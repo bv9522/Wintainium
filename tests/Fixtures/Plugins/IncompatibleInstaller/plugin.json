@@ -1,0 +1,8 @@
+{
+  "pluginId": "wintanium.installer.msi-only",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedFormats": ["msi"]
+  }
+}

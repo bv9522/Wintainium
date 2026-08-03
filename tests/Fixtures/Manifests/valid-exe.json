@@ -1,0 +1,25 @@
+{
+  "manifestVersion": "1.0",
+  "id": "com.github.desktop",
+  "name": "GitHub Desktop",
+  "homepage": "https://desktop.github.com/",
+  "source": {
+    "pluginId": "wintanium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "desktop/desktop"
+    }
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.exe",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["exe"],
+    "architectures": ["x64"]
+  }
+}

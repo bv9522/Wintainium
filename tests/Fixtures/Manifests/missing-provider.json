@@ -1,0 +1,22 @@
+{
+  "manifestVersion": "1.0",
+  "id": "org.example.no-provider",
+  "name": "No Provider",
+  "source": {
+    "pluginId": "wintanium.provider.not-installed",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"]
+  }
+}

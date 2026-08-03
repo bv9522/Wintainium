@@ -1,0 +1,25 @@
+{
+  "manifestVersion": "1.0",
+  "id": "com.github.cli",
+  "name": "GitHub CLI",
+  "homepage": "https://cli.github.com/",
+  "source": {
+    "pluginId": "wintanium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "cli/cli"
+    }
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.msi",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["msi"],
+    "architectures": ["x64"]
+  }
+}

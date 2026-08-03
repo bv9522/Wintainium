@@ -1,0 +1,28 @@
+{
+  "manifestVersion": "1.0",
+  "id": "org.neovim.neovim",
+  "name": "Neovim",
+  "homepage": "https://neovim.io/",
+  "source": {
+    "pluginId": "wintanium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "neovim/neovim"
+    }
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {
+      "entryPoint": "nvim-win64/bin/nvim.exe"
+    }
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"],
+    "allowUnknownArchitecture": false
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wintanium.dev/schemas/application-manifest-1.0.json",
+  "title": "Wintanium Application Manifest",
+  "description": "A portable declaration of application management intent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "id",
+    "name",
+    "source",
+    "installer",
+    "release",
+    "artifact"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9-]+)+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "documentation": {
+      "type": "string",
+      "format": "uri"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "deprecated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replacementId"],
+      "properties": {
+        "replacementId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[.-][a-z0-9-]+)+$"
+        }
+      }
+    },
+    "source": {
+      "$ref": "#/$defs/providerPluginReference"
+    },
+    "installer": {
+      "$ref": "#/$defs/installerPluginReference"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel"],
+      "properties": {
+        "channel": {
+          "enum": ["stable", "prerelease", "any"]
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formats", "architectures"],
+      "properties": {
+        "formats": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["zip", "msi", "exe"]
+          }
+        },
+        "architectures": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["x64", "x86", "arm64", "neutral"]
+          }
+        },
+        "allowUnknownArchitecture": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "providerPluginReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pluginId", "requiredContractVersion", "settings"],
+      "properties": {
+        "pluginId": {
+          "type": "string",
+          "pattern": "^wintanium\\.provider\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
+        },
+        "requiredContractVersion": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "settings": {
+          "type": "object"
+        }
+      }
+    },
+    "installerPluginReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pluginId", "requiredContractVersion", "settings"],
+      "properties": {
+        "pluginId": {
+          "type": "string",
+          "pattern": "^wintanium\\.installer\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
+        },
+        "requiredContractVersion": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "settings": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

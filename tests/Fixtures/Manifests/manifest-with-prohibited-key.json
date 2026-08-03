@@ -1,0 +1,25 @@
+{
+  "manifestVersion": "1.0",
+  "id": "org.example.prohibited",
+  "name": "Example Application",
+  "source": {
+    "pluginId": "wintanium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "example/application",
+      "apiToken": "must-not-be-here"
+    }
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"]
+  }
+}

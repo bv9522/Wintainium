@@ -1,0 +1,8 @@
+{
+  "pluginId": "wintanium.provider.github-releases",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedReleaseChannels": ["stable", "prerelease", "any"]
+  }
+}

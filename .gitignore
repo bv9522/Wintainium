@@ -1,0 +1,19 @@
+# PowerShell and test output
+TestResults/
+*.clixml
+
+# Build and package artifacts
+artifacts/
+dist/
+bin/
+obj/
+
+# Local configuration and secrets
+config/local.json
+*.secrets.json
+
+# Editor and operating-system files
+.vs/
+.vscode/
+desktop.ini
+Thumbs.db

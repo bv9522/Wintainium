@@ -1,0 +1,22 @@
+{
+  "manifestVersion": "1.0",
+  "id": "org.example.incompatible",
+  "name": "Incompatible Installer",
+  "source": {
+    "pluginId": "wintanium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "installer": {
+    "pluginId": "wintanium.installer.msi-only",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"]
+  }
+}

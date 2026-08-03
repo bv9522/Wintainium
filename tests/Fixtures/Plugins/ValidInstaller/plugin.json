@@ -1,0 +1,8 @@
+{
+  "pluginId": "wintanium.installer.portable-zip",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedFormats": ["zip"]
+  }
+}
