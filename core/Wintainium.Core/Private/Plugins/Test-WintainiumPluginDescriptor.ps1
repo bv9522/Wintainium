@@ -1,4 +1,4 @@
-function Test-WintaniumPluginDescriptor {
+function Test-WintainiumPluginDescriptor {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -17,7 +17,7 @@ function Test-WintaniumPluginDescriptor {
     }
 
     if ($null -ne $descriptor) {
-        if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^wintanium\.(provider|installer)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
+        if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginIdInvalid'; Message = 'pluginId is missing or invalid.' })
         }
 
@@ -50,3 +50,4 @@ function Test-WintaniumPluginDescriptor {
         Errors = $errors.ToArray()
     }
 }
+

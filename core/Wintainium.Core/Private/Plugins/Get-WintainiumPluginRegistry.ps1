@@ -1,4 +1,4 @@
-function Get-WintaniumPluginRegistry {
+function Get-WintainiumPluginRegistry {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -16,7 +16,7 @@ function Get-WintaniumPluginRegistry {
     }
 
     foreach ($descriptorFile in @(Get-ChildItem -LiteralPath $PluginRoot -Filter 'plugin.json' -File -Recurse)) {
-        $result = Test-WintaniumPluginDescriptor -DescriptorPath $descriptorFile.FullName
+        $result = Test-WintainiumPluginDescriptor -DescriptorPath $descriptorFile.FullName
         if ($result.IsValid) {
             $plugins.Add([pscustomobject][ordered]@{
                     PluginId = $result.Descriptor.pluginId
@@ -36,3 +36,4 @@ function Get-WintaniumPluginRegistry {
         DescriptorErrors = $descriptorErrors.ToArray()
     }
 }
+

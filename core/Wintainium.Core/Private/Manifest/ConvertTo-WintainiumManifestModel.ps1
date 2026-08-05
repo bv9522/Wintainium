@@ -1,4 +1,4 @@
-function ConvertTo-WintaniumManifestModel {
+function ConvertTo-WintainiumManifestModel {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -24,3 +24,4 @@ function ConvertTo-WintaniumManifestModel {
         Artifact = $Manifest['artifact']
     }
 }
+

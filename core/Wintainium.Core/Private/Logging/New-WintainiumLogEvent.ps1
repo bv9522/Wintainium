@@ -1,4 +1,4 @@
-function New-WintaniumLogEvent {
+function New-WintainiumLogEvent {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -30,3 +30,4 @@ function New-WintaniumLogEvent {
         Context = $Context
     }
 }
+

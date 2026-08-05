@@ -1,4 +1,4 @@
-function Test-WintaniumManifestSemantics {
+function Test-WintainiumManifestSemantics {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -56,3 +56,4 @@ function Test-WintaniumManifestSemantics {
 
     $errors.ToArray()
 }
+

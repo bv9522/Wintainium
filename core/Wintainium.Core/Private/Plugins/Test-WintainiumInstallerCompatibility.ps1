@@ -1,4 +1,4 @@
-function Test-WintaniumInstallerCompatibility {
+function Test-WintainiumInstallerCompatibility {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -26,3 +26,4 @@ function Test-WintaniumInstallerCompatibility {
         Error = $null
     }
 }
+

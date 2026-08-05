@@ -1,4 +1,4 @@
-function Test-WintaniumManifestSchema {
+function Test-WintainiumManifestSchema {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -9,10 +9,10 @@ function Test-WintaniumManifestSchema {
     )
 
     $json = Get-Content -LiteralPath $ManifestPath -Raw -Encoding utf8 -ErrorAction Stop
-    Test-WintaniumManifestJsonSchema -Json $json -SchemaPath $SchemaPath
+    Test-WintainiumManifestJsonSchema -Json $json -SchemaPath $SchemaPath
 }
 
-function Test-WintaniumManifestJsonSchema {
+function Test-WintainiumManifestJsonSchema {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -30,3 +30,4 @@ function Test-WintaniumManifestJsonSchema {
         return $false
     }
 }
+

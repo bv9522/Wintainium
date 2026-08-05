@@ -1,4 +1,4 @@
-function ConvertFrom-WintaniumManifestJson {
+function ConvertFrom-WintainiumManifestJson {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -27,7 +27,7 @@ function ConvertFrom-WintaniumManifestJson {
             })
     }
 
-    if ($null -ne $rawManifest -and -not (Test-WintaniumManifestJsonSchema -Json $Json -SchemaPath $SchemaPath)) {
+    if ($null -ne $rawManifest -and -not (Test-WintainiumManifestJsonSchema -Json $Json -SchemaPath $SchemaPath)) {
         $errors.Add([pscustomobject][ordered]@{
                 Code = 'ManifestSchemaInvalid'
                 Path = '$'
@@ -36,12 +36,12 @@ function ConvertFrom-WintaniumManifestJson {
     }
 
     if ($errors.Count -eq 0) {
-        foreach ($validationError in @(Test-WintaniumManifestSemantics -Manifest $rawManifest)) {
+        foreach ($validationError in @(Test-WintainiumManifestSemantics -Manifest $rawManifest)) {
             $errors.Add($validationError)
         }
 
         if ($errors.Count -eq 0) {
-            $model = ConvertTo-WintaniumManifestModel -Manifest $rawManifest
+            $model = ConvertTo-WintainiumManifestModel -Manifest $rawManifest
         }
     }
 
@@ -52,3 +52,4 @@ function ConvertFrom-WintaniumManifestJson {
         Errors = $errors.ToArray()
     }
 }
+

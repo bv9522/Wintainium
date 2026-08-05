@@ -1,4 +1,4 @@
-function Find-WintaniumManifestFile {
+function Find-WintainiumManifestFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -7,7 +7,13 @@ function Find-WintaniumManifestFile {
     )
 
     $resolvedRoot = (Resolve-Path -LiteralPath $ManifestRoot -ErrorAction Stop).Path
-    Get-ChildItem -LiteralPath $resolvedRoot -Filter '*.json' -File -ErrorAction Stop |
-        Sort-Object -Property FullName |
-        ForEach-Object { $_.FullName }
+
+    $manifests = @(
+        Get-ChildItem -LiteralPath $resolvedRoot -Filter '*.json' -File -ErrorAction Stop |
+            Sort-Object -Property FullName |
+            ForEach-Object { $_.FullName }
+    )
+
+    return ,$manifests
 }
+

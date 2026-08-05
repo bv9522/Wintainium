@@ -5,8 +5,8 @@ registry reads descriptors only; it does not load plugin behavior.
 
 Required fields:
 
-- `pluginId`: Stable identifier beginning with `wintanium.provider.` or
-  `wintanium.installer.`.
+- `pluginId`: Stable identifier beginning with `Wintainium.provider.` or
+  `Wintainium.installer.`.
 - `pluginType`: `Provider` or `Installer`.
 - `contractVersions`: Supported major contract versions.
 - `capabilities`: An object describing supported capability boundaries.
@@ -14,3 +14,4 @@ Required fields:
 Installer descriptors must declare `capabilities.supportedFormats`. Future
 phases will add validated, plugin-owned settings schemas without changing the
 core's provider/installer separation.
+

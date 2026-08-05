@@ -1,7 +1,7 @@
-function Test-WintaniumApplicationDefinition {
+function Test-WintainiumApplicationDefinition {
     <#
     .SYNOPSIS
-    Validates an offline Wintanium application manifest and resolves its required plugins.
+    Validates an offline Wintainium application manifest and resolves its required plugins.
 
     .DESCRIPTION
     This Phase 1 command performs no network, download, installation, or state-management work.
@@ -13,9 +13,9 @@ function Test-WintaniumApplicationDefinition {
         [ValidateNotNullOrEmpty()]
         [string]$ManifestPath,
 
-        [string]$PluginRoot = $script:WintaniumDefaultPluginRoot,
+        [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
 
-        [string]$SchemaPath = (Join-Path -Path $script:WintaniumSchemaRoot -ChildPath 'application-manifest.schema.json')
+        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
     )
 
     $operationId = [guid]::NewGuid().Guid
@@ -26,10 +26,10 @@ function Test-WintaniumApplicationDefinition {
     $provider = $null
     $installer = $null
 
-    $logEvents.Add((New-WintaniumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
+    $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
 
     try {
-        $manifestLoad = Import-WintaniumManifest -Path $ManifestPath -SchemaPath $SchemaPath
+        $manifestLoad = Import-WintainiumManifest -Path $ManifestPath -SchemaPath $SchemaPath
         $manifest = $manifestLoad.Manifest
         foreach ($errorRecord in @($manifestLoad.Errors)) {
             $errors.Add($errorRecord)
@@ -44,12 +44,12 @@ function Test-WintaniumApplicationDefinition {
     }
 
     if ($errors.Count -eq 0) {
-        $registry = Get-WintaniumPluginRegistry -PluginRoot $PluginRoot
+        $registry = Get-WintainiumPluginRegistry -PluginRoot $PluginRoot
         foreach ($descriptorError in @($registry.DescriptorErrors)) {
             $warnings.Add([pscustomobject]@{ Code = 'PluginDescriptorIgnored'; Message = 'An invalid plugin descriptor was ignored by the registry.'; Detail = $descriptorError })
         }
 
-        $providerResolution = Resolve-WintaniumPlugin -Plugins $registry.Plugins -PluginId $manifest.source.pluginId -PluginType 'Provider' -RequiredContractVersion $manifest.source.requiredContractVersion
+        $providerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.source.pluginId -PluginType 'Provider' -RequiredContractVersion $manifest.source.requiredContractVersion
         if ($providerResolution.IsResolved) {
             $provider = $providerResolution.Plugin
         }
@@ -57,10 +57,10 @@ function Test-WintaniumApplicationDefinition {
             $errors.Add($providerResolution.Error)
         }
 
-        $installerResolution = Resolve-WintaniumPlugin -Plugins $registry.Plugins -PluginId $manifest.installer.pluginId -PluginType 'Installer' -RequiredContractVersion $manifest.installer.requiredContractVersion
+        $installerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.installer.pluginId -PluginType 'Installer' -RequiredContractVersion $manifest.installer.requiredContractVersion
         if ($installerResolution.IsResolved) {
             $installer = $installerResolution.Plugin
-            $compatibility = Test-WintaniumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer
+            $compatibility = Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer
             if (-not $compatibility.IsCompatible) {
                 $errors.Add($compatibility.Error)
             }
@@ -73,7 +73,7 @@ function Test-WintaniumApplicationDefinition {
     $severity = if ($errors.Count -eq 0) { 'Information' } else { 'Error' }
     $eventName = if ($errors.Count -eq 0) { 'ValidationSucceeded' } else { 'ValidationFailed' }
     $message = if ($errors.Count -eq 0) { 'Application definition is valid.' } else { 'Application definition is invalid.' }
-    $logEvents.Add((New-WintaniumLogEvent -Severity $severity -OperationId $operationId -Component 'Core' -EventName $eventName -Message $message -Context @{ ErrorCount = $errors.Count; WarningCount = $warnings.Count }))
+    $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $operationId -Component 'Core' -EventName $eventName -Message $message -Context @{ ErrorCount = $errors.Count; WarningCount = $warnings.Count }))
 
     [pscustomobject][ordered]@{
         OperationId = $operationId
@@ -86,3 +86,4 @@ function Test-WintaniumApplicationDefinition {
         LogEvents = $logEvents.ToArray()
     }
 }
+

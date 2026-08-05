@@ -1,15 +1,15 @@
-function Import-WintaniumManifest {
+function Import-WintainiumManifest {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Path,
 
-        [string]$SchemaPath = (Join-Path -Path $script:WintaniumSchemaRoot -ChildPath 'application-manifest.schema.json')
+        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
     )
 
     try {
-        $file = Read-WintaniumManifestFile -Path $Path
+        $file = Read-WintainiumManifestFile -Path $Path
     }
     catch {
         return [pscustomobject][ordered]@{
@@ -24,5 +24,6 @@ function Import-WintaniumManifest {
         }
     }
 
-    ConvertFrom-WintaniumManifestJson -Json $file.Json -Path $file.Path -SchemaPath $SchemaPath
+    ConvertFrom-WintainiumManifestJson -Json $file.Json -Path $file.Path -SchemaPath $SchemaPath
 }
+

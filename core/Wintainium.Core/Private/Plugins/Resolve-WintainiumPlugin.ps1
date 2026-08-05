@@ -1,4 +1,4 @@
-function Resolve-WintaniumPlugin {
+function Resolve-WintainiumPlugin {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -36,3 +36,4 @@ function Resolve-WintaniumPlugin {
         Error = $null
     }
 }
+

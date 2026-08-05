@@ -1,4 +1,4 @@
-function Read-WintaniumManifestFile {
+function Read-WintainiumManifestFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -12,3 +12,4 @@ function Read-WintaniumManifestFile {
         Json = Get-Content -LiteralPath $resolvedPath -Raw -Encoding utf8 -ErrorAction Stop
     }
 }
+
