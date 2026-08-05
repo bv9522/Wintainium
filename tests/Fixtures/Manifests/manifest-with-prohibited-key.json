@@ -3,7 +3,7 @@
   "id": "org.example.prohibited",
   "name": "Example Application",
   "source": {
-    "pluginId": "wintanium.provider.github-releases",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {
       "repository": "example/application",
@@ -11,7 +11,7 @@
     }
   },
   "installer": {
-    "pluginId": "wintanium.installer.portable-zip",
+    "pluginId": "Wintainium.installer.portable-zip",
     "requiredContractVersion": "1",
     "settings": {}
   },

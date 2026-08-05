@@ -1,8 +1,8 @@
-# Project Charter: Wintanium
+# Project Charter: Wintainium
 
 ## Mission
 
-Wintanium is an open, modular Windows software manager that uses official
+Wintainium is an open, modular Windows software manager that uses official
 developer sources instead of depending primarily on centralized repositories.
 
 ## Principles

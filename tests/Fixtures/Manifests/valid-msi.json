@@ -4,14 +4,14 @@
   "name": "GitHub CLI",
   "homepage": "https://cli.github.com/",
   "source": {
-    "pluginId": "wintanium.provider.github-releases",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {
       "repository": "cli/cli"
     }
   },
   "installer": {
-    "pluginId": "wintanium.installer.msi",
+    "pluginId": "Wintainium.installer.msi",
     "requiredContractVersion": "1",
     "settings": {}
   },

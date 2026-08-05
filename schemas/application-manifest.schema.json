@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wintanium.dev/schemas/application-manifest-1.0.json",
-  "title": "Wintanium Application Manifest",
+  "$id": "https://Wintainium.dev/schemas/application-manifest-1.0.json",
+  "title": "Wintainium Application Manifest",
   "description": "A portable declaration of application management intent.",
   "type": "object",
   "additionalProperties": false,
@@ -115,7 +115,7 @@
       "properties": {
         "pluginId": {
           "type": "string",
-          "pattern": "^wintanium\\.provider\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
+          "pattern": "^Wintainium\\.provider\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
         },
         "requiredContractVersion": {
           "type": "string",
@@ -133,7 +133,7 @@
       "properties": {
         "pluginId": {
           "type": "string",
-          "pattern": "^wintanium\\.installer\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
+          "pattern": "^Wintainium\\.installer\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
         },
         "requiredContractVersion": {
           "type": "string",

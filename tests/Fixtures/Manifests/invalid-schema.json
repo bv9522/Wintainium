@@ -2,12 +2,12 @@
   "manifestVersion": "1.0",
   "id": "org.example.invalid",
   "source": {
-    "pluginId": "wintanium.provider.github-releases",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {}
   },
   "installer": {
-    "pluginId": "wintanium.installer.portable-zip",
+    "pluginId": "Wintainium.installer.portable-zip",
     "requiredContractVersion": "1",
     "settings": {}
   },

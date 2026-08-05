@@ -1,15 +1,15 @@
 $testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintanium.Core/Wintanium.Core.psd1'
+$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 $fixtureRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Manifests'
 
 Import-Module $modulePath -Force
-$module = Get-Module Wintanium.Core
+$module = Get-Module Wintainium.Core
 
-Describe 'Wintanium manifest loading' {
+Describe 'Wintainium manifest loading' {
     It 'loads a valid manifest into the internal manifest model' {
         $result = & $module {
             param($path)
-            Import-WintaniumManifest -Path $path
+            Import-WintainiumManifest -Path $path
         } (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json')
 
         $result.IsValid | Should Be $true
@@ -21,7 +21,7 @@ Describe 'Wintanium manifest loading' {
     It 'returns a structured error for a missing required property' {
         $result = & $module {
             param($path)
-            Import-WintaniumManifest -Path $path
+            Import-WintainiumManifest -Path $path
         } (Join-Path -Path $fixtureRoot -ChildPath 'invalid-schema.json')
 
         $result.IsValid | Should Be $false
@@ -38,7 +38,7 @@ Describe 'Wintanium manifest loading' {
 
         $result = & $module {
             param($path)
-            Import-WintaniumManifest -Path $path
+            Import-WintainiumManifest -Path $path
         } $invalidManifest
 
         $result.IsValid | Should Be $false
@@ -51,7 +51,7 @@ Describe 'Wintanium manifest loading' {
 
         $result = & $module {
             param($path)
-            Import-WintaniumManifest -Path $path
+            Import-WintainiumManifest -Path $path
         } $malformedManifest
 
         $result.IsValid | Should Be $false
@@ -64,7 +64,7 @@ Describe 'Wintanium manifest loading' {
 
         $paths = & $module {
             param($path)
-            @(Find-WintaniumManifestFile -ManifestRoot $path)
+            @(Find-WintainiumManifestFile -ManifestRoot $path)
         } $emptyDirectory
 
         $paths.Count | Should Be 0
@@ -78,7 +78,7 @@ Describe 'Wintanium manifest loading' {
 
         $paths = & $module {
             param($path)
-            @(Find-WintaniumManifestFile -ManifestRoot $path)
+            @(Find-WintainiumManifestFile -ManifestRoot $path)
         } $manifestDirectory
 
         $paths.Count | Should Be 2

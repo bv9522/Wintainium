@@ -1,6 +1,6 @@
-# Wintanium
+# Wintainium
 
-Wintanium is an open, modular Windows software manager inspired by Obtainium.
+Wintainium is an open, modular Windows software manager inspired by Obtainium.
 It helps users install and update applications from official upstream sources
 such as GitHub Releases and vendor download pages.
 

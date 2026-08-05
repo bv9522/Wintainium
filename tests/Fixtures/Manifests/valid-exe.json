@@ -4,14 +4,14 @@
   "name": "GitHub Desktop",
   "homepage": "https://desktop.github.com/",
   "source": {
-    "pluginId": "wintanium.provider.github-releases",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {
       "repository": "desktop/desktop"
     }
   },
   "installer": {
-    "pluginId": "wintanium.installer.exe",
+    "pluginId": "Wintainium.installer.exe",
     "requiredContractVersion": "1",
     "settings": {}
   },

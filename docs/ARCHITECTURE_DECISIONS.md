@@ -1,12 +1,12 @@
 # Architecture Decision Log
 
-This log records architectural decisions that guide Wintanium's long-term
+This log records architectural decisions that guide Wintainium's long-term
 design. Decisions are immutable once accepted; a later decision may supersede
 an earlier one with an explicit reference.
 
 ## Decision #001: PowerShell Engine with GUI Independence
 
-**Decision:** The Wintanium engine will be PowerShell-first and usable
+**Decision:** The Wintainium engine will be PowerShell-first and usable
 independently of any graphical interface.
 
 **Reason:** The engine should support automation, scripting, scheduled tasks,
@@ -18,7 +18,7 @@ of business logic.
 ## Decision #002: Managed Application as the Central Domain Entity
 
 **Decision:** The Managed Application object is the central business concept
-of Wintanium.
+of Wintainium.
 
 **Reason:** Users manage applications, not installers or providers. Provider
 plugins and installer plugins are capabilities that serve the managed
@@ -29,13 +29,13 @@ application lifecycle.
 - Source-centric architecture
 - Package-centric architecture
 
-**Rejected because:** They couple Wintanium to specific distribution methods.
+**Rejected because:** They couple Wintainium to specific distribution methods.
 
 **Status:** Accepted
 
 ## Decision #003: Separate Provider and Installer Plugin Contracts
 
-**Decision:** Wintanium will maintain separate plugin contracts for
+**Decision:** Wintainium will maintain separate plugin contracts for
 discovering upstream release information and applying selected local
 artifacts.
 
@@ -59,7 +59,7 @@ scripts, machine-specific paths, credentials, or bypasses of safety controls.
 ## Decision #005: Plugins communicate through the core
 
 **Decision:** Provider and Installer plugins communicate only through the
-Wintanium core.
+Wintainium core.
 
 **Reason:** The core owns workflow orchestration, policy enforcement, and
 state management. Plugins provide capabilities but do not control lifecycle

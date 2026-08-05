@@ -1,5 +1,5 @@
 {
-  "pluginId": "wintanium.installer.exe",
+  "pluginId": "Wintainium.installer.exe",
   "pluginType": "Installer",
   "contractVersions": ["1"],
   "capabilities": {

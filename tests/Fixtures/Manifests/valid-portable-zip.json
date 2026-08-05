@@ -4,14 +4,14 @@
   "name": "Neovim",
   "homepage": "https://neovim.io/",
   "source": {
-    "pluginId": "wintanium.provider.github-releases",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {
       "repository": "neovim/neovim"
     }
   },
   "installer": {
-    "pluginId": "wintanium.installer.portable-zip",
+    "pluginId": "Wintainium.installer.portable-zip",
     "requiredContractVersion": "1",
     "settings": {
       "entryPoint": "nvim-win64/bin/nvim.exe"

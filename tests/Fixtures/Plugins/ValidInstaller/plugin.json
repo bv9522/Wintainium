@@ -1,5 +1,5 @@
 {
-  "pluginId": "wintanium.installer.portable-zip",
+  "pluginId": "Wintainium.installer.portable-zip",
   "pluginType": "Installer",
   "contractVersions": ["1"],
   "capabilities": {

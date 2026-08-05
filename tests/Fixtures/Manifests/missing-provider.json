@@ -3,12 +3,12 @@
   "id": "org.example.no-provider",
   "name": "No Provider",
   "source": {
-    "pluginId": "wintanium.provider.not-installed",
+    "pluginId": "Wintainium.provider.not-installed",
     "requiredContractVersion": "1",
     "settings": {}
   },
   "installer": {
-    "pluginId": "wintanium.installer.portable-zip",
+    "pluginId": "Wintainium.installer.portable-zip",
     "requiredContractVersion": "1",
     "settings": {}
   },

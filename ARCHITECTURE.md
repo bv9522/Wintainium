@@ -14,12 +14,12 @@ client of that engine and must not duplicate engine rules.
 | Provider plugins | Obtain version and artifact metadata from upstream software providers. |
 | Installer plugins | Validate and apply a downloaded artifact according to its format. |
 | Application manifests | Declare portable application-management intent and select compatible plugins. |
-| Manifest repositories | Store and distribute Wintanium application manifests. |
+| Manifest repositories | Store and distribute Wintainium application manifests. |
 | Configuration | Holds user-selected paths, policies, and enabled plugins. |
 
 ## Repositories and providers
 
-A **manifest repository** is a location that stores Wintanium manifest files.
+A **manifest repository** is a location that stores Wintainium manifest files.
 It distributes management definitions; it is not necessarily related to an
 application publisher.
 

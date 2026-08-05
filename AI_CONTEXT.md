@@ -1,6 +1,6 @@
 # AI Development Context
 
-Use this file as a compact orientation guide when assisting with Wintanium.
+Use this file as a compact orientation guide when assisting with Wintainium.
 
 ## Required reading order
 
