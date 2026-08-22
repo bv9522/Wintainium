@@ -5,8 +5,12 @@ BeforeAll {
     $script:harnessPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Support/ProviderContractHarness.ps1'
 
     Import-Module $script:modulePath -Force
-    . $script:harnessPath
 }
+
+# Pester discovers the dynamically registered contract tests while it is
+# evaluating the Describe block, so the harness function must exist before
+# discovery reaches Register-WintainiumProviderContractTests.
+. $script:harnessPath
 
 Describe 'Wintainium provider contract harness' {
     BeforeAll {
