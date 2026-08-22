@@ -40,13 +40,18 @@ upstream software provider.
 - A manifest selects provider and installer plugins by stable identifiers.
 - Plugin failures produce actionable errors and leave state recoverable.
 - Provider and installer plugins communicate only with the core.
-- Provider descriptors declare stable identity, contract versions, and capabilities; they do not contain arbitrary executable instructions.
+- Provider descriptors declare stable identity, contract versions, capabilities, and constrained module entry points; they do not contain arbitrary executable commands.
 
 ## Provider contract
 
 Phase 3 establishes a versioned provider contract. Provider Contract Version
 `1` requires provider descriptors to declare `releaseDiscovery=true` and
-`artifactDiscovery=true` capabilities.
+`artifactDiscovery=true` capabilities and a relative `.psm1` entry point.
+
+The Core-to-provider operation is fixed: Core loads the validated provider
+module and invokes only `Invoke-WintainiumProvider -Request <ProviderRequest>`.
+The descriptor cannot select an arbitrary command. The provider operation is
+private to Core and returns exactly one structured `ProviderResult`.
 
 A provider receives a purpose-built discovery request rather than the entire
 application manifest. The request contains Core correlation information,
@@ -65,10 +70,12 @@ candidates. An artifact may contain an untrusted URI, filename, normalized
 format, normalized architecture, optional size, upstream-declared hashes, and
 upstream-declared signature metadata.
 
-Provider-specific API fields remain inside the provider implementation unless
-a future architecture decision deliberately promotes a field into the Core
-model. Artifact URIs, hashes, and signatures are untrusted source metadata;
-verification is a later Core responsibility.
+Core validates provider result structure, operation correlation, and normalized
+release shape before accepting provider data. Provider-specific API fields
+remain inside the provider implementation unless a future architecture
+decision deliberately promotes a field into the Core model. Artifact URIs,
+hashes, and signatures are untrusted source metadata; verification is a later
+Core responsibility.
 
 Provider operations may communicate with upstream network services. The Phase
 2 Manifest Engine remains completely network-free and must never invoke a
@@ -78,7 +85,8 @@ Provider results distinguish successful discovery with no matching releases
 from provider/source failures. Core-level provider resolution failures such as
 unregistered providers, incompatible contracts, and unsupported capabilities
 are distinct from upstream failures such as source unavailability or
-authentication failure.
+authentication failure. Unhandled provider exceptions crossing the operation
+boundary are represented as structured `ProviderInternalError` results.
 
 See `core/Wintainium.Core/Contracts/ProviderContract.md` for the detailed
 contract and `docs/ARCHITECTURE_DECISIONS.md` for the accepted decisions.
