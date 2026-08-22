@@ -12,7 +12,9 @@ function Resolve-WintainiumPlugin {
         [string]$PluginType,
 
         [Parameter(Mandatory)]
-        [string]$RequiredContractVersion
+        [string]$RequiredContractVersion,
+
+        [string[]]$RequiredCapabilities = @()
     )
 
     $pluginsByIdentity = @($Plugins | Where-Object {
@@ -47,7 +49,25 @@ function Resolve-WintainiumPlugin {
         }
     }
 
-    $plugin = $compatiblePlugins | Sort-Object DescriptorPath | Select-Object -First 1
+    $capabilityCompatiblePlugins = @($compatiblePlugins | Where-Object {
+            $plugin = $_
+            $capabilities = if ($plugin.Capabilities -is [System.Collections.IDictionary]) { $plugin.Capabilities } else { @{} }
+            @($RequiredCapabilities | Where-Object { -not ($capabilities.ContainsKey($_) -and $capabilities[$_] -eq $true) }).Count -eq 0
+        })
+
+    if ($capabilityCompatiblePlugins.Count -eq 0) {
+        $required = ($RequiredCapabilities -join ', ')
+        return [pscustomobject]@{
+            IsResolved = $false
+            Plugin = $null
+            Error = [pscustomobject]@{
+                Code = if ($PluginType -eq 'Provider') { 'ProviderCapabilityUnsupported' } else { 'PluginNotResolved' }
+                Message = "No compatible $PluginType plugin for '$PluginId' declares all required capabilities: $required."
+            }
+        }
+    }
+
+    $plugin = $capabilityCompatiblePlugins | Sort-Object DescriptorPath | Select-Object -First 1
 
     [pscustomobject]@{
         IsResolved = $true
