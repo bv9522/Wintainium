@@ -80,6 +80,18 @@ Describe 'Wintainium manifest import' {
         @($result.Errors.Code) | Should -Contain 'ManifestSchemaInvalid'
     }
 
+    It 'returns ManifestSchemaUnavailable when the schema resource is missing' {
+        $path = Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json'
+        $missingSchema = Join-Path -Path $TestDrive -ChildPath 'missing-schema.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path; SchemaPath = $missingSchema } {
+            Import-WintainiumManifest -Path $Path -SchemaPath $SchemaPath
+        }
+
+        $result.IsValid | Should -Be $false
+        $result.Manifest | Should -BeNullOrEmpty
+        @($result.Errors.Code) | Should -Contain 'ManifestSchemaUnavailable'
+    }
+
     It 'preserves nested source, installer, release, and artifact data' {
         $path = Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path; SchemaPath = $script:schemaPath } {
