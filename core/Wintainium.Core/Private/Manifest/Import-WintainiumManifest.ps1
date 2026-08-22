@@ -36,7 +36,7 @@ function Import-WintainiumManifest {
 
     if (-not (Test-Path -LiteralPath $SchemaPath -PathType Leaf)) {
         $baseResult.Errors = @([pscustomobject][ordered]@{
-                Code = 'ManifestSchemaInvalid'
+                Code = 'ManifestSchemaUnavailable'
                 Path = '$'
                 Message = "Manifest schema '$SchemaPath' was not found."
             })
