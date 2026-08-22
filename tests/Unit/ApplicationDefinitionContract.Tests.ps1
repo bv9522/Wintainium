@@ -1,12 +1,17 @@
 $testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
 $modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+$schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest.schema.json'
 $fixtureRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Manifests'
+$pluginRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Plugins'
 
 Import-Module $modulePath -Force
 
 Describe 'Test-WintainiumApplicationDefinition public contract' {
     It 'returns the complete stable result shape for a valid application definition' {
-        $result = Test-WintainiumApplicationDefinition -ManifestPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json')
+        $result = Test-WintainiumApplicationDefinition `
+            -ManifestPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json') `
+            -PluginRoot $pluginRoot `
+            -SchemaPath $schemaPath
 
         $result.PSObject.Properties.Name | Should -Contain 'OperationId'
         $result.PSObject.Properties.Name | Should -Contain 'IsValid'
@@ -28,7 +33,10 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
     It 'returns a stable invalid result when the manifest cannot be loaded' {
         $missingManifest = Join-Path -Path $TestDrive -ChildPath 'does-not-exist.json'
 
-        $result = Test-WintainiumApplicationDefinition -ManifestPath $missingManifest
+        $result = Test-WintainiumApplicationDefinition `
+            -ManifestPath $missingManifest `
+            -PluginRoot $pluginRoot `
+            -SchemaPath $schemaPath
 
         $result.PSObject.Properties.Name | Should -Contain 'OperationId'
         $result.PSObject.Properties.Name | Should -Contain 'IsValid'
@@ -66,7 +74,10 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
 }
 '@ | Set-Content -LiteralPath $manifest -Encoding utf8
 
-        $result = Test-WintainiumApplicationDefinition -ManifestPath $manifest
+        $result = Test-WintainiumApplicationDefinition `
+            -ManifestPath $manifest `
+            -PluginRoot $pluginRoot `
+            -SchemaPath $schemaPath
 
         $result.IsValid | Should -Be $false
         $result.Errors.Count | Should -BeGreaterThan 0
