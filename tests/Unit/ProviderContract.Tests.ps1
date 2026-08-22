@@ -8,15 +8,26 @@ BeforeAll {
 }
 
 Describe 'Wintainium provider contract' {
-    It 'requires provider discovery capabilities on provider descriptors' {
+    It 'requires provider discovery capabilities and a constrained module entry point' {
         $descriptorPath = Join-Path -Path $script:pluginRoot -ChildPath 'ValidProvider/plugin.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
 
         $result.IsValid | Should -Be $true
+        $result.Descriptor.entryPoint | Should -Be 'Wintainium.provider.github-releases.psm1'
         $result.Descriptor.capabilities.releaseDiscovery | Should -Be $true
         $result.Descriptor.capabilities.artifactDiscovery | Should -Be $true
+    }
+
+    It 'rejects a provider descriptor with an unsafe entry point' {
+        $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'UnsafeEntryPoint/plugin.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
+        }
+
+        $result.IsValid | Should -Be $false
+        @($result.Errors.Code) | Should -Contain 'DescriptorProviderEntryPointInvalid'
     }
 
     It 'rejects a provider descriptor without release discovery capability' {
@@ -80,5 +91,6 @@ Describe 'Wintainium provider contract' {
         $resolved.IsResolved | Should -Be $true
         $resolved.Plugin.PluginType | Should -Be 'Provider'
         $resolved.Plugin.PluginId | Should -Be 'Wintainium.provider.github-releases'
+        $resolved.Plugin.EntryPoint | Should -Be 'Wintainium.provider.github-releases.psm1'
     }
 }
