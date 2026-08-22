@@ -2,6 +2,7 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     $script:pluginRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins'
+    $script:providerContractFixtureRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/ProviderContracts'
 
     Import-Module $script:modulePath -Force
 }
@@ -14,12 +15,12 @@ Describe 'Wintainium provider contract' {
         }
 
         $result.IsValid | Should -Be $true
-        @($result.Descriptor.capabilities.releaseDiscovery) | Should -Contain $true
-        @($result.Descriptor.capabilities.artifactDiscovery) | Should -Contain $true
+        $result.Descriptor.capabilities.releaseDiscovery | Should -Be $true
+        $result.Descriptor.capabilities.artifactDiscovery | Should -Be $true
     }
 
     It 'rejects a provider descriptor without release discovery capability' {
-        $descriptorPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/InvalidProviderMissingCapability/plugin.json'
+        $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'MissingReleaseDiscovery/plugin.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
@@ -29,7 +30,7 @@ Describe 'Wintainium provider contract' {
     }
 
     It 'rejects a provider descriptor without artifact discovery capability' {
-        $descriptorPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/InvalidProviderMissingArtifactCapability/plugin.json'
+        $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'MissingArtifactDiscovery/plugin.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
