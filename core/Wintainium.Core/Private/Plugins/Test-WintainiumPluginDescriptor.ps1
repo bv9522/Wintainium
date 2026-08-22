@@ -33,6 +33,16 @@ function Test-WintainiumPluginDescriptor {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorCapabilitiesInvalid'; Message = 'capabilities must be an object.' })
         }
 
+        if ($descriptor.pluginType -eq 'Provider' -and $descriptor.capabilities -is [System.Collections.IDictionary]) {
+            if (-not $descriptor.capabilities.ContainsKey('releaseDiscovery') -or $descriptor.capabilities.releaseDiscovery -ne $true) {
+                $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderReleaseDiscoveryMissing'; Message = 'Provider descriptors require capabilities.releaseDiscovery=true.' })
+            }
+
+            if (-not $descriptor.capabilities.ContainsKey('artifactDiscovery') -or $descriptor.capabilities.artifactDiscovery -ne $true) {
+                $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
+            }
+        }
+
         if ($descriptor.pluginType -eq 'Installer' -and (
                 -not $descriptor.ContainsKey('capabilities') -or
                 $descriptor.capabilities -isnot [System.Collections.IDictionary] -or
