@@ -1,17 +1,19 @@
-$testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-$schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest.schema.json'
-$fixtureRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Manifests'
-$pluginRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Plugins'
+BeforeAll {
+    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+    $script:schemaPath = Join-Path -Path $script:testRoot -ChildPath 'schemas/application-manifest.schema.json'
+    $script:fixtureRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests'
+    $script:pluginRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins'
 
-Import-Module $modulePath -Force
+    Import-Module $script:modulePath -Force
+}
 
 Describe 'Test-WintainiumApplicationDefinition public contract' {
     It 'returns the complete stable result shape for a valid application definition' {
         $result = Test-WintainiumApplicationDefinition `
-            -ManifestPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json') `
-            -PluginRoot $pluginRoot `
-            -SchemaPath $schemaPath
+            -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') `
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
 
         $result.PSObject.Properties.Name | Should -Contain 'OperationId'
         $result.PSObject.Properties.Name | Should -Contain 'IsValid'
@@ -35,8 +37,8 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
 
         $result = Test-WintainiumApplicationDefinition `
             -ManifestPath $missingManifest `
-            -PluginRoot $pluginRoot `
-            -SchemaPath $schemaPath
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
 
         $result.PSObject.Properties.Name | Should -Contain 'OperationId'
         $result.PSObject.Properties.Name | Should -Contain 'IsValid'
@@ -76,8 +78,8 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
 
         $result = Test-WintainiumApplicationDefinition `
             -ManifestPath $manifest `
-            -PluginRoot $pluginRoot `
-            -SchemaPath $schemaPath
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
 
         $result.IsValid | Should -Be $false
         $result.Errors.Count | Should -BeGreaterThan 0
