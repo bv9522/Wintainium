@@ -172,12 +172,13 @@ new major version.
 ## Decision #014: Provider Descriptors Do Not Contain Arbitrary Executable Instructions
 
 **Decision:** Provider descriptors identify provider identity, supported
-contract versions, and capabilities. They do not contain arbitrary PowerShell
-commands, script expressions, or manifest-controlled executable entry points.
+contract versions, capabilities, and a constrained relative module entry
+point. They do not contain arbitrary PowerShell commands, script expressions,
+or manifest-controlled executable instructions.
 
-**Reason:** Manifests and descriptors are data contracts. Provider execution is
-controlled by the plugin system and Core rather than by arbitrary data-driven
-command execution.
+**Reason:** Provider execution is controlled by the plugin system and Core.
+The entry point is a constrained file reference to a PowerShell module, while
+the operation Core invokes is fixed by the provider contract.
 
 **Status:** Accepted
 
@@ -201,5 +202,55 @@ validation, and provider-internal failures.
 **Reason:** Update discovery and diagnostics require Core to distinguish a
 healthy source containing no matching releases from an operation that could
 not reliably obtain release information.
+
+**Status:** Accepted
+
+## Decision #017: Provider Operation Uses a Fixed Module Contract
+
+**Decision:** A provider plugin entry point is a constrained relative `.psm1`
+module path. Core invokes only the fixed exported operation
+`Invoke-WintainiumProvider -Request <ProviderRequest>`.
+
+**Reason:** Providers are executable behavior, but arbitrary command selection
+would create an unnecessary execution surface. A fixed operation gives
+providers implementation freedom inside their module while keeping the Core
+boundary deterministic and auditable.
+
+**Status:** Accepted
+
+## Decision #018: Provider Operation Returns Exactly One Structured Result
+
+**Decision:** A provider operation must return exactly one `ProviderResult`.
+Core validates the result before accepting its normalized release and artifact
+data.
+
+**Reason:** A single structured result prevents provider output streams from
+becoming an implicit second protocol and gives Core one deterministic boundary
+for success, no-data, warnings, and failures.
+
+**Status:** Accepted
+
+## Decision #019: Core Owns Provider Result Validation
+
+**Decision:** Core validates provider result structure, correlation identity,
+and normalized release shape. Provider-specific data is not accepted into the
+Core model merely because a provider emitted it.
+
+**Reason:** Providers are replaceable executable plugins. Core must enforce the
+shared contract rather than trusting each implementation to define its own
+interpretation of valid output.
+
+**Status:** Accepted
+
+## Decision #020: Provider Exceptions Become Structured Operation Failures
+
+**Decision:** Unhandled provider execution exceptions are converted by Core
+into structured `ProviderInternalError` results. Provider-returned statuses
+such as `NoReleasesFound` remain provider-defined structured outcomes rather
+than exceptions.
+
+**Reason:** Expected operational failures must remain machine-readable and
+correlated. Exceptions crossing the plugin boundary would make provider
+behavior inconsistent and complicate later orchestration.
 
 **Status:** Accepted
