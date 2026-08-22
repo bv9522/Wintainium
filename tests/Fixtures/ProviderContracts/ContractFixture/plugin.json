@@ -1,0 +1,11 @@
+{
+  "pluginId": "Wintainium.provider.contract-fixture",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.contract-fixture.psm1",
+  "capabilities": {
+    "releaseDiscovery": true,
+    "artifactDiscovery": true,
+    "supportedReleaseChannels": ["stable", "prerelease", "any"]
+  }
+}
