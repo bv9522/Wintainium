@@ -1,12 +1,14 @@
-$testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-$fixtureRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Manifests'
+BeforeAll {
+    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+    $script:fixtureRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests'
 
-Import-Module $modulePath -Force
+    Import-Module $script:modulePath -Force
+}
 
 Describe 'Wintainium manifest loading' {
     It 'loads a valid manifest into the internal manifest model' {
-        $path = Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json'
+        $path = Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path } {
             Import-WintainiumManifest -Path $Path
         }
@@ -18,7 +20,7 @@ Describe 'Wintainium manifest loading' {
     }
 
     It 'returns a structured error for a missing required property' {
-        $path = Join-Path -Path $fixtureRoot -ChildPath 'invalid-schema.json'
+        $path = Join-Path -Path $script:fixtureRoot -ChildPath 'invalid-schema.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path } {
             Import-WintainiumManifest -Path $Path
         }
@@ -69,8 +71,8 @@ Describe 'Wintainium manifest loading' {
     It 'discovers multiple manifests from one local collection' {
         $manifestDirectory = Join-Path -Path $TestDrive -ChildPath 'many'
         New-Item -ItemType Directory -Path $manifestDirectory | Out-Null
-        Copy-Item -LiteralPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'one.json')
-        Copy-Item -LiteralPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-msi.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'two.json')
+        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'one.json')
+        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-msi.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'two.json')
 
         $paths = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestDirectory } {
             @(Find-WintainiumManifestFile -ManifestRoot $Path)
