@@ -1,13 +1,15 @@
-$testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-$pluginRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Plugins'
-$manifestRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/Manifests'
+BeforeAll {
+    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+    $script:pluginRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins'
+    $script:manifestRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests'
 
-Import-Module $modulePath -Force
+    Import-Module $script:modulePath -Force
+}
 
 Describe 'Wintainium plugin registry' {
     It 'registers valid plugin descriptors and reports malformed descriptors' {
-        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $pluginRoot } {
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
 
@@ -16,7 +18,7 @@ Describe 'Wintainium plugin registry' {
     }
 
     It 'resolves an installer by id, type, and contract version' {
-        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $pluginRoot } {
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
         $resolved = InModuleScope Wintainium.Core -Parameters @{ Plugins = $registry.Plugins } {
@@ -28,8 +30,8 @@ Describe 'Wintainium plugin registry' {
     }
 
     It 'rejects an installer that supports none of the requested formats' {
-        $manifestPath = Join-Path -Path $manifestRoot -ChildPath 'incompatible-installer.json'
-        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $pluginRoot } {
+        $manifestPath = Join-Path -Path $script:manifestRoot -ChildPath 'incompatible-installer.json'
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestPath; Plugins = $registry.Plugins } {
