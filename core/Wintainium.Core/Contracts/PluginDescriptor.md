@@ -18,19 +18,25 @@ names.
 
 ## Provider descriptors
 
-Provider Contract Version 1 requires these boolean capabilities:
+Provider Contract Version 1 requires these fields and boolean capabilities:
 
+- `entryPoint`: Relative `.psm1` module path inside the provider plugin
+  directory. Parent-directory traversal and rooted paths are invalid.
 - `capabilities.releaseDiscovery`: provider can discover releases.
 - `capabilities.artifactDiscovery`: provider can discover artifact candidates
   associated with releases.
+
+Core invokes only the fixed `Invoke-WintainiumProvider` operation exported by
+the declared module entry point. The descriptor cannot select an arbitrary
+command to execute.
 
 Providers may declare additional stable capability information, but provider
 specific API details do not become Core contracts merely by appearing in the
 descriptor.
 
-A provider descriptor identifies capabilities and contract support. It must
-not contain arbitrary PowerShell commands, script expressions, or other
-manifest-controlled executable instructions.
+A provider descriptor identifies capabilities and a constrained executable
+module reference. It must not contain arbitrary PowerShell commands, script
+expressions, command lines, or manifest-controlled executable instructions.
 
 See `ProviderContract.md` for the complete Phase 3 provider contract.
 
