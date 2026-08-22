@@ -22,6 +22,7 @@ function Get-WintainiumPluginRegistry {
                     PluginId = $result.Descriptor.pluginId
                     PluginType = $result.Descriptor.pluginType
                     ContractVersions = @($result.Descriptor.contractVersions)
+                    EntryPoint = if ($result.Descriptor.ContainsKey('entryPoint')) { $result.Descriptor.entryPoint } else { $null }
                     Capabilities = $result.Descriptor.capabilities
                     DescriptorPath = $result.DescriptorPath
                 })
@@ -36,4 +37,3 @@ function Get-WintainiumPluginRegistry {
         DescriptorErrors = $descriptorErrors.ToArray()
     }
 }
-
