@@ -1,20 +1,18 @@
-BeforeAll {
-    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-    $script:providerRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/ProviderContracts'
-    $script:harnessPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Support/ProviderContractHarness.ps1'
+$testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+$providerRoot = Join-Path -Path $testRoot -ChildPath 'tests/Fixtures/ProviderContracts'
+$harnessPath = Join-Path -Path $testRoot -ChildPath 'tests/Support/ProviderContractHarness.ps1'
 
-    Import-Module $script:modulePath -Force
-}
+Import-Module $modulePath -Force
 
 # Pester discovers the dynamically registered contract tests while it is
-# evaluating the Describe block, so the harness function must exist before
-# discovery reaches Register-WintainiumProviderContractTests.
-. $script:harnessPath
+a# evaluating the Describe block, so the harness function must exist before
+the # discovery reaches Register-WintainiumProviderContractTests.
+. $harnessPath
 
 Describe 'Wintainium provider contract harness' {
     BeforeAll {
-        $script:registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:providerRoot } {
+        $script:registry = InModuleScope Wintainium.Core -Parameters @{ Path = $providerRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
 
