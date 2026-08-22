@@ -15,7 +15,7 @@ function Get-WintainiumPluginRegistry {
         }
     }
 
-    foreach ($descriptorFile in @(Get-ChildItem -LiteralPath $PluginRoot -Filter 'plugin.json' -File -Recurse)) {
+    foreach ($descriptorFile in @(Get-ChildItem -LiteralPath $PluginRoot -Filter 'plugin.json' -File -Recurse | Sort-Object FullName)) {
         $result = Test-WintainiumPluginDescriptor -DescriptorPath $descriptorFile.FullName
         if ($result.IsValid) {
             $plugins.Add([pscustomobject][ordered]@{
