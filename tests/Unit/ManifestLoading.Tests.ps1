@@ -71,15 +71,15 @@ Describe 'Wintainium manifest loading' {
     It 'discovers multiple manifests from one local collection' {
         $manifestDirectory = Join-Path -Path $TestDrive -ChildPath 'many'
         New-Item -ItemType Directory -Path $manifestDirectory | Out-Null
-        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'one.json')
-        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-msi.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'two.json')
+        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'one.wintainium.json')
+        Copy-Item -LiteralPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-msi.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'two.wintainium.json')
 
         $paths = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestDirectory } {
             @(Find-WintainiumManifestFile -ManifestRoot $Path)
         }
 
         $paths.Count | Should -Be 2
-        $paths[0] | Should -Match 'one.json$'
-        $paths[1] | Should -Match 'two.json$'
+        $paths[0] | Should -Match 'one\.wintainium\.json$'
+        $paths[1] | Should -Match 'two\.wintainium\.json$'
     }
 }
