@@ -3,6 +3,8 @@
   "pluginType": "Provider",
   "contractVersions": ["1"],
   "capabilities": {
+    "releaseDiscovery": true,
+    "artifactDiscovery": true,
     "supportedReleaseChannels": ["stable", "prerelease", "any"]
   }
 }
