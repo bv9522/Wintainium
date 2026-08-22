@@ -68,7 +68,7 @@ function Invoke-WintainiumProviderOperation {
             return & $baseResult $false 'ProviderInternalError' @() @($error) @()
         }
 
-        $providerResult = & "$($module.Name)\Invoke-WintainiumProvider" -Request $Request
+        $providerResult = & $command -Request $Request
     }
     catch {
         $error = [pscustomobject]@{ Code = 'ProviderInternalError'; Message = $_.Exception.Message }
@@ -88,12 +88,23 @@ function Invoke-WintainiumProviderOperation {
         return & $baseResult $false 'ProviderResultInvalid' @() @($error) @()
     }
 
-    foreach ($requiredProperty in @('IsSuccessful', 'Status', 'Releases', 'Errors', 'Warnings')) {
+    foreach ($requiredProperty in @('IsSuccessful', 'Status', 'Releases', 'Errors', 'Warnings', 'LogEvents')) {
         if (-not $providerResult.PSObject.Properties[$requiredProperty]) {
             $error = [pscustomobject]@{ Code = 'ProviderResultInvalid'; Message = "Provider result is missing required property '$requiredProperty'." }
             $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message $error.Message -Context @{ ErrorCode = $error.Code }))
             return & $baseResult $false 'ProviderResultInvalid' @() @($error) @()
         }
+    }
+
+    foreach ($providerLogEvent in @($providerResult.LogEvents)) {
+        if ($null -ne $providerLogEvent -and $providerLogEvent.PSObject.Properties['OperationId']) {
+            if ([string]$providerLogEvent.OperationId -ne $operationId) {
+                $error = [pscustomobject]@{ Code = 'ProviderResultLogCorrelationInvalid'; Message = 'Provider log event OperationId does not match the Core request OperationId.' }
+                $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message $error.Message -Context @{ ErrorCode = $error.Code }))
+                return & $baseResult $false 'ProviderResultInvalid' @() @($error) @()
+            }
+        }
+        $logEvents.Add($providerLogEvent)
     }
 
     $releases = @($providerResult.Releases)
