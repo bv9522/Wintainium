@@ -6,8 +6,8 @@ $harnessPath = Join-Path -Path $testRoot -ChildPath 'tests/Support/ProviderContr
 Import-Module $modulePath -Force
 
 # Pester discovers the dynamically registered contract tests while it is
-a# evaluating the Describe block, so the harness function must exist before
-the # discovery reaches Register-WintainiumProviderContractTests.
+evaluating the Describe block, so the harness function must exist before
+discovery reaches Register-WintainiumProviderContractTests.
 . $harnessPath
 
 Describe 'Wintainium provider contract harness' {
