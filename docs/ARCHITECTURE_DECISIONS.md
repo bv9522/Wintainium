@@ -129,3 +129,77 @@ implementation should retain freedom to change the internal import pipeline
 without exposing implementation details as public API.
 
 **Status:** Accepted
+
+## Decision #011: Provider Contract Discovers Releases and Artifact Candidates
+
+**Decision:** A provider discovers upstream releases and the artifact
+candidates associated with those releases. It does not select the final
+release or final artifact for Wintainium.
+
+**Reason:** Provider-specific upstream knowledge must remain separate from
+Core lifecycle policy. Core may later consider installed state, manifest
+preferences, architecture, installer compatibility, trust policy, and other
+constraints when selecting a release and artifact.
+
+**Status:** Accepted
+
+## Decision #012: Provider Results Use Normalized Core Models
+
+**Decision:** Provider results expose only provider-independent Wintainium
+release and artifact concepts. Provider-specific API fields remain inside the
+provider implementation unless deliberately promoted by a future architecture
+decision.
+
+**Reason:** An unrestricted provider-metadata bag would create an undocumented
+second Core schema and couple future phases to individual upstream services.
+
+**Status:** Accepted
+
+## Decision #013: Provider Contract Uses Major Version Compatibility
+
+**Decision:** Provider Contract Version 1 uses positive major-version
+identifiers such as `"1"`. A manifest requires a specific contract major
+version through `source.requiredContractVersion`, and a provider must
+explicitly advertise that version in `contractVersions`.
+
+**Reason:** The existing plugin descriptor and manifest contracts already use
+major-version identifiers. Keeping the same mechanism avoids introducing an
+incompatible versioning system. Breaking provider-contract changes require a
+new major version.
+
+**Status:** Accepted
+
+## Decision #014: Provider Descriptors Do Not Contain Arbitrary Executable Instructions
+
+**Decision:** Provider descriptors identify provider identity, supported
+contract versions, and capabilities. They do not contain arbitrary PowerShell
+commands, script expressions, or manifest-controlled executable entry points.
+
+**Reason:** Manifests and descriptors are data contracts. Provider execution is
+controlled by the plugin system and Core rather than by arbitrary data-driven
+command execution.
+
+**Status:** Accepted
+
+## Decision #015: Provider Network Boundary
+
+**Decision:** Provider operations may communicate with declared upstream
+software sources. The Phase 2 Manifest Engine remains completely network-free.
+
+**Reason:** Network behavior belongs at the provider boundary. Keeping it out
+of manifest discovery and import preserves deterministic offline validation
+and prevents provider execution from being triggered accidentally.
+
+**Status:** Accepted
+
+## Decision #016: Provider Results Distinguish No Data From Failure
+
+**Decision:** `NoReleasesFound` is distinct from source availability,
+authentication, configuration, malformed upstream data, provider-result
+validation, and provider-internal failures.
+
+**Reason:** Update discovery and diagnostics require Core to distinguish a
+healthy source containing no matching releases from an operation that could
+not reliably obtain release information.
+
+**Status:** Accepted
