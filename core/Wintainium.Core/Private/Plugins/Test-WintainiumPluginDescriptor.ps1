@@ -33,13 +33,22 @@ function Test-WintainiumPluginDescriptor {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorCapabilitiesInvalid'; Message = 'capabilities must be an object.' })
         }
 
-        if ($descriptor.pluginType -eq 'Provider' -and $descriptor.capabilities -is [System.Collections.IDictionary]) {
-            if (-not $descriptor.capabilities.ContainsKey('releaseDiscovery') -or $descriptor.capabilities.releaseDiscovery -ne $true) {
-                $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderReleaseDiscoveryMissing'; Message = 'Provider descriptors require capabilities.releaseDiscovery=true.' })
+        if ($descriptor.pluginType -eq 'Provider') {
+            if (-not $descriptor.ContainsKey('entryPoint') -or
+                $descriptor.entryPoint -isnot [string] -or
+                $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or
+                $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
+                $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderEntryPointInvalid'; Message = 'Provider descriptors require a relative .psm1 entryPoint without parent-directory traversal.' })
             }
 
-            if (-not $descriptor.capabilities.ContainsKey('artifactDiscovery') -or $descriptor.capabilities.artifactDiscovery -ne $true) {
-                $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
+            if ($descriptor.capabilities -is [System.Collections.IDictionary]) {
+                if (-not $descriptor.capabilities.ContainsKey('releaseDiscovery') -or $descriptor.capabilities.releaseDiscovery -ne $true) {
+                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderReleaseDiscoveryMissing'; Message = 'Provider descriptors require capabilities.releaseDiscovery=true.' })
+                }
+
+                if (-not $descriptor.capabilities.ContainsKey('artifactDiscovery') -or $descriptor.capabilities.artifactDiscovery -ne $true) {
+                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
+                }
             }
         }
 
@@ -60,4 +69,3 @@ function Test-WintainiumPluginDescriptor {
         Errors = $errors.ToArray()
     }
 }
-
