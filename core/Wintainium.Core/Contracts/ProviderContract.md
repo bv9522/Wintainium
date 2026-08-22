@@ -4,6 +4,8 @@
 
 Phase 3A contract: Accepted.
 
+Phase 3C operation contract: Accepted.
+
 Provider Contract Major Version: `1`.
 
 ## Purpose
@@ -47,11 +49,14 @@ The existing plugin descriptor is the provider identity contract. A provider des
 - `pluginId`
 - `pluginType` = `Provider`
 - `contractVersions`
+- `entryPoint`
 - `capabilities`
 
 Provider IDs use the stable form `Wintainium.provider.<name>` and are independent of display names.
 
-The descriptor describes supported contracts and capabilities. It must not contain arbitrary executable commands or PowerShell expressions.
+The descriptor describes supported contracts and capabilities. `entryPoint` is a relative PowerShell module (`.psm1`) path within the provider plugin directory. It is a file reference, not an arbitrary command or PowerShell expression. Core invokes only the fixed provider operation exported by that module: `Invoke-WintainiumProvider`.
+
+Provider descriptors must not contain arbitrary executable commands, command lines, script blocks, or PowerShell expressions.
 
 ## Contract Versioning
 
@@ -73,6 +78,57 @@ Core supplies a purpose-built request rather than the entire application manifes
 - `DiscoveryContext` — narrowly scoped discovery intent required by the provider contract.
 
 Providers must not receive arbitrary executable manifest content, installer commands, download destinations, or raw credentials.
+
+## Provider Operation
+
+The Core-to-provider operation is intentionally private to Core in Phase 3. The provider implementation exports exactly one contract operation:
+
+`Invoke-WintainiumProvider -Request <ProviderRequest>`
+
+Core loads the provider module from the validated descriptor `entryPoint` and invokes only this fixed operation name. The descriptor cannot select an arbitrary command to execute.
+
+The operation returns exactly one `ProviderResult` object. Core validates the result before allowing normalized release data to cross the provider boundary.
+
+The provider operation may use the network to communicate with its declared upstream source. Core itself does not perform provider-specific HTTP operations.
+
+## Provider Result
+
+A provider operation returns a structured result containing:
+
+- `OperationId`
+- `IsSuccessful`
+- `Status`
+- `Releases`
+- `Errors`
+- `Warnings`
+- `LogEvents`
+
+The returned `OperationId` must exactly match the request `OperationId`.
+
+`NoReleasesFound` is a successful source interaction with no matching releases and must remain distinct from source or provider failure.
+
+Expected failure categories include:
+
+- `ConfigurationInvalid`
+- `AuthenticationFailed`
+- `SourceNotFound`
+- `SourceUnavailable`
+- `UpstreamResponseInvalid`
+- `ProviderResultInvalid`
+- `ProviderInternalError`
+
+Core operation failures additionally distinguish provider execution-boundary problems such as:
+
+- `ProviderEntryPointNotFound`
+- `ProviderOperationNotFound`
+- `ProviderResultOperationIdMismatch`
+- `ProviderResultReleaseInvalid`
+
+Core resolution failures remain distinct, including:
+
+- `ProviderNotRegistered`
+- `ProviderContractIncompatible`
+- `ProviderCapabilityUnsupported`
 
 ## Release Model
 
@@ -104,36 +160,6 @@ Providers discover artifact candidates but never select the final artifact. Prov
 
 Artifact URIs are data, never executable instructions.
 
-## Provider Result
-
-A provider operation returns a structured result containing:
-
-- `OperationId`
-- `IsSuccessful`
-- `Status`
-- `Releases`
-- `Errors`
-- `Warnings`
-- `LogEvents`
-
-`NoReleasesFound` is a successful source interaction with no matching releases and must remain distinct from source or provider failure.
-
-Expected failure categories include:
-
-- `ConfigurationInvalid`
-- `AuthenticationFailed`
-- `SourceNotFound`
-- `SourceUnavailable`
-- `UpstreamResponseInvalid`
-- `ProviderResultInvalid`
-- `ProviderInternalError`
-
-Core resolution failures remain distinct, including:
-
-- `ProviderNotRegistered`
-- `ProviderContractIncompatible`
-- `ProviderCapabilityUnsupported`
-
 ## Capabilities
 
 Capabilities describe provider operations or meaningful provider features, not upstream API implementation details. The minimum Phase 3 provider discovery capabilities are:
@@ -155,11 +181,15 @@ Provider operations may communicate with upstream sources. The Manifest Engine m
 
 Manifests are declarative data. They must never contain provider commands, arbitrary PowerShell, or secrets. Provider settings may contain non-secret source configuration. Authentication secrets belong to secure machine/user configuration or credential mechanisms outside the manifest.
 
+Provider module entry points are executable plugin components and therefore belong to the trusted plugin boundary, not the manifest data boundary. Core constrains them to validated relative module paths and invokes only the fixed provider operation.
+
 Providers communicate only with Core and their declared upstream source. Providers do not invoke other plugins or bypass Core policy.
 
 ## Logging and Correlation
 
 Provider operations participate in Core correlation by propagating `OperationId` and emitting structured log events through the Core logging model.
+
+Core emits provider-operation start/completion/failure events using the same `OperationId`. Provider-supplied log events, when present, must preserve that correlation identifier.
 
 Providers must not create a competing logging/correlation contract.
 
