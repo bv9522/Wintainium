@@ -8,7 +8,7 @@ BeforeAll {
 
 Describe 'Wintainium manifest discovery' {
     BeforeEach {
-        $script:collectionRoot = Join-Path -Path $TestDrive -ChildPath 'manifests'
+        $script:collectionRoot = Join-Path -Path $TestDrive -ChildPath ("manifests-{0}" -f ([guid]::NewGuid().Guid))
         New-Item -ItemType Directory -Path $script:collectionRoot -Force | Out-Null
     }
 
