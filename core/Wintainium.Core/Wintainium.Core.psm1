@@ -12,4 +12,7 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Public') -Filter 
     Sort-Object FullName |
     ForEach-Object { . $_.FullName }
 
-Export-ModuleMember -Function 'Test-WintainiumApplicationDefinition'
+Export-ModuleMember -Function @(
+    'Get-WintainiumManifest'
+    'Test-WintainiumApplicationDefinition'
+)
