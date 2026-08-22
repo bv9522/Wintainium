@@ -26,5 +26,5 @@ function Find-WintainiumManifestFile {
             ForEach-Object { $_.FullName }
     )
 
-    return ,$manifests
+    return $manifests
 }
