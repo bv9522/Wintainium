@@ -24,6 +24,7 @@ function Get-WintainiumManifest {
     $warnings = [System.Collections.Generic.List[object]]::new()
     $logEvents = [System.Collections.Generic.List[object]]::new()
     $manifests = [System.Collections.Generic.List[object]]::new()
+    $manifestPaths = [System.Collections.Generic.List[string]]::new()
     $candidates = @()
 
     $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ManifestDiscoveryStarted' -Message 'Manifest collection discovery started.' -Context @{ Path = $Path; Recurse = $Recurse.IsPresent }))
@@ -68,25 +69,23 @@ function Get-WintainiumManifest {
             $warnings.Add([pscustomobject]$warningRecord)
         }
         if ($importResult.IsValid) {
-            $manifests.Add([pscustomobject][ordered]@{
-                    Path = $candidate
-                    Manifest = $importResult.Manifest
-                })
+            $manifests.Add($importResult.Manifest)
+            $manifestPaths.Add($candidate)
         }
     }
 
     $seenIds = @{}
-    foreach ($item in $manifests) {
-        $id = [string]$item.Manifest.Id
+    for ($index = 0; $index -lt $manifests.Count; $index++) {
+        $id = [string]$manifests[$index].Id
         if ($seenIds.ContainsKey($id)) {
             $errors.Add([pscustomobject][ordered]@{
                     Code = 'ManifestDuplicateApplicationId'
-                    Path = $item.Path
-                    Message = "Application ID '$id' is defined by multiple manifests: '$($seenIds[$id])' and '$($item.Path)'."
+                    Path = $manifestPaths[$index]
+                    Message = "Application ID '$id' is defined by multiple manifests: '$($seenIds[$id])' and '$($manifestPaths[$index])'."
                 })
         }
         else {
-            $seenIds[$id] = $item.Path
+            $seenIds[$id] = $manifestPaths[$index]
         }
     }
 
@@ -99,6 +98,7 @@ function Get-WintainiumManifest {
         OperationId = $operationId
         IsSuccessful = $errors.Count -eq 0
         Candidates = @($candidates)
+        ManifestPaths = $manifestPaths.ToArray()
         Manifests = $manifests.ToArray()
         Errors = $errors.ToArray()
         Warnings = $warnings.ToArray()
