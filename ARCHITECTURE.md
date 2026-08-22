@@ -11,7 +11,7 @@ client of that engine and must not duplicate engine rules.
 | Component | Responsibility |
 | --- | --- |
 | Core | Public commands, contracts, orchestration, shared validation, and error handling. |
-| Provider plugins | Obtain version and artifact metadata from upstream software providers. |
+| Provider plugins | Discover upstream release and artifact metadata through the provider contract. |
 | Installer plugins | Validate and apply a downloaded artifact according to its format. |
 | Application manifests | Declare portable application-management intent and select compatible plugins. |
 | Manifest repositories | Store and distribute Wintainium application manifests. |
@@ -40,6 +40,48 @@ upstream software provider.
 - A manifest selects provider and installer plugins by stable identifiers.
 - Plugin failures produce actionable errors and leave state recoverable.
 - Provider and installer plugins communicate only with the core.
+- Provider descriptors declare stable identity, contract versions, and capabilities; they do not contain arbitrary executable instructions.
+
+## Provider contract
+
+Phase 3 establishes a versioned provider contract. Provider Contract Version
+`1` requires provider descriptors to declare `releaseDiscovery=true` and
+`artifactDiscovery=true` capabilities.
+
+A provider receives a purpose-built discovery request rather than the entire
+application manifest. The request contains Core correlation information,
+application/provider identity, the required provider contract version,
+validated non-secret provider settings, and narrowly scoped discovery context.
+
+A provider discovers upstream releases and the artifact candidates associated
+with those releases. It does **not** select the final release or artifact,
+perform update determination, download an artifact, verify downloaded bytes,
+or install anything. Those responsibilities remain with later Core phases.
+
+Normalized provider results contain only provider-independent Wintainium
+concepts. A release contains an opaque release identifier, upstream version
+string, normalized channel, optional publication timestamp, and artifact
+candidates. An artifact may contain an untrusted URI, filename, normalized
+format, normalized architecture, optional size, upstream-declared hashes, and
+upstream-declared signature metadata.
+
+Provider-specific API fields remain inside the provider implementation unless
+a future architecture decision deliberately promotes a field into the Core
+model. Artifact URIs, hashes, and signatures are untrusted source metadata;
+verification is a later Core responsibility.
+
+Provider operations may communicate with upstream network services. The Phase
+2 Manifest Engine remains completely network-free and must never invoke a
+provider during manifest discovery or import.
+
+Provider results distinguish successful discovery with no matching releases
+from provider/source failures. Core-level provider resolution failures such as
+unregistered providers, incompatible contracts, and unsupported capabilities
+are distinct from upstream failures such as source unavailability or
+authentication failure.
+
+See `core/Wintainium.Core/Contracts/ProviderContract.md` for the detailed
+contract and `docs/ARCHITECTURE_DECISIONS.md` for the accepted decisions.
 
 ## Trust and validation
 
@@ -132,5 +174,6 @@ import.
 ## Phase boundaries
 
 The Manifest Engine does not perform release discovery, downloading,
-installation, or update decisions. Those responsibilities belong to later
-provider, update-discovery, download, installer, and orchestration phases.
+installation, or update decisions. Provider release/artifact discovery begins
+at Phase 3. Update decisions belong to Phase 4; downloading to Phase 5;
+installation to Phase 6; and lifecycle orchestration to Phase 7.
