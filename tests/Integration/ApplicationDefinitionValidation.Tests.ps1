@@ -28,7 +28,7 @@ Describe 'Application definition validation workflow' {
             -SchemaPath $script:schemaPath
 
         $result.IsValid | Should -Be $false
-        @($result.Errors.Code) | Should -Contain 'PluginNotResolved'
+        @($result.Errors.Code) | Should -Contain 'ProviderNotRegistered'
     }
 
     It 'reports an incompatible installer capability' {
