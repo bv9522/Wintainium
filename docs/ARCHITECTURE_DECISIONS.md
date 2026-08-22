@@ -75,3 +75,57 @@ reproducible, while offline tests prove the internal architecture before
 external provider or installer complexity is introduced.
 
 **Status:** Accepted
+
+## Decision #007: Local Manifest Discovery Is Separate From Upstream Release Discovery
+
+**Decision:** The Phase 2 Manifest Engine treats local manifest discovery and
+import as a distinct offline capability from provider-based upstream release
+discovery.
+
+**Reason:** A manifest repository distributes management definitions, while a
+provider discovers release and artifact metadata from an upstream software
+source. Conflating these operations would introduce network behavior and
+provider execution into a layer that must remain deterministic and locally
+validatable.
+
+**Constraints:** Local discovery/import must not download, execute, or contact
+network services. Future remote catalog functionality must adapt external
+sources to the manifest-engine boundary rather than changing this local
+contract.
+
+**Status:** Accepted
+
+## Decision #008: Recognized Manifest Files Use an Explicit Filename Convention
+
+**Decision:** Wintainium recognizes `*.wintainium.json` files as manifest
+candidates. Arbitrary JSON files are not implicitly treated as manifests.
+
+**Reason:** Collections commonly contain metadata, documentation, and other
+JSON. An explicit filename convention prevents accidental interpretation of
+unrelated data while making collection discovery predictable.
+
+**Status:** Accepted
+
+## Decision #009: Duplicate Application IDs Are Collection Errors
+
+**Decision:** A collection containing multiple valid manifests with the same
+application ID is considered erroneous. Core returns the valid manifests but
+does not silently choose a winner.
+
+**Reason:** Deterministic discovery order is useful for reproducibility, but
+order must not become an implicit precedence rule for application identity.
+A later catalog or policy layer can define explicit precedence if needed.
+
+**Status:** Accepted
+
+## Decision #010: Phase 2 Public/Private Manifest Boundary
+
+**Decision:** `Get-WintainiumManifest` is the public local collection command.
+`Import-WintainiumManifest` remains private and is the single-manifest import
+primitive used by Core.
+
+**Reason:** Callers need a stable collection-level contract, while the
+implementation should retain freedom to change the internal import pipeline
+without exposing implementation details as public API.
+
+**Status:** Accepted
