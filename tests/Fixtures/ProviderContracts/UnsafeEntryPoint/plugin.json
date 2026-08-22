@@ -1,0 +1,10 @@
+{
+  "pluginId": "Wintainium.provider.unsafe-entry-point",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "../escape.psm1",
+  "capabilities": {
+    "releaseDiscovery": true,
+    "artifactDiscovery": true
+  }
+}
