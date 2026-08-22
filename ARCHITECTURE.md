@@ -53,4 +53,84 @@ controls.
 The core validates expected file types and destination paths before
 installation. User data must never be overwritten implicitly.
 
-Detailed command and object contracts will be added before the first feature.
+## Manifest Engine contracts
+
+Phase 2 establishes a deliberately local and offline manifest engine. Manifest
+discovery, import, JSON parsing, and schema validation do not perform network
+access, download artifacts, execute commands, or invoke provider or installer
+behavior.
+
+### Manifest file convention
+
+Recognized manifest files use the `*.wintainium.json` filename convention.
+Ordinary JSON files are not implicitly treated as Wintainium manifests.
+Collections are local directories. Discovery is non-recursive by default and
+supports explicit recursive discovery through `Get-WintainiumManifest -Recurse`.
+Candidate paths are returned in deterministic full-path order.
+
+### `Get-WintainiumManifest`
+
+`Get-WintainiumManifest` is the public Core command for discovering and
+collecting local manifests. It accepts a mandatory directory `-Path`, an
+optional `-Recurse` switch, and an optional `-SchemaPath` override.
+
+The command returns one structured result object with this stable shape:
+
+| Property | Meaning |
+| --- | --- |
+| `OperationId` | Correlation identifier for the operation and its log events. |
+| `IsSuccessful` | `true` only when discovery/import completed without errors. |
+| `Candidates` | Recognized manifest file paths discovered in deterministic order. |
+| `ManifestPaths` | Paths corresponding to successfully imported manifests. |
+| `Manifests` | Successfully imported internal manifest models. |
+| `Errors` | Structured errors encountered during collection or import. |
+| `Warnings` | Structured warnings returned by the manifest engine. |
+| `LogEvents` | Structured Core log events associated with the operation. |
+
+A malformed or schema-invalid candidate does not prevent other valid candidates
+from being returned. Duplicate application IDs are reported as collection
+errors; Core does not silently select a winner. An empty recognized collection
+is a successful operation.
+
+### `Import-WintainiumManifest`
+
+`Import-WintainiumManifest` is a private Core operation used to import one
+local manifest. It accepts a manifest `-Path` and optional `-SchemaPath` and
+returns a structured result containing `IsValid`, `Path`, `Manifest`, `Errors`,
+and `Warnings`.
+
+Import distinguishes missing files, invalid directory paths, read failures,
+malformed JSON, schema-invalid manifests, and unavailable schema resources.
+A valid document is converted into the internal manifest model only after
+schema validation succeeds.
+
+### Internal manifest model
+
+The current internal manifest model contains:
+
+`ManifestVersion`, `Id`, `Name`, `Description`, `Homepage`, `Publisher`,
+`Aliases`, `Documentation`, `Notes`, `Deprecated`, `Source`, `Installer`,
+`Release`, and `Artifact`.
+
+The model remains declarative. Provider and installer references identify
+capabilities but do not cause plugin execution during manifest import or
+collection.
+
+### Error and logging conventions
+
+Manifest operations return structured results rather than relying on
+exceptions for expected validation or collection failures. Errors contain a
+stable `Code`, `Path`, and human-readable `Message`. Public collection
+operations expose an `OperationId` and structured `LogEvents` for correlation.
+
+These Phase 2 contracts are intentionally independent from future remote
+catalogs. A future remote catalog layer may obtain manifest documents from
+network sources, but it must supply validated manifest documents to the same
+manifest-engine boundary rather than adding networking to local discovery or
+import.
+
+## Phase boundaries
+
+The Manifest Engine does not perform release discovery, downloading,
+installation, or update decisions. Those responsibilities belong to later
+provider, update-discovery, download, installer, and orchestration phases.
