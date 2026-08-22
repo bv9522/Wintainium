@@ -6,10 +6,10 @@ Import-Module $modulePath -Force
 
 Describe 'Wintainium manifest loading' {
     It 'loads a valid manifest into the internal manifest model' {
-        $result = InModuleScope Wintainium.Core {
-            param($path)
-            Import-WintainiumManifest -Path $path
-        } (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json')
+        $path = Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path } {
+            Import-WintainiumManifest -Path $Path
+        }
 
         $result.IsValid | Should -Be $true
         $result.Manifest.Id | Should -Be 'org.neovim.neovim'
@@ -18,10 +18,10 @@ Describe 'Wintainium manifest loading' {
     }
 
     It 'returns a structured error for a missing required property' {
-        $result = InModuleScope Wintainium.Core {
-            param($path)
-            Import-WintainiumManifest -Path $path
-        } (Join-Path -Path $fixtureRoot -ChildPath 'invalid-schema.json')
+        $path = Join-Path -Path $fixtureRoot -ChildPath 'invalid-schema.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path } {
+            Import-WintainiumManifest -Path $Path
+        }
 
         $result.IsValid | Should -Be $false
         $result.Errors[0].Code | Should -Be 'ManifestSchemaInvalid'
@@ -35,10 +35,9 @@ Describe 'Wintainium manifest loading' {
 }
 '@ | Set-Content -LiteralPath $invalidManifest -Encoding utf8
 
-        $result = InModuleScope Wintainium.Core {
-            param($path)
-            Import-WintainiumManifest -Path $path
-        } $invalidManifest
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $invalidManifest } {
+            Import-WintainiumManifest -Path $Path
+        }
 
         $result.IsValid | Should -Be $false
         $result.Errors[0].Code | Should -Be 'ManifestSchemaInvalid'
@@ -48,10 +47,9 @@ Describe 'Wintainium manifest loading' {
         $malformedManifest = Join-Path -Path $TestDrive -ChildPath 'malformed.json'
         '{ "id": }' | Set-Content -LiteralPath $malformedManifest -Encoding utf8
 
-        $result = InModuleScope Wintainium.Core {
-            param($path)
-            Import-WintainiumManifest -Path $path
-        } $malformedManifest
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $malformedManifest } {
+            Import-WintainiumManifest -Path $Path
+        }
 
         $result.IsValid | Should -Be $false
         $result.Errors[0].Code | Should -Be 'ManifestJsonInvalid'
@@ -61,10 +59,9 @@ Describe 'Wintainium manifest loading' {
         $emptyDirectory = Join-Path -Path $TestDrive -ChildPath 'empty'
         New-Item -ItemType Directory -Path $emptyDirectory | Out-Null
 
-        $paths = InModuleScope Wintainium.Core {
-            param($path)
-            @(Find-WintainiumManifestFile -ManifestRoot $path)
-        } $emptyDirectory
+        $paths = InModuleScope Wintainium.Core -Parameters @{ Path = $emptyDirectory } {
+            @(Find-WintainiumManifestFile -ManifestRoot $Path)
+        }
 
         $paths.Count | Should -Be 0
     }
@@ -75,10 +72,9 @@ Describe 'Wintainium manifest loading' {
         Copy-Item -LiteralPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'one.json')
         Copy-Item -LiteralPath (Join-Path -Path $fixtureRoot -ChildPath 'valid-msi.json') -Destination (Join-Path -Path $manifestDirectory -ChildPath 'two.json')
 
-        $paths = InModuleScope Wintainium.Core {
-            param($path)
-            @(Find-WintainiumManifestFile -ManifestRoot $path)
-        } $manifestDirectory
+        $paths = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestDirectory } {
+            @(Find-WintainiumManifestFile -ManifestRoot $Path)
+        }
 
         $paths.Count | Should -Be 2
         $paths[0] | Should -Match 'one.json$'
