@@ -1,0 +1,8 @@
+{
+  "pluginId": "Wintainium.provider.invalid-release-capability",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "artifactDiscovery": true
+  }
+}
