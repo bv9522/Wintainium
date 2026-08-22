@@ -57,12 +57,24 @@ Describe 'Wintainium provider contract' {
         $incompatible.Error.Code | Should -Be 'ProviderContractIncompatible'
     }
 
-    It 'resolves a provider by stable id and compatible contract version' {
+    It 'rejects a resolved provider when a required capability is not declared' {
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
         $resolved = InModuleScope Wintainium.Core -Parameters @{ Plugins = $registry.Plugins } {
-            Resolve-WintainiumPlugin -Plugins $Plugins -PluginId 'Wintainium.provider.github-releases' -PluginType Provider -RequiredContractVersion '1'
+            Resolve-WintainiumPlugin -Plugins $Plugins -PluginId 'Wintainium.provider.github-releases' -PluginType Provider -RequiredContractVersion '1' -RequiredCapabilities @('unsupportedCapability')
+        }
+
+        $resolved.IsResolved | Should -Be $false
+        $resolved.Error.Code | Should -Be 'ProviderCapabilityUnsupported'
+    }
+
+    It 'resolves a provider by stable id, compatible contract version, and capabilities' {
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
+            Get-WintainiumPluginRegistry -PluginRoot $Path
+        }
+        $resolved = InModuleScope Wintainium.Core -Parameters @{ Plugins = $registry.Plugins } {
+            Resolve-WintainiumPlugin -Plugins $Plugins -PluginId 'Wintainium.provider.github-releases' -PluginType Provider -RequiredContractVersion '1' -RequiredCapabilities @('releaseDiscovery', 'artifactDiscovery')
         }
 
         $resolved.IsResolved | Should -Be $true
