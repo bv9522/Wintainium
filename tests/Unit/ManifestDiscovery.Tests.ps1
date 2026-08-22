@@ -1,7 +1,6 @@
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-    $script:schemaPath = Join-Path -Path $script:testRoot -ChildPath 'schemas/application-manifest.schema.json'
     $script:fixturePath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests/valid-portable-zip.json'
 
     Import-Module $script:modulePath -Force
@@ -10,7 +9,7 @@ BeforeAll {
 Describe 'Wintainium manifest discovery' {
     BeforeEach {
         $script:collectionRoot = Join-Path -Path $TestDrive -ChildPath 'manifests'
-        New-Item -ItemType Directory -Path $script:collectionRoot | Out-Null
+        New-Item -ItemType Directory -Path $script:collectionRoot -Force | Out-Null
     }
 
     It 'returns recognized manifest files in deterministic full-path order' {
@@ -27,7 +26,7 @@ Describe 'Wintainium manifest discovery' {
     It 'does not recurse unless Recurse is specified' {
         Copy-Item -LiteralPath $script:fixturePath -Destination (Join-Path $script:collectionRoot 'root.wintainium.json')
         $nested = Join-Path $script:collectionRoot 'nested'
-        New-Item -ItemType Directory -Path $nested | Out-Null
+        New-Item -ItemType Directory -Path $nested -Force | Out-Null
         Copy-Item -LiteralPath $script:fixturePath -Destination (Join-Path $nested 'nested.wintainium.json')
 
         $result = Get-WintainiumManifest -Path $script:collectionRoot
@@ -38,7 +37,7 @@ Describe 'Wintainium manifest discovery' {
 
     It 'discovers nested manifests when Recurse is specified' {
         $nested = Join-Path $script:collectionRoot 'nested'
-        New-Item -ItemType Directory -Path $nested | Out-Null
+        New-Item -ItemType Directory -Path $nested -Force | Out-Null
         Copy-Item -LiteralPath $script:fixturePath -Destination (Join-Path $nested 'nested.wintainium.json')
 
         $result = Get-WintainiumManifest -Path $script:collectionRoot -Recurse
