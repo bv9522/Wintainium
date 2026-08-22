@@ -8,31 +8,28 @@ Import-Module $modulePath -Force
 Describe 'Wintainium manifest validation' {
     It 'accepts a valid portable ZIP manifest against the shared schema' {
         $manifestPath = Join-Path -Path $fixtureRoot -ChildPath 'valid-portable-zip.json'
-        $result = InModuleScope Wintainium.Core {
-            param($path, $schema)
-            Test-WintainiumManifestSchema -ManifestPath $path -SchemaPath $schema
-        } $manifestPath $schemaPath
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestPath; Schema = $schemaPath } {
+            Test-WintainiumManifestSchema -ManifestPath $Path -SchemaPath $Schema
+        }
 
         $result | Should -Be $true
     }
 
     It 'rejects a manifest that is missing a required field' {
         $manifestPath = Join-Path -Path $fixtureRoot -ChildPath 'invalid-schema.json'
-        $result = InModuleScope Wintainium.Core {
-            param($path, $schema)
-            Test-WintainiumManifestSchema -ManifestPath $path -SchemaPath $schema
-        } $manifestPath $schemaPath
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestPath; Schema = $schemaPath } {
+            Test-WintainiumManifestSchema -ManifestPath $Path -SchemaPath $Schema
+        }
 
         $result | Should -Be $false
     }
 
     It 'reports prohibited manifest information during semantic validation' {
         $manifestPath = Join-Path -Path $fixtureRoot -ChildPath 'manifest-with-prohibited-key.json'
-        $result = InModuleScope Wintainium.Core {
-            param($path)
-            $loadResult = Import-WintainiumManifest -Path $path
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestPath } {
+            $loadResult = Import-WintainiumManifest -Path $Path
             @($loadResult.Errors)
-        } $manifestPath
+        }
 
         $result.Count | Should -BeGreaterThan 0
         $result[0].Code | Should -Be 'ManifestContainsProhibitedInformation'
