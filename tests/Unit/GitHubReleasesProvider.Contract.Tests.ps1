@@ -1,18 +1,20 @@
+$testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+$harnessPath = Join-Path -Path $testRoot -ChildPath 'tests/Support/ProviderContractHarness.ps1'
+. $harnessPath
+
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     $script:providerRoot = Join-Path -Path $script:testRoot -ChildPath 'plugins'
     $script:providerPath = Join-Path -Path $script:providerRoot -ChildPath 'Wintainium.provider.github-releases/Wintainium.provider.github-releases.psm1'
-    $script:harnessPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Support/ProviderContractHarness.ps1'
 
     Import-Module $script:modulePath -Force
-    . $script:harnessPath
 
     Get-Module -Name 'Wintainium.provider.github-releases' -All |
         Remove-Module -Force -ErrorAction SilentlyContinue
     Import-Module $script:providerPath -Force
 
-    Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
+    Mock -ModuleName Wintainainium.provider.github-releases Invoke-RestMethod {
         @([pscustomobject]@{
             id = 9001
             tag_name = 'v9.0.0'
