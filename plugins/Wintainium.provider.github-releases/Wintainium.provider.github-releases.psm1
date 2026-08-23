@@ -97,18 +97,44 @@ function ConvertFrom-GitHubRelease {
     }
 
     $artifacts = foreach ($asset in @($Release.assets)) {
+        if ($null -eq $asset) {
+            throw 'GitHub release asset response contains a null asset.'
+        }
+
         foreach ($property in @('browser_download_url', 'name', 'size')) {
             if (-not $asset.PSObject.Properties[$property]) {
                 throw "GitHub release asset response is missing '$property'."
             }
         }
 
+        $uri = [string]$asset.browser_download_url
+        $fileName = [string]$asset.name
+        if ([string]::IsNullOrWhiteSpace($uri) -or [string]::IsNullOrWhiteSpace($fileName)) {
+            throw 'GitHub release asset response contains an empty download URL or filename.'
+        }
+
+        if ($uri -notmatch '^https://') {
+            throw "GitHub release asset download URL '$uri' is not an HTTPS URI."
+        }
+
+        $size = $null
+        try {
+            $size = [long]$asset.size
+        }
+        catch {
+            throw "GitHub release asset '$fileName' has an invalid size."
+        }
+
+        if ($size -lt 0) {
+            throw "GitHub release asset '$fileName' has a negative size."
+        }
+
         [pscustomobject][ordered]@{
-            Uri = [string]$asset.browser_download_url
-            FileName = [string]$asset.name
-            Format = ConvertTo-GitHubArtifactFormat -FileName ([string]$asset.name)
-            Architecture = ConvertTo-GitHubArtifactArchitecture -FileName ([string]$asset.name)
-            Size = [long]$asset.size
+            Uri = $uri
+            FileName = $fileName
+            Format = ConvertTo-GitHubArtifactFormat -FileName $fileName
+            Architecture = ConvertTo-GitHubArtifactArchitecture -FileName $fileName
+            Size = $size
             Hashes = @()
             Signature = $null
         }
