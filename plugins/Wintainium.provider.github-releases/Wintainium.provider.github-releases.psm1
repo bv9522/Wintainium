@@ -153,6 +153,19 @@ function Invoke-WintainiumProvider {
         )
     }
 
+    $hasRepositorySetting = if ($settings -is [System.Collections.IDictionary]) {
+        $settings.Contains('repository')
+    }
+    else {
+        $null -ne $settings.PSObject.Properties['repository']
+    }
+
+    if (-not $hasRepositorySetting -or [string]::IsNullOrWhiteSpace([string]$settings.repository)) {
+        return New-GitHubProviderResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubRepositoryMissing' -Message 'GitHub provider setting repository is required.')
+        )
+    }
+
     $repository = [string]$settings.repository
     if ($repository -notmatch '^[^/\s]+/[^/\s]+$') {
         return New-GitHubProviderResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
@@ -161,7 +174,14 @@ function Invoke-WintainiumProvider {
     }
 
     $maxPages = 10
-    if ($settings.PSObject.Properties['maxPages'] -and $null -ne $settings.maxPages) {
+    $hasMaxPagesSetting = if ($settings -is [System.Collections.IDictionary]) {
+        $settings.Contains('maxPages')
+    }
+    else {
+        $null -ne $settings.PSObject.Properties['maxPages']
+    }
+
+    if ($hasMaxPagesSetting -and $null -ne $settings.maxPages) {
         try {
             $maxPages = [int]$settings.maxPages
         }
