@@ -15,7 +15,7 @@ Describe 'Wintainium provider contract' {
         }
 
         $result.IsValid | Should -Be $true
-        $result.Descriptor.entryPoint | Should -Be 'Wintainium.provider.github-releases.psm1'
+        $result.Descriptor.entryPoint | Should -Be 'Wintainium.provider.valid-fixture.psm1'
         $result.Descriptor.capabilities.releaseDiscovery | Should -Be $true
         $result.Descriptor.capabilities.artifactDiscovery | Should -Be $true
     }
@@ -32,7 +32,7 @@ Describe 'Wintainium provider contract' {
 
     It 'rejects a provider descriptor without release discovery capability' {
         $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'MissingReleaseDiscovery/plugin.json'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $Path } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
 
@@ -91,6 +91,6 @@ Describe 'Wintainium provider contract' {
         $resolved.IsResolved | Should -Be $true
         $resolved.Plugin.PluginType | Should -Be 'Provider'
         $resolved.Plugin.PluginId | Should -Be 'Wintainium.provider.github-releases'
-        $resolved.Plugin.EntryPoint | Should -Be 'Wintainium.provider.github-releases.psm1'
+        $resolved.Plugin.EntryPoint | Should -Be 'Wintainium.provider.valid-fixture.psm1'
     }
 }
