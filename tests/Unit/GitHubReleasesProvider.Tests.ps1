@@ -22,6 +22,22 @@ Describe 'Wintainium GitHub Releases provider' {
         Should -Invoke Invoke-RestMethod -ModuleName Wintainium.provider.github-releases -Times 0 -Exactly
     }
 
+    It 'rejects an invalid repository setting without network access' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000106'
+            Settings = @{ repository = 'example/project/extra' }
+        }
+
+        Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod { throw 'Network access should not occur.' }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'ConfigurationInvalid'
+        @($result.Errors.Code) | Should -Contain 'GitHubRepositoryInvalid'
+        Should -Invoke Invoke-RestMethod -ModuleName Wintainium.provider.github-releases -Times 0 -Exactly
+    }
+
     It 'maps GitHub releases and assets into normalized Wintainium data' {
         $request = [pscustomobject]@{
             OperationId = '00000000-0000-0000-0000-000000000102'
@@ -78,6 +94,45 @@ Describe 'Wintainium GitHub Releases provider' {
         }
     }
 
+    It 'paginates when GitHub returns a full page and stops on the first short page' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000107'
+            Settings = @{ repository = 'example/project'; maxPages = 3 }
+        }
+
+        Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
+            if ($Uri -like '*page=1') {
+                return @(1..100 | ForEach-Object {
+                    [pscustomobject]@{
+                        id = $_
+                        tag_name = "v1.0.$_"
+                        prerelease = $false
+                        published_at = $null
+                        assets = @()
+                    }
+                })
+            }
+
+            return @(
+                [pscustomobject]@{
+                    id = 101
+                    tag_name = 'v1.0.101'
+                    prerelease = $false
+                    published_at = $null
+                    assets = @()
+                }
+            )
+        }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        $result.Releases | Should -HaveCount 101
+        $result.Releases[100].ReleaseId | Should -Be '101'
+        Should -Invoke Invoke-RestMethod -ModuleName Wintainium.provider.github-releases -Times 2 -Exactly
+    }
+
     It 'returns NoReleasesFound for an empty GitHub releases collection' {
         $request = [pscustomobject]@{
             OperationId = '00000000-0000-0000-0000-000000000103'
@@ -111,6 +166,82 @@ Describe 'Wintainium GitHub Releases provider' {
         $result.IsSuccessful | Should -BeFalse
         $result.Status | Should -Be 'SourceNotFound'
         @($result.Errors.Code) | Should -Contain 'GitHubRepositoryNotFound'
+    }
+
+    It 'rejects malformed GitHub release data as an upstream response failure' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000108'
+            Settings = @{ repository = 'example/project' }
+        }
+
+        Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
+            @([pscustomobject]@{
+                id = 200
+                tag_name = 'v2.5.0'
+                prerelease = $false
+                published_at = 'not-a-timestamp'
+                assets = @()
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'UpstreamResponseInvalid'
+        @($result.Errors.Code) | Should -Contain 'GitHubReleaseInvalid'
+    }
+
+    It 'rejects malformed GitHub asset data as an upstream response failure' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000109'
+            Settings = @{ repository = 'example/project' }
+        }
+
+        Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
+            @([pscustomobject]@{
+                id = 201
+                tag_name = 'v2.5.1'
+                prerelease = $false
+                published_at = $null
+                assets = @([pscustomobject]@{
+                    browser_download_url = 'https://github.com/example/project/releases/download/v2.5.1/example.zip'
+                    size = 1024
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'UpstreamResponseInvalid'
+        @($result.Errors.Code) | Should -Contain 'GitHubReleaseInvalid'
+    }
+
+    It 'rejects a non-HTTPS GitHub asset URL as an upstream response failure' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000110'
+            Settings = @{ repository = 'example/project' }
+        }
+
+        Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
+            @([pscustomobject]@{
+                id = 202
+                tag_name = 'v2.5.2'
+                prerelease = $false
+                published_at = $null
+                assets = @([pscustomobject]@{
+                    browser_download_url = 'http://example.invalid/example.zip'
+                    name = 'example.zip'
+                    size = 1024
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'UpstreamResponseInvalid'
+        @($result.Errors.Code) | Should -Contain 'GitHubReleaseInvalid'
     }
 
     It 'rejects invalid maxPages configuration' {
