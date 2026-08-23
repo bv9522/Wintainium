@@ -258,13 +258,21 @@ function Invoke-WintainiumProvider {
             )
         }
 
+        # PowerShell can unwrap a one-element array returned by a mocked command
+        # into the element itself. GitHub's releases endpoint still represents
+        # that response as a collection, so normalize both shapes here. A scalar
+        # release is therefore treated as a one-item page rather than as an
+        # invalid response.
         if ($null -eq $response) {
             $pageItems = @()
         }
-        elseif ($response -isnot [System.Collections.IEnumerable] -or $response -is [string]) {
+        elseif ($response -is [string]) {
             return New-GitHubProviderResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
-                (New-GitHubProviderError -Code 'GitHubResponseInvalid' -Message 'GitHub releases response was not an array.')
+                (New-GitHubProviderError -Code 'GitHubResponseInvalid' -Message 'GitHub releases response was not a release collection.')
             )
+        }
+        elseif ($response -is [System.Collections.IEnumerable]) {
+            $pageItems = @($response)
         }
         else {
             $pageItems = @($response)
