@@ -1,0 +1,71 @@
+function Register-WintainiumProviderContractTests {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object]$Provider,
+
+        [Parameter(Mandatory)]
+        [scriptblock]$RequestFactory
+    )
+
+    if (-not $Provider) {
+        throw 'A resolved provider descriptor is required.'
+    }
+
+    if (-not $RequestFactory) {
+        throw 'A provider request factory is required.'
+    }
+
+    It 'accepts a provider descriptor with the required contract identity and capabilities' {
+        $Provider.PluginType | Should -Be 'Provider'
+        @($Provider.ContractVersions) | Should -Contain '1'
+        $Provider.Capabilities.releaseDiscovery | Should -BeTrue
+        $Provider.Capabilities.artifactDiscovery | Should -BeTrue
+        $Provider.EntryPoint | Should -Match '\.psm1$'
+    }
+
+    It 'executes the provider through the fixed Core operation boundary' {
+        $request = & $RequestFactory
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
+            Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
+        }
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        $result.OperationId | Should -Be $request.OperationId
+    }
+
+    It 'returns normalized release and artifact data' {
+        $request = & $RequestFactory
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
+            Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
+        }
+
+        $result.Releases | Should -HaveCount 1
+        $release = $result.Releases[0]
+        $release.ReleaseId | Should -Not -BeNullOrEmpty
+        $release.Version | Should -Not -BeNullOrEmpty
+        $release.Channel | Should -BeIn @('stable', 'prerelease')
+        $release.Artifacts | Should -HaveCount 1
+
+        $artifact = $release.Artifacts[0]
+        $artifact.Uri | Should -Match '^https://'
+        $artifact.FileName | Should -Not -BeNullOrEmpty
+        $artifact.Format | Should -Be 'zip'
+        $artifact.Architecture | Should -Be 'x64'
+    }
+
+    It 'preserves operation correlation in provider log events' {
+        $request = & $RequestFactory
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
+            Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
+        }
+
+        @($result.LogEvents) | Should -Not -BeNullOrEmpty
+        @($result.LogEvents | Where-Object { $_.OperationId -ne $request.OperationId }) | Should -HaveCount 0
+    }
+}
