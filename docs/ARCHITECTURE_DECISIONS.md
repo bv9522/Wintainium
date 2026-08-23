@@ -158,14 +158,14 @@ second Core schema and couple future phases to individual upstream services.
 ## Decision #013: Provider Contract Uses Major Version Compatibility
 
 **Decision:** Provider Contract Version 1 uses positive major-version
-identifiers such as `"1"`. A manifest requires a specific contract major
-version through `source.requiredContractVersion`, and a provider must
+identifiers such as `"1"`. A manifest requires a specific provider contract
+major version through `source.requiredContractVersion`, and a provider must
 explicitly advertise that version in `contractVersions`.
 
 **Reason:** The existing plugin descriptor and manifest contracts already use
 major-version identifiers. Keeping the same mechanism avoids introducing an
 incompatible versioning system. Breaking provider-contract changes require a
-new major version.
+new major contract version.
 
 **Status:** Accepted
 
@@ -252,5 +252,26 @@ than exceptions.
 **Reason:** Expected operational failures must remain machine-readable and
 correlated. Exceptions crossing the plugin boundary would make provider
 behavior inconsistent and complicate later orchestration.
+
+**Status:** Accepted
+
+## Decision #021: Provider Architecture Is Source-Agnostic; GitHub Is the First Reference Provider
+
+**Decision:** Wintainium's provider contract must remain independent of any
+single upstream distribution platform. GitHub Releases is the first real
+reference provider, while future providers may target official vendor
+websites, vendor APIs, feeds, CDNs, update manifests, and other authoritative
+sources.
+
+**Reason:** Wintainium's mission is to obtain software from official developer
+sources rather than depend primarily on a centralized repository. Many Windows
+applications are not distributed through GitHub. Making GitHub-specific
+concepts part of Core would undermine the project's central extensibility goal.
+
+**Constraints:** GitHub-specific API fields remain inside the GitHub provider.
+Core consumes only normalized provider-independent release and artifact data.
+A new source family must be implementable as another Provider Contract v1
+plugin without changing the Core provider operation boundary solely because of
+that source's transport or API.
 
 **Status:** Accepted
