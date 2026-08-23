@@ -37,19 +37,23 @@ function Get-GitHubHttpStatusCode {
 
     try {
         $response = $ErrorRecord.Exception.Response
-        if ($null -eq $response) {
-            return $null
+        if ($null -ne $response) {
+            if ($response.StatusCode -is [int]) {
+                return [int]$response.StatusCode
+            }
+
+            return [int]$response.StatusCode.value__
         }
 
-        if ($response.StatusCode -is [int]) {
-            return [int]$response.StatusCode
+        if ($ErrorRecord.Exception.Data.Contains('StatusCode')) {
+            return [int]$ErrorRecord.Exception.Data['StatusCode']
         }
-
-        return [int]$response.StatusCode.value__
     }
     catch {
         return $null
     }
+
+    return $null
 }
 
 function ConvertTo-GitHubArtifactFormat {
@@ -120,6 +124,10 @@ function ConvertFrom-GitHubRelease {
         }
     }
 
+    if ([string]::IsNullOrWhiteSpace([string]$Release.id) -or [string]::IsNullOrWhiteSpace([string]$Release.tag_name)) {
+        throw 'GitHub release response contains an empty id or tag_name.'
+    }
+
     [pscustomobject][ordered]@{
         ReleaseId = [string]$Release.id
         Version = [string]$Release.tag_name
@@ -170,11 +178,13 @@ function Invoke-WintainiumProvider {
         )
     }
 
-    $encodedRepository = [uri]::EscapeDataString($repository)
+    $repositoryParts = $repository.Split('/', 2)
+    $encodedOwner = [uri]::EscapeDataString($repositoryParts[0])
+    $encodedRepositoryName = [uri]::EscapeDataString($repositoryParts[1])
     $releases = [System.Collections.Generic.List[object]]::new()
 
     for ($page = 1; $page -le $maxPages; $page++) {
-        $uri = "https://api.github.com/repos/$encodedRepository/releases?per_page=100&page=$page"
+        $uri = "https://api.github.com/repos/$encodedOwner/$encodedRepositoryName/releases?per_page=100&page=$page"
         try {
             $response = Invoke-RestMethod -Method Get -Uri $uri -Headers @{
                 Accept = 'application/vnd.github+json'
@@ -202,13 +212,18 @@ function Invoke-WintainiumProvider {
             )
         }
 
-        if ($null -eq $response -or $response -isnot [System.Collections.IEnumerable] -or $response -is [string]) {
+        if ($null -eq $response) {
+            $pageItems = @()
+        }
+        elseif ($response -isnot [System.Collections.IEnumerable] -or $response -is [string]) {
             return New-GitHubProviderResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
                 (New-GitHubProviderError -Code 'GitHubResponseInvalid' -Message 'GitHub releases response was not an array.')
             )
         }
+        else {
+            $pageItems = @($response)
+        }
 
-        $pageItems = @($response)
         foreach ($release in $pageItems) {
             try {
                 $releases.Add((ConvertFrom-GitHubRelease -Release $release))
