@@ -32,7 +32,7 @@ Describe 'Wintainium provider contract' {
 
     It 'rejects a provider descriptor without release discovery capability' {
         $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'MissingReleaseDiscovery/plugin.json'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $Path } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
 
