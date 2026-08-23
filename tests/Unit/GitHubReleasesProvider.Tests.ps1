@@ -2,6 +2,12 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:providerPath = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.provider.github-releases/Wintainium.provider.github-releases.psm1'
 
+    # Pester runs in the caller's PowerShell session. Remove any stale copy of
+    # this module before importing the branch-local provider so an older fixture
+    # or prior test run cannot create a duplicate module identity.
+    Get-Module -Name 'Wintainium.provider.github-releases' -All |
+        Remove-Module -Force -ErrorAction SilentlyContinue
+
     Import-Module $script:providerPath -Force
 }
 
