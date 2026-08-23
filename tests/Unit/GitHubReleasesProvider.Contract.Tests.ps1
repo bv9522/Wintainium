@@ -14,7 +14,7 @@ BeforeAll {
         Remove-Module -Force -ErrorAction SilentlyContinue
     Import-Module $script:providerPath -Force
 
-    Mock -ModuleName Wintainainium.provider.github-releases Invoke-RestMethod {
+    Mock -ModuleName Wintainium.provider.github-releases Invoke-RestMethod {
         @([pscustomobject]@{
             id = 9001
             tag_name = 'v9.0.0'
