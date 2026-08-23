@@ -5,11 +5,12 @@
     Author = 'Wintainium Contributors'
     CompanyName = 'Wintainium'
     Copyright = '(c) Wintainium Contributors.'
-    Description = 'Core validation foundation for Wintainium application definitions.'
+    Description = 'Core validation and provider-backed release discovery foundation for Wintainium application definitions.'
     PowerShellVersion = '7.4'
     FunctionsToExport = @(
         'Get-WintainiumManifest'
         'Test-WintainiumApplicationDefinition'
+        'Get-WintainiumApplicationRelease'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
