@@ -16,23 +16,23 @@ function Register-WintainiumProviderContractTests {
         throw 'A provider request factory is required.'
     }
 
-    # Pester v6 executes It blocks after this function has returned. Persist the
-    # inputs into the caller's scope so the deferred test blocks can still see them.
-    Set-Variable -Name WintainiumProviderContractRequestFactory -Value $RequestFactory -Scope 1
-    Set-Variable -Name WintainiumProviderContractUnderTest -Value $Provider -Scope 1
+    # Pester v6 executes It blocks after this function has returned. Capture the
+    # supplied inputs in explicit closures rather than relying on dynamic scope.
+    $providerUnderTest = $Provider
+    $requestFactoryUnderTest = $RequestFactory
 
-    It 'accepts a provider descriptor with the required contract identity and capabilities' {
-        $WintainiumProviderContractUnderTest.PluginType | Should -Be 'Provider'
-        @($WintainiumProviderContractUnderTest.ContractVersions) | Should -Contain '1'
-        $WintainiumProviderContractUnderTest.Capabilities.releaseDiscovery | Should -BeTrue
-        $WintainiumProviderContractUnderTest.Capabilities.artifactDiscovery | Should -BeTrue
-        $WintainiumProviderContractUnderTest.EntryPoint | Should -Match '\.psm1$'
-    }
+    It 'accepts a provider descriptor with the required contract identity and capabilities' ({
+        $providerUnderTest.PluginType | Should -Be 'Provider'
+        @($providerUnderTest.ContractVersions) | Should -Contain '1'
+        $providerUnderTest.Capabilities.releaseDiscovery | Should -BeTrue
+        $providerUnderTest.Capabilities.artifactDiscovery | Should -BeTrue
+        $providerUnderTest.EntryPoint | Should -Match '\.psm1$'
+    }.GetNewClosure())
 
-    It 'executes the provider through the fixed Core operation boundary' {
-        $request = & $WintainiumProviderContractRequestFactory
+    It 'executes the provider through the fixed Core operation boundary' ({
+        $request = & $requestFactoryUnderTest
 
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $WintainiumProviderContractUnderTest; Request = $request } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $providerUnderTest; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
         }
 
@@ -40,12 +40,12 @@ function Register-WintainiumProviderContractTests {
         $result.IsSuccessful | Should -BeTrue
         $result.Status | Should -Be 'Success'
         $result.OperationId | Should -Be $request.OperationId
-    }
+    }.GetNewClosure())
 
-    It 'returns normalized release and artifact data' {
-        $request = & $WintainiumProviderContractRequestFactory
+    It 'returns normalized release and artifact data' ({
+        $request = & $requestFactoryUnderTest
 
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $WintainiumProviderContractUnderTest; Request = $request } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $providerUnderTest; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
         }
 
@@ -61,16 +61,16 @@ function Register-WintainiumProviderContractTests {
         $artifact.FileName | Should -Not -BeNullOrEmpty
         $artifact.Format | Should -Be 'zip'
         $artifact.Architecture | Should -Be 'x64'
-    }
+    }.GetNewClosure())
 
-    It 'preserves operation correlation in provider log events' {
-        $request = & $WintainiumProviderContractRequestFactory
+    It 'preserves operation correlation in provider log events' ({
+        $request = & $requestFactoryUnderTest
 
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $WintainiumProviderContractUnderTest; Request = $request } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $providerUnderTest; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
         }
 
         @($result.LogEvents) | Should -Not -BeNullOrEmpty
         @($result.LogEvents | Where-Object { $_.OperationId -ne $request.OperationId }) | Should -HaveCount 0
-    }
+    }.GetNewClosure())
 }
