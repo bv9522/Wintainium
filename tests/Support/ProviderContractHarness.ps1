@@ -16,6 +16,10 @@ function Register-WintainiumProviderContractTests {
         throw 'A provider request factory is required.'
     }
 
+    # Pester executes It blocks after this registration function has returned.
+    # Persist the factory in script scope so it remains available during test execution.
+    $script:WintainiumProviderContractRequestFactory = $RequestFactory
+
     It 'accepts a provider descriptor with the required contract identity and capabilities' {
         $Provider.PluginType | Should -Be 'Provider'
         @($Provider.ContractVersions) | Should -Contain '1'
@@ -25,7 +29,7 @@ function Register-WintainiumProviderContractTests {
     }
 
     It 'executes the provider through the fixed Core operation boundary' {
-        $request = & $RequestFactory
+        $request = & $script:WintainiumProviderContractRequestFactory
 
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
@@ -38,7 +42,7 @@ function Register-WintainiumProviderContractTests {
     }
 
     It 'returns normalized release and artifact data' {
-        $request = & $RequestFactory
+        $request = & $script:WintainiumProviderContractRequestFactory
 
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
@@ -59,7 +63,7 @@ function Register-WintainiumProviderContractTests {
     }
 
     It 'preserves operation correlation in provider log events' {
-        $request = & $RequestFactory
+        $request = & $script:WintainiumProviderContractRequestFactory
 
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $Provider; Request = $request } {
             Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
