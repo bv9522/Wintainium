@@ -6,7 +6,9 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     $script:providerRoot = Join-Path -Path $script:testRoot -ChildPath 'plugins'
-    $script:providerPath = Join-Path -Path $script:providerRoot -ChildPath 'Wintainium.provider.github-releases/Wintainium.provider.github-releases.psm1'
+    $script:providerDirectory = Join-Path -Path $script:providerRoot -ChildPath 'Wintainium.provider.github-releases'
+    $script:providerDescriptorPath = Join-Path -Path $script:providerDirectory -ChildPath 'plugin.json'
+    $script:providerPath = Join-Path -Path $script:providerDirectory -ChildPath 'Wintainium.provider.github-releases.psm1'
 
     Import-Module $script:modulePath -Force
 
@@ -30,19 +32,26 @@ BeforeAll {
         })
     }
 
-    $script:registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:providerRoot } {
-        Get-WintainiumPluginRegistry -PluginRoot $Path
+    if (-not (Test-Path -LiteralPath $script:providerDescriptorPath -PathType Leaf)) {
+        throw "The GitHub Releases provider descriptor was not found at '$script:providerDescriptorPath'."
     }
 
-    $script:provider = $script:registry.Plugins |
-        Where-Object {
-            $_.PluginType -eq 'Provider' -and
-            $_.PluginId -eq 'Wintainium.provider.github-releases'
-        } |
-        Select-Object -First 1
+    $descriptorResult = InModuleScope Wintainium.Core -Parameters @{ Path = $script:providerDescriptorPath } {
+        Test-WintainiumPluginDescriptor -DescriptorPath $Path
+    }
 
-    if (-not $script:provider) {
-        throw "The GitHub Releases provider could not be resolved from '$script:providerRoot'."
+    if (-not $descriptorResult.IsValid) {
+        $messages = @($descriptorResult.Errors | ForEach-Object { "$($_.Code): $($_.Message)" }) -join '; '
+        throw "The GitHub Releases provider descriptor is invalid: $messages"
+    }
+
+    $script:provider = [pscustomobject][ordered]@{
+        PluginId = $descriptorResult.Descriptor.pluginId
+        PluginType = $descriptorResult.Descriptor.pluginType
+        ContractVersions = @($descriptorResult.Descriptor.contractVersions)
+        EntryPoint = $descriptorResult.Descriptor.entryPoint
+        Capabilities = $descriptorResult.Descriptor.capabilities
+        DescriptorPath = $script:providerDescriptorPath
     }
 }
 
