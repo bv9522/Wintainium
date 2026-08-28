@@ -3,28 +3,6 @@ $modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintain
 
 Import-Module $modulePath -Force
 
-function New-TestInstalledApplicationState {
-    param(
-        [hashtable]$Overrides = @{}
-    )
-
-    $state = @{
-        ApplicationId = 'org.example.app'
-        InstallationState = 'Installed'
-        Version = '1.2.vendor-build'
-        VersionSource = 'Registry'
-        Architecture = 'x64'
-        Channel = 'stable'
-        InstallationLocation = 'C:\Program Files\Example'
-    }
-
-    foreach ($key in $Overrides.Keys) {
-        $state[$key] = $Overrides[$key]
-    }
-
-    [pscustomobject]$state
-}
-
 Describe 'Wintainium installed application state' {
     It 'creates a valid installed state with all observations preserved' {
         $state = InModuleScope Wintainium.Core {
@@ -108,7 +86,15 @@ Describe 'Wintainium installed application state' {
     }
 
     It 'reports structured validation errors for a missing application identifier' {
-        $state = New-TestInstalledApplicationState -Overrides @{ ApplicationId = '' }
+        $state = [pscustomobject][ordered]@{
+            ApplicationId = ''
+            InstallationState = 'Installed'
+            Version = '1.2.vendor-build'
+            VersionSource = 'Registry'
+            Architecture = 'x64'
+            Channel = 'stable'
+            InstallationLocation = 'C:\Program Files\Example'
+        }
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state } {
             param($State)
             Test-WintainiumInstalledApplicationState -State $State
@@ -120,7 +106,15 @@ Describe 'Wintainium installed application state' {
     }
 
     It 'reports structured validation errors when a not-installed state contains a version' {
-        $state = New-TestInstalledApplicationState -Overrides @{ InstallationState = 'NotInstalled'; Version = '1.0' }
+        $state = [pscustomobject][ordered]@{
+            ApplicationId = 'org.example.app'
+            InstallationState = 'NotInstalled'
+            Version = '1.0'
+            VersionSource = 'Registry'
+            Architecture = 'x64'
+            Channel = 'stable'
+            InstallationLocation = 'C:\Program Files\Example'
+        }
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state } {
             param($State)
             Test-WintainiumInstalledApplicationState -State $State
@@ -132,7 +126,15 @@ Describe 'Wintainium installed application state' {
 
     It 'accepts all defined architecture values' {
         foreach ($architecture in @('x86', 'x64', 'arm64', 'neutral', 'unknown')) {
-            $state = New-TestInstalledApplicationState -Overrides @{ Architecture = $architecture }
+            $state = [pscustomobject][ordered]@{
+                ApplicationId = 'org.example.app'
+                InstallationState = 'Installed'
+                Version = '1.2.vendor-build'
+                VersionSource = 'Registry'
+                Architecture = $architecture
+                Channel = 'stable'
+                InstallationLocation = 'C:\Program Files\Example'
+            }
             $result = InModuleScope Wintainium.Core -Parameters @{ State = $state } {
                 param($State)
                 Test-WintainiumInstalledApplicationState -State $State
@@ -144,7 +146,15 @@ Describe 'Wintainium installed application state' {
 
     It 'accepts all defined channel values' {
         foreach ($channel in @('stable', 'prerelease', 'unknown')) {
-            $state = New-TestInstalledApplicationState -Overrides @{ Channel = $channel }
+            $state = [pscustomobject][ordered]@{
+                ApplicationId = 'org.example.app'
+                InstallationState = 'Installed'
+                Version = '1.2.vendor-build'
+                VersionSource = 'Registry'
+                Architecture = 'x64'
+                Channel = $channel
+                InstallationLocation = 'C:\Program Files\Example'
+            }
             $result = InModuleScope Wintainium.Core -Parameters @{ State = $state } {
                 param($State)
                 Test-WintainiumInstalledApplicationState -State $State
