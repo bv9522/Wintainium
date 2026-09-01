@@ -50,12 +50,12 @@ function Resolve-WintainiumDownloadTarget {
         throw [System.ArgumentException]::new('A usable artifact filename could not be determined.')
     }
 
-    if ($rawName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) {
-        throw [System.ArgumentException]::new('Artifact filename contains invalid Windows filename characters.')
-    }
-
     if ($rawName.Contains('/') -or $rawName.Contains('\') -or [System.IO.Path]::IsPathRooted($rawName)) {
         throw [System.ArgumentException]::new('Artifact filename must be a single filename and cannot contain path components.')
+    }
+
+    if ($rawName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) {
+        throw [System.ArgumentException]::new('Artifact filename contains invalid Windows filename characters.')
     }
 
     $reservedBaseName = [System.IO.Path]::GetFileNameWithoutExtension($rawName).TrimEnd('.')
