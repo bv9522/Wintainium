@@ -48,3 +48,39 @@ Describe 'Core provider discovery workflow' {
         @($result.LogEvents | Where-Object { $_.OperationId -ne $result.OperationId }).Count | Should -Be 0
     }
 }
+
+Describe 'Core update decision workflow' {
+    It 'produces a deterministic update target from fixture discovery without network access' {
+        $discovery = Get-WintainiumApplicationRelease `
+            -ManifestPath (Join-Path -Path $script:manifestRoot -ChildPath 'valid-portable-zip.json') `
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
+
+        $installedState = [pscustomobject]@{
+            ApplicationId = $discovery.Manifest.Id
+            Version = '1.0.0'
+            Architecture = 'x64'
+            Channel = 'stable'
+            InstallationState = 'Installed'
+        }
+        $decisionInput = [pscustomobject]@{
+            Manifest = $discovery.Manifest
+            InstalledState = $installedState
+            ProviderResult = [pscustomobject]@{
+                IsSuccessful = $discovery.IsSuccessful
+                Releases = @($discovery.Releases)
+            }
+        }
+
+        $decision = InModuleScope Wintainium.Core -Parameters @{ DecisionInput=$decisionInput } {
+            param($DecisionInput)
+            Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64'
+        }
+
+        $decision.Status | Should -Be 'UpdateAvailable'
+        $decision.IsUpdateAvailable | Should -BeTrue
+        $decision.SelectedRelease.ReleaseId | Should -Be 'fixture-release-1'
+        $decision.SelectedArtifact.Uri | Should -Be 'https://example.invalid/example-1.2.3-x64.zip'
+        $decision.IsDeterministic | Should -BeTrue
+    }
+}
