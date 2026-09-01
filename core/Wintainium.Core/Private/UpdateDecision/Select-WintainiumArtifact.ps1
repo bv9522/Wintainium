@@ -13,11 +13,18 @@ function Select-WintainiumArtifact {
     $index = 0
     foreach ($artifact in @($Release.Artifacts)) {
         $observation = Test-WintainiumArtifactEligibility -Artifact $artifact -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        $reasonCode = $observation.ReasonCode
+        $reason = $observation.Reason
+        if ($reasonCode -eq 'ArchitectureNotPermitted' -and $observation.Architecture -ne 'unknown') {
+            $reasonCode = 'ArchitectureIncompatible'
+            $reason = 'Artifact architecture is incompatible with the target machine.'
+        }
+
         $observations.Add([pscustomobject][ordered]@{
             Artifact = $observation.Artifact
             Eligible = $observation.Eligible
-            ReasonCode = $observation.ReasonCode
-            Reason = $observation.Reason
+            ReasonCode = $reasonCode
+            Reason = $reason
             Format = $observation.Format
             Architecture = $observation.Architecture
             InputOrder = $index
