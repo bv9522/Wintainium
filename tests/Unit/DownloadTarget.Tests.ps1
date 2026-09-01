@@ -12,7 +12,10 @@ Describe 'Resolve-WintainiumDownloadTarget' {
     }
 
     It 'accepts an absolute HTTPS URI and resolves within the download root' {
-        $result = Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root
+        $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+            param($Request, $Root)
+            Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+        }
         $result.Uri | Should -Be 'https://example.com/releases/Wintainium-1.2.3-x64.zip'
         $result.FileName | Should -Be 'Wintainium-1.2.3-x64.zip'
         $result.DestinationPath | Should -Be ([System.IO.Path]::GetFullPath((Join-Path $root 'Wintainium-1.2.3-x64.zip')))
@@ -20,27 +23,42 @@ Describe 'Resolve-WintainiumDownloadTarget' {
 
     It 'rejects non-HTTPS URIs' {
         $request.SelectedArtifact.Uri = 'http://example.com/file.zip'
-        { Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root } | Should -Throw '*HTTPS is required*'
+        { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+                param($Request, $Root)
+                Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+            } } | Should -Throw '*HTTPS is required*'
     }
 
     It 'rejects unsupported URI schemes' {
         $request.SelectedArtifact.Uri = 'file:///C:/Windows/System32/example.exe'
-        { Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root } | Should -Throw '*not supported*'
+        { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+                param($Request, $Root)
+                Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+            } } | Should -Throw '*not supported*'
     }
 
     It 'rejects path components in provider-supplied filenames' {
         $request.SelectedArtifact.FileName = '..\outside.exe'
-        { Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root } | Should -Throw '*path components*'
+        { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+                param($Request, $Root)
+                Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+            } } | Should -Throw '*path components*'
     }
 
     It 'rejects reserved Windows device names' {
         $request.SelectedArtifact.FileName = 'CON.exe'
-        { Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root } | Should -Throw '*reserved Windows device name*'
+        { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+                param($Request, $Root)
+                Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+            } } | Should -Throw '*reserved Windows device name*'
     }
 
     It 'derives a filename from the URI when the artifact filename is absent' {
         $request.SelectedArtifact.PSObject.Properties.Remove('FileName')
-        $result = Resolve-WintainiumDownloadTarget -DownloadRequest $request -DownloadRoot $root
+        $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+            param($Request, $Root)
+            Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+        }
         $result.FileName | Should -Be 'Wintainium-1.2.3-x64.zip'
     }
 }
