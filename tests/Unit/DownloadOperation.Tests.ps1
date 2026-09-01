@@ -68,9 +68,74 @@ Describe 'Invoke-WintainiumDownload' {
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
             }
             $result.Status | Should -Be 'Downloaded'
+            $result.FailureKind | Should -BeNullOrEmpty
+            $result.Retryable | Should -BeFalse
             $result.BytesWritten | Should -Be ([System.Text.Encoding]::UTF8.GetByteCount('Wintainium test artifact'))
             Test-Path -LiteralPath $result.DestinationPath | Should -BeTrue
             [System.IO.File]::ReadAllText($result.DestinationPath) | Should -Be 'Wintainium test artifact'
+            Get-ChildItem -LiteralPath $root -File | Where-Object Name -ne $request.SelectedArtifact.FileName | Should -BeNullOrEmpty
+        }
+        finally {
+            $client.Dispose()
+            $response.Dispose()
+        }
+    }
+
+    It 'returns a retryable HTTP failure without creating a destination file' {
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::ServiceUnavailable)
+        $response.ReasonPhrase = 'Unavailable'
+        $handler = [TestDownloadHandler]::new($response)
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root; Client = $client } {
+                param($Request, $Root, $Client)
+                Mock Resolve-WintainiumDownloadTarget {
+                    [pscustomobject]@{
+                        Uri = $Request.SelectedArtifact.Uri
+                        DownloadRoot = $Root
+                        FileName = $Request.SelectedArtifact.FileName
+                        DestinationPath = Join-Path $Root $Request.SelectedArtifact.FileName
+                    }
+                }
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $result.Status | Should -Be 'Failed'
+            $result.FailureKind | Should -Be 'Http'
+            $result.Retryable | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $root $request.SelectedArtifact.FileName) | Should -BeFalse
+            Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        }
+        finally {
+            $client.Dispose()
+            $response.Dispose()
+        }
+    }
+
+    It 'returns a non-retryable destination collision and preserves the existing file' {
+        [System.IO.Directory]::CreateDirectory($root) | Out-Null
+        $destination = Join-Path $root $request.SelectedArtifact.FileName
+        [System.IO.File]::WriteAllText($destination, 'existing artifact')
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('new artifact'))
+        $handler = [TestDownloadHandler]::new($response)
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root; Client = $client } {
+                param($Request, $Root, $Client)
+                Mock Resolve-WintainiumDownloadTarget {
+                    [pscustomobject]@{
+                        Uri = $Request.SelectedArtifact.Uri
+                        DownloadRoot = $Root
+                        FileName = $Request.SelectedArtifact.FileName
+                        DestinationPath = Join-Path $Root $Request.SelectedArtifact.FileName
+                    }
+                }
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $result.Status | Should -Be 'Failed'
+            $result.FailureKind | Should -Be 'DestinationExists'
+            $result.Retryable | Should -BeFalse
+            [System.IO.File]::ReadAllText($destination) | Should -Be 'existing artifact'
             Get-ChildItem -LiteralPath $root -File | Where-Object Name -ne $request.SelectedArtifact.FileName | Should -BeNullOrEmpty
         }
         finally {
