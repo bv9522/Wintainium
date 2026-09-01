@@ -33,4 +33,27 @@ Describe 'Invoke-WintainiumDownload' {
         $parameters | Should -Not -Contain 'Installer'
         $parameters | Should -Not -Contain 'Execute'
     }
+
+    It 'downloads bytes and atomically completes the destination file' {
+        $handler = [System.Net.Http.HttpMessageHandler]::new()
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root; Client = $client } {
+                param($Request, $Root, $Client)
+                Mock Resolve-WintainiumDownloadTarget {
+                    [pscustomobject]@{
+                        Uri = $Request.SelectedArtifact.Uri
+                        DownloadRoot = $Root
+                        FileName = $Request.SelectedArtifact.FileName
+                        DestinationPath = Join-Path $Root $Request.SelectedArtifact.FileName
+                    }
+                }
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $result.Status | Should -Be 'Downloaded'
+        }
+        finally {
+            $client.Dispose()
+        }
+    }
 }
