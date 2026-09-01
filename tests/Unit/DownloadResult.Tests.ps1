@@ -1,6 +1,32 @@
 $modulePath = Join-Path $PSScriptRoot '..\..\core\Wintainium.Core\Wintainium.Core.psd1'
 Import-Module $modulePath -Force
 
+if (-not ([System.Management.Automation.PSTypeName]'Wintainium.Tests.ResultHandoffHttpHandler').Type) {
+    Add-Type -TypeDefinition @'
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Wintainium.Tests
+{
+    public sealed class ResultHandoffHttpHandler : HttpMessageHandler
+    {
+        public HttpResponseMessage Response { get; }
+
+        public ResultHandoffHttpHandler(HttpResponseMessage response)
+        {
+            Response = response;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Response);
+        }
+    }
+}
+'@
+}
+
 Describe 'Phase 5 download result handoff' {
     BeforeEach {
         $root = Join-Path $TestDrive ([guid]::NewGuid().ToString())
@@ -11,7 +37,7 @@ Describe 'Phase 5 download result handoff' {
     It 'returns a stable success result containing the completed local artifact location' {
         $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
         $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('artifact bytes'))
-        $handler = [TestDownloadHandler]::new($response)
+        $handler = [Wintainium.Tests.ResultHandoffHttpHandler]::new($response)
         $client = [System.Net.Http.HttpClient]::new($handler)
         try {
             $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
@@ -45,7 +71,7 @@ Describe 'Phase 5 download result handoff' {
 
     It 'returns a structured failure result without claiming a local artifact was produced' {
         $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::ServiceUnavailable)
-        $handler = [TestDownloadHandler]::new($response)
+        $handler = [Wintainium.Tests.ResultHandoffHttpHandler]::new($response)
         $client = [System.Net.Http.HttpClient]::new($handler)
         try {
             $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
