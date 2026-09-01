@@ -16,6 +16,10 @@ function Test-WintainiumReleaseEligibility {
         return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = 'UnknownReleaseChannel'; Reason = 'The release channel is missing or unsupported.'; Release = $Release; VersionComparison = $null }
     }
 
+    if ($channelPolicy -notin @('stable','prerelease','any')) {
+        return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = 'InvalidReleasePolicy'; Reason = 'The manifest contains an unsupported release channel policy.'; Release = $Release; VersionComparison = $null }
+    }
+
     if ($channelPolicy -eq 'stable' -and $releaseChannel -ne 'stable') {
         return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = 'ChannelNotPermitted'; Reason = 'The manifest permits stable releases only.'; Release = $Release; VersionComparison = $null }
     }
@@ -28,23 +32,23 @@ function Test-WintainiumReleaseEligibility {
         return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = 'DeprecatedRelease'; Reason = 'The release is marked deprecated by the provider.'; Release = $Release; VersionComparison = $null }
     }
 
-    $installedVersion = $InstalledState.Version
-    $releaseVersion = $Release.Version
-    if ([string]::IsNullOrWhiteSpace([string]$installedVersion) -or [string]::IsNullOrWhiteSpace([string]$releaseVersion)) {
+    $installedVersion = [string]$InstalledState.Version
+    $releaseVersion = [string]$Release.Version
+    if ([string]::IsNullOrWhiteSpace($installedVersion) -or [string]::IsNullOrWhiteSpace($releaseVersion)) {
         return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = 'InsufficientVersionData'; Reason = 'Installed or release version data is unavailable.'; Release = $Release; VersionComparison = $null }
     }
 
-    $installedObservation = New-WintainiumVersionObservation -Version ([string]$installedVersion)
-    $releaseObservation = New-WintainiumVersionObservation -Version ([string]$releaseVersion)
+    $installedObservation = New-WintainiumVersionObservation -Version $installedVersion
+    $releaseObservation = New-WintainiumVersionObservation -Version $releaseVersion
     $comparison = Compare-WintainiumVersion -Left $installedObservation -Right $releaseObservation
 
-    if ($comparison.Result -ne 'Greater') {
-        $reasonCode = switch ($comparison.Result) {
+    if ($comparison.Comparison -ne 'Greater') {
+        $reasonCode = switch ($comparison.Comparison) {
             'Equal' { 'NotNewer' }
             'Less' { 'DowngradeNotPermitted' }
             default { 'VersionComparisonUnknown' }
         }
-        return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = $reasonCode; Reason = "The release version does not establish a newer compatible version."; Release = $Release; VersionComparison = $comparison }
+        return [pscustomobject][ordered]@{ Eligible = $false; ReasonCode = $reasonCode; Reason = 'The release version does not establish a newer compatible version.'; Release = $Release; VersionComparison = $comparison }
     }
 
     [pscustomobject][ordered]@{ Eligible = $true; ReasonCode = 'Eligible'; Reason = 'The release satisfies the applicable channel and version eligibility rules.'; Release = $Release; VersionComparison = $comparison }
