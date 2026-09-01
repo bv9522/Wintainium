@@ -9,10 +9,11 @@ function Select-WintainiumArtifact {
     if ($null -eq $Release) { throw [System.ArgumentNullException]::new('Release') }
     if ($null -eq $Manifest) { throw [System.ArgumentNullException]::new('Manifest') }
 
-    $artifacts = if ($Release.PSObject.Properties['Artifacts']) { @($Release.Artifacts) } else { @() }
-    $observations = for ($index = 0; $index -lt $artifacts.Count; $index++) {
-        $observation = Test-WintainiumArtifactEligibility -Artifact $artifacts[$index] -Manifest $Manifest -MachineArchitecture $MachineArchitecture
-        [pscustomobject][ordered]@{
+    $observations = [System.Collections.Generic.List[object]]::new()
+    $index = 0
+    foreach ($artifact in @($Release.Artifacts)) {
+        $observation = Test-WintainiumArtifactEligibility -Artifact $artifact -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        $observations.Add([pscustomobject][ordered]@{
             Artifact = $observation.Artifact
             Eligible = $observation.Eligible
             ReasonCode = $observation.ReasonCode
@@ -20,7 +21,8 @@ function Select-WintainiumArtifact {
             Format = $observation.Format
             Architecture = $observation.Architecture
             InputOrder = $index
-        }
+        })
+        $index++
     }
 
     $eligible = @($observations | Where-Object Eligible)
