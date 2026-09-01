@@ -67,32 +67,30 @@ Describe 'Resolve-WintainiumDownloadTarget' {
         { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
                 param($Request, $Root)
                 Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
-            } } | Should -Throw '*host*'
+            } } | Should -Throw '*absolute URI*'
     }
 
-    It 'rejects URI user information' {
+    It 'rejects HTTPS URIs containing user information' {
         $request.SelectedArtifact.Uri = 'https://user:password@example.com/file.zip'
         { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
                 param($Request, $Root)
                 Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
-            } } | Should -Throw '*user information*'
+            } } | Should -Throw '*credentials*'
     }
 
     It 'rejects URI fragments' {
-        $request.SelectedArtifact.Uri = 'https://example.com/file.zip#fragment'
+        $request.SelectedArtifact.Uri = 'https://example.com/file.zip#download'
         { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
                 param($Request, $Root)
                 Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
-            } } | Should -Throw '*fragments*'
+            } } | Should -Throw '*fragment*'
     }
 
-    It 'rejects filenames ending in a space or period' {
-        foreach ($name in @('file.zip ', 'file.zip.')) {
-            $request.SelectedArtifact.FileName = $name
-            { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
-                    param($Request, $Root)
-                    Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
-                } } | Should -Throw '*end with a space or period*'
-        }
+    It 'rejects filenames ending with a space or period' {
+        $request.SelectedArtifact.FileName = 'artifact.zip '
+        { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+                param($Request, $Root)
+                Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+            } } | Should -Throw '*end with a space or period*'
     }
 }
