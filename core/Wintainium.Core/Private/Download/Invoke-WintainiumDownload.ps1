@@ -46,7 +46,7 @@ function Invoke-WintainiumDownload {
             if (Test-Path -LiteralPath $target.DestinationPath) { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='DestinationExists'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$false; ErrorMessage='The destination file already exists.' } }
             return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='DestinationWrite'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$true; ErrorMessage=$_.Exception.Message }
         }
-        [pscustomobject][ordered]@{ OperationId=$operationId; Status='Downloaded'; FailureKind=$null; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=[System.IO.FileInfo]::new($target.DestinationPath).Length; Retryable=$false; ErrorMessage=$null }
+        return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Downloaded'; FailureKind=$null; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=[System.IO.FileInfo]::new($target.DestinationPath).Length; Retryable=$false; ErrorMessage=$null }
     }
     finally {
         if (Test-Path -LiteralPath $temporaryPath) { Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue }
