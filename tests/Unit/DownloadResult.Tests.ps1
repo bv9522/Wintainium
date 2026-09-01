@@ -41,13 +41,13 @@ Describe 'Phase 5 download result handoff' {
         $handler = [Wintainium.Tests.ResultHandoffHttpHandler]::new($response)
         $client = [System.Net.Http.HttpClient]::new($handler)
         try {
-            $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
+            $result = @(InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
                 param($Request,$Root,$Client)
                 Mock Resolve-WintainiumDownloadTarget {
                     [pscustomobject]@{ Uri=$Request.SelectedArtifact.Uri; DownloadRoot=$Root; FileName=$Request.SelectedArtifact.FileName; DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName }
                 }
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
-            }
+            })[-1]
 
             $result.PSObject.Properties.Name | Should -Contain 'OperationId'
             $result.PSObject.Properties.Name | Should -Contain 'Status'
