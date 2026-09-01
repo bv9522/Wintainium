@@ -53,4 +53,4 @@ Phase 4C answers: `Is this discovered release allowed to compete?`
 
 Phase 4D answers: `Which artifact belonging to an eligible release is compatible and preferred?`
 
-Phase 4E resolves the best eligible release and artifact target. Phase 4F produces the final structured update decision. Downloading begins in Phase 5; installation begins in Phase 6.
+The Phase 4E contract defines the structured update decision. Phase 4F produces that decision, including target resolution. Downloading begins in Phase 5; installation begins in Phase 6.
