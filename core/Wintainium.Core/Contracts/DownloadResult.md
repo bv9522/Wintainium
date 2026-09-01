@@ -10,6 +10,7 @@ A download result reports what happened during acquisition of the selected artif
 
 `Invoke-WintainiumDownload` returns a structured result containing:
 
+- `OperationId` — the correlation identifier from the download request, preserved unchanged when supplied.
 - `Status` — `Downloaded` on successful completion, otherwise `Failed`.
 - `FailureKind` — `$null` on success; a stable failure category when the operation fails.
 - `Uri` — the resolved artifact URI used by the download operation.
@@ -18,6 +19,8 @@ A download result reports what happened during acquisition of the selected artif
 - `BytesWritten` — bytes successfully written to the temporary file before completion, or the completed artifact length on success.
 - `Retryable` — whether the reported failure may be retried under future retry policy; always `$false` on success.
 - `ErrorMessage` — a human-readable failure description; `$null` on success.
+
+`OperationId` provides correlation across the Phase 5 request/result boundary without making the result responsible for orchestration or logging policy.
 
 ## Successful Handoff
 
