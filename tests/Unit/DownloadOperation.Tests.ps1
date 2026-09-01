@@ -1,6 +1,21 @@
 $modulePath = Join-Path $PSScriptRoot '..\..\core\Wintainium.Core\Wintainium.Core.psd1'
 Import-Module $modulePath -Force
 
+class TestDownloadHandler : System.Net.Http.HttpMessageHandler {
+    [System.Net.Http.HttpResponseMessage] $Response
+
+    TestDownloadHandler([System.Net.Http.HttpResponseMessage] $response) {
+        $this.Response = $response
+    }
+
+    [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync(
+        [System.Net.Http.HttpRequestMessage] $request,
+        [System.Threading.CancellationToken] $cancellationToken
+    ) {
+        return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response)
+    }
+}
+
 Describe 'Invoke-WintainiumDownload' {
     BeforeEach {
         $root = Join-Path $TestDrive 'downloads'
@@ -35,7 +50,9 @@ Describe 'Invoke-WintainiumDownload' {
     }
 
     It 'downloads bytes and atomically completes the destination file' {
-        $handler = [System.Net.Http.HttpMessageHandler]::new()
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('Wintainium test artifact'))
+        $handler = [TestDownloadHandler]::new($response)
         $client = [System.Net.Http.HttpClient]::new($handler)
         try {
             $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root; Client = $client } {
@@ -51,9 +68,14 @@ Describe 'Invoke-WintainiumDownload' {
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
             }
             $result.Status | Should -Be 'Downloaded'
+            $result.BytesWritten | Should -Be ([System.Text.Encoding]::UTF8.GetByteCount('Wintainium test artifact'))
+            Test-Path -LiteralPath $result.DestinationPath | Should -BeTrue
+            [System.IO.File]::ReadAllText($result.DestinationPath) | Should -Be 'Wintainium test artifact'
+            Get-ChildItem -LiteralPath $root -File | Where-Object Name -ne $request.SelectedArtifact.FileName | Should -BeNullOrEmpty
         }
         finally {
             $client.Dispose()
+            $response.Dispose()
         }
     }
 }
