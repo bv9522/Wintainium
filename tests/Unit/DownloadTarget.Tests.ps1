@@ -75,7 +75,7 @@ Describe 'Resolve-WintainiumDownloadTarget' {
         { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
                 param($Request, $Root)
                 Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
-            } } | Should -Throw '*credentials*'
+            } } | Should -Throw '*user information*'
     }
 
     It 'rejects URI fragments' {
