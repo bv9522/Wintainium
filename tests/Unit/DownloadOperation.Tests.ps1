@@ -11,21 +11,11 @@ Describe 'Invoke-WintainiumDownload' {
         $request = [pscustomobject]@{ SelectedArtifact = $artifact }
     }
 
-    It 'writes downloaded content to a temporary file before completing the destination' {
-        Mock Resolve-WintainiumDownloadTarget {
-            [pscustomobject]@{
-                Uri = 'https://example.com/releases/Wintainium-1.2.3-x64.zip'
-                DownloadRoot = $root
-                FileName = 'Wintainium-1.2.3-x64.zip'
-                DestinationPath = Join-Path $root 'Wintainium-1.2.3-x64.zip'
-            }
+    It 'exposes the controlled download operation through the Core module boundary' {
+        $command = InModuleScope Wintainium.Core {
+            Get-Command Invoke-WintainiumDownload -CommandType Function
         }
-        Mock Test-Path { $false }
-        Mock Remove-Item {}
-        Mock ([System.Net.Http.HttpClient]::new())
-
-        # Network I/O is exercised by integration tests; this unit contract verifies the Core boundary exists.
-        Get-Command Invoke-WintainiumDownload -CommandType Function | Should -Not -BeNullOrEmpty
+        $command | Should -Not -BeNullOrEmpty
     }
 
     It 'rejects an unsafe target before attempting network I/O' {
