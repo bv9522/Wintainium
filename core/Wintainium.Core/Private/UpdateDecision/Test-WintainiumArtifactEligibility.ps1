@@ -35,15 +35,12 @@ function Test-WintainiumArtifactEligibility {
     }
 
     $allowedArchitectures = @($artifactPolicy.architectures | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
-    if ($architecture -notin $allowedArchitectures) {
+    $unknownAllowed = $architecture -eq 'unknown' -and [bool]$artifactPolicy.allowUnknownArchitecture
+    if (-not $unknownAllowed -and $architecture -notin $allowedArchitectures) {
         return [pscustomobject][ordered]@{ Artifact=$Artifact; Eligible=$false; ReasonCode='ArchitectureNotPermitted'; Reason='Artifact architecture is not permitted by the manifest.'; Format=$format; Architecture=$architecture }
     }
 
-    $compatible = $architecture -eq 'neutral' -or $architecture -eq $machine
-    if (-not $compatible -and $architecture -eq 'unknown' -and [bool]$artifactPolicy.allowUnknownArchitecture) {
-        $compatible = $true
-    }
-
+    $compatible = $architecture -eq 'neutral' -or $architecture -eq $machine -or $unknownAllowed
     if (-not $compatible) {
         return [pscustomobject][ordered]@{ Artifact=$Artifact; Eligible=$false; ReasonCode='ArchitectureIncompatible'; Reason='Artifact architecture is incompatible with the target machine.'; Format=$format; Architecture=$architecture }
     }
