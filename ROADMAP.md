@@ -34,15 +34,19 @@ Core provider boundary.
 - 4G: Integrate provider discovery with the update-decision pipeline.
 - 4H: Lock Phase 4 architecture and documentation.
 
-Phase 4 ends at a structured, explainable update decision. It does not download
-artifacts, verify downloaded bytes or signatures, select installers, or execute
-installation. Those responsibilities belong to later phases.
+**Status: Complete and locked.** Phase 4 ends at a structured, explainable update decision. It does not download artifacts, verify downloaded bytes or signatures, select installers, or execute installation.
 
 ## Phase 5 — Download engine
 
-- Download selected artifacts through a controlled Core-owned boundary.
-- Apply download safety and destination policies.
-- Preserve recoverability and structured operation results.
+- 5A: Validate the download request input boundary.
+- 5B: Validate URI and destination safety.
+- 5C: Perform controlled Core-owned acquisition.
+- 5D: Define structured failure and recovery behavior.
+- 5E: Define the structured download-result/artifact handoff.
+- 5F: Integrate the selected Phase 4 artifact with the download boundary.
+- 5G: Audit and lock the Phase 5 architecture and documentation.
+
+**Status: Complete and locked.** Phase 5 acquires the selected Phase 4 artifact through a controlled Core-owned boundary, publishes only completed transfers, cleans partial downloads, and returns structured results. A successful download does not establish artifact trust or installation readiness.
 
 ## Phase 6 — Installer engine
 
