@@ -1,4 +1,4 @@
-# Phase 4E/4F Update Target Resolution Support Contract
+# Phase 4E Update Target Resolution Support Contract
 
 ## Purpose
 
@@ -6,9 +6,9 @@ This support contract composes the completed Phase 4C release-eligibility
 result with the completed Phase 4D artifact selector. It resolves the single best update target:
 an eligible release with one selectable artifact.
 
-It is deliberately not the final update-decision result. Phase 4E defines that
-result; the Phase 4F engine presents the resolved target, or the absence of
-one, as the structured decision consumed by later orchestration.
+It is deliberately not the final update-decision result. Phase 4E resolves the
+best update target; the Phase 4F engine presents the resolved target, or the
+absence of one, as the structured decision consumed by later orchestration.
 
 ## Inputs
 
@@ -58,5 +58,5 @@ The result contains:
 
 Target resolution answers: `Which eligible release and artifact form the best update target?`
 
-Phase 4E defines the final structured decision, and Phase 4F produces it.
-Downloading begins in Phase 5; installation begins in Phase 6.
+Phase 4E resolves the update target. Phase 4F produces the final structured
+decision. Downloading begins in Phase 5; installation begins in Phase 6.
