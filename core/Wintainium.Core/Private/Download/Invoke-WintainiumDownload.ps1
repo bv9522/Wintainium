@@ -22,44 +22,113 @@ function Invoke-WintainiumDownload {
     }
 
     try {
-        $response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
         try {
-            $response.EnsureSuccessStatusCode() | Out-Null
-            $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
-            try {
-                $fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
-                try {
-                    $stream.CopyToAsync($fileStream).GetAwaiter().GetResult()
-                }
-                finally {
-                    $fileStream.Dispose()
+            $response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+        }
+        catch {
+            return [pscustomobject][ordered]@{
+                Status = 'Failed'
+                FailureKind = 'Network'
+                Uri = $target.Uri
+                FileName = $target.FileName
+                DestinationPath = $target.DestinationPath
+                BytesWritten = 0
+                Retryable = $true
+                ErrorMessage = $_.Exception.Message
+            }
+        }
+
+        try {
+            if (-not $response.IsSuccessStatusCode) {
+                $retryable = [int]$response.StatusCode -ge 500 -or [int]$response.StatusCode -eq 408 -or [int]$response.StatusCode -eq 429
+                return [pscustomobject][ordered]@{
+                    Status = 'Failed'
+                    FailureKind = 'Http'
+                    Uri = $target.Uri
+                    FileName = $target.FileName
+                    DestinationPath = $target.DestinationPath
+                    BytesWritten = 0
+                    Retryable = $retryable
+                    ErrorMessage = "HTTP status $([int]$response.StatusCode) ($($response.ReasonPhrase))."
                 }
             }
-            finally {
-                $stream.Dispose()
+
+            try {
+                $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+                try {
+                    $fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+                    try {
+                        $stream.CopyToAsync($fileStream).GetAwaiter().GetResult()
+                    }
+                    finally {
+                        $fileStream.Dispose()
+                    }
+                }
+                finally {
+                    $stream.Dispose()
+                }
+            }
+            catch {
+                return [pscustomobject][ordered]@{
+                    Status = 'Failed'
+                    FailureKind = 'Transfer'
+                    Uri = $target.Uri
+                    FileName = $target.FileName
+                    DestinationPath = $target.DestinationPath
+                    BytesWritten = if (Test-Path -LiteralPath $temporaryPath) { [System.IO.FileInfo]::new($temporaryPath).Length } else { 0 }
+                    Retryable = $true
+                    ErrorMessage = $_.Exception.Message
+                }
             }
         }
         finally {
             $response.Dispose()
         }
 
-        [System.IO.File]::Move($temporaryPath, $target.DestinationPath)
+        if (Test-Path -LiteralPath $target.DestinationPath) {
+            return [pscustomobject][ordered]@{
+                Status = 'Failed'
+                FailureKind = 'DestinationExists'
+                Uri = $target.Uri
+                FileName = $target.FileName
+                DestinationPath = $target.DestinationPath
+                BytesWritten = 0
+                Retryable = $false
+                ErrorMessage = 'The destination file already exists.'
+            }
+        }
+
+        try {
+            [System.IO.File]::Move($temporaryPath, $target.DestinationPath)
+        }
+        catch {
+            return [pscustomobject][ordered]@{
+                Status = 'Failed'
+                FailureKind = 'DestinationWrite'
+                Uri = $target.Uri
+                FileName = $target.FileName
+                DestinationPath = $target.DestinationPath
+                BytesWritten = 0
+                Retryable = $true
+                ErrorMessage = $_.Exception.Message
+            }
+        }
 
         [pscustomobject][ordered]@{
             Status = 'Downloaded'
+            FailureKind = $null
             Uri = $target.Uri
             FileName = $target.FileName
             DestinationPath = $target.DestinationPath
             BytesWritten = [System.IO.FileInfo]::new($target.DestinationPath).Length
+            Retryable = $false
+            ErrorMessage = $null
         }
     }
-    catch {
+    finally {
         if (Test-Path -LiteralPath $temporaryPath) {
             Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
         }
-        throw
-    }
-    finally {
         if ($ownsClient) {
             $HttpClient.Dispose()
         }
