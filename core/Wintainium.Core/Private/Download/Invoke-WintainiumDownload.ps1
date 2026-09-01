@@ -6,7 +6,9 @@ function Invoke-WintainiumDownload {
         [Parameter(Mandatory)]
         [string]$DownloadRoot,
         [Parameter()]
-        [System.Net.Http.HttpClient]$HttpClient
+        [System.Net.Http.HttpClient]$HttpClient,
+        [Parameter()]
+        [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
     $target = Resolve-WintainiumDownloadTarget -DownloadRequest $DownloadRequest -DownloadRoot $DownloadRoot
@@ -19,7 +21,8 @@ function Invoke-WintainiumDownload {
     $ownsClient = $null -eq $HttpClient
     if ($ownsClient) { $HttpClient = [System.Net.Http.HttpClient]::new() }
     try {
-        try { $response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult() }
+        try { $response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $CancellationToken).GetAwaiter().GetResult() }
+        catch [System.OperationCanceledException] { return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$false; ErrorMessage='The download was cancelled.' } }
         catch { return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Network'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$true; ErrorMessage=$_.Exception.Message } }
         try {
             if (-not $response.IsSuccessStatusCode) {
@@ -27,13 +30,14 @@ function Invoke-WintainiumDownload {
                 return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Http'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$retryable; ErrorMessage="HTTP status $([int]$response.StatusCode) ($($response.ReasonPhrase))." }
             }
             try {
-                $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+                $stream = $response.Content.ReadAsStreamAsync($CancellationToken).GetAwaiter().GetResult()
                 try {
                     $fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
-                    try { $stream.CopyToAsync($fileStream).GetAwaiter().GetResult() }
+                    try { $stream.CopyToAsync($fileStream, $CancellationToken).GetAwaiter().GetResult() }
                     finally { $fileStream.Dispose() }
                 } finally { $stream.Dispose() }
             }
+            catch [System.OperationCanceledException] { return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=if (Test-Path -LiteralPath $temporaryPath) { [System.IO.FileInfo]::new($temporaryPath).Length } else { 0 }; Retryable=$false; ErrorMessage='The download was cancelled.' } }
             catch { return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Transfer'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=if (Test-Path -LiteralPath $temporaryPath) { [System.IO.FileInfo]::new($temporaryPath).Length } else { 0 }; Retryable=$true; ErrorMessage=$_.Exception.Message } }
         } finally { $response.Dispose() }
         try { [System.IO.File]::Move($temporaryPath, $target.DestinationPath) }
