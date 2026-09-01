@@ -31,10 +31,11 @@ Describe 'Phase 5 download result handoff' {
     BeforeEach {
         $root = Join-Path $TestDrive ([guid]::NewGuid().ToString())
         $artifact = [pscustomobject]@{ Uri='https://example.com/releases/Wintainium-1.2.3-x64.zip'; FileName='Wintainium-1.2.3-x64.zip' }
-        $request = [pscustomobject]@{ SelectedArtifact=$artifact }
+        $operationId = [guid]::NewGuid().Guid
+        $request = [pscustomobject]@{ OperationId=$operationId; SelectedArtifact=$artifact }
     }
 
-    It 'returns a stable success result containing the completed local artifact location' {
+    It 'returns a stable success result containing the completed local artifact location and correlation id' {
         $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
         $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('artifact bytes'))
         $handler = [Wintainium.Tests.ResultHandoffHttpHandler]::new($response)
@@ -48,6 +49,7 @@ Describe 'Phase 5 download result handoff' {
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
             }
 
+            $result.PSObject.Properties.Name | Should -Contain 'OperationId'
             $result.PSObject.Properties.Name | Should -Contain 'Status'
             $result.PSObject.Properties.Name | Should -Contain 'FailureKind'
             $result.PSObject.Properties.Name | Should -Contain 'Uri'
@@ -56,6 +58,7 @@ Describe 'Phase 5 download result handoff' {
             $result.PSObject.Properties.Name | Should -Contain 'BytesWritten'
             $result.PSObject.Properties.Name | Should -Contain 'Retryable'
             $result.PSObject.Properties.Name | Should -Contain 'ErrorMessage'
+            $result.OperationId | Should -Be $operationId
             $result.Status | Should -Be 'Downloaded'
             $result.FailureKind | Should -BeNullOrEmpty
             $result.Uri | Should -Be $artifact.Uri
@@ -82,6 +85,7 @@ Describe 'Phase 5 download result handoff' {
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
             }
 
+            $result.OperationId | Should -Be $operationId
             $result.Status | Should -Be 'Failed'
             $result.FailureKind | Should -Be 'Http'
             $result.Uri | Should -Be $artifact.Uri
