@@ -275,3 +275,22 @@ plugin without changing the Core provider operation boundary solely because of
 that source's transport or API.
 
 **Status:** Accepted
+
+## Decision #022: Core Owns Deterministic Update Decisions
+
+**Decision:** Phase 4 consumes validated manifest policy, installed state, and
+normalized provider observations to produce a structured, provider-independent
+update decision. It retains eligibility and target-resolution observations for
+auditing and user explanation. Unknown ordering and unavailable information
+produce structured indeterminate outcomes; Core does not guess.
+
+**Reason:** Provider plugins remain replaceable discovery mechanisms. Letting a
+provider decide whether or how an application updates would introduce
+application-specific policy into an untrusted upstream boundary and make the
+result inconsistent across sources.
+
+**Constraints:** Phase 4 selects no execution authority. It must not download
+artifacts, verify downloaded bytes, select an installer, or install software.
+Phase 5 owns secure acquisition; Phase 6 owns installation.
+
+**Status:** Accepted

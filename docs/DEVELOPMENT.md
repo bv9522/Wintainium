@@ -67,9 +67,12 @@ Phase 3 establishes provider resolution, the fixed provider operation boundary,
 the reusable offline provider contract harness, and the first real reference
 provider.
 
-Phase 4 and later phases will own update decisions, downloading, installation,
-and managed-application lifecycle orchestration. Do not pull those
-responsibilities backward into the Phase 3 provider contract.
+Phase 4 is the locked update-decision boundary. It consumes installed state,
+manifest policy, and completed provider results to return a deterministic,
+explainable structured decision and an optional selected release/artifact.
+Providers discover; Core decides. Phase 4 never downloads, verifies bytes,
+chooses installers, or installs software. Those responsibilities begin in
+Phases 5 and 6; lifecycle orchestration begins in Phase 7.
 
 ## Approved baseline
 

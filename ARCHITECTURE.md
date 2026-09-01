@@ -185,3 +185,20 @@ The Manifest Engine does not perform release discovery, downloading,
 installation, or update decisions. Provider release/artifact discovery begins
 at Phase 3. Update decisions belong to Phase 4; downloading to Phase 5;
 installation to Phase 6; and lifecycle orchestration to Phase 7.
+
+### Phase 4 update determination (locked)
+
+Phase 4 converts validated manifest policy, installed application state, and a
+completed normalized provider result into a deterministic, explainable update
+decision. Core owns version comparison, release eligibility, artifact
+selection, target resolution, and the final structured result.
+
+Providers discover upstream releases and artifacts; they do not make
+application-specific update decisions. Provider metadata remains untrusted
+observation data throughout Phase 4. Ambiguous ordering, unavailable provider
+data, and incompatible artifacts are represented as structured outcomes rather
+than guessed selections.
+
+Phase 4 decides **what** update target, if any, should be considered. It does
+not download data, verify downloaded bytes, choose an installer, or execute an
+installation. Those responsibilities begin in Phases 5 and 6.
