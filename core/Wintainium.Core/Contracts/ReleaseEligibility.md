@@ -8,30 +8,32 @@ It consumes validated Phase 4 inputs and the Phase 4B version-comparison contrac
 
 ## Eligibility Rules
 
-A release is eligible only when all applicable policy and compatibility checks pass:
+A release is eligible only when all applicable policy checks pass:
 
 - The release channel is permitted by the manifest's `release.channel` policy.
-- Stable policy does not admit prereleases unless the manifest explicitly permits them.
-- A deprecated release is not eligible.
-- If an installed architecture and release architecture are both known, they must be compatible.
-- A release must not be selected as a downgrade.
+- Stable policy admits stable releases only.
+- Prerelease policy admits prerelease releases only.
+- `any` admits both stable and prerelease releases.
+- A deprecated release is not eligible when the provider explicitly marks it deprecated.
 - When installed and release versions are comparable, only a release greater than the installed version may compete for an update.
-- An unknown version comparison does not establish eligibility.
-- Missing or malformed provider metadata does not get guessed into eligibility.
+- Equal versions are not updates.
+- Lower versions are never selected as downgrades.
+- Unknown or incompatible version comparisons do not establish eligibility.
+- Missing or malformed release metadata does not get guessed into eligibility.
 
 ## Channel Policy
 
 `stable` admits stable releases only.
 
-`prerelease` admits prerelease releases. A prerelease policy does not silently convert an unavailable or unknown channel into stable.
+`prerelease` admits prerelease releases only. It does not silently convert an unknown channel into stable.
 
 `any` admits both stable and prerelease releases.
 
 Provider channel values are normalized before policy evaluation. Unknown channel values are treated as insufficient metadata rather than guessed.
 
-## Architecture
+## Release State
 
-Architecture compatibility is evaluated conservatively. Known incompatible architectures are rejected. Unknown architecture is not silently treated as compatible unless the manifest's artifact policy explicitly permits unknown architecture; artifact-level compatibility remains a separate Phase 4D concern.
+Provider metadata remains untrusted source metadata. A provider-supplied deprecation marker may be used as a release eligibility input, but it is not a trust decision and does not authorize execution of the release.
 
 ## Result
 
@@ -43,7 +45,7 @@ Each release receives a structured eligibility observation containing:
 - human-readable `Reason`
 - version comparison outcome where applicable
 
-The operation also returns the eligible releases in deterministic input order. It does not select the final release target; final update determination remains a later Phase 4 stage.
+The collection operation returns eligible releases in deterministic input order while retaining all observations, including rejected releases. It does not select the final release target; final update determination remains a later Phase 4 stage.
 
 ## Phase Boundary
 
