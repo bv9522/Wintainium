@@ -37,6 +37,34 @@ namespace Wintainium.Tests
             return Task.FromResult(_stream);
         }
     }
+
+    public sealed class FailingReadStream : MemoryStream
+    {
+        private readonly int _maximumBytes;
+
+        public FailingReadStream(byte[] buffer, int maximumBytes) : base(buffer)
+        {
+            _maximumBytes = maximumBytes;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (Position >= _maximumBytes)
+                throw new IOException("Simulated transfer interruption.");
+
+            var allowed = Math.Min(count, _maximumBytes - (int)Position);
+            return base.Read(buffer, offset, allowed);
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (Position >= _maximumBytes)
+                throw new IOException("Simulated transfer interruption.");
+
+            var allowed = Math.Min(buffer.Length, _maximumBytes - (int)Position);
+            return base.ReadAsync(buffer.Slice(0, allowed), cancellationToken);
+        }
+    }
 }
 '@
 }
@@ -45,16 +73,6 @@ class TestDownloadHandler : System.Net.Http.HttpMessageHandler {
     [System.Net.Http.HttpResponseMessage] $Response
     TestDownloadHandler([System.Net.Http.HttpResponseMessage] $response) { $this.Response = $response }
     [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync([System.Net.Http.HttpRequestMessage] $request, [System.Threading.CancellationToken] $cancellationToken) { return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response) }
-}
-
-class FailingReadStream : System.IO.MemoryStream {
-    [int] $MaximumBytes
-    FailingReadStream([byte[]] $buffer, [int] $maximumBytes) : base($buffer) { $this.MaximumBytes = $maximumBytes }
-    [int] Read([byte[]] $buffer, [int] $offset, [int] $count) {
-        if ($this.Position -ge $this.MaximumBytes) { throw [System.IO.IOException]::new('Simulated transfer interruption.') }
-        $allowed = [Math]::Min($count, $this.MaximumBytes - [int]$this.Position)
-        return ([System.IO.Stream]$this).Read($buffer, $offset, $allowed)
-    }
 }
 
 Describe 'Invoke-WintainiumDownload' {
@@ -79,7 +97,7 @@ Describe 'Invoke-WintainiumDownload' {
         try { $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client} { param($Request,$Root,$Client); Mock Resolve-WintainiumDownloadTarget { [pscustomobject]@{Uri=$Request.SelectedArtifact.Uri;DownloadRoot=$Root;FileName=$Request.SelectedArtifact.FileName;DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName} }; Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client }; $result.Status|Should -Be 'Failed'; $result.FailureKind|Should -Be 'DestinationExists'; $result.Retryable|Should -BeFalse; [System.IO.File]::ReadAllText($destination)|Should -Be 'existing artifact'; Get-ChildItem -LiteralPath $root -File | Where-Object Name -ne $request.SelectedArtifact.FileName | Should -BeNullOrEmpty } finally { $client.Dispose(); $response.Dispose() }
     }
     It 'classifies an interrupted transfer as retryable and removes the partial temporary file' {
-        $payload=[System.Text.Encoding]::UTF8.GetBytes('partial artifact content'); $stream=[FailingReadStream]::new($payload,7); $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK); $response.Content=[Wintainium.Tests.TestStreamContent]::new($stream); $handler=[TestDownloadHandler]::new($response); $client=[System.Net.Http.HttpClient]::new($handler)
+        $payload=[System.Text.Encoding]::UTF8.GetBytes('partial artifact content'); $stream=[Wintainium.Tests.FailingReadStream]::new($payload,7); $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK); $response.Content=[Wintainium.Tests.TestStreamContent]::new($stream); $handler=[TestDownloadHandler]::new($response); $client=[System.Net.Http.HttpClient]::new($handler)
         try { $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client} { param($Request,$Root,$Client); Mock Resolve-WintainiumDownloadTarget { [pscustomobject]@{Uri=$Request.SelectedArtifact.Uri;DownloadRoot=$Root;FileName=$Request.SelectedArtifact.FileName;DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName} }; Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client }; $result.Status|Should -Be 'Failed'; $result.FailureKind|Should -Be 'Transfer'; $result.Retryable|Should -BeTrue; $result.BytesWritten|Should -BeGreaterThan 0; Test-Path -LiteralPath $result.DestinationPath|Should -BeFalse; Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue|Should -BeNullOrEmpty } finally { $client.Dispose(); $response.Dispose(); $stream.Dispose() }
     }
     It 'classifies a cancelled download as non-retryable and removes temporary output' {
