@@ -20,9 +20,9 @@ class FailingReadStream : System.IO.MemoryStream {
 class TestStreamContent : System.Net.Http.HttpContent {
     [System.IO.Stream] $Stream
     TestStreamContent([System.IO.Stream] $stream) { $this.Stream = $stream }
-    protected override [System.Threading.Tasks.Task] SerializeToStreamAsync([System.IO.Stream] $stream, System.Net.Http.TransportContext $context) { return [System.Threading.Tasks.Task]::CompletedTask }
-    protected override [bool] TryComputeLength([ref long] $length) { $length = -1; return $false }
-    protected override [System.Threading.Tasks.Task[System.IO.Stream]] CreateContentReadStreamAsync() { return [System.Threading.Tasks.Task[System.IO.Stream]]::FromResult($this.Stream) }
+    [System.Threading.Tasks.Task] SerializeToStreamAsync([System.IO.Stream] $stream, System.Net.Http.TransportContext $context) { return [System.Threading.Tasks.Task]::CompletedTask }
+    [bool] TryComputeLength([ref long] $length) { $length = -1; return $false }
+    [System.Threading.Tasks.Task[System.IO.Stream]] CreateContentReadStreamAsync() { return [System.Threading.Tasks.Task[System.IO.Stream]]::FromResult($this.Stream) }
 }
 
 Describe 'Invoke-WintainiumDownload' {
