@@ -25,4 +25,12 @@ Describe 'Invoke-WintainiumDownload' {
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root
             } } | Should -Throw '*HTTPS is required*'
     }
+
+    It 'does not expose installer or execution parameters at the download boundary' {
+        $parameters = InModuleScope Wintainium.Core {
+            (Get-Command Invoke-WintainiumDownload -CommandType Function).Parameters.Keys
+        }
+        $parameters | Should -Not -Contain 'Installer'
+        $parameters | Should -Not -Contain 'Execute'
+    }
 }
