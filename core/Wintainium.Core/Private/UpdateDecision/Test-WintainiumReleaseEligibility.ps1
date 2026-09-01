@@ -40,7 +40,10 @@ function Test-WintainiumReleaseEligibility {
 
     $installedObservation = New-WintainiumVersionObservation -Version $installedVersion
     $releaseObservation = New-WintainiumVersionObservation -Version $releaseVersion
-    $comparison = Compare-WintainiumVersion -Left $installedObservation -Right $releaseObservation
+
+    # Compare the candidate release against the installed version. A candidate is
+    # newer when Release > Installed, which is represented by 'Greater'.
+    $comparison = Compare-WintainiumVersion -Left $releaseObservation -Right $installedObservation
 
     if ($comparison.Comparison -ne 'Greater') {
         $reasonCode = switch ($comparison.Comparison) {
