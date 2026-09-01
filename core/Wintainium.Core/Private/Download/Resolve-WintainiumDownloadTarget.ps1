@@ -38,6 +38,18 @@ function Resolve-WintainiumDownloadTarget {
         throw [System.ArgumentException]::new('HTTP download URIs are not permitted; HTTPS is required.')
     }
 
+    if ([string]::IsNullOrWhiteSpace($uri.Host)) {
+        throw [System.ArgumentException]::new('Download URI must contain a host.')
+    }
+
+    if (-not [string]::IsNullOrEmpty($uri.UserInfo)) {
+        throw [System.ArgumentException]::new('Download URI user information is not permitted.')
+    }
+
+    if (-not [string]::IsNullOrEmpty($uri.Fragment)) {
+        throw [System.ArgumentException]::new('Download URI fragments are not permitted.')
+    }
+
     $rawName = $null
     if ($artifact.PSObject.Properties['FileName']) {
         $rawName = [string]$artifact.FileName
@@ -52,6 +64,10 @@ function Resolve-WintainiumDownloadTarget {
 
     if ($rawName.Contains('/') -or $rawName.Contains('\') -or [System.IO.Path]::IsPathRooted($rawName)) {
         throw [System.ArgumentException]::new('Artifact filename must be a single filename and cannot contain path components.')
+    }
+
+    if ($rawName.EndsWith(' ') -or $rawName.EndsWith('.')) {
+        throw [System.ArgumentException]::new('Artifact filename cannot end with a space or period on Windows.')
     }
 
     if ($rawName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) {
