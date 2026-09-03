@@ -52,13 +52,11 @@ function Test-WintainiumPluginDescriptor {
             }
         }
 
-        if ($descriptor.pluginType -eq 'Installer' -and (
-                -not $descriptor.ContainsKey('capabilities') -or
-                $descriptor.capabilities -isnot [System.Collections.IDictionary] -or
-                -not $descriptor.capabilities.ContainsKey('supportedFormats') -or
-                @($descriptor.capabilities.supportedFormats).Count -eq 0
-            )) {
-            $errors.Add([pscustomobject]@{ Code = 'DescriptorInstallerFormatsMissing'; Message = 'Installer descriptors require capabilities.supportedFormats.' })
+        if ($descriptor.pluginType -eq 'Installer' -and $descriptor.capabilities -is [System.Collections.IDictionary]) {
+            $installerResult = Test-WintainiumInstallerDescriptor -Descriptor $descriptor
+            foreach ($installerError in @($installerResult.Errors)) {
+                $errors.Add($installerError)
+            }
         }
     }
 
