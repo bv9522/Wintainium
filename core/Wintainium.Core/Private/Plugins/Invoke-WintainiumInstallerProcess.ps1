@@ -74,15 +74,28 @@ function Invoke-WintainiumInstallerProcess {
         $timedOut = $false
         $cancelled = $false
         $timeoutTask = [System.Threading.Tasks.Task]::Delay($TimeoutMilliseconds)
+        $processExitTask = $process.WaitForExitAsync()
         try {
             if ($CancellationToken.CanBeCanceled) {
                 $cancelTask = [System.Threading.Tasks.Task]::Delay([System.Threading.Timeout]::Infinite, $CancellationToken)
-                $completedTask = [System.Threading.Tasks.Task]::WhenAny($process.WaitForExitAsync(), $timeoutTask, $cancelTask).GetAwaiter().GetResult()
-                if ($completedTask -eq $timeoutTask) { $timedOut = $true }
-                elseif ($completedTask -eq $cancelTask) { $cancelled = $true }
+                $completedTask = [System.Threading.Tasks.Task]::WhenAny($processExitTask, $timeoutTask, $cancelTask).GetAwaiter().GetResult()
+                if ($completedTask -eq $processExitTask) {
+                    # Normal process completion wins over a simultaneously completing
+                    # timeout/cancellation task. Once the process has exited, do not
+                    # reclassify the completed invocation as interrupted.
+                } elseif ($completedTask -eq $timeoutTask) {
+                    $timedOut = $true
+                } elseif ($completedTask -eq $cancelTask) {
+                    $cancelled = $true
+                }
             } else {
-                $completedTask = [System.Threading.Tasks.Task]::WhenAny($process.WaitForExitAsync(), $timeoutTask).GetAwaiter().GetResult()
-                if ($completedTask -eq $timeoutTask) { $timedOut = $true }
+                $completedTask = [System.Threading.Tasks.Task]::WhenAny($processExitTask, $timeoutTask).GetAwaiter().GetResult()
+                if ($completedTask -eq $processExitTask) {
+                    # Normal process completion wins over a simultaneously completing
+                    # timeout task.
+                } else {
+                    $timedOut = $true
+                }
             }
         } finally {
             if (($timedOut -or $cancelled) -and -not $process.HasExited) {
