@@ -21,6 +21,8 @@ The process is created with `UseShellExecute = false`, redirected standard outpu
 
 Relative executable paths, missing executables, invalid working directories, and invalid environment-variable names are rejected before process creation.
 
+A cancellation token that is already signaled is honored before process creation. Wintainium does not launch an installer when the operation has already been cancelled.
+
 No `cmd.exe /c`, PowerShell `Invoke-Expression`, shell operators, pipelines, redirection syntax, or implicit executable discovery is used by this boundary.
 
 ## Lifecycle semantics
@@ -32,7 +34,9 @@ The process lifecycle has four terminal outcomes:
 - `Failed` with `FailureKind = Timeout` — the configured timeout elapsed before normal completion; or
 - `Failed` with `FailureKind = Cancelled` — the supplied cancellation token was signaled before normal completion.
 
-A process that times out or is cancelled is terminated through the process API, including its process tree where supported by the runtime. Wintainium does not leave a timed-out installer process running in the background.
+A process that times out or is cancelled is terminated through the process API, including its process tree where supported by the runtime. Wintainium does not leave a timed-out or cancelled installer process running in the background.
+
+When normal process completion and a timeout/cancellation signal become observable at the same lifecycle boundary, normal process completion wins. Once the process has completed, Wintainium does not reclassify that invocation as interrupted.
 
 Process-start failures return `FailureKind = ProcessStart` and never report an exit code.
 
@@ -48,7 +52,7 @@ Every terminal result contains:
 - `DurationMilliseconds`; and
 - `ErrorMessage` when a Core-owned failure description is available.
 
-Standard output and standard error are captured independently so installer diagnostics are not discarded.
+Standard output and standard error are captured independently so installer diagnostics are not discarded. After the process reaches a terminal lifecycle state, Wintainium waits for process completion and drains both output streams before returning the result.
 
 ## Security boundary
 
