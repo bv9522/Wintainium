@@ -17,10 +17,13 @@ The selected installer plugin is authoritative for its declared entry point. Cor
 A valid invocation must provide:
 
 - a successful installer selection;
+- a selected installer plugin with a non-empty `PluginId`;
+- an installer request whose declared `pluginId` matches the selected plugin identifier case-insensitively;
 - a selected installer plugin with an `entryPoint`;
-- an absolute descriptor path for the selected plugin;
+- an absolute descriptor path for the selected plugin, and an existing descriptor file;
 - a relative `.psm1` entry point that remains within the plugin directory;
-- an existing completed artifact file; and
+- an existing completed artifact file;
+- a non-empty artifact format selected by Phase 6C; and
 - structured installer settings.
 
 The plugin entry point is resolved relative to the plugin descriptor directory. Absolute paths, parent-directory traversal, and non-`.psm1` entry points are rejected.
