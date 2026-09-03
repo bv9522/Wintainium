@@ -56,9 +56,12 @@ Describe 'Wintainium installer invocation preparation' {
         }
 
         $result.IsValid | Should -Be $true
+        $result.Invocation.OperationId | Should -Be 'installer-operation'
+        $result.Invocation.DownloadOperationId | Should -Be 'download-operation'
         $result.Invocation.PluginId | Should -Be 'Wintainium.installer.exe'
         $result.Invocation.PluginModulePath | Should -Be (Join-Path $script:pluginRoot 'Installer.psm1')
         $result.Invocation.ArtifactPath | Should -Be (Join-Path $script:pluginRoot 'artifact.exe')
+        $result.Invocation.ArtifactFormat | Should -Be 'exe'
         $result.Invocation.Settings.silent | Should -Be $true
         $result.Error | Should -Be $null
     }
@@ -82,6 +85,15 @@ Describe 'Wintainium installer invocation preparation' {
         $result.Error.Code | Should -Be 'InstallerInvocationPluginMissing'
     }
 
+    It 'requires the completed artifact handoff' {
+        $request = [pscustomobject][ordered]@{ OperationId = 'installer-operation'; DownloadOperationId = 'download-operation'; Installer = $script:request.Installer; Artifact = $null }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.Error.Code | Should -Be 'InstallerInvocationArtifactMissing'
+    }
+
     It 'rejects an installer plugin without an entry point' {
         $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.exe'; DescriptorPath = $script:descriptorPath }
         $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; ArtifactFormat = 'exe'; Error = $null }
@@ -90,6 +102,16 @@ Describe 'Wintainium installer invocation preparation' {
         }
 
         $result.Error.Code | Should -Be 'InstallerInvocationEntryPointMissing'
+    }
+
+    It 'rejects a plugin without an absolute descriptor path' {
+        $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.exe'; EntryPoint = 'Installer.psm1'; DescriptorPath = 'plugin.json' }
+        $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; ArtifactFormat = 'exe'; Error = $null }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $script:request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.Error.Code | Should -Be 'InstallerInvocationDescriptorPathInvalid'
     }
 
     It 'rejects absolute or traversal entry points' {
@@ -138,5 +160,35 @@ Describe 'Wintainium installer invocation preparation' {
         }
 
         $result.Error.Code | Should -Be 'InstallerInvocationArtifactPathInvalid'
+    }
+
+    It 'rejects unstructured installer settings' {
+        $request = [pscustomobject][ordered]@{
+            OperationId = 'installer-operation'
+            DownloadOperationId = 'download-operation'
+            Installer = [pscustomobject][ordered]@{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '1'
+                settings = 'silent'
+            }
+            Artifact = $script:request.Artifact
+        }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.Error.Code | Should -Be 'InstallerInvocationSettingsInvalid'
+    }
+
+    It 'does not execute the installer module while preparing the invocation' {
+        $markerPath = Join-Path $script:pluginRoot 'execution-marker.txt'
+        Set-Content -LiteralPath (Join-Path $script:pluginRoot 'Installer.psm1') -Value "Set-Content -LiteralPath '$markerPath' -Value 'executed'" -Encoding utf8
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $script:request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.IsValid | Should -Be $true
+        Test-Path -LiteralPath $markerPath | Should -Be $false
     }
 }
