@@ -39,34 +39,49 @@ function Test-WintainiumInstallerDescriptor {
             })
     }
     else {
-        if (-not $Descriptor.capabilities.ContainsKey('supportedFormats') -or
-            @($Descriptor.capabilities.supportedFormats).Count -eq 0) {
+        $rawFormats = $Descriptor.capabilities['supportedFormats']
+
+        if (-not $Descriptor.capabilities.ContainsKey('supportedFormats') -or $null -eq $rawFormats) {
             $errors.Add([pscustomobject]@{
                     Code = 'DescriptorInstallerFormatsMissing'
                     Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
                 })
         }
-        else {
-            $formats = @($Descriptor.capabilities.supportedFormats)
-            $invalidFormats = @($formats | Where-Object {
-                    $_ -isnot [string] -or
-                    $_.Trim().Length -eq 0 -or
-                    $_ -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._+-]*$'
+        elseif ($rawFormats -is [string] -or $rawFormats -is [System.Collections.IDictionary]) {
+            $errors.Add([pscustomobject]@{
+                    Code = 'DescriptorInstallerFormatsInvalid'
+                    Message = 'Installer supportedFormats must be an array of format identifier strings.'
                 })
-
-            if ($invalidFormats.Count -gt 0) {
+        }
+        else {
+            $formats = @($rawFormats)
+            if ($formats.Count -eq 0) {
                 $errors.Add([pscustomobject]@{
-                        Code = 'DescriptorInstallerFormatsInvalid'
-                        Message = 'Installer supportedFormats must contain non-empty format identifiers using letters, numbers, dot, underscore, plus, or hyphen.'
+                        Code = 'DescriptorInstallerFormatsMissing'
+                        Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
                     })
             }
-
-            $normalizedFormats = @($formats | ForEach-Object { $_.ToString().Trim().ToLowerInvariant() })
-            if ($normalizedFormats.Count -ne (@($normalizedFormats | Select-Object -Unique).Count)) {
-                $errors.Add([pscustomobject]@{
-                        Code = 'DescriptorInstallerFormatsDuplicate'
-                        Message = 'Installer supportedFormats must not contain duplicate identifiers.'
+            else {
+                $invalidFormats = @($formats | Where-Object {
+                        $_ -isnot [string] -or
+                        $_.Trim().Length -eq 0 -or
+                        $_ -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._+-]*$'
                     })
+
+                if ($invalidFormats.Count -gt 0) {
+                    $errors.Add([pscustomobject]@{
+                            Code = 'DescriptorInstallerFormatsInvalid'
+                            Message = 'Installer supportedFormats must contain non-empty format identifiers using letters, numbers, dot, underscore, plus, or hyphen.'
+                        })
+                }
+
+                $normalizedFormats = @($formats | ForEach-Object { $_.ToString().Trim().ToLowerInvariant() })
+                if ($normalizedFormats.Count -ne (@($normalizedFormats | Select-Object -Unique).Count)) {
+                    $errors.Add([pscustomobject]@{
+                            Code = 'DescriptorInstallerFormatsDuplicate'
+                            Message = 'Installer supportedFormats must not contain duplicate identifiers.'
+                        })
+                }
             }
         }
     }
