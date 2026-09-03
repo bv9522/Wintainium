@@ -2,54 +2,46 @@
 
 ## Purpose
 
-Phase 6D defines the Core-owned boundary that prepares a selected installer plugin for controlled process invocation.
+Phase 6D defines the Core-owned boundary that prepares a selected installer plugin for controlled invocation.
 
-The invocation contract is declarative and deterministic. It describes the executable, argument vector, working directory, environment overrides, and elevation policy required by a selected installer. It does not itself start a process.
+The invocation contract is declarative and deterministic. It identifies the validated installer plugin module, the completed artifact it will receive, and the structured installer settings it may consume. It does not itself execute the plugin or start the vendor installer.
 
 ## Inputs
 
 `New-WintainiumInstallerInvocation -Selection <InstallerSelection> -Request <InstallerRequest>` accepts the successful Phase 6C installer selection and the validated Phase 6A installer request.
 
-The selected installer plugin is authoritative for the invocation definition. Core does not infer installer commands from artifact filenames, formats, or executable contents.
+The selected installer plugin is authoritative for its declared entry point. Core does not infer installer commands from artifact filenames, formats, or executable contents.
 
 ## Invocation rules
 
 A valid invocation must provide:
 
-- an explicit executable path;
-- an explicit argument collection, which may be empty;
-- a valid working directory when one is supplied;
-- environment overrides as structured key/value data when supplied; and
-- an explicit elevation policy.
+- a successful installer selection;
+- a selected installer plugin with an `entryPoint`;
+- an absolute descriptor path for the selected plugin;
+- a relative `.psm1` entry point that remains within the plugin directory;
+- an existing completed artifact file; and
+- structured installer settings.
 
-The executable path must be absolute and resolve to an existing file. Relative executable paths are rejected.
+The plugin entry point is resolved relative to the plugin descriptor directory. Absolute paths, parent-directory traversal, and non-`.psm1` entry points are rejected.
 
-Arguments are represented as individual values rather than a single shell command line. Core does not invoke `cmd.exe`, PowerShell, or another shell as an implicit command interpreter.
-
-No arbitrary command text, shell operators, redirection, pipelines, or implicit execution behavior are accepted as an invocation boundary.
-
-Elevation is explicit. Phase 6D does not elevate implicitly and does not authorize elevation merely because an installer normally requires administrative rights.
+No arbitrary command text, shell operators, redirection, pipelines, or inferred executable instructions are accepted at this boundary.
 
 ## Result
 
 A successful invocation preparation returns:
 
-- `IsValid = true`;
-- `ExecutablePath`;
-- `Arguments`;
-- `WorkingDirectory`;
-- `Environment`;
-- `Elevation`; and
-- `Error = $null`.
+- `IsValid = true`; and
+- `Invocation` containing `OperationId`, `DownloadOperationId`, `PluginId`, `PluginModulePath`, `ArtifactPath`, `ArtifactFormat`, and `Settings`.
 
-A failed preparation returns `IsValid = false`, no executable invocation payload, and a structured error.
+A failed preparation returns `IsValid = false`, no invocation payload, and a structured error.
 
 ## Trust boundary
 
-Invocation preparation does **not** establish artifact authenticity, integrity, signature validity, trust, or safety. Those concerns remain separate from process execution policy.
+Invocation preparation does **not** establish artifact authenticity, integrity, signature validity, trust, or safety.
 
-Preparing an invocation also does not start the installer, wait for it, interpret its exit code, handle cancellation, or reconcile installed application state.
+Preparing an invocation also does not execute plugin code, start a vendor installer, wait for a process, interpret an exit code, handle cancellation, or reconcile installed application state.
 
 ## Phase boundary
 
-Phase 6C selects the applicable installer. Phase 6D prepares a constrained process invocation for that selected installer. Phase 6E owns process lifecycle, exit, timeout, and cancellation semantics. Later boundaries own structured installation results and state reconciliation.
+Phase 6C selects the applicable installer. Phase 6D prepares the constrained handoff to that installer's declared module entry point. Later Phase 6 boundaries govern execution/process lifecycle semantics and structured installation results.
