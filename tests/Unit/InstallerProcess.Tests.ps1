@@ -21,7 +21,7 @@ Describe 'Wintainium installer process lifecycle' {
     It 'preserves argument boundaries instead of constructing shell command text' {
         $argumentWithSpaces = 'value with spaces'
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath; Value = $argumentWithSpaces } {
-            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','param($value); Write-Output $value','--',$Value) -TimeoutMilliseconds 10000
+            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','Write-Output $args[0]',$Value) -TimeoutMilliseconds 10000
         }
         $result.Status | Should -Be 'Completed'
         $result.StandardOutput | Should -Match [regex]::Escape($argumentWithSpaces)
