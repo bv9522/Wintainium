@@ -13,7 +13,7 @@ function Select-WintainiumInstaller {
 
     $pluginId = $Manifest.installer.pluginId
     $requiredContractVersion = $Manifest.installer.requiredContractVersion
-    $artifactFormat = if ($Artifact.ContainsKey('format')) { [string]$Artifact.format } else { $null }
+    $artifactFormat = if ($Artifact.Contains('format')) { [string]$Artifact['format'] } else { $null }
 
     if ([string]::IsNullOrWhiteSpace($artifactFormat)) {
         return [pscustomobject][ordered]@{
@@ -37,9 +37,14 @@ function Select-WintainiumInstaller {
         }
     }
 
-    $supportedFormats = @($resolution.Plugin.Capabilities['supportedFormats'] | ForEach-Object {
-            if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
-        })
+    $capabilities = $resolution.Plugin.Capabilities
+    $supportedFormats = @()
+    if ($capabilities -is [System.Collections.IDictionary] -and $capabilities.Contains('supportedFormats')) {
+        $supportedFormats = @($capabilities['supportedFormats'] | ForEach-Object {
+                if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
+            })
+    }
+
     $normalizedArtifactFormat = $artifactFormat.Trim().ToLowerInvariant()
 
     if ($supportedFormats -notcontains $normalizedArtifactFormat) {
