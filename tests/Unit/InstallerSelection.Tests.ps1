@@ -86,11 +86,16 @@ Describe 'Wintainium installer selection' {
     }
 
     It 'requires the manifest installer contract version to be registered' {
-        $manifest = $script:manifest.Clone()
-        $manifest.installer = [ordered]@{
-            pluginId = 'Wintainium.installer.exe'
-            requiredContractVersion = '2'
-            settings = [ordered]@{}
+        $manifest = [ordered]@{
+            installer = [ordered]@{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '2'
+                settings = [ordered]@{}
+            }
+            artifact = [ordered]@{
+                formats = @('exe')
+                architectures = @('x64')
+            }
         }
         $artifact = [ordered]@{ format = 'exe' }
         $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $manifest; Artifact = $artifact; Plugins = @($script:exePlugin) } {
