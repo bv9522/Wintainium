@@ -42,7 +42,11 @@ See `ProviderContract.md` for the complete Phase 3 provider contract.
 
 ## Installer descriptors
 
-Installer descriptors must declare `capabilities.supportedFormats`.
+Installer Contract Version 1 requires `capabilities.supportedFormats` to be a
+non-empty JSON array of unique, non-empty string format identifiers. Core
+validates the identifier shape but intentionally does not maintain a universal
+format allowlist.
 
-Future phases may add validated plugin-owned settings schemas without
-changing the provider/installer separation.
+Installer descriptor validation is declarative and does not load installer
+behavior or execute an artifact. See `InstallerDescriptor.md` for the complete
+Phase 6B installer descriptor and capability contract.
