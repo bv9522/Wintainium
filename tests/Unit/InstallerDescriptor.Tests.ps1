@@ -40,7 +40,7 @@ Describe 'Wintainium installer descriptor contract' {
 
     It 'rejects an empty supported format' {
         $descriptorPath = Join-Path -Path $script:installerContractFixtureRoot -ChildPath 'EmptyFormat/plugin.json'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $Path } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
 
@@ -76,5 +76,15 @@ Describe 'Wintainium installer descriptor contract' {
 
         $result.IsValid | Should -Be $false
         @($result.Errors.Code) | Should -Contain 'DescriptorInstallerFormatsMissing'
+    }
+
+    It 'rejects a scalar supportedFormats value instead of an array' {
+        $descriptorPath = Join-Path -Path $script:installerContractFixtureRoot -ChildPath 'ScalarFormat/plugin.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
+        }
+
+        $result.IsValid | Should -Be $false
+        @($result.Errors.Code) | Should -Contain 'DescriptorInstallerFormatsInvalid'
     }
 }
