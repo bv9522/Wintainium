@@ -24,7 +24,7 @@ Describe 'Wintainium installer process lifecycle' {
             Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-CommandWithArgs','Write-Output $args[0]',$Value) -TimeoutMilliseconds 10000
         }
         $result.Status | Should -Be 'Completed'
-        $result.StandardOutput | Should -Match [regex]::Escape($argumentWithSpaces)
+        $result.StandardOutput.Trim() | Should -Be $argumentWithSpaces
     }
     It 'captures standard error and reports a non-zero exit code' {
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
