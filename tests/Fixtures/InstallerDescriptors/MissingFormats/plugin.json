@@ -1,0 +1,6 @@
+{
+  "pluginId": "Wintainium.installer.missing-format",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {}
+}

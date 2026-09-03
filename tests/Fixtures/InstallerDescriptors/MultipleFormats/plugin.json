@@ -1,0 +1,8 @@
+{
+  "pluginId": "Wintainium.installer.multi-format",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedFormats": ["exe", "msi"]
+  }
+}

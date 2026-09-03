@@ -1,0 +1,8 @@
+{
+  "pluginId": "Wintainium.installer.non-string",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedFormats": ["exe", 7]
+  }
+}
