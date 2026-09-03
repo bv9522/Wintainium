@@ -28,8 +28,8 @@ function Invoke-WintainiumInstallerProcess {
     }
 
     $resolvedWorkingDirectory = $null
-    if ($null -ne $WorkingDirectory) {
-        if ([string]::IsNullOrWhiteSpace($WorkingDirectory) -or -not [System.IO.Path]::IsPathFullyQualified($WorkingDirectory)) {
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        if (-not [System.IO.Path]::IsPathFullyQualified($WorkingDirectory)) {
             return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='WorkingDirectoryInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The working directory must be an absolute path when supplied.' }
         }
         $resolvedWorkingDirectory = [System.IO.Path]::GetFullPath($WorkingDirectory)
