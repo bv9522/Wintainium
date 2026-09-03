@@ -40,7 +40,7 @@ Describe 'Wintainium installer descriptor contract' {
 
     It 'rejects an empty supported format' {
         $descriptorPath = Join-Path -Path $script:installerContractFixtureRoot -ChildPath 'EmptyFormat/plugin.json'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $Path } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
             Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
 
