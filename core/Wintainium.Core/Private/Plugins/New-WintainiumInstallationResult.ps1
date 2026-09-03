@@ -1,8 +1,8 @@
 function New-WintainiumInstallationResult {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [psobject]$Invocation,
-        [Parameter(Mandatory)] [psobject]$ProcessResult
+        [Parameter(Mandatory)] [AllowNull()] [psobject]$Invocation,
+        [Parameter(Mandatory)] [AllowNull()] [psobject]$ProcessResult
     )
 
     if ($null -eq $Invocation) {
