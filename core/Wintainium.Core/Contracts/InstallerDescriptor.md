@@ -15,9 +15,7 @@ An installer descriptor must contain:
 - `contractVersions` — one or more positive major installer contract versions;
 - `capabilities` — an object containing `supportedFormats`.
 
-`supportedFormats` must be a non-empty array of non-empty string format identifiers. Format identifiers are compared case-insensitively and are normalized to lowercase by the descriptor validation boundary.
-
-Format identifiers are intentionally extensible. Core validates their shape but does not maintain a universal list of installer formats.
+`supportedFormats` must be a non-empty JSON array of non-empty string format identifiers. Format identifiers are compared case-insensitively. Core validates their shape but does not maintain a universal list of installer formats.
 
 ## Capability semantics
 
@@ -38,7 +36,7 @@ Invalid installer descriptors are rejected when:
 - the plugin identity or type is invalid;
 - no compatible contract version is declared;
 - `capabilities` is not an object;
-- `supportedFormats` is missing or empty;
+- `supportedFormats` is missing, empty, or not an array;
 - a supported format is not a string;
 - a supported format is empty or malformed; or
 - duplicate supported formats are declared.
