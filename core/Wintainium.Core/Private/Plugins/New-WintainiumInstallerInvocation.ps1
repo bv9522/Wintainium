@@ -2,13 +2,13 @@ function New-WintainiumInstallerInvocation {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [System.Collections.IDictionary]$Selection,
+        [psobject]$Selection,
 
         [Parameter(Mandatory)]
-        [System.Collections.IDictionary]$Request
+        [psobject]$Request
     )
 
-    if (-not $Selection.Contains('IsSelected') -or $Selection.IsSelected -ne $true) {
+    if ($null -eq $Selection -or -not ($Selection.PSObject.Properties.Name -contains 'IsSelected') -or $Selection.IsSelected -ne $true) {
         return [pscustomobject][ordered]@{
             IsValid = $false
             Invocation = $null
@@ -19,7 +19,7 @@ function New-WintainiumInstallerInvocation {
         }
     }
 
-    if (-not $Selection.Contains('InstallerPlugin') -or $null -eq $Selection.InstallerPlugin) {
+    if (-not ($Selection.PSObject.Properties.Name -contains 'InstallerPlugin') -or $null -eq $Selection.InstallerPlugin) {
         return [pscustomobject][ordered]@{
             IsValid = $false
             Invocation = $null
@@ -30,7 +30,7 @@ function New-WintainiumInstallerInvocation {
         }
     }
 
-    if (-not $Request.Contains('Artifact') -or $null -eq $Request.Artifact) {
+    if ($null -eq $Request -or -not ($Request.PSObject.Properties.Name -contains 'Artifact') -or $null -eq $Request.Artifact) {
         return [pscustomobject][ordered]@{
             IsValid = $false
             Invocation = $null
@@ -109,7 +109,7 @@ function New-WintainiumInstallerInvocation {
     }
 
     $artifact = $Request.Artifact
-    $artifactPath = if ($artifact -is [System.Collections.IDictionary] -and $artifact.Contains('Path')) { [string]$artifact.Path } else { $null }
+    $artifactPath = if ($artifact.PSObject.Properties.Name -contains 'Path') { [string]$artifact.Path } else { $null }
     if ([string]::IsNullOrWhiteSpace($artifactPath) -or -not [System.IO.Path]::IsPathFullyQualified($artifactPath) -or -not (Test-Path -LiteralPath $artifactPath -PathType Leaf)) {
         return [pscustomobject][ordered]@{
             IsValid = $false
@@ -121,7 +121,8 @@ function New-WintainiumInstallerInvocation {
         }
     }
 
-    $settings = $Request.Installer.settings
+    $installer = if ($Request.PSObject.Properties.Name -contains 'Installer') { $Request.Installer } else { $null }
+    $settings = if ($null -ne $installer -and $installer.PSObject.Properties.Name -contains 'settings') { $installer.settings } else { $null }
     if ($null -eq $settings -or ($settings -isnot [System.Collections.IDictionary] -and $settings -isnot [pscustomobject])) {
         return [pscustomobject][ordered]@{
             IsValid = $false
