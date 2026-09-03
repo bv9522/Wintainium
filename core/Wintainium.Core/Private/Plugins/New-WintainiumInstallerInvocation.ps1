@@ -34,9 +34,10 @@ function New-WintainiumInstallerInvocation {
     if (-not (Test-Path -LiteralPath $descriptorPath -PathType Leaf)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorPathMissing'; Message = 'The selected installer plugin descriptor file was not found.' } }
     }
-    $entryPointHasDirectorySeparator = $entryPoint.IndexOfAny([char[]]@('\', '/')) -ge 0
-    if ([System.IO.Path]::IsPathFullyQualified($entryPoint) -or $entryPointHasDirectorySeparator -or $entryPoint -notmatch '^[^\/:*?"<>|]+\.psm1$') {
-        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationEntryPointInvalid'; Message = 'Installer entryPoint must be a relative .psm1 path without parent-directory traversal.' } }
+
+    $entryPointHasPathSeparator = $entryPoint.Contains([char]92) -or $entryPoint.Contains([char]47)
+    if ([System.IO.Path]::IsPathFullyQualified($entryPoint) -or $entryPointHasPathSeparator -or $entryPoint -notmatch '^[^:*?"<>|]+\.psm1$') {
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationEntryPointInvalid'; Message = 'Installer entryPoint must be a relative .psm1 file name without path separators or parent-directory traversal.' } }
     }
 
     $pluginRoot = Split-Path -Path $descriptorPath -Parent
