@@ -79,6 +79,21 @@ Describe 'Wintainium installer process lifecycle' {
         }
         finally { $cts.Dispose() }
     }
+    It 'does not launch a process when cancellation is already requested' {
+        $markerPath = Join-Path $script:tempRoot 'pre-cancelled-marker.txt'
+        $cts = [System.Threading.CancellationTokenSource]::new()
+        try {
+            $cts.Cancel()
+            $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath; Token = $cts.Token; MarkerPath = $markerPath } {
+                Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command',"[IO.File]::WriteAllText('$MarkerPath','started')") -CancellationToken $Token -TimeoutMilliseconds 10000
+            }
+            $result.Status | Should -Be 'Failed'
+            $result.FailureKind | Should -Be 'Cancelled'
+            $result.ExitCode | Should -Be $null
+            Test-Path -LiteralPath $markerPath | Should -BeFalse
+        }
+        finally { $cts.Dispose() }
+    }
     It 'does not classify an already completed process as cancelled when cancellation occurs later' {
         $cts = [System.Threading.CancellationTokenSource]::new()
         try {
