@@ -33,7 +33,10 @@ function Test-WintainiumPluginDescriptor {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorCapabilitiesInvalid'; Message = 'capabilities must be an object.' })
         }
 
-        if ($descriptor.pluginType -eq 'Provider') {
+        $pluginType = if ($descriptor.ContainsKey('pluginType')) { [string]$descriptor.pluginType } else { $null }
+        $capabilities = if ($descriptor.ContainsKey('capabilities') -and $descriptor.capabilities -is [System.Collections.IDictionary]) { $descriptor.capabilities } else { $null }
+
+        if ($pluginType -eq 'Provider') {
             if (-not $descriptor.ContainsKey('entryPoint') -or
                 $descriptor.entryPoint -isnot [string] -or
                 $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or
@@ -41,18 +44,18 @@ function Test-WintainiumPluginDescriptor {
                 $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderEntryPointInvalid'; Message = 'Provider descriptors require a relative .psm1 entryPoint without parent-directory traversal.' })
             }
 
-            if ($descriptor.capabilities -is [System.Collections.IDictionary]) {
-                if (-not $descriptor.capabilities.ContainsKey('releaseDiscovery') -or $descriptor.capabilities.releaseDiscovery -ne $true) {
+            if ($null -ne $capabilities) {
+                if (-not $capabilities.ContainsKey('releaseDiscovery') -or $capabilities.releaseDiscovery -ne $true) {
                     $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderReleaseDiscoveryMissing'; Message = 'Provider descriptors require capabilities.releaseDiscovery=true.' })
                 }
 
-                if (-not $descriptor.capabilities.ContainsKey('artifactDiscovery') -or $descriptor.capabilities.artifactDiscovery -ne $true) {
+                if (-not $capabilities.ContainsKey('artifactDiscovery') -or $capabilities.artifactDiscovery -ne $true) {
                     $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
                 }
             }
         }
 
-        if ($descriptor.pluginType -eq 'Installer' -and $descriptor.capabilities -is [System.Collections.IDictionary]) {
+        if ($pluginType -eq 'Installer' -and $null -ne $capabilities) {
             $installerResult = Test-WintainiumInstallerDescriptor -Descriptor $descriptor
             foreach ($installerError in @($installerResult.Errors)) {
                 $errors.Add($installerError)
