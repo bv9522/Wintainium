@@ -47,6 +47,11 @@ function Invoke-WintainiumInstallerProcess {
     }
 
     $startTime = [System.Diagnostics.Stopwatch]::GetTimestamp()
+
+    if ($CancellationToken.IsCancellationRequested) {
+        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The installer process was cancelled before it started.' }
+    }
+
     $process = [System.Diagnostics.Process]::new()
     try {
         $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
