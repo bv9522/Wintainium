@@ -79,6 +79,27 @@ Describe 'Wintainium installer process lifecycle' {
         }
         finally { $cts.Dispose() }
     }
+    It 'does not classify an already completed process as cancelled when cancellation occurs later' {
+        $cts = [System.Threading.CancellationTokenSource]::new()
+        try {
+            $cts.CancelAfter(1000)
+            $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath; Token = $cts.Token } {
+                Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -CancellationToken $Token -TimeoutMilliseconds 10000
+            }
+            $result.Status | Should -Be 'Completed'
+            $result.FailureKind | Should -Be $null
+            $result.ExitCode | Should -Be 0
+        }
+        finally { $cts.Dispose() }
+    }
+    It 'does not classify an already completed process as timed out when the timeout is longer than execution' {
+        $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
+            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -TimeoutMilliseconds 1000
+        }
+        $result.Status | Should -Be 'Completed'
+        $result.FailureKind | Should -Be $null
+        $result.ExitCode | Should -Be 0
+    }
     It 'treats a successful zero exit code as completed' {
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
             Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -TimeoutMilliseconds 10000
