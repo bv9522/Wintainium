@@ -50,18 +50,33 @@ Core provider boundary.
 
 ## Phase 6 — Installer engine
 
-- Select compatible installer plugins.
-- Verify downloaded artifacts before execution.
-- Execute installation or update operations through controlled installer
-  boundaries.
-- Preserve recoverability and structured operation results.
+- 6A: Validate the installer input boundary.
+- 6B: Define installer descriptors and capability validation.
+- 6C: Select a compatible installer plugin.
+- 6D: Prepare a controlled installer invocation.
+- 6E: Own installer process lifecycle, timeout, and cancellation semantics.
+- 6F: Produce structured installation results.
+- 6G: Integrate installer plugin planning with the controlled process boundary.
+- 6H: Audit and lock the Phase 6 architecture and documentation.
+
+**Status: Complete and locked.** Phase 6 owns installer selection and controlled execution boundaries, but it does not perform post-install application-state reconciliation. Artifact verification/trust remains an explicit prerequisite before execution and is not implied by a successful Phase 5 download or Phase 6 structural input.
 
 ## Phase 7 — Orchestration
 
+- 7A: Establish the orchestration input boundary and parent operation context.
 - Compose discovery, decision, download, verification, and installation into
-  end-to-end application update workflows.
-- Support multiple-application and update-all workflows.
-- Add scheduling and policy-driven automation where appropriate.
+  end-to-end application update workflows without duplicating stage policy.
+- Define deterministic stage sequencing and fail-fast behavior.
+- Propagate cancellation and structured failures across stage boundaries.
+- Preserve operation correlation and diagnostics across the lifecycle.
+- Define recoverable partial-operation semantics.
+- Add multiple-application and update-all workflows after the single-application
+  lifecycle is stable.
+- Add scheduling and policy-driven automation only after the underlying
+  orchestration contract is stable.
+
+**Status: In progress.** Phase 7A currently defines only the high-level request
+boundary; it does not execute downstream stages.
 
 ## Phase 8 — UX and documentation
 
