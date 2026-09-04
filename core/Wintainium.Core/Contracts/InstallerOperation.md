@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 6G contract: Accepted for implementation.
+Phase 6G contract: **Locked**.
 
 ## Purpose
 
@@ -79,7 +79,12 @@ Core rejects a plugin result when:
 - `Arguments` is present but is not an array of strings;
 - `WorkingDirectory` is present and is not an absolute existing directory;
 - `EnvironmentVariables` is present but is not a dictionary;
-- an environment-variable name is empty or invalid.
+- an environment-variable name is empty or invalid; or
+- an environment-variable value is null.
+
+Core also accepts an explicitly null 6D installer invocation as invalid input
+and returns a structured `InvalidInput` installation result rather than
+allowing parameter binding to escape the operation boundary.
 
 Core normalizes valid paths to full paths before passing them to 6E.
 
