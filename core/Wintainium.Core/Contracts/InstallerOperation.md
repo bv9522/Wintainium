@@ -113,6 +113,31 @@ retains the final process boundary. No shell command line, `cmd.exe /c`,
 The installer plugin must not be used to bypass Core trust, verification,
 policy, cancellation, timeout, process-lifecycle, or result semantics.
 
+## Audit checklist
+
+Before a Phase 6G lock is carried forward, the implementation must satisfy:
+
+- 6C owns installer selection; 6D owns invocation preparation.
+- 6G invokes only the fixed `Invoke-WintainiumInstaller` plugin operation.
+- Null or malformed operation inputs fail structurally before execution where
+  the boundary can validate them deterministically.
+- Plugin output is exactly one structured process specification.
+- Executable paths and working directories are absolute and existing before
+  reaching 6E.
+- Arguments remain structured strings and are never converted into shell
+  command text.
+- Environment overrides are dictionary-based, name-validated, and reject
+  null values.
+- 6G translates its process vocabulary to the already-locked 6E API without
+  modifying or weakening 6E.
+- Timeout, cancellation, process lifecycle, and termination remain owned by
+  6E.
+- 6F remains the single structured installation-result interpretation layer.
+- Correlation identifiers and process diagnostics survive the integration
+  boundary.
+- Artifact authenticity, integrity, signature validity, trust approval, and
+  post-install application-state reconciliation remain outside 6G.
+
 ## Phase boundary
 
 6C selects the installer plugin.
