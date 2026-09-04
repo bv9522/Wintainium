@@ -77,14 +77,14 @@ Describe 'New-WintainiumInstallationResult' {
     It 'preserves successful stderr as process diagnostics while clearing the result error' {
         $invocation = [pscustomobject]@{ OperationId='op-9'; DownloadOperationId='dl-9'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Completed'; FailureKind=''; ExitCode=0; StandardOutput='installed'; StandardError='warning: restart recommended'; DurationMilliseconds=7; ErrorMessage='stale error' }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult }
         $result.Status | Should -Be 'Completed'; $result.FailureKind | Should -Be $null; $result.StandardError | Should -Be 'warning: restart recommended'; $result.ErrorMessage | Should -Be $null
     }
 
     It 'normalizes missing optional process diagnostics deterministically' {
         $invocation = [pscustomobject]@{ OperationId='op-10'; DownloadOperationId='dl-10'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Failed'; FailureKind='ProcessStart'; ExitCode=$null; DurationMilliseconds=0 }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process }
         $result.StandardOutput | Should -Be ''; $result.StandardError | Should -Be ''; $result.DurationMilliseconds | Should -Be 0; $result.ErrorMessage | Should -Be $null
     }
 
