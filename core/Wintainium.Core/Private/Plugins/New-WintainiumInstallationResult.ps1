@@ -23,7 +23,7 @@ function New-WintainiumInstallationResult {
     $downloadOperationId = if ($Invocation.PSObject.Properties.Name -contains 'DownloadOperationId') { $Invocation.DownloadOperationId } else { $null }
     $pluginId = if ($Invocation.PSObject.Properties.Name -contains 'PluginId') { $Invocation.PluginId } else { $null }
 
-    if ($status -eq 'Completed' -and $exitCode -eq 0) {
+    if ($status -eq 'Completed' -and $exitCode -is [int] -and $exitCode -eq 0) {
         return [pscustomobject][ordered]@{ Status='Completed'; FailureKind=$null; OperationId=$operationId; DownloadOperationId=$downloadOperationId; PluginId=$pluginId; ExitCode=$exitCode; StandardOutput=$standardOutput; StandardError=$standardError; DurationMilliseconds=$duration; ErrorMessage=$null }
     }
 
