@@ -2,18 +2,18 @@ Describe 'Invoke-WintainiumInstallerOperation' {
     BeforeAll {
         $modulePath = Join-Path $PSScriptRoot '../../core/Wintainium.Core/Wintainium.Core.psd1'
         Import-Module $modulePath -Force
-    }
 
-    function New-TestInvocation {
-        param([string]$PluginModulePath)
-        [pscustomobject]@{
-            OperationId = 'op-installer-1'
-            DownloadOperationId = 'dl-installer-1'
-            PluginId = 'Wintainium.installer.valid-fixture'
-            PluginModulePath = $PluginModulePath
-            ArtifactPath = (Join-Path $TestDrive 'artifact.exe')
-            ArtifactFormat = 'exe'
-            Settings = [pscustomobject]@{}
+        function New-TestInvocation {
+            param([string]$PluginModulePath)
+            [pscustomobject]@{
+                OperationId = 'op-installer-1'
+                DownloadOperationId = 'dl-installer-1'
+                PluginId = 'Wintainium.installer.valid-fixture'
+                PluginModulePath = $PluginModulePath
+                ArtifactPath = (Join-Path $TestDrive 'artifact.exe')
+                ArtifactFormat = 'exe'
+                Settings = [pscustomobject]@{}
+            }
         }
     }
 
