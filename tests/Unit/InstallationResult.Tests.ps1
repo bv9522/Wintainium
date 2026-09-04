@@ -84,7 +84,14 @@ Describe 'New-WintainiumInstallationResult' {
     It 'normalizes missing optional process diagnostics deterministically' {
         $invocation = [pscustomobject]@{ OperationId='op-10'; DownloadOperationId='dl-10'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Failed'; FailureKind='ProcessStart'; ExitCode=$null; DurationMilliseconds=0 }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult }
         $result.StandardOutput | Should -Be ''; $result.StandardError | Should -Be ''; $result.DurationMilliseconds | Should -Be 0; $result.ErrorMessage | Should -Be $null
+    }
+
+    It 'does not treat a string zero exit code as successful installation' {
+        $invocation = [pscustomobject]@{ OperationId='op-11'; DownloadOperationId='dl-11'; PluginId='installer.test' }
+        $process = [pscustomobject]@{ Status='Completed'; FailureKind=$null; ExitCode='0'; StandardOutput='installed'; StandardError=''; DurationMilliseconds=9; ErrorMessage=$null }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result.Status | Should -Be 'Failed'; $result.FailureKind | Should -Be 'ProcessFailed'; $result.ExitCode | Should -Be '0'
     }
 }
