@@ -9,23 +9,16 @@ engine rather than contain its own package-management logic.
 
 ## Status
 
-Phases 1–5 are implemented, tested, and locked. The current engine can validate
-application manifests, discover upstream releases through provider plugins,
-produce deterministic update decisions, and safely acquire the selected
-artifact through the Core-owned download boundary.
-
-Artifact verification, installer selection, installation, and end-to-end
-lifecycle orchestration remain future phases.
+Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration is now
+in progress, beginning with the Core-owned orchestration input boundary.
 
 ## Repository map
 
-- `docs/` — design, architecture, and contributor documentation.
-- `core/` — the Wintainium PowerShell engine and its contracts.
+- `docs/` — design and contributor documentation.
+- `core/` — engine PowerShell module(s), once implementation begins.
 - `plugins/` — independently loadable source and installer plugins.
 - `manifests/` — application definitions in JSON.
-- `tests/` — automated Pester tests.
+- `tests/` — automated tests.
 
 See [PROJECT.md](PROJECT.md), [ROADMAP.md](ROADMAP.md), and
-[ARCHITECTURE.md](ARCHITECTURE.md) for the project direction. See
-[docs/Phase5DownloadEngine.md](docs/Phase5DownloadEngine.md) for the locked
-Phase 5 acquisition boundary.
+[ARCHITECTURE.md](ARCHITECTURE.md) for the current direction.
