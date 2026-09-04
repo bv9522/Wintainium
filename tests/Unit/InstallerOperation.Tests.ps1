@@ -17,6 +17,19 @@ Describe 'Invoke-WintainiumInstallerOperation' {
         }
     }
 
+    It 'returns a structured failure when the installer invocation is null' {
+        $result = InModuleScope Wintainium.Core {
+            Invoke-WintainiumInstallerOperation -Invocation $null -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InvalidInput'
+        $result.OperationId | Should -Be $null
+        $result.DownloadOperationId | Should -Be $null
+        $result.PluginId | Should -Be $null
+        $result.ExitCode | Should -Be $null
+    }
+
     It 'composes plugin planning, controlled process execution, and structured result creation' {
         $modulePath = Join-Path $PSScriptRoot '../Fixtures/Plugins/ValidInstaller/Wintainium.installer.valid-fixture.psm1'
         $invocation = New-TestInvocation -PluginModulePath $modulePath
