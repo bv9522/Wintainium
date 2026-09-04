@@ -1,7 +1,7 @@
 function Invoke-WintainiumInstallerOperation {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [psobject]$Invocation,
+        [AllowNull()] [Parameter(Mandatory)] [psobject]$Invocation,
         [Parameter(Mandatory)] [ValidateRange(1, 2147483647)] [int]$TimeoutMilliseconds,
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
