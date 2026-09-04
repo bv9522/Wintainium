@@ -121,8 +121,8 @@ function Invoke-WintainiumInstallerOperation {
     }
 
     $processParameters = @{
-        ExecutablePath = $executablePath
-        Arguments = [string[]]$arguments
+        FilePath = $executablePath
+        ArgumentList = [string[]]$arguments
         TimeoutMilliseconds = $TimeoutMilliseconds
         CancellationToken = $CancellationToken
     }
