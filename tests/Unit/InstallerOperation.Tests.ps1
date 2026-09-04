@@ -121,7 +121,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
             Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 10000
         }
 
-        $expected = "alpha beta<SEP>quote`"value<SEP>semi;pipe<SEP>$workingDirectory"
+        $expected = "alpha beta<SEP>quote`"value<SEP>semi;pipe<SEP>fixture-value<SEP>$workingDirectory"
         $result.Status | Should -Be 'Completed'
         $result.StandardOutput.Trim() | Should -Be $expected
     }
