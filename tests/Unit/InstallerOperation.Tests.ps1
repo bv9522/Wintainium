@@ -96,6 +96,126 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $result.FailureKind | Should -Be 'InstallerProcessSpecificationInvalid'
     }
 
+    It 'preserves structured argument boundaries, working directory, and environment overrides' {
+        $pluginRoot = Join-Path $TestDrive 'ProcessInputs'
+        $workingDirectory = Join-Path $pluginRoot 'Work'
+        New-Item -ItemType Directory -Path $workingDirectory -Force | Out-Null
+        $modulePath = Join-Path $pluginRoot 'inputs.psm1'
+        $pwshPath = Join-Path $PSHOME 'pwsh.exe'
+        $script = 'Write-Output (($args -join "<SEP>") + "<SEP>" + $env:WINTAINIUM_TEST_VALUE + "<SEP>" + (Get-Location).Path)'
+        Set-Content -LiteralPath $modulePath -Value @"
+function Invoke-WintainiumInstaller {
+    param([psobject]`$Invocation)
+    [pscustomobject]@{
+        ExecutablePath = '$pwshPath'
+        Arguments = @('-NoProfile', '-CommandWithArgs', '$script', 'alpha beta', 'quote"value', 'semi;pipe')
+        WorkingDirectory = '$workingDirectory'
+        EnvironmentVariables = @{ WINTAINIUM_TEST_VALUE = 'fixture-value' }
+    }
+}
+Export-ModuleMember -Function Invoke-WintainiumInstaller
+"@ -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 10000
+        }
+
+        $expected = "alpha beta<SEP>quote`"value<SEP>semi;pipe<SEP>$workingDirectory"
+        $result.Status | Should -Be 'Completed'
+        $result.StandardOutput.Trim() | Should -Be $expected
+    }
+
+    It 'rejects an invalid working directory before reaching the process boundary' {
+        $pluginRoot = Join-Path $TestDrive 'InvalidWorkingDirectory'
+        New-Item -ItemType Directory -Path $pluginRoot | Out-Null
+        $modulePath = Join-Path $pluginRoot 'invalid-working-directory.psm1'
+        $pwshPath = Join-Path $PSHOME 'pwsh.exe'
+        $missingDirectory = Join-Path $pluginRoot 'missing'
+        Set-Content -LiteralPath $modulePath -Value @"
+function Invoke-WintainiumInstaller {
+    param([psobject]`$Invocation)
+    [pscustomobject]@{ ExecutablePath = '$pwshPath'; Arguments = @(); WorkingDirectory = '$missingDirectory' }
+}
+Export-ModuleMember -Function Invoke-WintainiumInstaller
+"@ -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InstallerProcessSpecificationInvalid'
+    }
+
+    It 'rejects an invalid environment variable name before reaching the process boundary' {
+        $pluginRoot = Join-Path $TestDrive 'InvalidEnvironment'
+        New-Item -ItemType Directory -Path $pluginRoot | Out-Null
+        $modulePath = Join-Path $pluginRoot 'invalid-environment.psm1'
+        $pwshPath = Join-Path $PSHOME 'pwsh.exe'
+        Set-Content -LiteralPath $modulePath -Value @"
+function Invoke-WintainiumInstaller {
+    param([psobject]`$Invocation)
+    [pscustomobject]@{ ExecutablePath = '$pwshPath'; Arguments = @(); EnvironmentVariables = @{ 'BAD-NAME' = 'value' } }
+}
+Export-ModuleMember -Function Invoke-WintainiumInstaller
+"@ -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InstallerProcessSpecificationInvalid'
+    }
+
+    It 'rejects a plugin that returns multiple process specifications' {
+        $pluginRoot = Join-Path $TestDrive 'MultipleResults'
+        New-Item -ItemType Directory -Path $pluginRoot | Out-Null
+        $modulePath = Join-Path $pluginRoot 'multiple-results.psm1'
+        $pwshPath = Join-Path $PSHOME 'pwsh.exe'
+        Set-Content -LiteralPath $modulePath -Value @"
+function Invoke-WintainiumInstaller {
+    param([psobject]`$Invocation)
+    [pscustomobject]@{ ExecutablePath = '$pwshPath'; Arguments = @() }
+    [pscustomobject]@{ ExecutablePath = '$pwshPath'; Arguments = @() }
+}
+Export-ModuleMember -Function Invoke-WintainiumInstaller
+"@ -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InstallerResultInvalid'
+    }
+
+    It 'converts installer plugin exceptions into a structured failure' {
+        $pluginRoot = Join-Path $TestDrive 'PluginException'
+        New-Item -ItemType Directory -Path $pluginRoot | Out-Null
+        $modulePath = Join-Path $pluginRoot 'exception.psm1'
+        Set-Content -LiteralPath $modulePath -Value @'
+function Invoke-WintainiumInstaller {
+    param([psobject]$Invocation)
+    throw 'fixture installer failure'
+}
+Export-ModuleMember -Function Invoke-WintainiumInstaller
+'@ -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InstallerInternalError'
+        $result.ExitCode | Should -Be $null
+    }
+
     It 'preserves controlled process timeout and cancellation semantics through the result boundary' {
         $pluginRoot = Join-Path $TestDrive 'Lifecycle'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
