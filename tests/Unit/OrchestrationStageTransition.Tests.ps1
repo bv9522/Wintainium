@@ -23,7 +23,11 @@ BeforeAll {
     }
 
     function New-TestState {
-        $result = New-WintainiumOrchestrationOperationState -StagePlan (New-TestStagePlan)
+        $plan = New-TestStagePlan
+        $result = InModuleScope Wintainium.Core -Parameters @{ StagePlan = $plan } {
+            param($StagePlan)
+            New-WintainiumOrchestrationOperationState -StagePlan $StagePlan
+        }
         $result.State
     }
 }
@@ -34,7 +38,14 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $plan = New-TestStagePlan
         $stageResult = [pscustomobject]@{ Status = 'Succeeded' }
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $stageResult -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            State = $state
+            StagePlan = $plan
+            StageResult = $stageResult
+        } {
+            param($State, $StagePlan, $StageResult)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $StageResult -Succeeded $true
+        }
 
         $result.IsValid | Should -BeTrue
         $result.State.Status | Should -Be 'Running'
@@ -49,7 +60,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state = New-TestState
         $plan = New-TestStagePlan
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
 
         $result.State.OperationId | Should -Be $operationId
     }
@@ -59,7 +73,14 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $plan = New-TestStagePlan
         $stageResult = [pscustomobject]@{ Status = 'Failed'; FailureKind = 'Network' }
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $stageResult -Succeeded $false
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            State = $state
+            StagePlan = $plan
+            StageResult = $stageResult
+        } {
+            param($State, $StagePlan, $StageResult)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $StageResult -Succeeded $false
+        }
 
         $result.IsValid | Should -BeTrue
         $result.State.Status | Should -Be 'Failed'
@@ -76,7 +97,14 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state.CurrentStageName = 'Installation'
         $stageResult = [pscustomobject]@{ Status = 'Succeeded' }
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 7 -StageName 'Installation' -StageResult $stageResult -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            State = $state
+            StagePlan = $plan
+            StageResult = $stageResult
+        } {
+            param($State, $StagePlan, $StageResult)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 7 -StageName 'Installation' -StageResult $StageResult -Succeeded $true
+        }
 
         $result.IsValid | Should -BeTrue
         $result.State.Status | Should -Be 'Completed'
@@ -89,7 +117,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state = New-TestState
         $plan = New-TestStagePlan
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 2 -StageName 'ReleaseDiscovery' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 2 -StageName 'ReleaseDiscovery' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
 
         $result.IsValid | Should -BeFalse
         $result.Errors.Code | Should -Contain 'OrchestrationOperationStateStageMismatch'
@@ -99,7 +130,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state = New-TestState
         $plan = New-TestStagePlan
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ReleaseDiscovery' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ReleaseDiscovery' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
 
         $result.IsValid | Should -BeFalse
         $result.Errors.Code | Should -Contain 'OrchestrationOperationStateStageMismatch'
@@ -110,7 +144,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $plan = New-TestStagePlan
         $plan.OperationId = [guid]::NewGuid().ToString()
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
 
         $result.IsValid | Should -BeFalse
         $result.Errors.Code | Should -Contain 'OrchestrationOperationStateOperationIdMismatch'
@@ -121,7 +158,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state.Status = 'Failed'
         $plan = New-TestStagePlan
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
 
         $result.IsValid | Should -BeFalse
         $result.Errors.Code | Should -Contain 'OrchestrationOperationStateTerminal'
@@ -131,7 +171,10 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $state = New-TestState
         $plan = New-TestStagePlan
 
-        $result = Update-WintainiumOrchestrationOperationState -State $state -StagePlan $plan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $null -Succeeded $false
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult $null -Succeeded $false
+        }
 
         $result.IsValid | Should -BeTrue
         $result.State.Status | Should -Be 'Failed'
