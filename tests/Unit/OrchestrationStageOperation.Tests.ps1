@@ -59,7 +59,7 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         $result.State.StageResults[0].Result.Accepted | Should -Be 'fixture-input'
     }
 
-    It 'does not transition state when stage execution fails' {
+    It 'commits ordinary stage execution failure through the state transition boundary' {
         $operationId = [guid]::NewGuid().Guid
         $state = New-TestState -OperationId $operationId
         $plan = New-TestStagePlan -OperationId $operationId
@@ -72,8 +72,10 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         $result.IsSuccessful | Should -BeFalse
         $result.Execution.IsSuccessful | Should -BeFalse
         $result.Error.Code | Should -Be 'OrchestrationStageExecutionFailed'
-        $result.State.Status | Should -Be 'Pending'
-        $result.State.CompletedStages.Count | Should -Be 0
+        $result.State.Status | Should -Be 'Failed'
+        $result.State.CurrentStageSequence | Should -Be 1
+        $result.State.FailedStage.Name | Should -Be 'ManifestValidation'
+        $result.State.StageResults.Count | Should -Be 1
     }
 
     It 'does not transition state when execution is cancelled before start' {
