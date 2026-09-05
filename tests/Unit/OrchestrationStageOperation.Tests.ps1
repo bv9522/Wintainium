@@ -1,9 +1,7 @@
 Describe 'Invoke-WintainiumOrchestrationStageOperation' {
     BeforeAll {
-        $operationId = [guid]::NewGuid().Guid
-
         function New-TestStagePlan {
-            param([string]$OperationId)
+            param([Parameter(Mandatory)][string]$OperationId)
             [pscustomobject][ordered]@{
                 OperationId = $OperationId
                 Stages = @(
@@ -15,15 +13,19 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         }
 
         function New-TestState {
-            $result = New-WintainiumOrchestrationOperationState -StagePlan (New-TestStagePlan -OperationId $operationId)
+            param([Parameter(Mandatory)][string]$OperationId)
+            $result = New-WintainiumOrchestrationOperationState -StagePlan (New-TestStagePlan -OperationId $OperationId)
             if (-not $result.IsValid) { throw 'Test state could not be created.' }
             $result.State
         }
 
         function New-TestContext {
-            param([System.Threading.CancellationToken]$Token = [System.Threading.CancellationToken]::None)
+            param(
+                [Parameter(Mandatory)][string]$OperationId,
+                [System.Threading.CancellationToken]$Token = [System.Threading.CancellationToken]::None
+            )
             [pscustomobject][ordered]@{
-                OperationId = $operationId
+                OperationId = $OperationId
                 CancellationToken = $Token
                 IsCancellationRequested = $Token.IsCancellationRequested
             }
@@ -32,9 +34,10 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'executes the current stage and advances state through the transition boundary' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
-            $context = New-TestContext
+            $context = New-TestContext -OperationId $operationId
             $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput 'fixture-input' -StageExecutor {
                 param($StageInput, $CancellationToken)
                 [pscustomobject]@{ Accepted = $StageInput; Cancelled = $CancellationToken.IsCancellationRequested }
@@ -50,9 +53,10 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'does not transition state when stage execution fails' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
-            $context = New-TestContext
+            $context = New-TestContext -OperationId $operationId
             $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor {
                 throw 'fixture failure'
             }
@@ -67,28 +71,28 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'does not transition state when execution is cancelled before start' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
             $cts = [System.Threading.CancellationTokenSource]::new()
             $cts.Cancel()
-            $context = New-TestContext -Token $cts.Token
-            $executed = $false
+            $context = New-TestContext -OperationId $operationId -Token $cts.Token
             $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor {
-                $executed = $true
+                throw 'executor must not run'
             }
 
             $result.IsSuccessful | Should -BeFalse
             $result.Execution.WasCancelled | Should -BeTrue
-            $executed | Should -BeFalse
             $result.State.Status | Should -Be 'Pending'
         }
     }
 
     It 'preserves the parent operation identifier' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
-            $context = New-TestContext
+            $context = New-TestContext -OperationId $operationId
             $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput 'x' -StageExecutor { param($StageInput, $CancellationToken) $StageInput }
 
             $result.OperationId | Should -Be $operationId
@@ -99,9 +103,10 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'does not mutate the supplied operation state' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
-            $context = New-TestContext
+            $context = New-TestContext -OperationId $operationId
             [void](Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput 'x' -StageExecutor { param($StageInput, $CancellationToken) $StageInput })
 
             $state.Status | Should -Be 'Pending'
@@ -112,14 +117,13 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'rejects a state transition mismatch without invoking the executor' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
-            $context = New-TestContext
-            $executed = $false
-            $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 2 -StageName 'ReleaseDiscovery' -StageInput $null -StageExecutor { $executed = $true }
+            $context = New-TestContext -OperationId $operationId
+            $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 2 -StageName 'ReleaseDiscovery' -StageInput $null -StageExecutor { throw 'executor must not run' }
 
             $result.IsSuccessful | Should -BeFalse
-            $executed | Should -BeFalse
             $result.Execution.Error.Code | Should -Be 'OrchestrationStageCurrentStageMismatch'
             $result.State.Status | Should -Be 'Pending'
         }
@@ -127,12 +131,13 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
 
     It 'does not add a separate cancellation terminal state' {
         InModuleScope Wintainium.Core {
-            $state = New-TestState
+            $operationId = [guid]::NewGuid().Guid
+            $state = New-TestState -OperationId $operationId
             $plan = New-TestStagePlan -OperationId $operationId
             $cts = [System.Threading.CancellationTokenSource]::new()
             $cts.Cancel()
-            $context = New-TestContext -Token $cts.Token
-            $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor { }
+            $context = New-TestContext -OperationId $operationId -Token $cts.Token
+            $result = Invoke-WintainiumOrchestrationStageOperation -OperationState $state -StagePlan $plan -CancellationContext $context -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor { throw 'executor must not run' }
 
             $result.State.Status | Should -Be 'Pending'
             $result.State.PSObject.Properties['Cancelled'] | Should -BeNullOrEmpty
