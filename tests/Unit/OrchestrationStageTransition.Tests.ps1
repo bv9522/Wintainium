@@ -121,6 +121,30 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
         $result.State.CompletedStages.Count | Should -Be 1
     }
 
+    It 'does not mutate the supplied state when a transition succeeds' {
+        $state = New-TestState
+        $plan = New-TestStagePlan -OperationId $operationId
+        $originalStatus = $state.Status
+        $originalSequence = $state.CurrentStageSequence
+        $originalName = $state.CurrentStageName
+        $originalCompletedCount = $state.CompletedStages.Count
+        $originalResultCount = $state.StageResults.Count
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
+            param($State, $StagePlan)
+            Update-WintainiumOrchestrationOperationState -State $State -StagePlan $StagePlan -StageSequence 1 -StageName 'ManifestValidation' -StageResult ([pscustomobject]@{}) -Succeeded $true
+        }
+
+        $result.IsValid | Should -BeTrue
+        $state.Status | Should -Be $originalStatus
+        $state.CurrentStageSequence | Should -Be $originalSequence
+        $state.CurrentStageName | Should -Be $originalName
+        $state.CompletedStages.Count | Should -Be $originalCompletedCount
+        $state.StageResults.Count | Should -Be $originalResultCount
+        $state.FailedStage | Should -BeNullOrEmpty
+        $state.Error | Should -BeNullOrEmpty
+    }
+
     It 'rejects a stage result for a non-current stage' {
         $state = New-TestState
         $plan = New-TestStagePlan -OperationId $operationId
