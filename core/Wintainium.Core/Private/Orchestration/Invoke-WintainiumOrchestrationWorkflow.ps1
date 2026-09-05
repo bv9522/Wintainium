@@ -39,6 +39,7 @@ function Invoke-WintainiumOrchestrationWorkflow {
 
     $stageResults = [System.Collections.Generic.List[object]]::new()
     $state = $OperationState
+    $cancellationToken = $CancellationContext.CancellationToken
 
     $stages = @($StagePlan.Stages)
     if ($stages.Count -eq 0) { return & $newFailure 'OrchestrationWorkflowStagePlanEmpty' 'StagePlan must contain at least one stage.' }
@@ -65,7 +66,7 @@ function Invoke-WintainiumOrchestrationWorkflow {
             return & $newFailure 'OrchestrationWorkflowCurrentStageMismatch' 'The workflow stage does not match the current operation state stage.' $state $stageResults.ToArray()
         }
 
-        if ($CancellationContext.IsCancellationRequested) {
+        if ($cancellationToken.IsCancellationRequested) {
             return [pscustomobject][ordered]@{
                 IsSuccessful = $false
                 WasCancelled = $true
@@ -91,6 +92,17 @@ function Invoke-WintainiumOrchestrationWorkflow {
         $stageExecutorProperty = $binding.PSObject.Properties['StageExecutor']
         if ($null -eq $stageInputProperty -or $null -eq $stageExecutorProperty -or $null -eq $binding.StageExecutor) {
             return & $newFailure 'OrchestrationWorkflowStageBindingInvalid' 'Stage binding must contain StageInput and StageExecutor.' $state $stageResults.ToArray()
+        }
+
+        if ($cancellationToken.IsCancellationRequested) {
+            return [pscustomobject][ordered]@{
+                IsSuccessful = $false
+                WasCancelled = $true
+                OperationId = $operationId
+                State = $state
+                StageResults = @($stageResults.ToArray())
+                Error = [pscustomobject][ordered]@{ Code = 'OrchestrationWorkflowCancelled'; Message = 'The orchestration workflow was cancelled before the stage execution boundary was entered.' }
+            }
         }
 
         $stageOperation = Invoke-WintainiumOrchestrationStageOperation `
