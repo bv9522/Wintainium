@@ -5,8 +5,13 @@ BeforeAll {
     $operationId = [guid]::NewGuid().ToString()
 
     function New-TestStagePlan {
+        param(
+            [Parameter(Mandatory)]
+            [string]$OperationId
+        )
+
         [pscustomobject][ordered]@{
-            OperationId = $script:operationId
+            OperationId = $OperationId
             ManifestPath = 'C:\Manifests\example.json'
             MachineArchitecture = 'x64'
             DownloadRoot = 'C:\Downloads'
@@ -23,10 +28,13 @@ BeforeAll {
     }
 
     function New-TestState {
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
         $result = InModuleScope Wintainium.Core -Parameters @{ StagePlan = $plan } {
             param($StagePlan)
             New-WintainiumOrchestrationOperationState -StagePlan $StagePlan
+        }
+        if (-not $result.IsValid) {
+            throw "Test fixture operation state construction failed: $($result.Errors | ConvertTo-Json -Compress)"
         }
         $result.State
     }
@@ -35,7 +43,7 @@ BeforeAll {
 Describe 'Update-WintainiumOrchestrationOperationState' {
     It 'advances a successful stage to the next planned stage' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
         $stageResult = [pscustomobject]@{ Status = 'Succeeded' }
 
         $result = InModuleScope Wintainium.Core -Parameters @{
@@ -58,7 +66,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'preserves the operation identifier across transitions' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
@@ -70,7 +78,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'records a failed stage without advancing to the next stage' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
         $stageResult = [pscustomobject]@{ Status = 'Failed'; FailureKind = 'Network' }
 
         $result = InModuleScope Wintainium.Core -Parameters @{
@@ -92,7 +100,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'completes the operation when the final planned stage succeeds' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
         $state.CurrentStageSequence = 7
         $state.CurrentStageName = 'Installation'
         $stageResult = [pscustomobject]@{ Status = 'Succeeded' }
@@ -115,7 +123,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'rejects a stage result for a non-current stage' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
@@ -128,7 +136,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'rejects a stage name that does not match the current stage' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
@@ -141,8 +149,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'rejects an operation identifier mismatch between state and plan' {
         $state = New-TestState
-        $plan = New-TestStagePlan
-        $plan.OperationId = [guid]::NewGuid().ToString()
+        $plan = New-TestStagePlan -OperationId ([guid]::NewGuid().ToString())
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
@@ -156,7 +163,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
     It 'rejects transitions from a terminal state' {
         $state = New-TestState
         $state.Status = 'Failed'
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
@@ -169,7 +176,7 @@ Describe 'Update-WintainiumOrchestrationOperationState' {
 
     It 'preserves a null stage result when the stage itself failed' {
         $state = New-TestState
-        $plan = New-TestStagePlan
+        $plan = New-TestStagePlan -OperationId $operationId
 
         $result = InModuleScope Wintainium.Core -Parameters @{ State = $state; StagePlan = $plan } {
             param($State, $StagePlan)
