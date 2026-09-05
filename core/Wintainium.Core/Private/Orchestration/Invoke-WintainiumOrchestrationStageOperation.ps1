@@ -33,14 +33,14 @@ function Invoke-WintainiumOrchestrationStageOperation {
     $operationId = if ($null -ne $OperationState -and $OperationState.PSObject.Properties['OperationId']) { [string]$OperationState.OperationId } else { $null }
 
     $newFailure = {
-        param([string]$Code, [string]$Message, [psobject]$ExecutionResult = $null)
+        param([string]$Code, [string]$Message, [psobject]$ExecutionResult = $null, [psobject]$StateResult = $OperationState)
         [pscustomobject][ordered]@{
             IsSuccessful = $false
             OperationId = $operationId
             StageSequence = $StageSequence
             StageName = $StageName
             Execution = $ExecutionResult
-            State = $OperationState
+            State = $StateResult
             Error = [pscustomobject][ordered]@{ Code = $Code; Message = $Message }
         }
     }
@@ -60,7 +60,23 @@ function Invoke-WintainiumOrchestrationStageOperation {
         -StageExecutor $StageExecutor
 
     if (-not $execution.IsSuccessful) {
-        return & $newFailure 'OrchestrationStageExecutionFailed' 'The orchestration stage did not complete successfully.' $execution
+        if ($execution.WasCancelled) {
+            return & $newFailure 'OrchestrationStageExecutionCancelled' 'The orchestration stage was cancelled before or during execution.' $execution
+        }
+
+        $failureTransition = Update-WintainiumOrchestrationOperationState `
+            -State $OperationState `
+            -StagePlan $StagePlan `
+            -StageSequence $StageSequence `
+            -StageName $StageName `
+            -StageResult $execution.Result `
+            -Succeeded $false
+
+        if (-not $failureTransition.IsValid) {
+            return & $newFailure 'OrchestrationStageStateTransitionFailed' 'The stage failed, but its failure could not be committed to orchestration state.' $execution
+        }
+
+        return & $newFailure 'OrchestrationStageExecutionFailed' 'The orchestration stage did not complete successfully.' $execution $failureTransition.State
     }
 
     $transition = Update-WintainiumOrchestrationOperationState `
