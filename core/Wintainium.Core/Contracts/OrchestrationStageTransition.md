@@ -85,3 +85,19 @@ cannot by itself produce a successful `Verification` result.
 No provider commands, installer executable paths, installer arguments, shell
 text, credentials, artifact bytes, or external process execution are introduced
 by this boundary.
+
+## Audit Checklist
+
+Phase 7D is complete only when all of the following remain true:
+
+- StagePlan is authoritative for lifecycle sequencing; transition logic does not invent stages.
+- State and StagePlan retain the same parent OperationId.
+- The completed sequence and name must match both current state and planned stage.
+- Successful non-final stages advance exactly one planned stage and preserve prior results.
+- Successful final stages enter `Completed` with no current stage.
+- Failed stages enter terminal `Failed` state without automatic retry, skip, or advance.
+- Null stage results remain representable and are not replaced with synthetic errors.
+- Returned state is new; the supplied state and its lifecycle collections are not mutated.
+- Validation failures are structured and do not execute external work.
+- `Succeeded` is supplied explicitly by orchestration; this boundary does not infer trust or success from opaque results.
+- No provider execution, downloading, verification, installer execution, artifact trust establishment, or installed-state reconciliation occurs here.
