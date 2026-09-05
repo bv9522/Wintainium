@@ -71,14 +71,21 @@ Describe 'Invoke-WintainiumOrchestrationWorkflow' {
         $result.IsSuccessful | Should -BeFalse; @($calls) | Should -Be @(1,2)
     }
 
-    It 'stops before the next stage when cancellation is requested' {
+    It 'stops before the next stage when cancellation is requested between stages' {
         $operationId = [guid]::NewGuid().Guid; $state = New-TestState $operationId; $plan = New-TestStagePlan $operationId; $cts = [System.Threading.CancellationTokenSource]::new()
         try {
             $context = New-TestContext $operationId $cts.Token; $seen = [System.Collections.Generic.List[int]]::new()
             $result = InModuleScope Wintainium.Core -Parameters @{ OperationState = $state; StagePlan = $plan; CancellationContext = $context; Seen = $seen; Cts = $cts } {
                 param($OperationState, $StagePlan, $CancellationContext, $Seen, $Cts)
                 Invoke-WintainiumOrchestrationWorkflow -OperationState $OperationState -StagePlan $StagePlan -CancellationContext $CancellationContext -StageFactory {
-                    param($Stage, $CurrentState, $CurrentContext); $Seen.Add([int]$Stage.Sequence); if ($Stage.Sequence -eq 1) { $Cts.Cancel() }; New-TestBinding $Stage.Name { param($StageInput, $CancellationToken) $StageInput }
+                    param($Stage, $CurrentState, $CurrentContext)
+                    $Seen.Add([int]$Stage.Sequence)
+                    if ($Stage.Sequence -eq 1) {
+                        New-TestBinding $Stage.Name { param($StageInput, $CancellationToken) $Cts.Cancel(); $StageInput }
+                    }
+                    else {
+                        New-TestBinding $Stage.Name { param($StageInput, $CancellationToken) $StageInput }
+                    }
                 }
             }
             $result.IsSuccessful | Should -BeFalse; $result.WasCancelled | Should -BeTrue; $result.State.Status | Should -Be 'Running'; @($seen) | Should -Be @(1); $result.State.CompletedStages.Count | Should -Be 1
