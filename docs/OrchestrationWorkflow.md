@@ -10,7 +10,7 @@ The workflow coordinator owns only lifecycle sequencing and propagation. It does
 
 - `OperationState` — current immutable orchestration state.
 - `StagePlan` — authoritative deterministic stage plan.
-- `CancellationContext` — Phase 7E cancellation context.
+- `CancellationContext` — Phase 7E cancellation context containing the caller's `CancellationToken` plus its creation-time cancellation snapshot.
 - `StageFactory` — explicit Core-supplied resolver that receives the current stage descriptor, current state, and cancellation context, and returns `StageInput` plus `StageExecutor`.
 
 The workflow does not discover or load arbitrary plugins through `StageFactory`.
@@ -19,11 +19,14 @@ The workflow does not discover or load arbitrary plugins through `StageFactory`.
 
 1. Validate workflow inputs and require a non-empty stage plan.
 2. Start from the supplied operation state.
-3. For each authoritative stage in plan order, verify that it matches the current state, stop before starting if cancellation is requested, resolve its explicit stage binding, and invoke `Invoke-WintainiumOrchestrationStageOperation` exactly once.
-4. On success, replace the local state reference with the newly transitioned state.
-5. On ordinary failure, stop immediately and return the failed state.
-6. On cancellation, stop immediately without introducing a cancellation state.
-7. After the final stage, return the state produced by the final 7G transition.
+3. For each authoritative stage in plan order, verify that it matches the current state and observe the live caller `CancellationToken` before resolving or starting the stage.
+4. Resolve the explicit stage binding and invoke `Invoke-WintainiumOrchestrationStageOperation` exactly once when the live token is not cancelled.
+5. On success, replace the local state reference with the newly transitioned state.
+6. On ordinary failure, stop immediately and return the failed state.
+7. On cancellation, stop immediately without introducing a cancellation state.
+8. After the final stage, return the state produced by the final 7G transition.
+
+The coordinator observes the live token rather than the `IsCancellationRequested` snapshot captured when the cancellation context was created. This preserves cancellation between stages when the caller cancels after context creation.
 
 ## Fail-fast behavior
 
@@ -33,7 +36,7 @@ A stage-factory failure occurs before stage execution and therefore cannot be co
 
 ## Cancellation
 
-Cancellation remains control flow rather than an operation-state status. If cancellation is observed before a stage starts, that stage is not invoked. If 7G reports cancellation during execution, the workflow stops immediately and preserves the current committed state. No `Cancelled` state is invented.
+Cancellation remains control flow rather than an operation-state status. If the live caller token is observed as cancelled before a stage starts, that stage is not invoked. The same live-token check is performed after stage binding resolution so cancellation that occurs while resolving a binding cannot accidentally cross the stage execution boundary. If 7G reports cancellation during execution, the workflow stops immediately and preserves the current committed state. No `Cancelled` state is invented.
 
 ## State and correlation
 
@@ -54,7 +57,7 @@ This boundary does not implement provider discovery, update decisions, downloads
 - [x] Uses the authoritative stage plan order.
 - [x] Delegates each stage to the locked 7G single-stage coordinator.
 - [x] Preserves 7D immutable state-transition ownership.
-- [x] Preserves 7E cancellation semantics.
+- [x] Preserves 7E live-token cancellation semantics.
 - [x] Fails fast on ordinary stage failure.
 - [x] Does not mutate supplied operation state.
 - [x] Preserves parent operation correlation.
