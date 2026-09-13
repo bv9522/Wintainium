@@ -91,4 +91,21 @@ Describe 'Wintainium public CLI contract' {
             $helpText | Should -Match $property
         }
     }
+
+    It 'documents that manifest discovery is offline and import-only' {
+        $helpText = Get-Help -Name Get-WintainiumManifest -Full | Out-String
+        $helpText | Should -Match 'offline manifest discovery and import only'
+    }
+
+    It 'documents that application validation does not perform execution work' {
+        $helpText = Get-Help -Name Test-WintainiumApplicationDefinition -Full | Out-String
+        $helpText | Should -Match 'no network, download, installation, or installed-state management work'
+    }
+
+    It 'documents that release discovery does not perform update execution' {
+        $helpText = Get-Help -Name Get-WintainiumApplicationRelease -Full | Out-String
+        $helpText | Should -Match 'does not decide'
+        $helpText | Should -Match 'download an artifact'
+        $helpText | Should -Match 'install anything'
+    }
 }
