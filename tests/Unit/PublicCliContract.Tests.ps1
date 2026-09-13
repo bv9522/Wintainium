@@ -72,23 +72,23 @@ Describe 'Wintainium public CLI contract' {
     }
 
     It 'documents structured output for the public manifest command' {
-        $help = Get-Help -Name Get-WintainiumManifest -Full
-        $help.Outputs | Out-String | Should -Match 'OperationId'
-        $help.Outputs | Out-String | Should -Match 'IsSuccessful'
-        $help.Outputs | Out-String | Should -Match 'ManifestPaths'
+        $helpText = Get-Help -Name Get-WintainiumManifest -Full | Out-String
+        $helpText | Should -Match 'OperationId'
+        $helpText | Should -Match 'IsSuccessful'
+        $helpText | Should -Match 'ManifestPaths'
     }
 
     It 'documents structured output for the public application validation command' {
-        $help = Get-Help -Name Test-WintainiumApplicationDefinition -Full
-        $help.Outputs | Out-String | Should -Match 'OperationId'
-        $help.Outputs | Out-String | Should -Match 'IsValid'
-        $help.Outputs | Out-String | Should -Match 'ProviderPlugin'
+        $helpText = Get-Help -Name Test-WintainiumApplicationDefinition -Full | Out-String
+        $helpText | Should -Match 'OperationId'
+        $helpText | Should -Match 'IsValid'
+        $helpText | Should -Match 'ProviderPlugin'
     }
 
     It 'documents structured output for the public release discovery command' {
-        $help = Get-Help -Name Get-WintainiumApplicationRelease -Full
-        $help.Outputs | Out-String | Should -Match 'OperationId'
-        $help.Outputs | Out-String | Should -Match 'IsSuccessful'
-        $help.Outputs | Out-String | Should -Match 'Releases'
+        $helpText = Get-Help -Name Get-WintainiumApplicationRelease -Full | Out-String
+        $helpText | Should -Match 'OperationId'
+        $helpText | Should -Match 'IsSuccessful'
+        $helpText | Should -Match 'Releases'
     }
 }
