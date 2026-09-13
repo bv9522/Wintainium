@@ -102,6 +102,14 @@ function Invoke-WintainiumInstallerProcess {
                     $timedOut = $true
                 }
             }
+
+            # The process itself is the authoritative lifecycle source. If it has
+            # already exited by the time the race is observed, cancellation/timeout
+            # cannot retroactively change a completed invocation into an interrupted one.
+            if (($timedOut -or $cancelled) -and $process.HasExited) {
+                $timedOut = $false
+                $cancelled = $false
+            }
         } finally {
             if (($timedOut -or $cancelled) -and -not $process.HasExited) {
                 try { $process.Kill($true) } catch { }
