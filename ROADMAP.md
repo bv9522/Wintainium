@@ -80,7 +80,7 @@ Core provider boundary.
 - Add scheduling and policy-driven automation only after the underlying
   orchestration contract is stable.
 
-**Status: 7A–7I implemented and validated; 7I pending final merge/lock.** The current single-application lifecycle establishes deterministic stage sequencing, immutable state transitions, explicit cancellation control flow, structured failures, parent-operation correlation, and a Core-owned lifecycle entry boundary. The mandatory verification stage remains explicit and is not bypassed by orchestration.
+**Status: 7A–7I implemented, validated, and locked.** The current single-application lifecycle establishes deterministic stage sequencing, immutable state transitions, explicit cancellation control flow, structured failures, parent-operation correlation, and a Core-owned lifecycle entry boundary. The mandatory verification stage remains explicit and is not bypassed by orchestration.
 
 ## Phase 8 — UX and documentation
 
