@@ -4,11 +4,18 @@ function Get-WintainiumApplicationRelease {
     Validates an application manifest, resolves its provider, and discovers releases.
 
     .DESCRIPTION
-    This command is the Phase 3 Core boundary between a validated application
-    definition and provider-backed release discovery. Manifest validation and
-    plugin resolution occur before the provider is invoked. The provider
-    receives only a purpose-built discovery request and its normalized result
-    is returned through the Core operation boundary.
+    Validates the application definition and resolves its provider before invoking
+    provider-backed release discovery. The provider receives only a purpose-built
+    discovery request, and its normalized result is returned through the Core
+    operation boundary.
+
+    This command discovers upstream release information only. It does not decide
+    whether an installed application needs an update, download an artifact, verify
+    an artifact, or install anything.
+
+    The command returns a structured result for both interactive PowerShell use and
+    future presentation clients. Use IsSuccessful and Status for control flow and
+    inspect Errors by Code rather than parsing diagnostic Message text.
 
     .PARAMETER ManifestPath
     Path to the Wintainium application manifest whose releases should be discovered.
@@ -22,6 +29,9 @@ function Get-WintainiumApplicationRelease {
     .OUTPUTS
     PSCustomObject. The result contains OperationId, IsSuccessful, Status, Manifest,
     ProviderPlugin, Releases, Errors, Warnings, and LogEvents.
+
+    Errors are structured objects with a stable Code and human-readable Message.
+    Collection-valued properties are returned as arrays, including when empty.
 
     .EXAMPLE
     Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
