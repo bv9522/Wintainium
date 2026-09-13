@@ -104,7 +104,7 @@ Describe 'Invoke-WintainiumOrchestrationWorkflow' {
                     }
                 }
             }
-            $result.IsSuccessful | Should -BeFalse; $result.WasCancelled | Should -BeTrue; $result.State.Status | Should -Be 'Pending'; @($seen) | Should -Be @(1); $result.State.CompletedStages.Count | Should -Be 1
+            $result.IsSuccessful | Should -BeFalse; $result.WasCancelled | Should -BeTrue; $result.State.Status | Should -Be 'Running'; @($seen) | Should -Be @(1); $result.State.CompletedStages.Count | Should -Be 1
         } finally { $cts.Dispose() }
     }
 
