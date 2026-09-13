@@ -23,7 +23,9 @@ Use this file as a compact orientation guide when assisting with Wintainium.
 - Phase 5 is locked and owns controlled artifact acquisition only.
 - A successful download does not establish artifact trust or installation readiness.
 - Phase 6 is locked and owns installer selection, controlled installer invocation, process lifecycle semantics, and structured installation results.
-- Phase 7 owns end-to-end lifecycle orchestration without moving business rules into orchestration or the GUI.
+- Phase 7 is implemented through 7I and locked; orchestration coordinates lifecycle flow without moving stage business rules into orchestration or the GUI.
+- Cancellation is control flow, not an operation-state status; operation state remains Pending/Running/Failed/Completed.
+- The mandatory verification stage remains explicit and must not be bypassed by orchestration.
 - The Android/Termux environment is a secondary test environment; Wintainium remains Windows-first.
 
 ## Current state
@@ -43,13 +45,23 @@ Phase 6 is implemented and locked. It defines installer input validation,
 installer descriptors and capability validation, Core-owned installer
 selection, controlled installer invocation preparation, controlled process
 lifecycle semantics, the fixed installer-plugin operation boundary, and
-structured installation results. Phase 6 does not reconcile post-install
+structured installation results. A targeted 6E completion-race correction uses
+`WaitForExitAsync()` as the authoritative normal-completion signal without
+changing the locked process contract. Phase 6 does not reconcile post-install
 application state.
 
-Phase 7 is now in progress. Phase 7A establishes the Core-owned orchestration
-input boundary. The first request primitive carries a normalized manifest path,
-target machine architecture, Core-controlled download root, and a new parent
-operation correlation identifier. It performs no downstream lifecycle work.
+Phase 7 is implemented and locked through 7I. The lifecycle now establishes a
+parent operation context, deterministic seven-stage plan, immutable operation
+state and transitions, explicit cancellation control flow, Core-owned single-
+stage execution, single-stage coordination, multi-stage workflow coordination,
+and a lifecycle entry boundary that initializes state once and delegates the
+complete operation to the workflow coordinator. The workflow preserves the
+mandatory verification boundary and does not infer trust from download success.
+
+The 310/310 regression checkpoint covers the complete repository test suite at
+Phase 7I lock. The test host may use a harmless `pwsh.exe` compatibility link
+for Windows-oriented process tests under Termux; production remains
+Windows-native.
 
 The repository is authoritative over this context. When this file conflicts
 with implementation, contracts, or tests, inspect the repository and update
