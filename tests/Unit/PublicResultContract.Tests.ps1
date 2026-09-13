@@ -40,9 +40,9 @@ Describe 'Wintainium public result contract' {
         )
 
         $expectedPropertySets = @(
-            @('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
-            @('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'Errors', 'Warnings', 'LogEvents')
-            @('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
         )
 
         for ($index = 0; $index -lt $results.Count; $index++) {
