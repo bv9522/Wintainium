@@ -4,8 +4,28 @@ function Test-WintainiumApplicationDefinition {
     Validates an offline Wintainium application manifest and resolves its required plugins.
 
     .DESCRIPTION
-    This Phase 1 command performs no network, download, installation, or state-management work.
-    It returns structured validation data so future interfaces can present the same engine result.
+    Performs no network, download, installation, or state-management work. The command
+    validates the manifest and resolves the provider and installer plugins required by
+    that application definition. It returns structured validation data for CLI, automation,
+    and future graphical clients.
+
+    .PARAMETER ManifestPath
+    Path to the application manifest to validate.
+
+    .PARAMETER PluginRoot
+    Root directory containing installed Wintainium plugins.
+
+    .PARAMETER SchemaPath
+    Path to the application-manifest JSON schema used for validation.
+
+    .OUTPUTS
+    PSCustomObject. The result contains OperationId, IsValid, Manifest, ProviderPlugin,
+    InstallerPlugin, Errors, Warnings, and LogEvents.
+
+    .EXAMPLE
+    Test-WintainiumApplicationDefinition -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
+
+    Validates one application definition and resolves its required plugins.
     #>
     [CmdletBinding()]
     param(
