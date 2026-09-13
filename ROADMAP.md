@@ -100,16 +100,32 @@ audited; three remain intended public operations, while
 `New-WintainiumInstallerRequest` is classified as a low-level implementation
 operation that should leave the stable user-facing surface. The locked Phase 7
 lifecycle is identified as the missing public end-to-end operation and will be
-wrapped by a purpose-built public command in 8B.
+wrapped by a purpose-built public command only after its real internal stage
+composition boundary is established.
 
 ### 8B — CLI UX and public result contract
 
-- Expose the purpose-built public orchestration command.
+- Establish the common structured result contract for supported public commands.
 - Refine public parameter names, validation, comment-based help, and examples.
-- Standardize structured result fields and stable error categories.
+- Establish a Core-owned composition seam for the real end-to-end orchestration
+  stage executors before exposing the public update command.
+- Expose the purpose-built public orchestration command only after that seam can
+  supply real stage bindings without leaking `StagePlan`, `CancellationContext`,
+  stage factories, provider requests, download requests, or installer requests
+  to callers.
+- Standardize stable error categories and machine-readable result data.
 - Add appropriate human-readable and machine-readable presentation without
   putting presentation logic into Core business rules.
 - Add contract tests for the supported public command surface.
+
+**Status: In progress.** `docs/PublicResultContract.md` defines the result
+boundary, and contract coverage has been added for the three currently
+supported public commands. The Phase 7 lifecycle is deliberately not exposed
+as a public command yet because the repository currently contains the generic
+lifecycle machinery but not a concrete Core-owned stage-composition seam for
+binding the seven real application-management stages. Exposing it now would
+force CLI/GUI callers to construct internal orchestration dependencies and
+would violate the presentation-neutral boundary.
 
 ### 8C — User documentation and operational guidance
 
