@@ -159,4 +159,4 @@ A release-discovery result can fail because the application definition is invali
 
 ## Next documentation layers
 
-The CLI reference in `docs/CLI.md` describes the public command contracts in more detail. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
+The detailed public command reference is in `docs/CLI.md`. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
