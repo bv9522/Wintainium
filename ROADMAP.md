@@ -59,24 +59,28 @@ Core provider boundary.
 - 6G: Integrate installer plugin planning with the controlled process boundary.
 - 6H: Audit and lock the Phase 6 architecture and documentation.
 
-**Status: Complete and locked.** Phase 6 owns installer selection and controlled execution boundaries, but it does not perform post-install application-state reconciliation. Artifact verification/trust remains an explicit prerequisite before execution and is not implied by a successful Phase 5 download or Phase 6 structural input.
+**Status: Complete and locked.** Phase 6 owns installer selection and controlled execution boundaries, but it does not perform post-install application-state reconciliation. Artifact verification/trust remains an explicit prerequisite before execution and is not implied by a successful Phase 5 download or Phase 6 structural input. A targeted 6E process-completion race correction is covered by the Phase 7I regression checkpoint without changing the locked process contract.
 
 ## Phase 7 — Orchestration
 
 - 7A: Establish the orchestration input boundary and parent operation context.
+- 7B: Define deterministic orchestration stage sequencing.
+- 7C: Define immutable orchestration operation state.
+- 7D: Define stage state transitions and fail-fast failure commitment.
+- 7E: Define the cancellation control-flow boundary.
+- 7F: Define Core-owned single-stage execution.
+- 7G: Coordinate single-stage execution with state transitions.
+- 7H: Coordinate the complete multi-stage workflow.
+- 7I: Coordinate lifecycle initialization and workflow delegation.
 - Compose discovery, decision, download, verification, and installation into
   end-to-end application update workflows without duplicating stage policy.
-- Define deterministic stage sequencing and fail-fast behavior.
-- Propagate cancellation and structured failures across stage boundaries.
-- Preserve operation correlation and diagnostics across the lifecycle.
 - Define recoverable partial-operation semantics.
 - Add multiple-application and update-all workflows after the single-application
   lifecycle is stable.
 - Add scheduling and policy-driven automation only after the underlying
   orchestration contract is stable.
 
-**Status: In progress.** Phase 7A currently defines only the high-level request
-boundary; it does not execute downstream stages.
+**Status: 7A–7I implemented and validated; 7I pending final merge/lock.** The current single-application lifecycle establishes deterministic stage sequencing, immutable state transitions, explicit cancellation control flow, structured failures, parent-operation correlation, and a Core-owned lifecycle entry boundary. The mandatory verification stage remains explicit and is not bypassed by orchestration.
 
 ## Phase 8 — UX and documentation
 
