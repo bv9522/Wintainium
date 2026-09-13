@@ -71,24 +71,24 @@ Describe 'Wintainium public CLI contract' {
         $help.Examples.Example | Should -Not -BeNullOrEmpty
     }
 
-    It 'documents structured output for the public manifest command' {
+    It 'documents the complete structured output contract for the public manifest command' {
         $helpText = Get-Help -Name Get-WintainiumManifest -Full | Out-String
-        $helpText | Should -Match 'OperationId'
-        $helpText | Should -Match 'IsSuccessful'
-        $helpText | Should -Match 'ManifestPaths'
+        foreach ($property in @('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')) {
+            $helpText | Should -Match $property
+        }
     }
 
-    It 'documents structured output for the public application validation command' {
+    It 'documents the complete structured output contract for the public application validation command' {
         $helpText = Get-Help -Name Test-WintainiumApplicationDefinition -Full | Out-String
-        $helpText | Should -Match 'OperationId'
-        $helpText | Should -Match 'IsValid'
-        $helpText | Should -Match 'ProviderPlugin'
+        foreach ($property in @('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'Errors', 'Warnings', 'LogEvents')) {
+            $helpText | Should -Match $property
+        }
     }
 
-    It 'documents structured output for the public release discovery command' {
+    It 'documents the complete structured output contract for the public release discovery command' {
         $helpText = Get-Help -Name Get-WintainiumApplicationRelease -Full | Out-String
-        $helpText | Should -Match 'OperationId'
-        $helpText | Should -Match 'IsSuccessful'
-        $helpText | Should -Match 'Releases'
+        foreach ($property in @('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')) {
+            $helpText | Should -Match $property
+        }
     }
 }
