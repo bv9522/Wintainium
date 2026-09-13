@@ -9,8 +9,9 @@ engine rather than contain its own package-management logic.
 
 ## Status
 
-Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration is now
-in progress, beginning with the Core-owned orchestration input boundary.
+Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration has now
+reached the Core-owned lifecycle coordination boundary: 7A–7I are implemented
+and validated, with 7I pending final merge/lock.
 
 ## Repository map
 

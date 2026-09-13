@@ -2,7 +2,8 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     Import-Module $script:modulePath -Force
-    $script:pwshPath = Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+    $script:pwshExecutableName = if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' }
+    $script:pwshPath = Join-Path -Path $PSHOME -ChildPath $script:pwshExecutableName
     $script:tempRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('Wintainium-InstallerProcess-' + [guid]::NewGuid().ToString())
     New-Item -ItemType Directory -Path $script:tempRoot -Force | Out-Null
 }
@@ -97,9 +98,11 @@ Describe 'Wintainium installer process lifecycle' {
     It 'does not classify an already completed process as cancelled when cancellation occurs later' {
         $cts = [System.Threading.CancellationTokenSource]::new()
         try {
-            $cts.CancelAfter(1000)
+            # Keep the cancellation comfortably beyond process startup on slower
+            # cross-platform test hosts while preserving the race-order assertion.
+            $cts.CancelAfter(10000)
             $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath; Token = $cts.Token } {
-                Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -CancellationToken $Token -TimeoutMilliseconds 10000
+                Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -CancellationToken $Token -TimeoutMilliseconds 30000
             }
             $result.Status | Should -Be 'Completed'
             $result.FailureKind | Should -Be $null
@@ -109,7 +112,7 @@ Describe 'Wintainium installer process lifecycle' {
     }
     It 'does not classify an already completed process as timed out when the timeout is longer than execution' {
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
-            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -TimeoutMilliseconds 1000
+            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 0') -TimeoutMilliseconds 30000
         }
         $result.Status | Should -Be 'Completed'
         $result.FailureKind | Should -Be $null

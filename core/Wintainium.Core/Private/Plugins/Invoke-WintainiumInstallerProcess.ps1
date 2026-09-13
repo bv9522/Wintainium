@@ -86,8 +86,7 @@ function Invoke-WintainiumInstallerProcess {
                 $completedTask = [System.Threading.Tasks.Task]::WhenAny($processExitTask, $timeoutTask, $cancelTask).GetAwaiter().GetResult()
                 if ($completedTask -eq $processExitTask) {
                     # Normal process completion wins over a simultaneously completing
-                    # timeout/cancellation task. Once the process has exited, do not
-                    # reclassify the completed invocation as interrupted.
+                    # timeout/cancellation task.
                 } elseif ($completedTask -eq $timeoutTask) {
                     $timedOut = $true
                 } elseif ($completedTask -eq $cancelTask) {
@@ -101,6 +100,14 @@ function Invoke-WintainiumInstallerProcess {
                 } else {
                     $timedOut = $true
                 }
+            }
+
+            # WaitForExitAsync is the authoritative completion signal. HasExited can
+            # lag that signal on some runtimes, so use the task itself to close the
+            # cancellation/timeout race deterministically.
+            if ($processExitTask.IsCompleted) {
+                $timedOut = $false
+                $cancelled = $false
             }
         } finally {
             if (($timedOut -or $cancelled) -and -not $process.HasExited) {

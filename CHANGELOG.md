@@ -18,8 +18,11 @@ versioning once releases begin.
 - Phase 5 download-result contract documenting the separation between successful acquisition and later artifact trust or installation readiness.
 - Phase 6 installer engine boundaries for installer input validation, descriptor/capability validation, installer selection, controlled invocation, process lifecycle semantics, plugin operation integration, and structured installation results.
 - Phase 7 orchestration input boundary carrying a parent operation correlation identifier and normalized application-management inputs.
+- Phase 7 deterministic stage planning, immutable operation state, stage transitions, cancellation control flow, single-stage coordination, multi-stage workflow coordination, and lifecycle coordination.
+- Phase 7 lifecycle and orchestration audit/lock documentation.
 
 ### Changed
 
-- Roadmap now records Phases 4, 5, and 6 as complete and locked, and Phase 7 as in progress.
-- AI development context now reflects the implemented engine state through the Phase 7 kickoff.
+- Roadmap now records Phases 4, 5, and 6 as complete and locked, and Phase 7 as implemented through the 7I lifecycle boundary pending final lock.
+- AI development context now reflects the implemented engine state through the Phase 7 orchestration lifecycle.
+- Phase 6E installer process completion now uses the `WaitForExitAsync()` completion task as the authoritative normal-completion signal, preventing a later cancellation or timeout signal from retroactively reclassifying an already completed process.
