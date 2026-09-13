@@ -11,7 +11,6 @@
         'Get-WintainiumManifest'
         'Test-WintainiumApplicationDefinition'
         'Get-WintainiumApplicationRelease'
-        'New-WintainiumInstallerRequest'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
