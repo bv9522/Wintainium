@@ -99,7 +99,7 @@ Describe 'Wintainium public CLI contract' {
 
     It 'documents that application validation does not perform execution work' {
         $helpText = Get-Help -Name Test-WintainiumApplicationDefinition -Full | Out-String
-        $helpText | Should -Match 'no network, download, installation, or installed-state management work'
+        $helpText | Should -Match 'no network,\s*download,\s*installation, or installed-state management work'
     }
 
     It 'documents that release discovery does not perform update execution' {
