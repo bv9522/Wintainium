@@ -26,11 +26,11 @@ helpers directly.
 | `Get-WintainiumManifest` | Discover and import a local manifest collection | Public | **Retain and refine** |
 | `Test-WintainiumApplicationDefinition` | Validate one manifest and resolve required plugins | Public | **Retain and refine** |
 | `Get-WintainiumApplicationRelease` | Validate a manifest, resolve its provider, and discover releases | Public | **Retain and refine** |
-| `New-WintainiumInstallerRequest` | Transform a completed download result into installer input | Publicly exported, but low-level | **Remove from the user-facing contract; retain as an internal Core operation unless a concrete external client requires it** |
+| `New-WintainiumInstallerRequest` | Transform a completed download result into installer input | Internal helper | **Keep private** |
 
-The module manifest and module loader currently export exactly these four
-functions. The audit therefore distinguishes the historical exported surface
-from the stable user-facing surface being established in Phase 8.
+The module manifest and module loader now export exactly the three intended
+user-facing commands. The installer request helper remains available only
+inside the loaded Core module scope for internal composition and tests.
 
 ## Required public operation boundary
 
@@ -44,11 +44,12 @@ The stable user-facing surface must cover these conceptual operations:
 4. **Application update lifecycle** — execute the Core-owned orchestration
    lifecycle for an application update.
 
-The fourth operation is the principal missing public entry point. Phase 8B
-will expose a purpose-built public wrapper around the locked Phase 7 lifecycle.
-The wrapper will construct/validate the presentation-neutral orchestration
-request and dependencies; callers will not be required to know the internal
-`StagePlan`, `StageFactory`, or stage-operation contracts.
+The fourth operation is the principal missing public entry point. Phase 8B is
+establishing the boundary for a purpose-built public wrapper around the locked
+Phase 7 lifecycle. The wrapper must not be exposed until Core has a concrete
+composition seam capable of constructing the real stage bindings internally.
+Callers will not be required to know the internal `StagePlan`, `StageFactory`,
+or stage-operation contracts.
 
 ## Deliberately non-public
 
