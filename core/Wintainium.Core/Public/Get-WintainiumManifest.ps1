@@ -8,6 +8,10 @@ function Get-WintainiumManifest {
     the .wintainium.json filename convention. Invalid candidates do not prevent valid
     manifests from being returned.
 
+    The command returns a structured result for both interactive PowerShell use and
+    future presentation clients. Use IsSuccessful to determine overall success and
+    inspect Errors by Code rather than parsing diagnostic Message text.
+
     .PARAMETER Path
     Path to the local manifest collection directory.
 
@@ -20,6 +24,9 @@ function Get-WintainiumManifest {
     .OUTPUTS
     PSCustomObject. The result contains OperationId, IsSuccessful, Candidates,
     ManifestPaths, Manifests, Errors, Warnings, and LogEvents.
+
+    Errors are structured objects with a stable Code and human-readable Message.
+    Collection-valued properties are returned as arrays, including when empty.
 
     .EXAMPLE
     Get-WintainiumManifest -Path 'C:\Wintainium\manifests'
