@@ -16,5 +16,4 @@ Export-ModuleMember -Function @(
     'Get-WintainiumManifest'
     'Test-WintainiumApplicationDefinition'
     'Get-WintainiumApplicationRelease'
-    'New-WintainiumInstallerRequest'
 )
