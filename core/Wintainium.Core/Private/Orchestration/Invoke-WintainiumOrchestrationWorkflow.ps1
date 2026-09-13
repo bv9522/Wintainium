@@ -116,7 +116,12 @@ function Invoke-WintainiumOrchestrationWorkflow {
 
         $stageResults.Add($stageOperation)
 
-        if ($stageOperation.WasCancelled -or ($stageOperation.Execution -and $stageOperation.Execution.WasCancelled)) {
+        $stageWasCancelled = $false
+        if ($null -ne $stageOperation.Execution -and $stageOperation.Execution.PSObject.Properties['WasCancelled']) {
+            $stageWasCancelled = [bool]$stageOperation.Execution.WasCancelled
+        }
+
+        if ($stageWasCancelled) {
             return [pscustomobject][ordered]@{
                 IsSuccessful = $false
                 WasCancelled = $true
