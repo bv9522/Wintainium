@@ -11,6 +11,7 @@ Describe 'Wintainium public result contract' {
         New-Item -Path $path -ItemType Directory | Out-Null
 
         $result = Get-WintainiumManifest -Path $path
+        $parsedOperationId = [guid]::Empty
 
         $result -is [string] | Should -BeFalse
         $result.PSObject.Properties['OperationId'] | Should -Not -BeNullOrEmpty
@@ -18,7 +19,7 @@ Describe 'Wintainium public result contract' {
         $result.PSObject.Properties['Errors'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Warnings'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['LogEvents'] | Should -Not -BeNullOrEmpty
-        [guid]::TryParse([string]$result.OperationId, [ref]([guid]::Empty)) | Should -BeTrue
+        [guid]::TryParse([string]$result.OperationId, [ref]$parsedOperationId) | Should -BeTrue
     }
 
     It 'returns structured validation failure data without requiring exception-text parsing' {
