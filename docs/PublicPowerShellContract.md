@@ -2,11 +2,11 @@
 
 ## Status
 
-Phase 8A — Public CLI Contract Audit: **complete**.
+Phase 8B — CLI UX and public result contract: **in progress**.
 
-This document defines the intended public PowerShell boundary for Wintainium's
-engine. It is an API contract decision, not a promise that every operation is
-already exposed as a user-facing command.
+This document defines the stable public PowerShell boundary for Wintainium's
+engine. It is an API contract decision, not a promise that every conceptual
+operation is already exposed as a user-facing command.
 
 ## Design principle
 
@@ -28,13 +28,14 @@ helpers directly.
 | `Get-WintainiumApplicationRelease` | Validate a manifest, resolve its provider, and discover releases | Public | **Retain and refine** |
 | `New-WintainiumInstallerRequest` | Transform a completed download result into installer input | Internal helper | **Keep private** |
 
-The module manifest and module loader now export exactly the three intended
+The module manifest and module loader export exactly the three intended
 user-facing commands. The installer request helper remains available only
 inside the loaded Core module scope for internal composition and tests.
 
 ## Required public operation boundary
 
-The stable user-facing surface must cover these conceptual operations:
+The stable user-facing surface is intended to cover these conceptual
+operations:
 
 1. **Manifest discovery** — locate/import available application definitions.
 2. **Application validation** — determine whether a manifest and its required
@@ -44,12 +45,21 @@ The stable user-facing surface must cover these conceptual operations:
 4. **Application update lifecycle** — execute the Core-owned orchestration
    lifecycle for an application update.
 
-The fourth operation is the principal missing public entry point. Phase 8B is
-establishing the boundary for a purpose-built public wrapper around the locked
-Phase 7 lifecycle. The wrapper must not be exposed until Core has a concrete
-composition seam capable of constructing the real stage bindings internally.
-Callers will not be required to know the internal `StagePlan`, `StageFactory`,
-or stage-operation contracts.
+The fourth operation is the principal missing public entry point. Phase 8B has
+established the contract requirements for a purpose-built public wrapper
+around the locked Phase 7 lifecycle, but the wrapper is not exposed yet.
+It must not be exposed until Core has a concrete composition seam capable of
+constructing the real stage bindings internally. Callers will not be required
+to know the internal `StagePlan`, `StageFactory`, `CancellationContext`, or
+stage-operation contracts.
+
+The remaining prerequisite is authoritative installed-application state.
+Phase 4's update decision requires that state alongside the manifest and
+provider result. The current repository does not yet provide an authoritative
+retrieval/persistence boundary, so Phase 8B does not invent a default state or
+make state construction a caller responsibility. The state boundary is owned
+by Phase 8E unless an earlier, explicitly justified contract change establishes
+it.
 
 ## Deliberately non-public
 
@@ -87,8 +97,8 @@ for convenience.
 ## Result rules
 
 Public engine commands return structured PowerShell objects rather than
-formatted text. Results should make success/failure explicit and, where the
-operation is correlated, expose the operation identifier.
+formatted text. Results make success or validity explicit and, where the
+operation is correlated, expose the Core-generated operation identifier.
 
 The public result vocabulary is intentionally centered on:
 
@@ -100,6 +110,10 @@ The public result vocabulary is intentionally centered on:
 - structured diagnostic/log information where that information is part of
   the existing operation contract.
 
+Collection-valued result properties are arrays even when empty. Consumers must
+not depend on property ordering, terminal formatting, or diagnostic message
+wording for business decisions.
+
 Formatting, tables, colors, progress displays, and other presentation choices
 must not become part of Core business logic.
 
@@ -109,36 +123,44 @@ Expected operational failures should be represented in the documented
 structured result contract. Parameter-binding failures and programmer errors
 remain normal PowerShell errors where appropriate.
 
-Phase 8B will normalize the distinction between:
+The public boundary recognizes these semantic error categories:
 
-- invalid caller input;
-- invalid application definition;
-- unavailable/incompatible plugin capability;
-- provider/discovery failure;
-- acquisition failure;
-- verification failure;
-- installer failure;
+- caller input;
+- application definition;
+- plugin capability;
+- provider/discovery;
+- acquisition;
+- verification;
+- installer;
 - cancellation;
-- unexpected internal failure.
+- internal/unexpected engine failure.
 
-The GUI and future automation clients should be able to act on stable error
-codes/categories without parsing human-readable messages.
+Individual owning operations remain responsible for their exact documented
+machine-readable error codes. Clients should branch on documented
+codes/categories rather than parse human-readable messages.
 
 ## Pipeline compatibility
 
-Pipeline support will be added only where it improves an actual user workflow
+Pipeline support is added only where it improves an actual user workflow
 without weakening explicit operation boundaries. Pipeline input is not a goal
 by itself, and public commands must not accept ambiguous object shapes merely
 to appear pipeline-friendly.
 
+Structured results remain usable with normal PowerShell tooling such as
+`Select-Object`, `Where-Object`, `ForEach-Object`, and `ConvertTo-Json` without
+requiring formatted-output parsing.
+
 ## Machine versus human output
 
-The engine returns data. A CLI presentation layer may render that data for
-people or serialize it for automation. No business decision may depend on a
-human/machine output switch.
+The engine returns data. A future CLI presentation layer may render that data
+for people or serialize it for automation. No business decision may depend on
+a human/machine output switch.
 
-Phase 8B should therefore prefer a consistent structured result model and a
-thin presentation wrapper over separate human and machine execution paths.
+The current public commands therefore expose one semantic result contract
+rather than separate human and machine execution paths. Any future presentation
+mode must consume that same result data and must not alter provider selection,
+update decisions, download behavior, verification requirements, installer
+selection, cancellation semantics, or other business rules.
 
 ## GUI seam
 
@@ -153,19 +175,28 @@ as an implementation sequence.
 That sequence remains an engine concern. The GUI may display stage progress
 because the engine reports it, but the GUI does not own the stage policy.
 
-## Explicit non-goals for Phase 8A
+## Documentation and help
 
-This audit does not introduce:
+The three currently supported public commands use comment-based help as the
+authoritative local CLI guidance for their implemented behavior. Each command
+documents its purpose, public parameters, structured output, and a
+copy/paste-oriented example.
+
+Examples demonstrate public inputs only. They do not expose private
+orchestration dependencies or imply that the current public surface can
+perform an end-to-end update.
+
+## Explicit non-goals for Phase 8B
+
+This contract does not introduce:
 
 - a C#/.NET GUI;
 - scheduling;
 - update-all orchestration;
+- persistence infrastructure before its defined boundary;
 - a plugin marketplace;
-- persistence/database infrastructure;
 - cloud services;
 - telemetry;
 - a second business-rule implementation;
 - arbitrary shell execution;
 - a general-purpose command interpreter.
-
-Those remain outside the Phase 8A public-contract decision.
