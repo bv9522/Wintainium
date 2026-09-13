@@ -8,7 +8,7 @@ BeforeAll {
 Describe 'Wintainium public result contract' {
     It 'returns a structured manifest-discovery result with correlation and diagnostics fields' {
         $path = Join-Path -Path $TestDrive -ChildPath 'manifests'
-        New-Item -Path $path -ItemType Directory | Out-Null
+        New-Item -Path $path -ItemType Directory -Force | Out-Null
 
         $result = Get-WintainiumManifest -Path $path
         $parsedOperationId = [guid]::Empty
@@ -26,6 +26,30 @@ Describe 'Wintainium public result contract' {
         @($result.Errors) | Should -BeNullOrEmpty
         @($result.Warnings) | Should -BeNullOrEmpty
         @($result.LogEvents).Count | Should -BeGreaterThan 0
+    }
+
+    It 'keeps the documented top-level result property sets stable for all supported commands' {
+        $manifestPath = Join-Path -Path $TestDrive -ChildPath 'missing.wintainium.json'
+        $manifestCollection = Join-Path -Path $TestDrive -ChildPath 'manifests'
+        New-Item -Path $manifestCollection -ItemType Directory -Force | Out-Null
+
+        $results = @(
+            (Get-WintainiumManifest -Path $manifestCollection)
+            (Test-WintainiumApplicationDefinition -ManifestPath $manifestPath)
+            (Get-WintainiumApplicationRelease -ManifestPath $manifestPath)
+        )
+
+        $expectedPropertySets = @(
+            @('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
+            @('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'Errors', 'Warnings', 'LogEvents')
+            @('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
+        )
+
+        for ($index = 0; $index -lt $results.Count; $index++) {
+            $actual = @($results[$index].PSObject.Properties.Name | Sort-Object)
+            $expected = @($expectedPropertySets[$index] | Sort-Object)
+            $actual | Should -Be $expected
+        }
     }
 
     It 'returns structured validation failure data without requiring exception-text parsing' {
@@ -84,7 +108,7 @@ Describe 'Wintainium public result contract' {
 
     It 'does not require clients to parse formatted output for structured result consumption' {
         $path = Join-Path -Path $TestDrive -ChildPath 'manifests'
-        New-Item -Path $path -ItemType Directory | Out-Null
+        New-Item -Path $path -ItemType Directory -Force | Out-Null
 
         $result = Get-WintainiumManifest -Path $path
         $json = $result | ConvertTo-Json -Depth 10
