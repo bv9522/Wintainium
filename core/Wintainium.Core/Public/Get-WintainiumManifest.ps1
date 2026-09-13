@@ -7,6 +7,29 @@ function Get-WintainiumManifest {
     Performs offline manifest discovery and import only. Recognized manifest files use
     the .wintainium.json filename convention. Invalid candidates do not prevent valid
     manifests from being returned.
+
+    .PARAMETER Path
+    Path to the local manifest collection directory.
+
+    .PARAMETER Recurse
+    Recursively search child directories for recognized manifest files.
+
+    .PARAMETER SchemaPath
+    Path to the application manifest JSON schema used during import.
+
+    .OUTPUTS
+    PSCustomObject. The result contains OperationId, IsSuccessful, Candidates,
+    ManifestPaths, Manifests, Errors, Warnings, and LogEvents.
+
+    .EXAMPLE
+    Get-WintainiumManifest -Path 'C:\Wintainium\manifests'
+
+    Discovers manifests in a single local collection directory.
+
+    .EXAMPLE
+    Get-WintainiumManifest -Path 'C:\Wintainium\manifests' -Recurse
+
+    Discovers manifests in the collection directory and its child directories.
     #>
     [CmdletBinding()]
     param(

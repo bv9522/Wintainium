@@ -9,6 +9,24 @@ function Get-WintainiumApplicationRelease {
     plugin resolution occur before the provider is invoked. The provider
     receives only a purpose-built discovery request and its normalized result
     is returned through the Core operation boundary.
+
+    .PARAMETER ManifestPath
+    Path to the Wintainium application manifest whose releases should be discovered.
+
+    .PARAMETER PluginRoot
+    Root directory containing the provider and installer plugins required by the manifest.
+
+    .PARAMETER SchemaPath
+    Path to the application manifest JSON schema used during validation.
+
+    .OUTPUTS
+    PSCustomObject. The result contains OperationId, IsSuccessful, Status, Manifest,
+    ProviderPlugin, Releases, Errors, Warnings, and LogEvents.
+
+    .EXAMPLE
+    Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
+
+    Validates the manifest and discovers normalized upstream releases through its provider.
     #>
     [CmdletBinding()]
     param(

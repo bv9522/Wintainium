@@ -16,10 +16,16 @@ Describe 'Wintainium public result contract' {
         $result -is [string] | Should -BeFalse
         $result.PSObject.Properties['OperationId'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['IsSuccessful'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['Candidates'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['ManifestPaths'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['Manifests'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Errors'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Warnings'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['LogEvents'] | Should -Not -BeNullOrEmpty
         [guid]::TryParse([string]$result.OperationId, [ref]$parsedOperationId) | Should -BeTrue
+        @($result.Errors) | Should -BeNullOrEmpty
+        @($result.Warnings) | Should -BeNullOrEmpty
+        @($result.LogEvents).Count | Should -BeGreaterThan 0
     }
 
     It 'returns structured validation failure data without requiring exception-text parsing' {
@@ -30,6 +36,9 @@ Describe 'Wintainium public result contract' {
         $result -is [string] | Should -BeFalse
         $result.IsValid | Should -BeFalse
         $result.PSObject.Properties['OperationId'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['Manifest'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['ProviderPlugin'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['InstallerPlugin'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Errors'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Warnings'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['LogEvents'] | Should -Not -BeNullOrEmpty
@@ -47,10 +56,14 @@ Describe 'Wintainium public result contract' {
         $result.IsSuccessful | Should -BeFalse
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.PSObject.Properties['OperationId'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['Manifest'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['ProviderPlugin'] | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties['Releases'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Errors'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['Warnings'] | Should -Not -BeNullOrEmpty
         $result.PSObject.Properties['LogEvents'] | Should -Not -BeNullOrEmpty
         @($result.Errors).Count | Should -BeGreaterThan 0
+        @($result.Releases).Count | Should -Be 0
     }
 
     It 'uses structured error objects rather than formatted error strings' {
@@ -67,5 +80,18 @@ Describe 'Wintainium public result contract' {
                 $errorRecord.PSObject.Properties['Message'] | Should -Not -BeNullOrEmpty
             }
         }
+    }
+
+    It 'does not require clients to parse formatted output for structured result consumption' {
+        $path = Join-Path -Path $TestDrive -ChildPath 'manifests'
+        New-Item -Path $path -ItemType Directory | Out-Null
+
+        $result = Get-WintainiumManifest -Path $path
+        $json = $result | ConvertTo-Json -Depth 10
+        $roundTrip = $json | ConvertFrom-Json
+
+        $roundTrip.OperationId | Should -Be $result.OperationId
+        $roundTrip.IsSuccessful | Should -Be $result.IsSuccessful
+        @($roundTrip.Errors) | Should -BeNullOrEmpty
     }
 }
