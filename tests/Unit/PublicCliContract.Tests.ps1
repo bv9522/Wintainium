@@ -52,4 +52,22 @@ Describe 'Wintainium public CLI contract' {
         $command.Parameters.Keys | Should -Contain 'PluginRoot'
         $command.Parameters.Keys | Should -Contain 'SchemaPath'
     }
+
+    It 'provides a synopsis and description for the public manifest command' {
+        $help = Get-Help -Name Get-WintainiumManifest -Full
+        $help.Synopsis | Should -Not -BeNullOrEmpty
+        $help.Description | Should -Not -BeNullOrEmpty
+    }
+
+    It 'provides a synopsis and description for the public application validation command' {
+        $help = Get-Help -Name Test-WintainiumApplicationDefinition -Full
+        $help.Synopsis | Should -Not -BeNullOrEmpty
+        $help.Description | Should -Not -BeNullOrEmpty
+    }
+
+    It 'provides a synopsis and description for the public release discovery command' {
+        $help = Get-Help -Name Get-WintainiumApplicationRelease -Full
+        $help.Synopsis | Should -Not -BeNullOrEmpty
+        $help.Description | Should -Not -BeNullOrEmpty
+    }
 }
