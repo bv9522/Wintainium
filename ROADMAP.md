@@ -82,13 +82,66 @@ Core provider boundary.
 
 **Status: 7A–7I implemented, validated, and locked.** The current single-application lifecycle establishes deterministic stage sequencing, immutable state transitions, explicit cancellation control flow, structured failures, parent-operation correlation, and a Core-owned lifecycle entry boundary. The mandatory verification stage remains explicit and is not bypassed by orchestration.
 
-## Phase 8 — UX and documentation
+## Phase 8 — UX, documentation, release preparation, and GUI readiness
 
-- Refine the PowerShell command-line experience.
-- Complete user-facing documentation and operational guidance.
-- Establish release packaging and upgrade procedures.
-- Prepare the engine for a future C#/.NET GUI without moving business rules
-  into the GUI.
+### 8A — Public CLI contract audit
+
+- Inventory the actual exported PowerShell surface.
+- Distinguish stable user-facing operations from internal implementation helpers.
+- Define the presentation-neutral request/result boundary for PowerShell and the
+  future C#/.NET client.
+- Establish structured error semantics and operation correlation requirements.
+- Identify the missing public orchestration entry boundary.
+- Prevent internal stage/provider/installer contracts from leaking into clients.
+
+**Status: Complete.** The public-contract decision is recorded in
+`docs/PublicPowerShellContract.md`. The current four exported functions were
+audited; three remain intended public operations, while
+`New-WintainiumInstallerRequest` is classified as a low-level implementation
+operation that should leave the stable user-facing surface. The locked Phase 7
+lifecycle is identified as the missing public end-to-end operation and will be
+wrapped by a purpose-built public command in 8B.
+
+### 8B — CLI UX and public result contract
+
+- Expose the purpose-built public orchestration command.
+- Refine public parameter names, validation, comment-based help, and examples.
+- Standardize structured result fields and stable error categories.
+- Add appropriate human-readable and machine-readable presentation without
+  putting presentation logic into Core business rules.
+- Add contract tests for the supported public command surface.
+
+### 8C — User documentation and operational guidance
+
+- Write the normal-user guide and CLI reference from actual implemented
+  behavior.
+- Document configuration, manifests, plugins, update operations, failures,
+  cancellation, logs, and troubleshooting.
+- Keep architecture/developer documentation aligned with public contracts.
+
+### 8D — Release boundary and packaging
+
+- Define deterministic release package contents and layout.
+- Establish authoritative version metadata and release validation.
+- Validate required Core, schema, plugin, manifest/resource, and documentation
+  assets without bundling development-only material.
+
+### 8E — Upgrade and persistence contract
+
+- Classify program files, user configuration, application state, logs, caches,
+  manifests, and temporary artifacts from the actual implementation.
+- Define safe replacement/preservation behavior for upgrades.
+- Validate a supported N→N+1 upgrade path without introducing speculative
+  persistence infrastructure.
+
+### 8F — GUI readiness audit and Phase 8 lock
+
+- Verify that a future C#/.NET GUI can consume the public engine boundary
+  without reproducing business rules.
+- Confirm the GUI seam is presentation/client code over the PowerShell engine.
+- Complete regression, documentation, package, and upgrade validation.
+- Lock Phase 8 only when the public contract, release boundary, and upgrade
+  behavior are coherent and tested.
 
 ## Version 1.0 — Desktop experience
 
