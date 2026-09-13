@@ -23,6 +23,6 @@ versioning once releases begin.
 
 ### Changed
 
-- Roadmap now records Phases 4, 5, and 6 as complete and locked, and Phase 7 as implemented through the 7I lifecycle boundary pending final lock.
+- Roadmap now records Phases 4, 5, and 6 as complete and locked, and Phase 7 as implemented, validated, and locked through 7I.
 - AI development context now reflects the implemented engine state through the Phase 7 orchestration lifecycle.
 - Phase 6E installer process completion now uses the `WaitForExitAsync()` completion task as the authoritative normal-completion signal, preventing a later cancellation or timeout signal from retroactively reclassifying an already completed process.
