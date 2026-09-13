@@ -23,7 +23,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Add appropriate human-readable and machine-readable presentation without putting presentation logic into Core business rules.
 - Add contract tests for the supported public command surface.
 
-**Status: In progress.** `docs/PublicResultContract.md` defines the result boundary, and contract coverage exists for the three currently supported public commands. The Phase 7 lifecycle remains internal until Core has a concrete composition seam for the seven real application-management stages.
+**Status: In progress.** `docs/PublicResultContract.md` and `docs/PublicPowerShellContract.md` define the current result and presentation-neutral API boundary, and contract coverage exists for the three currently supported public commands. Their comment-based help now documents structured outputs and command responsibilities. The Phase 7 lifecycle remains internal until Core has a concrete composition seam for the seven real application-management stages.
 
 **Architecture dependency identified:** the locked Phase 4 update decision requires an installed-application state alongside the manifest and provider result. The current repository has a state-object constructor but no authoritative installed-state retrieval/persistence boundary. Therefore 8B must not manufacture or require caller-supplied installed state merely to make the public update command appear complete. The concrete end-to-end public update command will be exposed only after the real state boundary is established as part of 8E (or an earlier explicitly justified contract change).
 
