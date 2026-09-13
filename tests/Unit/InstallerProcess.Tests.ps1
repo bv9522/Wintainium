@@ -2,7 +2,8 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     Import-Module $script:modulePath -Force
-    $script:pwshPath = Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+    $script:pwshExecutableName = if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' }
+    $script:pwshPath = Join-Path -Path $PSHOME -ChildPath $script:pwshExecutableName
     $script:tempRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('Wintainium-InstallerProcess-' + [guid]::NewGuid().ToString())
     New-Item -ItemType Directory -Path $script:tempRoot -Force | Out-Null
 }
