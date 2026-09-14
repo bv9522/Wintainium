@@ -33,7 +33,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Document configuration, manifests, plugins, update operations, failures, cancellation, logs, and troubleshooting.
 - Keep architecture/developer documentation aligned with public contracts.
 
-**Status: In progress.** `docs/GettingStarted.md`, `docs/CLI.md`, and `docs/ManifestAuthoring.md` now form the initial user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Remaining 8C work should fill documented operational gaps from the implementation, particularly configuration, plugin behavior, failure/cancellation/log semantics, and any release/upgrade guidance that can be stated without anticipating 8D/8E decisions.
+**Status: In progress.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` now form the initial user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces. Remaining 8C work should fill only operational gaps that can be stated from the current implementation without anticipating 8D/8E decisions.
 
 ### 8D — Release boundary and packaging
 
