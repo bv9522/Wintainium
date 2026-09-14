@@ -58,10 +58,27 @@ and a lifecycle entry boundary that initializes state once and delegates the
 complete operation to the workflow coordinator. The workflow preserves the
 mandatory verification boundary and does not infer trust from download success.
 
-The 310/310 regression checkpoint covers the complete repository test suite at
-Phase 7I lock. The test host may use a harmless `pwsh.exe` compatibility link
-for Windows-oriented process tests under Termux; production remains
-Windows-native.
+Phase 8A is complete. The public PowerShell surface is intentionally limited to
+`Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`, and
+`Get-WintainiumApplicationRelease`. Low-level installer-request construction is
+internal. The exported module boundary is presentation-neutral and returns
+structured objects rather than formatted output.
+
+Phase 8B is in progress. Public result contracts, stable error categories,
+comment-based help, contract tests, and the Core-owned orchestration composition
+requirements are documented. The public end-to-end update command remains
+withheld because update decisions require authoritative installed state and the
+current repository does not yet have the required state retrieval/persistence
+boundary. Callers must not manufacture that state or construct internal
+orchestration objects to bypass the boundary.
+
+Phase 8C has begun. `docs/GettingStarted.md`, `docs/CLI.md`, and
+`docs/ManifestAuthoring.md` provide the initial user-facing documentation
+layer. Documentation must describe implemented behavior and must not imply that
+internal orchestration or speculative persistence features are public.
+
+The current full-suite regression checkpoint is 331/331 green after the latest
+public-contract and documentation changes.
 
 The repository is authoritative over this context. When this file conflicts
 with implementation, contracts, or tests, inspect the repository and update
