@@ -12,7 +12,7 @@ engine rather than contain its own package-management logic.
 Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration 7A–7I
 is implemented, validated, and locked through the Core-owned lifecycle
 coordination boundary. Phase 8A is complete; Phase 8B is refining the public
-CLI/result boundary and beginning the user-facing documentation set.
+CLI/result boundary and Phase 8C is building the user-facing documentation set.
 
 The current public PowerShell surface intentionally consists of three commands:
 `Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`, and
@@ -22,17 +22,22 @@ composition boundaries are established.
 
 ## Repository map
 
-- `docs/` — design, CLI, and contributor documentation.
+- `docs/` — design, CLI, user, and contributor documentation.
 - `core/` — PowerShell engine module.
 - `plugins/` — independently loadable source and installer plugins.
 - `manifests/` — application definitions in JSON.
+- `schemas/` — authoritative JSON Schemas.
 - `tests/` — automated tests.
 
-## CLI reference
+## User documentation
 
-See [`docs/CLI.md`](docs/CLI.md) for the current public command reference,
-structured result handling, error handling, JSON serialization, and the limits
-of the current update surface.
+- [`docs/GettingStarted.md`](docs/GettingStarted.md) — first-use walkthrough.
+- [`docs/CLI.md`](docs/CLI.md) — current public command reference.
+- [`docs/ManifestAuthoring.md`](docs/ManifestAuthoring.md) — manifest fields,
+  policies, examples, and validation guidance.
+
+## Developer and architecture documentation
 
 See [PROJECT.md](PROJECT.md), [ROADMAP.md](ROADMAP.md), and
-[ARCHITECTURE.md](ARCHITECTURE.md) for the current direction.
+[ARCHITECTURE.md](ARCHITECTURE.md) for the current direction. Contributor and
+contract documentation lives under `docs/`.
