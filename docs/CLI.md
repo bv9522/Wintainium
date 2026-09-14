@@ -36,6 +36,20 @@ Only the three commands listed above are intended as the user-facing Core API at
 
 Discovers and imports application manifests from a local filesystem collection. This is an offline discovery/import operation.
 
+### Parameters
+
+- `-Path` **(required)** — local manifest collection directory.
+- `-Recurse` — also search child directories.
+- `-SchemaPath` — override the application-manifest JSON Schema used during import. The module's bundled schema is used by default.
+
+Example with an explicit schema path:
+
+```powershell
+$result = Get-WintainiumManifest `
+    -Path 'C:\Wintainium\manifests' `
+    -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json'
+```
+
 ### Typical use
 
 ```powershell
@@ -90,6 +104,21 @@ This command does not validate an application's provider behavior, discover upst
 
 Validates one application definition and resolves the provider and installer capabilities declared by the manifest.
 
+### Parameters
+
+- `-ManifestPath` **(required)** — path to the application manifest to validate.
+- `-PluginRoot` — root directory containing the provider and installer plugins required by the manifest. The module's default plugin root is used when omitted.
+- `-SchemaPath` — override the application-manifest JSON Schema used during validation. The module's bundled schema is used by default.
+
+Example with an explicit plugin root and schema:
+
+```powershell
+$validation = Test-WintainiumApplicationDefinition `
+    -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' `
+    -PluginRoot 'C:\Wintainium\plugins' `
+    -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json'
+```
+
 ### Typical use
 
 ```powershell
@@ -128,10 +157,25 @@ Validation performs no network release discovery, artifact download, installatio
 
 Validates an application definition, resolves its provider, and discovers normalized upstream release observations through the provider boundary.
 
+### Parameters
+
+- `-ManifestPath` **(required)** — path to the application manifest whose releases should be discovered.
+- `-PluginRoot` — root directory containing the provider and installer plugins required by the manifest. The module's default plugin root is used when omitted.
+- `-SchemaPath` — override the application-manifest JSON Schema used during validation. The module's bundled schema is used by default.
+
 ### Typical use
 
 ```powershell
 $releaseResult = Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json'
+```
+
+For a non-default plugin/schema layout:
+
+```powershell
+$releaseResult = Get-WintainiumApplicationRelease `
+    -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' `
+    -PluginRoot 'C:\Wintainium\plugins' `
+    -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json'
 ```
 
 Inspect the result:
@@ -239,6 +283,7 @@ A future CLI presentation layer and the future C#/.NET GUI are both expected to 
 ## See also
 
 - `docs/GettingStarted.md` — first-use walkthrough.
+- `docs/ManifestAuthoring.md` — manifest authoring and validation guidance.
 - `docs/PublicResultContract.md` — structured result contract.
 - `docs/PublicPowerShellContract.md` — public API and architectural boundary.
 - `docs/OrchestrationComposition.md` — internal composition requirements for the eventual end-to-end lifecycle.
