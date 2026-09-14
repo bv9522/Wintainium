@@ -21,7 +21,7 @@ versioning once releases begin.
 - Phase 7 deterministic stage planning, immutable operation state, stage transitions, cancellation control flow, single-stage coordination, multi-stage workflow coordination, and lifecycle coordination.
 - Phase 7 lifecycle and orchestration audit/lock documentation.
 - Phase 8 public CLI/result contracts for the supported PowerShell commands.
-- Phase 8 user-facing Getting Started, CLI reference, and manifest-authoring documentation.
+- Phase 8 user-facing Getting Started, CLI reference, manifest-authoring, and diagnostics/troubleshooting documentation.
 
 ### Changed
 
@@ -30,3 +30,4 @@ versioning once releases begin.
 - Phase 6E installer process completion now uses the `WaitForExitAsync()` completion task as the authoritative normal-completion signal, preventing a later cancellation or timeout signal from retroactively reclassifying an already completed process.
 - Phase 8A removed low-level installer request construction from the exported public PowerShell surface.
 - Phase 8B aligned public command help and structured-result contract documentation with the actual three-command surface and established the boundary for the future public orchestration command.
+- Phase 8C documentation now explicitly describes structured diagnostics, OperationId correlation, error-code handling, and operation-specific troubleshooting without inventing persistent configuration or update/install interfaces that do not yet exist.
