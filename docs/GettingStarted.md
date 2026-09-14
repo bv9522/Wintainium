@@ -55,6 +55,14 @@ For recursive discovery:
 $result = Get-WintainiumManifest -Path 'C:\Wintainium\manifests' -Recurse
 ```
 
+The bundled application-manifest schema is used automatically. An alternate schema can be supplied explicitly with `-SchemaPath` when working with a controlled development/test layout:
+
+```powershell
+$result = Get-WintainiumManifest `
+    -Path 'C:\Wintainium\manifests' `
+    -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json'
+```
+
 A discovery failure is represented in `Errors`; clients should inspect the stable `Code` property rather than parse `Message` text.
 
 ## 2. Validate an application definition
@@ -74,6 +82,15 @@ $validation.Errors | Select-Object Code, Message
 
 Application validation resolves the provider and installer capabilities declared by the manifest. It does **not** perform network access, download an artifact, install an application, or manage installed-application state.
 
+For a custom plugin/schema layout, the optional `-PluginRoot` and `-SchemaPath` parameters can be supplied explicitly:
+
+```powershell
+$validation = Test-WintainiumApplicationDefinition `
+    -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' `
+    -PluginRoot 'C:\Wintainium\plugins' `
+    -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json'
+```
+
 ## 3. Discover releases
 
 Once the application definition is valid, release discovery can be requested:
@@ -91,6 +108,8 @@ $releaseResult.Errors | Select-Object Code, Message
 ```
 
 Release discovery finds releases through the provider declared by the manifest. It does not decide whether an installed application needs an update, download the selected artifact, or install anything.
+
+The same optional `-PluginRoot` and `-SchemaPath` overrides are available when the manifest is being evaluated against a controlled plugin/schema layout.
 
 ## Structured results and automation
 
@@ -159,4 +178,4 @@ A release-discovery result can fail because the application definition is invali
 
 ## Next documentation layers
 
-The detailed public command reference is in `docs/CLI.md`. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
+The detailed public command reference is in `docs/CLI.md`. Manifest field and policy guidance is in `docs/ManifestAuthoring.md`. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
