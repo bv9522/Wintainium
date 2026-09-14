@@ -12,7 +12,8 @@ engine rather than contain its own package-management logic.
 Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration 7A–7I
 is implemented, validated, and locked through the Core-owned lifecycle
 coordination boundary. Phase 8A is complete; Phase 8B is refining the public
-CLI/result boundary and Phase 8C is building the user-facing documentation set.
+CLI/result boundary and Phase 8C is completing the user-facing documentation
+set.
 
 The current public PowerShell surface intentionally consists of three commands:
 `Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`, and
@@ -35,6 +36,8 @@ composition boundaries are established.
 - [`docs/CLI.md`](docs/CLI.md) — current public command reference.
 - [`docs/ManifestAuthoring.md`](docs/ManifestAuthoring.md) — manifest fields,
   policies, examples, and validation guidance.
+- [`docs/Diagnostics.md`](docs/Diagnostics.md) — structured errors, operation
+  correlation, and troubleshooting guidance.
 
 ## Developer and architecture documentation
 
