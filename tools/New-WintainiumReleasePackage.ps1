@@ -19,7 +19,6 @@ if (-not (Test-Path -LiteralPath $repository -PathType Container)) {
 
 $output = [System.IO.Path]::GetFullPath($OutputRoot)
 $repositoryWithSeparator = $repository.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
-$outputWithSeparator = $output.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
 if ($output -eq $repository -or $output.StartsWith($repositoryWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw 'Release package creation failed: OutputRoot must be outside the repository root.'
 }
