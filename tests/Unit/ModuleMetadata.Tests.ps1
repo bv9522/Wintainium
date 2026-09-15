@@ -2,25 +2,21 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $repoRoot = Split-Path -Parent $repoRoot
 $moduleManifestPath = Join-Path $repoRoot 'core/Wintainium.Core/Wintainium.Core.psd1'
 
-function Get-TestModuleManifest {
-    Import-PowerShellDataFile -Path $moduleManifestPath
-}
-
 Describe 'Wintainium Core module metadata' {
     It 'declares the expected module identity and version' {
-        $manifest = Get-TestModuleManifest
+        $manifest = Import-PowerShellDataFile -Path $moduleManifestPath
         $manifest.RootModule | Should -Be 'Wintainium.Core.psm1'
         $manifest.ModuleVersion | Should -Be '0.1.0'
         $manifest.GUID | Should -Be '44450f8f-15fc-4d6a-83f6-5f30b0bc3a54'
     }
 
     It 'requires the supported minimum PowerShell version' {
-        $manifest = Get-TestModuleManifest
+        $manifest = Import-PowerShellDataFile -Path $moduleManifestPath
         $manifest.PowerShellVersion | Should -Be '7.4'
     }
 
     It 'exports exactly the current public command surface' {
-        $manifest = Get-TestModuleManifest
+        $manifest = Import-PowerShellDataFile -Path $moduleManifestPath
         @($manifest.FunctionsToExport) | Should -Be @(
             'Get-WintainiumManifest'
             'Test-WintainiumApplicationDefinition'
@@ -31,12 +27,12 @@ Describe 'Wintainium Core module metadata' {
     }
 
     It 'does not export module variables as part of the public contract' {
-        $manifest = Get-TestModuleManifest
+        $manifest = Import-PowerShellDataFile -Path $moduleManifestPath
         @($manifest.VariablesToExport) | Should -BeNullOrEmpty
     }
 
     It 'describes the implemented engine rather than the historical foundation phase' {
-        $manifest = Get-TestModuleManifest
+        $manifest = Import-PowerShellDataFile -Path $moduleManifestPath
         $manifest.Description | Should -Match 'manifest validation'
         $manifest.Description | Should -Match 'provider-backed release discovery'
         $manifest.Description | Should -Match 'downloads'
