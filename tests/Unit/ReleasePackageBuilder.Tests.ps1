@@ -81,6 +81,33 @@ Describe 'Wintainium release package builder' {
         }
     }
 
+    It 'rejects a pre-existing archive even when the package directory is absent' {
+        $outputRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainPackageTest-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $outputRoot | Out-Null
+        try {
+            $manifest = Import-PowerShellDataFile -LiteralPath $moduleManifestPath
+            $archivePath = Join-Path $outputRoot ('Wintainium-' + [string]$manifest.ModuleVersion + '.zip')
+            New-Item -ItemType File -Path $archivePath | Out-Null
+
+            { & $builderPath -RepositoryRoot $repoRoot -OutputRoot $outputRoot } | Should -Throw '*archive*already exists*'
+            Test-Path -LiteralPath $archivePath -PathType Leaf | Should -BeTrue
+        }
+        finally {
+            Remove-Item -LiteralPath $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'rejects an output root inside the repository before creating package output' {
+        $outputRoot = Join-Path $repoRoot ('release-output-test-' + [guid]::NewGuid().ToString('N'))
+        try {
+            { & $builderPath -RepositoryRoot $repoRoot -OutputRoot $outputRoot } | Should -Throw '*outside the repository root*'
+            Test-Path -LiteralPath $outputRoot | Should -BeFalse
+        }
+        finally {
+            Remove-Item -LiteralPath $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     It 'assembles a package that independently passes release validation' {
         $outputRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainiumPackageTest-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $outputRoot | Out-Null
@@ -120,7 +147,6 @@ Describe 'Wintainium release package builder' {
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'manifests') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'plugins') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'schemas') -Force | Out-Null
-        New-Item -ItemType Directory -Path $outputRoot | Out-Null
 
         foreach ($relativePath in @(
             'ARCHITECTURE.md'
@@ -141,9 +167,11 @@ Describe 'Wintainium release package builder' {
             New-Item -ItemType File -Path (Join-Path $sourceRoot $relativePath) -Force | Out-Null
         }
         Copy-Item -LiteralPath $moduleManifestPath -Destination (Join-Path $sourceRoot 'core/Wintainium.Core/Wintainium.Core.psd1')
-        New-Item -ItemType File -Path (Join-Path $sourceRoot 'tools') -Force | Out-Null
+        New-Item -ItemType Directory -Path $outputRoot | Out-Null
 
         try {
+            $validator = Join-Path $sourceRoot 'tools/Test-WintainiumReleasePackage.ps1'
+            New-Item -ItemType File -Path $validator | Out-Null
             { & $builderPath -RepositoryRoot $sourceRoot -OutputRoot $outputRoot } | Should -Throw
             Get-ChildItem -LiteralPath $outputRoot | Should -BeNullOrEmpty
         }
