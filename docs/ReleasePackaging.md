@@ -1,90 +1,28 @@
-# Release Packaging
+# Wintainium Release Packaging
 
 ## Purpose
 
-This document defines the Phase 8 release boundary for Wintainium. It is the
-source-of-truth for what a distributable source package must contain while the
-project is still using the PowerShell engine as its primary product.
+Phase 8D defines the release boundary for a distributable Wintainium source package. The package is assembled from repository runtime and documentation assets while development-only material remains outside the distributable boundary.
 
-The release boundary is deliberately deterministic: a release is assembled
-from repository files, with no generated development state, test output, local
-configuration, or working-directory artifacts included.
+The release package is deterministic in **contents and relative layout**: the same repository state produces the same selected files and package structure. The ZIP archive itself is not required to be byte-for-byte identical across builds because archive metadata such as timestamps may vary.
 
-## Authoritative version
+Release packaging does not introduce application execution, installation, persistence, or upgrade behavior. Those concerns remain separate engine and Phase 8E responsibilities.
 
-The Wintainium Core module manifest is the authoritative version source for
-the current release boundary:
+## Authoritative version source
 
-`core/Wintainium.Core/Wintainium.Core.psd1` → `ModuleVersion`
+The Core module manifest is the authoritative version source:
 
-For the current Phase 8 development line, the version is `0.1.0`.
+```text
+core/Wintainium.Core/Wintainium.Core.psd1
+```
 
-A release process must read the version from the module manifest rather than
-maintaining a second independent application-version value. If a future
-release format requires additional version metadata, it must be derived from
-this value or explicitly supersede it through a documented contract change.
+Its `ModuleVersion` value determines the release package name. The current repository version is `0.1.0`.
 
-## Required release contents
+No second release-version source is maintained by the packaging tools.
 
-A source release package must preserve these repository paths and their
-relative layout:
+## Package boundary
 
-- `core/Wintainium.Core/` — the PowerShell engine and its internal contracts.
-- `schemas/` — authoritative application-definition schemas.
-- `plugins/` — plugin implementations and plugin layout required by the
-  release. Empty development placeholder directories are not release
-  dependencies.
-- `manifests/` — application manifests shipped with the release, when any are
-  present.
-- `docs/` — user, architecture, contract, and contributor documentation that
-  describes the shipped engine.
-- `README.md` — project entry point and public-surface overview.
-- `PROJECT.md` — project charter and scope.
-- `ARCHITECTURE.md` — current architecture boundary.
-- `ROADMAP.md` — project roadmap.
-- `CHANGELOG.md` — release history.
-
-The Core module manifest and module file are mandatory members of the Core
-package boundary even when the package is assembled from a larger repository
-checkout.
-
-## Excluded development material
-
-The following must not be copied into a distributable release package:
-
-- `.git/`
-- `.github/`
-- `tests/`
-- local editor or IDE state
-- Pester output, coverage output, and temporary test artifacts
-- generated build directories not explicitly defined by a release contract
-- local user configuration, caches, logs, and temporary download/install data
-- empty repository placeholders whose only purpose is to preserve a directory
-  during development
-
-Exclusion is based on package purpose, not on whether a file happens to be
-textual. Tests and development automation remain part of the source
-repository but are not runtime package assets.
-
-## Validation boundary
-
-Before a release is accepted, validation must establish all of the following:
-
-1. The Core module manifest exists and can be parsed as PowerShell data.
-2. `ModuleVersion` is present and is a valid release version.
-3. The Core module file referenced by `RootModule` exists.
-4. The manifest's exported public command surface is the supported surface.
-5. The authoritative application-manifest schema exists.
-6. Required documentation assets exist.
-7. Repository development material is not included in the release payload.
-8. The package preserves the documented relative layout.
-
-This validation checks release completeness; it does not install software,
-execute plugins, contact upstream providers, or mutate user state.
-
-## Package shape
-
-The intended source-release layout is:
+The distributable package has this root layout:
 
 ```text
 Wintainium/
@@ -101,27 +39,98 @@ Wintainium/
 └── schemas/
 ```
 
-`tests/` and repository metadata may remain present in a source checkout but
-are outside this distributable package shape.
+The package preserves the contents and relative paths of these runtime/documentation boundaries:
 
-## Release tooling
+- `core/` — Core engine module and its runtime contract/implementation files.
+- `docs/` — user-facing and developer-facing documentation required by the supported implementation boundary.
+- `manifests/` — shipped application manifests when present.
+- `plugins/` — shipped plugin implementations when present.
+- `schemas/` — runtime schemas required by the engine.
 
-`tools/New-WintainiumReleasePackage.ps1` materializes this boundary from a
-repository checkout. It reads the Core `ModuleVersion`, creates a versioned
-package directory and ZIP archive, copies only the documented root files and
-runtime directories, omits repository placeholders such as `.gitkeep`, and
-runs `tools/Test-WintainiumReleasePackage.ps1` against the assembled package
-before producing the archive.
+Repository placeholder files such as `.gitkeep` are not release dependencies and are omitted.
 
-The builder is intentionally a release-development tool outside the runtime
-package. It refuses to overwrite an existing versioned package directory or
-archive, so each release assembly is an explicit operation.
+## Required release assets
 
-The resulting package contains no `tests/`, repository metadata, local state,
-or release-tooling directory. Empty `plugins/` and `manifests/` directories may
-remain in the materialized package when the repository has no shipped files
-there; placeholder files are not copied.
+A valid package must contain:
 
-Installer/upgrade behavior is intentionally outside this document. Phase 8E
-will define which user-owned state is preserved or replaced during an actual
-upgrade.
+- `README.md`
+- `PROJECT.md`
+- `ARCHITECTURE.md`
+- `ROADMAP.md`
+- `CHANGELOG.md`
+- `docs/GettingStarted.md`
+- `docs/CLI.md`
+- `docs/ManifestAuthoring.md`
+- `docs/Diagnostics.md`
+- `docs/PublicResultContract.md`
+- `docs/PublicPowerShellContract.md`
+- `docs/ReleasePackaging.md`
+- `core/Wintainium.Core/Wintainium.Core.psd1`
+- `core/Wintainium.Core/Wintainium.Core.psm1`
+- `schemas/application-manifest.schema.json`
+
+The Core manifest must declare the supported three-command public surface:
+
+- `Get-WintainiumManifest`
+- `Test-WintainiumApplicationDefinition`
+- `Get-WintainiumApplicationRelease`
+
+## Excluded development material
+
+The distributable package must not contain:
+
+- `.git/`
+- `.github/`
+- `tests/`
+- `tools/`
+- `.editorconfig`
+- `.gitignore`
+- `AI_CONTEXT.md`
+- Pester output, coverage data, temporary test artifacts, or local build output.
+- local user configuration, application state, caches, logs, temporary download data, or installation data.
+
+Development tooling remains in the repository and is intentionally outside the release package.
+
+## Release validation
+
+`tools/Test-WintainiumReleasePackage.ps1` validates an assembled package independently of the builder. Validation establishes:
+
+1. Required root files exist.
+2. Required runtime directories exist.
+3. No unexpected root-level repository or development entries are present.
+4. Required documentation and runtime assets exist.
+5. The Core module manifest parses successfully.
+6. `ModuleVersion` exists and follows the supported version format.
+7. The declared `RootModule` exists.
+8. The exported public command surface matches the supported contract exactly.
+
+Validation does not install software, execute application-management stages, contact upstream providers, or mutate user state.
+
+## Package assembly
+
+`tools/New-WintainiumReleasePackage.ps1` is repository tooling, not distributable runtime code. It:
+
+1. Resolves the repository root.
+2. Preflights required source files and directories before creating any package output.
+3. Reads the authoritative Core `ModuleVersion`.
+4. Creates `Wintainium-<version>/` under the requested output root.
+5. Copies only the documented root files and package-boundary directories.
+6. Excludes `.gitkeep` repository placeholders and development material by construction.
+7. Validates the assembled package with the independent release validator.
+8. Creates `Wintainium-<version>.zip` only after validation succeeds.
+9. Refuses to overwrite an existing package directory or archive.
+10. Removes partially assembled package output if a post-creation failure occurs.
+
+File selection within each package-boundary directory is sorted by full source path before copying so that the selected file set and traversal order are stable.
+
+The builder does not modify repository source files.
+
+## Release archive determinism
+
+The release contract is deterministic at the **file-selection and layout level**. It does not currently promise identical ZIP bytes across separate builds because standard archive creation may encode build-time metadata.
+
+If byte-for-byte reproducible archives become a release requirement, archive metadata normalization will be introduced as an explicit future packaging enhancement rather than being implied by the current contract.
+
+## Upgrade boundary
+
+Release packaging does not define replacement or preservation of installed application state. Safe upgrade behavior, authoritative installed-application state, user configuration, persistence, and the supported N→N+1 upgrade path are Phase 8E responsibilities.
