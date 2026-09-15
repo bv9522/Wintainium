@@ -67,10 +67,9 @@ structured objects rather than formatted output.
 Phase 8B is complete for the current public surface. Public result contracts,
 stable error categories, comment-based help, contract tests, and the
 Core-owned orchestration composition requirements are documented. The public
-end-to-end update command remains withheld because update decisions require
-authoritative installed state and the repository does not yet have the required
-state retrieval/persistence boundary. Callers must not manufacture that state
-or construct internal orchestration objects to bypass the boundary.
+end-to-end update command remains withheld until the authoritative installed-
+state boundary is established. Callers must not manufacture that state or
+construct internal orchestration objects to bypass the boundary.
 
 Phase 8C is complete for the current implementation boundary. The user-facing
 documentation layer covers Getting Started, CLI usage, manifest authoring,
@@ -87,12 +86,20 @@ protects the output boundary, refuses overwrites, validates before archiving,
 and cleans partial output after post-creation failure. The final Phase 8D
 regression checkpoint is 356/356 green.
 
-Phase 8E is now the active phase. It owns the upgrade and persistence contract:
-classifying program files, user configuration, application state, logs, caches,
-manifests, and temporary artifacts; defining safe replacement and preservation
-behavior; establishing the authoritative installed-application state boundary
-needed by update orchestration; and validating a supported N→N+1 upgrade path
-without introducing speculative persistence infrastructure.
+Phase 8E is active. It owns the upgrade and persistence contract: classifying
+program files, user configuration, application state, logs, caches, manifests,
+and temporary artifacts; defining safe replacement and preservation behavior;
+establishing the authoritative installed-application state boundary needed by
+update orchestration; and validating a supported N→N+1 upgrade path without
+introducing speculative persistence infrastructure.
+
+`docs/UpgradePersistence.md` defines the current 8E ownership and transaction
+contract. Core now contains internal JSON persistence operations for the
+normalized `InstalledApplicationState` representation. Missing records return
+an explicit `Unknown` state; invalid persisted data is rejected; writes replace
+an existing application record atomically through a temporary file; and the
+store preserves separate records by stable `ApplicationId`. This persistence
+layer is storage only and does not make update decisions or execute applications.
 
 The repository is authoritative over this context. When this file conflicts
 with implementation, contracts, or tests, inspect the repository and update
