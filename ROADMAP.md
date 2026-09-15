@@ -33,13 +33,15 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Document configuration, manifests, plugins, update operations, failures, cancellation, logs, and troubleshooting.
 - Keep architecture/developer documentation aligned with public contracts.
 
-**Status: In progress.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` now form the initial user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. The project charter and architecture overview have also been refreshed so historical foundation-phase exclusions are clearly distinguished from the current engine boundary, while the current module metadata now describes the implemented engine rather than only its foundation role. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces. Remaining 8C work should fill only operational gaps that can be stated from the current implementation without anticipating 8D/8E decisions.
+**Status: Complete for the current implementation boundary.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` form the user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. The project charter, architecture overview, module metadata, README, and roadmap have been synchronized with the current engine boundary. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces. Configuration and installed-state persistence remain explicit Phase 8E work.
 
 ### 8D — Release boundary and packaging
 
 - Define deterministic release package contents and layout.
 - Establish authoritative version metadata and release validation.
 - Validate required Core, schema, plugin, manifest/resource, and documentation assets without bundling development-only material.
+
+**Status: In progress.** `docs/ReleasePackaging.md` now defines the deterministic source-release boundary, package layout, authoritative version source, required assets, excluded development material, and validation responsibilities. Contract coverage has been added for the release boundary. The next step is to materialize that contract as repeatable release validation/packaging tooling without introducing upgrade or persistence behavior from 8E.
 
 ### 8E — Upgrade and persistence contract
 
