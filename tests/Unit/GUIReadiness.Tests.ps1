@@ -49,6 +49,19 @@ Describe 'Wintainium GUI-facing public boundary' {
         $result.LogEvents.GetType() | Should -Be ([object[]])
     }
 
+    It 'preserves the release result collection contract when validation fails before discovery' {
+        $missingManifest = Join-Path -Path $TestDrive -ChildPath 'missing-release-manifest.json'
+
+        $result = Get-WintainiumApplicationRelease -ManifestPath $missingManifest
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'ApplicationDefinitionInvalid'
+        $result.Releases.GetType() | Should -Be ([object[]])
+        $result.Errors.GetType() | Should -Be ([object[]])
+        $result.Warnings.GetType() | Should -Be ([object[]])
+        $result.LogEvents.GetType() | Should -Be ([object[]])
+    }
+
     It 'keeps the GUI boundary independent of private orchestration object construction' {
         $contract = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\docs\GUIReadiness.md') -Raw
 
