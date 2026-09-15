@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 8F — GUI readiness audit: **in progress**.
+Phase 8F — GUI readiness audit: **complete**.
 
 Phase 8B established the public CLI and result contract; this document records the synchronized boundary consumed by the current PowerShell presentation layer and the future C#/.NET GUI.
 
