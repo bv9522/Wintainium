@@ -27,8 +27,8 @@ if ([string]::Equals($package, $program, [System.StringComparison]::OrdinalIgnor
     throw 'Engine upgrade failed: PackageRoot and ProgramRoot must be different locations.'
 }
 
-$programPrefix = $program.TrimEnd('\\', '/') + [System.IO.Path]::DirectorySeparatorChar
-$packagePrefix = $package.TrimEnd('\\', '/') + [System.IO.Path]::DirectorySeparatorChar
+$programPrefix = $program.TrimEnd([char[]]@('\', '/')) + [System.IO.Path]::DirectorySeparatorChar
+$packagePrefix = $package.TrimEnd([char[]]@('\', '/')) + [System.IO.Path]::DirectorySeparatorChar
 if ($package.StartsWith($programPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
     $program.StartsWith($packagePrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw 'Engine upgrade failed: package and program roots must not contain one another.'
