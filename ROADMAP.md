@@ -25,15 +25,13 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 
 **Status: Complete for the current public surface.** `docs/PublicResultContract.md` and `docs/PublicPowerShellContract.md` define the current result and presentation-neutral API boundary, and contract coverage exists for the three currently supported public commands. Their comment-based help documents structured outputs and command responsibilities. The Phase 7 lifecycle remains internal until Core has concrete composition seams for all seven real application-management stages.
 
-**Architecture dependency identified:** the locked Phase 4 update decision requires an installed-application state alongside the manifest and provider result. The current repository has a state-object constructor but no authoritative installed-state retrieval/persistence boundary. Therefore 8B does not manufacture or require caller-supplied installed state merely to make the public update command appear complete. The concrete end-to-end public update command will be exposed only after the real state boundary is established as part of 8E.
-
 ### 8C — User documentation and operational guidance
 
 - Write the normal-user guide and CLI reference from actual implemented behavior.
 - Document configuration, manifests, plugins, update operations, failures, cancellation, logs, and troubleshooting.
 - Keep architecture/developer documentation aligned with public contracts.
 
-**Status: Complete for the current implementation boundary.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` form the user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. The project charter, architecture overview, module metadata, README, and roadmap have been synchronized with the current engine boundary. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces. Configuration and installed-state persistence remain explicit Phase 8E work.
+**Status: Complete for the current implementation boundary.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` form the user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. The project charter, architecture overview, module metadata, README, and roadmap have been synchronized with the current engine boundary. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces.
 
 ### 8D — Release boundary and packaging
 
@@ -64,6 +62,8 @@ The complete Phase 8 regression checkpoint after the upgrade transaction and its
 - Confirm the GUI seam is presentation/client code over the PowerShell engine.
 - Complete regression, documentation, package, and upgrade validation.
 - Lock Phase 8 only when the public contract, release boundary, and upgrade behavior are coherent and tested.
+
+**Status: Complete and locked.** `docs/GUIReadiness.md` defines the presentation seam, allowed public result consumption, prohibited private dependencies, Core-owned stage policy, OperationId and cancellation semantics, managed installed-state `Unknown` behavior, and the intentional deferral of a public end-to-end update operation until verification and post-install state reconciliation have authoritative composition contracts. The module exports exactly the three supported public commands. Contract tests verify the public export surface, private orchestration isolation, structured array-valued results including empty collections, and the documented GUI boundary. The Phase 8F audit also synchronized the public PowerShell and result contracts with the completed 8E state boundary. The final full-suite regression checkpoint is **382/382 green**.
 
 ## Version 1.0 — Desktop experience
 
