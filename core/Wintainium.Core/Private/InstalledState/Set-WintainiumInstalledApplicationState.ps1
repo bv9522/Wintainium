@@ -61,7 +61,7 @@ function Set-WintainiumInstalledApplicationState {
     try {
         [System.IO.File]::WriteAllText($tempPath, $json, [System.Text.UTF8Encoding]::new($false))
         if ([System.IO.File]::Exists($statePath)) {
-            [System.IO.File]::Replace($tempPath, $statePath, $null)
+            [System.IO.File]::Move($tempPath, $statePath, $true)
         }
         else {
             [System.IO.File]::Move($tempPath, $statePath)
