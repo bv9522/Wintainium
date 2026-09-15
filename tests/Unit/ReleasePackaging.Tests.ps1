@@ -42,7 +42,7 @@ Describe 'Wintainium release packaging boundary' {
         $content | Should -Match '`\.github/`'
         $content | Should -Match '`tests/`'
         $content | Should -Match 'Pester output'
-        $content | Should -Match 'local user configuration, caches, logs'
+        $content | Should -Match 'local user configuration, application state, caches, logs'
     }
 
     It 'keeps release validation separate from execution and user-state mutation' {
