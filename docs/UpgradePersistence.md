@@ -116,15 +116,17 @@ A supported N→N+1 engine upgrade has this conceptual sequence:
 7. Remove only obsolete program files that belong to the previous release.
 8. Leave caches/temporary staging disposable.
 
-The initial implementation may use a simpler controlled replacement mechanism, but its externally observable behavior must preserve the same ownership rule: program files are replaceable; user state is preserved.
+The repository now implements this boundary with `tools/Invoke-WintainiumEngineUpgrade.ps1`. The tool accepts a validated release package and an existing program root, stages the complete new program tree beside the existing installation, validates the staged tree independently, switches the directory only after validation succeeds, and removes the previous program tree after the switch. Durable data remains outside the program root and is therefore untouched by the replacement operation.
 
-If a future migration is needed, it must be versioned, explicit, testable, and reversible or safely recoverable. A failed migration must not silently destroy the previous durable state.
+The switch uses a transaction-specific sibling backup. If the new program directory cannot be activated, the previous program directory is restored. If cleanup of the old program directory cannot complete after a successful switch, the upgrade remains successful but returns the recovery-backup location as a warning rather than falsely reporting an incomplete activation.
+
+The initial implementation intentionally does not migrate or relocate user data. Any future migration must be versioned, explicit, testable, and reversible or safely recoverable.
 
 ## Failure and recovery
 
-An incomplete engine upgrade must not be reported as successful. The system must preserve either the previous usable program installation or a clearly recoverable upgrade state.
+An incomplete engine upgrade must not be reported as successful. The implemented replacement path validates before switching and retains the previous program tree during the activation step so that a failed switch can restore the prior installation.
 
-Durable state corruption is outside the normal package-replacement path. The upgrade mechanism must not use a partially written configuration or installed-state file as the source for destructive replacement.
+Durable state corruption is outside the normal package-replacement path. The upgrade mechanism does not use a partially written configuration or installed-state file as the source for destructive replacement.
 
 ## Security boundary
 
@@ -134,4 +136,4 @@ Persistence is storage, not trust. Stored provider metadata, installation locati
 
 Phase 8E establishes the persistence ownership model, authoritative installed-state boundary, a minimal managed-state source, and the supported N→N+1 upgrade semantics needed by the public engine. It does not implement a general inventory product, cloud synchronization, telemetry, scheduling, update-all behavior, or GUI.
 
-The remaining implementation work is the controlled N→N+1 program-file replacement path and the final end-to-end composition audit. The public update command remains deferred until verification and post-install state reconciliation have concrete composition contracts.
+The remaining work is the final end-to-end composition audit. The public update command remains deferred until verification and post-install state reconciliation have concrete composition contracts.
