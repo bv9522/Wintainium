@@ -13,7 +13,17 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repository = (Resolve-Path -LiteralPath $RepositoryRoot -ErrorAction Stop).Path
+if (-not (Test-Path -LiteralPath $repository -PathType Container)) {
+    throw "Release package creation failed: repository root '$RepositoryRoot' is not a directory."
+}
+
 $output = [System.IO.Path]::GetFullPath($OutputRoot)
+$repositoryWithSeparator = $repository.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+$outputWithSeparator = $output.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+if ($output -eq $repository -or $output.StartsWith($repositoryWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Release package creation failed: OutputRoot must be outside the repository root.'
+}
+
 $moduleManifestPath = Join-Path $repository 'core/Wintainium.Core/Wintainium.Core.psd1'
 
 $requiredRootFiles = @(
