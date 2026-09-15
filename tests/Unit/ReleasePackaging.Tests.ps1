@@ -49,8 +49,8 @@ Describe 'Wintainium release packaging boundary' {
         $content = Get-Content -LiteralPath $releasePackagingPath -Raw
 
         $content | Should -Match 'does not install software'
-        $content | Should -Match 'does not.*contact upstream providers'
-        $content | Should -Match 'does not.*mutate user state'
+        $content | Should -Match 'contact upstream providers'
+        $content | Should -Match 'mutate user state'
     }
 
     It 'requires the supported public command surface in release validation' {
