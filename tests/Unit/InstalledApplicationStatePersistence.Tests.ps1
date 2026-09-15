@@ -5,7 +5,7 @@ Import-Module $modulePath -Force
 
 Describe 'Wintainium installed application state persistence' {
     BeforeEach {
-        $stateRoot = Join-Path $TestDrive 'state'
+        $stateRoot = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
     }
 
     It 'returns Unknown when no persisted state exists' {
