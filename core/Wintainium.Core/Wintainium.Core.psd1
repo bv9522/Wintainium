@@ -5,7 +5,7 @@
     Author = 'Wintainium Contributors'
     CompanyName = 'Wintainium'
     Copyright = '(c) Wintainium Contributors.'
-    Description = 'Core validation and provider-backed release discovery foundation for Wintainium application definitions.'
+    Description = 'PowerShell engine for manifest validation, provider-backed release discovery, downloads, installation, and lifecycle orchestration for Wintainium.'
     PowerShellVersion = '7.4'
     FunctionsToExport = @(
         'Get-WintainiumManifest'
