@@ -116,9 +116,11 @@ A supported N→N+1 engine upgrade has this conceptual sequence:
 7. Remove only obsolete program files that belong to the previous release.
 8. Leave caches/temporary staging disposable.
 
-The repository now implements this boundary with `tools/Invoke-WintainiumEngineUpgrade.ps1`. The tool accepts a validated release package and an existing program root, stages the complete new program tree beside the existing installation, validates the staged tree independently, switches the directory only after validation succeeds, and removes the previous program tree after the switch. Durable data remains outside the program root and is therefore untouched by the replacement operation.
+The repository implements this boundary with `tools/Invoke-WintainiumEngineUpgrade.ps1`. The tool validates the incoming package before mutation, stages the complete new program tree beside the existing installation, validates the staged tree independently, switches the directory only after validation succeeds, and removes the previous program tree after the switch. Durable data remains outside the program root and is therefore untouched by the replacement operation.
 
 The switch uses a transaction-specific sibling backup. If the new program directory cannot be activated, the previous program directory is restored. If cleanup of the old program directory cannot complete after a successful switch, the upgrade remains successful but returns the recovery-backup location as a warning rather than falsely reporting an incomplete activation.
+
+The upgrade tool is deliberately outside the distributable release boundary because it is release/installation tooling rather than runtime program content. It consumes the independently validated release package and does not write configuration or installed-application state.
 
 The initial implementation intentionally does not migrate or relocate user data. Any future migration must be versioned, explicit, testable, and reversible or safely recoverable.
 
@@ -126,14 +128,18 @@ The initial implementation intentionally does not migrate or relocate user data.
 
 An incomplete engine upgrade must not be reported as successful. The implemented replacement path validates before switching and retains the previous program tree during the activation step so that a failed switch can restore the prior installation.
 
+Incoming-package validation failure occurs before staging and therefore before any mutation of the existing program root. Staged validation failure occurs before activation and therefore leaves the existing program root active. Activation failure triggers restoration of the previous program root. Cleanup failure after successful activation does not invalidate the completed switch; instead, the recovery backup remains available and is returned as structured warning information.
+
 Durable state corruption is outside the normal package-replacement path. The upgrade mechanism does not use a partially written configuration or installed-state file as the source for destructive replacement.
 
 ## Security boundary
 
 Persistence is storage, not trust. Stored provider metadata, installation locations, and version observations remain untrusted observations. Persistence must not grant permission to execute arbitrary stored paths or bypass Phase 5 verification or Phase 6 installer safety rules.
 
+The upgrade transaction also validates both package and staging roots before activation, rejects equal or containing package/program roots, uses transaction-specific sibling paths, and never treats package contents as durable user state.
+
 ## Phase boundary
 
 Phase 8E establishes the persistence ownership model, authoritative installed-state boundary, a minimal managed-state source, and the supported N→N+1 upgrade semantics needed by the public engine. It does not implement a general inventory product, cloud synchronization, telemetry, scheduling, update-all behavior, or GUI.
 
-The remaining work is the final end-to-end composition audit. The public update command remains deferred until verification and post-install state reconciliation have concrete composition contracts.
+The final 8E composition audit confirms that the new persistence and upgrade boundaries do not leak into the public PowerShell surface or the locked Phase 4/5/6/7 business contracts. The full seven-stage application update lifecycle remains intentionally internal because verification and post-install state reconciliation do not yet have authoritative composition contracts. This is a deliberate architectural boundary, not an incomplete public API.
