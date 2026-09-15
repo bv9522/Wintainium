@@ -147,6 +147,7 @@ Describe 'Wintainium release package builder' {
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'manifests') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'plugins') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'schemas') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'tools') -Force | Out-Null
 
         foreach ($relativePath in @(
             'ARCHITECTURE.md'
