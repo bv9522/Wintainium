@@ -58,6 +58,12 @@ The GUI must not depend directly on:
 - console formatting or terminal text as an API;
 - undocumented object properties solely because they happen to exist.
 
+The GUI must not construct `StagePlan`, `StageFactory`, or `CancellationContext`. Those are internal orchestration concerns owned by Core.
+
+The GUI must not invoke providers or installers directly. It must use the documented Core operation boundary instead.
+
+The GUI must not parse terminal formatting or human-readable diagnostic text as an API.
+
 A GUI implementation must not become a second orchestration engine.
 
 ## Stage presentation
