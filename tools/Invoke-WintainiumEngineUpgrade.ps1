@@ -27,8 +27,8 @@ if ([string]::Equals($package, $program, [System.StringComparison]::OrdinalIgnor
     throw 'Engine upgrade failed: PackageRoot and ProgramRoot must be different locations.'
 }
 
-$programPrefix = $program.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
-$packagePrefix = $package.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+$programPrefix = $program.TrimEnd('\\', '/') + [System.IO.Path]::DirectorySeparatorChar
+$packagePrefix = $package.TrimEnd('\\', '/') + [System.IO.Path]::DirectorySeparatorChar
 if ($package.StartsWith($programPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
     $program.StartsWith($packagePrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw 'Engine upgrade failed: package and program roots must not contain one another.'
@@ -40,9 +40,15 @@ if (-not (Test-Path -LiteralPath $validatorPath -PathType Leaf)) {
     throw 'Engine upgrade failed: release package validator is unavailable.'
 }
 
-$packageValidation = & $validatorPath -PackageRoot $package
+try {
+    $packageValidation = & $validatorPath -PackageRoot $package
+}
+catch {
+    throw "Engine upgrade failed: release validation failed. $($_.Exception.Message)"
+}
+
 if (-not $packageValidation.IsValid) {
-    throw 'Engine upgrade failed: incoming package did not pass release validation.'
+    throw 'Engine upgrade failed: release validation failed.'
 }
 
 $parent = Split-Path -Parent $program
@@ -62,9 +68,15 @@ try {
         Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $staging $_.Name) -Recurse -Force
     }
 
-    $stagingValidation = & $validatorPath -PackageRoot $staging
+    try {
+        $stagingValidation = & $validatorPath -PackageRoot $staging
+    }
+    catch {
+        throw "Engine upgrade failed: staged release validation failed. $($_.Exception.Message)"
+    }
+
     if (-not $stagingValidation.IsValid) {
-        throw 'Engine upgrade failed: staged program files did not pass release validation.'
+        throw 'Engine upgrade failed: staged release validation failed.'
     }
 
     if (Test-Path -LiteralPath $backup -PathType Any) {
