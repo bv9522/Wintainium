@@ -23,6 +23,8 @@ versioning once releases begin.
 - Phase 8 public CLI/result contracts for the supported PowerShell commands.
 - Phase 8 user-facing Getting Started, CLI reference, manifest-authoring, and diagnostics/troubleshooting documentation.
 - Phase 8 release packaging boundary, independent release validation, and versioned package assembly tooling.
+- Phase 8E managed installed-state persistence, update-decision composition, and controlled engine N→N+1 upgrade tooling.
+- Phase 8F GUI readiness contract and presentation-boundary audit coverage.
 
 ### Changed
 
@@ -33,7 +35,17 @@ versioning once releases begin.
 - Phase 8B aligned public command help and structured-result contract documentation with the actual three-command surface and established the boundary for the future public orchestration command.
 - Phase 8C documentation now explicitly describes structured diagnostics, OperationId correlation, error-code handling, and operation-specific troubleshooting without inventing persistent configuration or update/install interfaces that do not yet exist.
 - Phase 8D release packaging now defines deterministic file selection and relative layout, authoritative versioning, an explicit distributable boundary, independent package validation, preflight and overwrite protection, and cleanup after post-creation failure.
+- Phase 8E established a narrow Wintainium-managed installed-state boundary, an internal update-decision composition seam, and a validated transactional program-file upgrade path while preserving durable user state outside the program root.
+- Phase 8F audited public structured-result arrays, including empty collection behavior, and synchronized the public PowerShell/result contracts with the completed persistence boundary. The future GUI remains a presentation client of Core rather than a second orchestration engine.
 
 ### Phase 8D lock
 
 - Phase 8D is complete and locked after the 356/356 full-suite regression checkpoint. The release boundary is ready for the Phase 8E upgrade and persistence contract work.
+
+### Phase 8E checkpoint
+
+- Phase 8E is complete after the controlled engine upgrade transaction and hardening. The full-suite checkpoint before the 8F audit was **377/377 green**.
+
+### Phase 8F lock
+
+- Phase 8F is complete and locked after the GUI readiness audit and **382/382 green** full-suite regression checkpoint. The public presentation boundary is documented, tested, and intentionally stops short of an incomplete end-to-end update command.
