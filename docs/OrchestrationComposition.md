@@ -4,7 +4,7 @@
 
 Phase 7 deliberately separates lifecycle policy from stage implementation. The locked lifecycle accepts a `StageFactory`; the workflow validates and traverses the stage plan, while the factory supplies the executor and input for the current stage.
 
-Phase 8B must preserve that separation while preventing callers from having to understand it.
+Phase 8 must preserve that separation while preventing callers from having to understand it.
 
 The intended dependency direction is:
 
@@ -14,7 +14,7 @@ The public command must never become the stage factory, stage planner, provider 
 
 ## Required Core-owned composition
 
-A production composition layer will eventually bind the authoritative seven-stage sequence:
+A complete production composition layer will eventually bind the authoritative seven-stage sequence:
 
 1. ManifestValidation
 2. ReleaseDiscovery
@@ -26,17 +26,17 @@ A production composition layer will eventually bind the authoritative seven-stag
 
 The composition layer owns dependency wiring. The lifecycle owns traversal, transition policy, cancellation boundaries, correlation, and terminal-state handling.
 
-This means a future public update command can accept a small stable request such as a manifest path, architecture, and download root and return one structured operation result. It must not require callers to provide `StagePlan`, `StageFactory`, `CancellationContext`, provider requests, download requests, or installer requests.
+This means a future public update command can accept a small stable request such as a manifest path, architecture, state location, and download root and return one structured operation result. It must not require callers to provide `StagePlan`, `StageFactory`, `CancellationContext`, provider requests, download requests, or installer requests.
 
 ## Current repository boundary
 
-The first six/seven conceptual stages do not yet form a complete caller-independent composition because update decision requires authoritative installed-application state.
+Phase 8E now establishes the first caller-independent composition seam at the **update-decision boundary**. `Get-WintainiumApplicationUpdateDecision` accepts the external inputs needed to identify a manifest and state location, invokes the existing release-discovery operation, retrieves the Core-owned installed state, constructs the internal `UpdateDecisionInput`, and delegates the actual decision to the locked Phase 4 operation.
 
-The current Core contains a constructor for an installed application state object, but that constructor does not discover or persist the state. Treating an invented default state as authoritative would change update semantics and could cause an installation decision that does not reflect the machine.
+The persisted installed-state record is the current Wintainium-managed state source. It represents the latest state previously established by Wintainium or an explicitly supported state writer; it is not a Windows-wide inventory scan. A missing record remains `Unknown` and therefore produces an indeterminate Phase 4 decision rather than a guessed installation state.
 
-Accordingly, Phase 8B does **not** expose a superficial end-to-end update command. It also does not make installed state a public caller responsibility merely to satisfy the shape of the Phase 7 lifecycle.
+The complete seven-stage lifecycle is **not yet** exposed through this seam. Downloaded-byte verification and post-install state reconciliation still require their concrete composition contracts. The existence of the decision composition must not be mistaken for completion of the end-to-end update pipeline.
 
-The authoritative installed-state boundary is part of the Phase 8E persistence/upgrade contract and must be established before the public update lifecycle is considered complete.
+Accordingly, Phase 8E does **not** expose a superficial public update command. Internal stage construction remains inside Core until every stage has a real contract and authoritative inputs/outputs.
 
 ## Composition invariants
 
@@ -54,8 +54,16 @@ A production Core composition must:
 - leave presentation and formatting outside the engine;
 - avoid retries, skips, update-all behavior, scheduling, or hidden elevation unless separately authorized by a future contract.
 
+The update-decision composition additionally must:
+
+- obtain installed state through the Core-owned state boundary;
+- require manifest identity to match installed-state identity;
+- preserve `Unknown` rather than guessing `NotInstalled` or `Installed`;
+- pass provider releases into Phase 4 only through its existing decision-input contract;
+- leave version comparison, eligibility, artifact selection, and update reasoning owned by Phase 4.
+
 ## What this seam is not
 
-It is not a general dependency-injection framework, command interpreter, plugin marketplace, persistence database, or GUI abstraction.
+It is not a general dependency-injection framework, command interpreter, plugin marketplace, persistence database, Windows-wide inventory product, or GUI abstraction.
 
 The goal is deliberately narrow: give Core one authoritative place to assemble the already-defined engine operations so every presentation layer consumes the same business workflow.
