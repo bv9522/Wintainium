@@ -55,7 +55,7 @@ function Get-WintainiumManifest {
     $logEvents = [System.Collections.Generic.List[object]]::new()
     $manifests = [System.Collections.Generic.List[object]]::new()
     $manifestPaths = [System.Collections.Generic.List[string]]::new()
-    $candidates = @()
+    $candidates = [System.Collections.Generic.List[string]]::new()
 
     $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ManifestDiscoveryStarted' -Message 'Manifest collection discovery started.' -Context @{ Path = $Path; Recurse = $Recurse.IsPresent }))
 
@@ -75,7 +75,9 @@ function Get-WintainiumManifest {
     }
     else {
         try {
-            $candidates = @(Find-WintainiumManifestFile -ManifestRoot $Path -Recurse:$Recurse)
+            foreach ($candidate in @(Find-WintainiumManifestFile -ManifestRoot $Path -Recurse:$Recurse)) {
+                $candidates.Add([string]$candidate)
+            }
         }
         catch {
             $errors.Add([pscustomobject][ordered]@{
@@ -127,7 +129,7 @@ function Get-WintainiumManifest {
     [pscustomobject][ordered]@{
         OperationId = $operationId
         IsSuccessful = $errors.Count -eq 0
-        Candidates = @($candidates)
+        Candidates = $candidates.ToArray()
         ManifestPaths = $manifestPaths.ToArray()
         Manifests = $manifests.ToArray()
         Errors = $errors.ToArray()
