@@ -41,7 +41,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Establish authoritative version metadata and release validation.
 - Validate required Core, schema, plugin, manifest/resource, and documentation assets without bundling development-only material.
 
-**Status: In progress.** `docs/ReleasePackaging.md` now defines the deterministic source-release boundary, package layout, authoritative version source, required assets, excluded development material, and validation responsibilities. Contract coverage has been added for the release boundary. The next step is to materialize that contract as repeatable release validation/packaging tooling without introducing upgrade or persistence behavior from 8E.
+**Status: In progress.** `docs/ReleasePackaging.md` defines the deterministic source-release boundary, package layout, authoritative version source, required assets, excluded development material, and validation responsibilities. `tools/Test-WintainiumReleasePackage.ps1` now validates the package root boundary, runtime directories, required documentation/runtime assets, Core module version, and public export surface. `tools/New-WintainiumReleasePackage.ps1` now materializes the documented boundary as a versioned package directory and ZIP archive, omits repository placeholders and development material, refuses overwrite, and validates the assembled package before archiving. Contract coverage exists for both validation and assembly. The next step is a genuine local package-build checkpoint and then final release-boundary audit before moving to 8E.
 
 ### 8E — Upgrade and persistence contract
 
