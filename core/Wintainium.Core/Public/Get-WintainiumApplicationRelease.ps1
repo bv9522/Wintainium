@@ -54,6 +54,7 @@ function Get-WintainiumApplicationRelease {
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
     $logEvents = [System.Collections.Generic.List[object]]::new()
+    $releases = [System.Collections.Generic.List[object]]::new()
 
     foreach ($item in @($validation.Errors)) { $errors.Add($item) }
     foreach ($item in @($validation.Warnings)) { $warnings.Add($item) }
@@ -66,7 +67,7 @@ function Get-WintainiumApplicationRelease {
             Status = 'ApplicationDefinitionInvalid'
             Manifest = $validation.Manifest
             ProviderPlugin = $validation.ProviderPlugin
-            Releases = @()
+            Releases = $releases.ToArray()
             Errors = $errors.ToArray()
             Warnings = $warnings.ToArray()
             LogEvents = $logEvents.ToArray()
@@ -91,6 +92,7 @@ function Get-WintainiumApplicationRelease {
 
     $providerResult = Invoke-WintainiumProviderOperation -Provider $provider -Request $request
 
+    foreach ($item in @($providerResult.Releases)) { $releases.Add($item) }
     foreach ($item in @($providerResult.Errors)) { $errors.Add($item) }
     foreach ($item in @($providerResult.Warnings)) { $warnings.Add($item) }
     foreach ($item in @($providerResult.LogEvents)) { $logEvents.Add($item) }
@@ -101,7 +103,7 @@ function Get-WintainiumApplicationRelease {
         Status = [string]$providerResult.Status
         Manifest = $manifest
         ProviderPlugin = $provider
-        Releases = @($providerResult.Releases)
+        Releases = $releases.ToArray()
         Errors = $errors.ToArray()
         Warnings = $warnings.ToArray()
         LogEvents = $logEvents.ToArray()
