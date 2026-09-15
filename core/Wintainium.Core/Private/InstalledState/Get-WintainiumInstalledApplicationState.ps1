@@ -10,6 +10,9 @@ function Get-WintainiumInstalledApplicationState {
         [string]$ApplicationId
     )
 
+    if ([string]::IsNullOrWhiteSpace($StateRoot)) { throw [System.ArgumentException]::new('StateRoot must not be empty or whitespace.') }
+    if ([string]::IsNullOrWhiteSpace($ApplicationId)) { throw [System.ArgumentException]::new('ApplicationId must not be empty or whitespace.') }
+
     $statePath = Join-Path -Path ([System.IO.Path]::GetFullPath($StateRoot.Trim())) -ChildPath 'installed-state.json'
     if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) {
         return New-WintainiumInstalledApplicationState -ApplicationId $ApplicationId -InstallationState Unknown
@@ -20,6 +23,10 @@ function Get-WintainiumInstalledApplicationState {
     }
     catch {
         throw [System.IO.InvalidDataException]::new("Installed application state could not be read from '$statePath'.", $_.Exception)
+    }
+
+    if ($null -eq $document.PSObject.Properties['SchemaVersion'] -or [int]$document.SchemaVersion -ne 1) {
+        throw [System.IO.InvalidDataException]::new("Installed application state at '$statePath' has an unsupported schema version.")
     }
 
     $record = @($document.States | Where-Object {
