@@ -50,6 +50,8 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Establish the authoritative installed-application state boundary needed by update orchestration.
 - Validate a supported N→N+1 upgrade path without introducing speculative persistence infrastructure.
 
+**Status: In progress.** `docs/UpgradePersistence.md` establishes the ownership model, durable-state boundary, installed-state semantics, missing/stale-state rules, upgrade transaction boundary, recovery expectations, and security boundary. Core now has an internal JSON persistence boundary for normalized `InstalledApplicationState`: reads return `Unknown` when no record exists, writes validate state before persisting, records are keyed by stable application identity, and writes use a temporary file followed by replacement to avoid exposing partially written JSON. Focused persistence tests have been added; the next checkpoint will validate the complete suite before the state-source and N→N+1 upgrade implementation proceeds.
+
 ### 8F — GUI readiness audit and Phase 8 lock
 
 - Verify that a future C#/.NET GUI can consume the public engine boundary without reproducing business rules.
