@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 8F — GUI readiness audit: **in progress**.
+Phase 8F — GUI readiness audit: **complete**.
 
 This document defines the boundary a future C#/.NET GUI must consume. Phase 8F does not implement a GUI, select a GUI framework, or expose private engine operations merely to make a prototype convenient.
 
@@ -120,3 +120,9 @@ The GUI seam is considered ready when:
 6. presentation does not depend on console formatting or diagnostic message parsing;
 7. the current absence of a public end-to-end update command is explicit rather than papered over;
 8. no GUI code is required to validate this architectural boundary.
+
+## 8F audit result
+
+All eight acceptance criteria are satisfied by the current engine boundary and contract tests. The supported presentation surface remains the three exported public commands, while internal update-decision composition and the Phase 7 lifecycle remain private. The public result contract preserves empty collections as arrays, including the manifest-discovery and release-discovery paths audited during 8F.
+
+Phase 8F therefore establishes GUI readiness as an architectural contract, not as a GUI implementation. A future presentation client can be built against the documented public boundary without reproducing engine policy or reaching into private orchestration.
