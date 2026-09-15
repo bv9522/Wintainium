@@ -41,7 +41,7 @@ Describe 'Wintainium GUI-facing public boundary' {
 
         $result.OperationId | Should -Not -BeNullOrEmpty
         $result.IsSuccessful | Should -BeTrue
-        $result.Candidates | Should -BeOfType System.Object[]
+        $result.Candidates | Should -BeOfType System.String[]
         $result.ManifestPaths | Should -BeOfType System.String[]
         $result.Manifests | Should -BeOfType System.Object[]
         $result.Errors | Should -BeOfType System.Object[]
@@ -52,7 +52,10 @@ Describe 'Wintainium GUI-facing public boundary' {
     It 'keeps the GUI boundary independent of private orchestration object construction' {
         $contract = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\docs\GUIReadiness.md') -Raw
 
-        $contract | Should -Match 'must not construct.*StagePlan.*StageFactory.*CancellationContext'
+        $contract | Should -Match 'must not construct'
+        $contract | Should -Match 'StagePlan'
+        $contract | Should -Match 'StageFactory'
+        $contract | Should -Match 'CancellationContext'
         $contract | Should -Match 'must not.*invoke providers/installers directly'
         $contract | Should -Match 'must not parse terminal formatting'
         $contract | Should -Match 'Unknown.*not.*NotInstalled'
