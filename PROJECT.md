@@ -23,8 +23,22 @@ developer sources instead of depending primarily on centralized repositories.
 - Future GUI: C#/.NET, separate from the engine
 - Version control: Git
 
-## Non-goals for the foundation phase
+## Foundation-phase non-goals
 
-- No update-checking or installation logic
-- No network source integrations
-- No GUI implementation
+The original foundation phase deliberately excluded update-checking,
+installation, network source integrations, and GUI implementation. Those
+constraints applied to the early architecture work and are no longer a
+statement of the project's current capability boundary.
+
+The implemented engine now includes provider-backed release discovery,
+download, installation, and lifecycle orchestration. The current public
+PowerShell surface remains intentionally smaller than the internal engine
+because the authoritative installed-state and public end-to-end composition
+boundaries are still being established.
+
+## Current product boundary
+
+The PowerShell engine remains the primary product and is intended to be usable
+without a GUI. Public commands return structured results suitable for an
+interactive CLI presentation layer or a future C#/.NET client. Presentation
+formatting and UI concerns remain outside Core.
