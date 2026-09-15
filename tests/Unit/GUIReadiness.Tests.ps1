@@ -41,12 +41,12 @@ Describe 'Wintainium GUI-facing public boundary' {
 
         $result.OperationId | Should -Not -BeNullOrEmpty
         $result.IsSuccessful | Should -BeTrue
-        $result.Candidates | Should -BeOfType System.String[]
-        $result.ManifestPaths | Should -BeOfType System.String[]
-        $result.Manifests | Should -BeOfType System.Object[]
-        $result.Errors | Should -BeOfType System.Object[]
-        $result.Warnings | Should -BeOfType System.Object[]
-        $result.LogEvents | Should -BeOfType System.Object[]
+        $result.Candidates.GetType() | Should -Be ([string[]])
+        $result.ManifestPaths.GetType() | Should -Be ([string[]])
+        $result.Manifests.GetType() | Should -Be ([object[]])
+        $result.Errors.GetType() | Should -Be ([object[]])
+        $result.Warnings.GetType() | Should -Be ([object[]])
+        $result.LogEvents.GetType() | Should -Be ([object[]])
     }
 
     It 'keeps the GUI boundary independent of private orchestration object construction' {
