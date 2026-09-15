@@ -53,7 +53,7 @@ Describe 'Wintainium release package builder' {
             $result = & $builderPath -RepositoryRoot $repoRoot -OutputRoot $outputRoot
             $packageRoot = $result.PackageRoot
 
-            @('.git', '.github', 'tests', '.editorconfig', '.gitignore', 'AI_CONTEXT.md') | ForEach-Object {
+            @('.git', '.github', 'tests', '.editorconfig', '.gitignore', 'AI_CONTEXT.md', 'tools') | ForEach-Object {
                 Test-Path -LiteralPath (Join-Path $packageRoot $_) | Should -BeFalse -Because $_
             }
 
@@ -89,6 +89,66 @@ Describe 'Wintainium release package builder' {
             & $validatorPath -PackageRoot $result.PackageRoot | Select-Object -ExpandProperty IsValid | Should -BeTrue
         }
         finally {
+            Remove-Item -LiteralPath $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'preflights required source assets before creating the package' {
+        $sourceRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainiumSourceTest-' + [guid]::NewGuid().ToString('N'))
+        $outputRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainiumPackageTest-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'core/Wintainium.Core') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'docs') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'manifests') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'plugins') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'schemas') -Force | Out-Null
+        New-Item -ItemType Directory -Path $outputRoot | Out-Null
+        try {
+            { & $builderPath -RepositoryRoot $sourceRoot -OutputRoot $outputRoot } | Should -Throw '*required source asset*'
+            Get-ChildItem -LiteralPath $outputRoot | Should -BeNullOrEmpty
+        }
+        finally {
+            Remove-Item -LiteralPath $sourceRoot -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'cleans up a partially assembled package after a post-creation failure' {
+        $sourceRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainiumSourceTest-' + [guid]::NewGuid().ToString('N'))
+        $outputRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('WintainiumPackageTest-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'core/Wintainium.Core') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'docs') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'manifests') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'plugins') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'schemas') -Force | Out-Null
+        New-Item -ItemType Directory -Path $outputRoot | Out-Null
+
+        foreach ($relativePath in @(
+            'ARCHITECTURE.md'
+            'CHANGELOG.md'
+            'PROJECT.md'
+            'README.md'
+            'ROADMAP.md'
+            'docs/GettingStarted.md'
+            'docs/CLI.md'
+            'docs/ManifestAuthoring.md'
+            'docs/Diagnostics.md'
+            'docs/PublicResultContract.md'
+            'docs/PublicPowerShellContract.md'
+            'docs/ReleasePackaging.md'
+            'core/Wintainium.Core/Wintainium.Core.psm1'
+            'schemas/application-manifest.schema.json'
+        )) {
+            New-Item -ItemType File -Path (Join-Path $sourceRoot $relativePath) -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $moduleManifestPath -Destination (Join-Path $sourceRoot 'core/Wintainium.Core/Wintainium.Core.psd1')
+        New-Item -ItemType File -Path (Join-Path $sourceRoot 'tools') -Force | Out-Null
+
+        try {
+            { & $builderPath -RepositoryRoot $sourceRoot -OutputRoot $outputRoot } | Should -Throw
+            Get-ChildItem -LiteralPath $outputRoot | Should -BeNullOrEmpty
+        }
+        finally {
+            Remove-Item -LiteralPath $sourceRoot -Recurse -Force -ErrorAction SilentlyContinue
             Remove-Item -LiteralPath $outputRoot -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
