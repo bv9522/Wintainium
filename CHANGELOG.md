@@ -22,6 +22,7 @@ versioning once releases begin.
 - Phase 7 lifecycle and orchestration audit/lock documentation.
 - Phase 8 public CLI/result contracts for the supported PowerShell commands.
 - Phase 8 user-facing Getting Started, CLI reference, manifest-authoring, and diagnostics/troubleshooting documentation.
+- Phase 8 release packaging boundary, independent release validation, and versioned package assembly tooling.
 
 ### Changed
 
@@ -31,3 +32,8 @@ versioning once releases begin.
 - Phase 8A removed low-level installer request construction from the exported public PowerShell surface.
 - Phase 8B aligned public command help and structured-result contract documentation with the actual three-command surface and established the boundary for the future public orchestration command.
 - Phase 8C documentation now explicitly describes structured diagnostics, OperationId correlation, error-code handling, and operation-specific troubleshooting without inventing persistent configuration or update/install interfaces that do not yet exist.
+- Phase 8D release packaging now defines deterministic file selection and relative layout, authoritative versioning, an explicit distributable boundary, independent package validation, preflight and overwrite protection, and cleanup after post-creation failure.
+
+### Phase 8D lock
+
+- Phase 8D is complete and locked after the 356/356 full-suite regression checkpoint. The release boundary is ready for the Phase 8E upgrade and persistence contract work.
