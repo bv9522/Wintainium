@@ -10,6 +10,8 @@ function Set-WintainiumInstalledApplicationState {
         [psobject]$State
     )
 
+    if ([string]::IsNullOrWhiteSpace($StateRoot)) { throw [System.ArgumentException]::new('StateRoot must not be empty or whitespace.') }
+
     $validation = Test-WintainiumInstalledApplicationState -State $State
     if (-not $validation.IsValid) {
         $message = ($validation.Errors | ForEach-Object { $_.Message }) -join ' '
@@ -28,7 +30,7 @@ function Set-WintainiumInstalledApplicationState {
     if (Test-Path -LiteralPath $statePath -PathType Leaf) {
         try {
             $existing = Get-Content -LiteralPath $statePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-            if ($null -ne $existing.PSObject.Properties['SchemaVersion'] -and [int]$existing.SchemaVersion -ne 1) {
+            if ($null -eq $existing.PSObject.Properties['SchemaVersion'] -or [int]$existing.SchemaVersion -ne 1) {
                 throw [System.IO.InvalidDataException]::new('Unsupported installed-state schema version.')
             }
             $document.States = @($existing.States)
