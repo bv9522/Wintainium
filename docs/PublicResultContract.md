@@ -1,8 +1,6 @@
 # Public PowerShell Result Contract
 
-Phase 8F — GUI readiness audit: **in progress**.
-
-Phase 8B established the result boundary consumed by the PowerShell CLI and the future C#/.NET presentation layer. Phase 8E has since established the managed installed-state composition boundary without exposing it publicly.
+Phase 8F completes the result-boundary audit established in Phase 8B. This contract is consumed by the PowerShell CLI and the future C#/.NET presentation layer.
 
 ## Common shape
 
@@ -18,7 +16,7 @@ Where applicable, public results expose these stable concepts:
 - `Warnings` — zero or more structured warning objects;
 - `LogEvents` — structured diagnostic events when the operation owns logging at its boundary.
 
-Collection-valued result properties are returned as arrays, including when empty. Consumers must not depend on property ordering, console formatting, or diagnostic message wording for business decisions.
+Collection-valued result properties are returned as arrays, including when empty. The audited public implementations preserve those collection properties as actual arrays rather than allowing PowerShell's empty-pipeline behavior to collapse them to `$null`. Consumers must not depend on property ordering, console formatting, or diagnostic message wording for business decisions.
 
 ## Supported command contracts
 
@@ -76,9 +74,7 @@ The eventual public update command must accept stable application-management inp
 
 The Phase 7 lifecycle primitive intentionally requires those internal dependencies. Therefore it is not itself a public CLI contract. A dedicated internal composition boundary must first assemble the real stage executors and dependencies. Only then should a public orchestration command be exposed.
 
-Phase 8E now provides the first caller-independent composition boundary: `Get-WintainiumApplicationUpdateDecision` combines provider discovery with the Wintainium-managed installed-state source and delegates the actual update decision to the locked Phase 4 rules. It remains private.
-
-The remaining prerequisite for a public end-to-end update operation is authoritative composition of downloaded-byte verification and post-install installed-state reconciliation. The current public surface therefore remains deliberately limited to manifest discovery, application validation, and release discovery. A missing managed state record is `Unknown`, not `NotInstalled`, and the public contract must not manufacture state to make an update appear actionable.
+Phase 8E now supplies the missing managed installed-state boundary and the internal update-decision composition seam. The managed state source is intentionally narrow and returns `Unknown` when a record is absent; it does not represent Windows-wide inventory. The remaining prerequisite for a public end-to-end update operation is authoritative composition of artifact verification and post-install state reconciliation. Phase 8F therefore keeps the public update operation deferred rather than exposing a caller-constructed or otherwise incomplete lifecycle.
 
 ## Pipeline compatibility
 
@@ -94,4 +90,4 @@ Examples demonstrate public inputs only. They do not expose private orchestratio
 
 ## Non-goals
 
-This contract does not introduce scheduling, update-all orchestration, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI. Persistence is limited to the explicitly defined Phase 8E managed installed-state boundary and does not imply general inventory, synchronization, or database infrastructure.
+This contract does not introduce scheduling, update-all orchestration, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI. The explicitly defined Phase 8E managed-state persistence boundary is part of the internal engine contract but is not a general-purpose public configuration or inventory API.
