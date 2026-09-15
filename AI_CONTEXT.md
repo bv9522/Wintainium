@@ -50,7 +50,7 @@ structured installation results. A targeted 6E completion-race correction uses
 changing the locked process contract. Phase 6 does not reconcile post-install
 application state.
 
-Phase 7 is implemented and locked through 7I. The lifecycle now establishes a
+Phase 7 is implemented and locked through 7I. The lifecycle establishes a
 parent operation context, deterministic seven-stage plan, immutable operation
 state and transitions, explicit cancellation control flow, Core-owned single-
 stage execution, single-stage coordination, multi-stage workflow coordination,
@@ -64,21 +64,35 @@ Phase 8A is complete. The public PowerShell surface is intentionally limited to
 internal. The exported module boundary is presentation-neutral and returns
 structured objects rather than formatted output.
 
-Phase 8B is in progress. Public result contracts, stable error categories,
-comment-based help, contract tests, and the Core-owned orchestration composition
-requirements are documented. The public end-to-end update command remains
-withheld because update decisions require authoritative installed state and the
-current repository does not yet have the required state retrieval/persistence
-boundary. Callers must not manufacture that state or construct internal
-orchestration objects to bypass the boundary.
+Phase 8B is complete for the current public surface. Public result contracts,
+stable error categories, comment-based help, contract tests, and the
+Core-owned orchestration composition requirements are documented. The public
+end-to-end update command remains withheld because update decisions require
+authoritative installed state and the repository does not yet have the required
+state retrieval/persistence boundary. Callers must not manufacture that state
+or construct internal orchestration objects to bypass the boundary.
 
-Phase 8C has begun. `docs/GettingStarted.md`, `docs/CLI.md`, and
-`docs/ManifestAuthoring.md` provide the initial user-facing documentation
-layer. Documentation must describe implemented behavior and must not imply that
-internal orchestration or speculative persistence features are public.
+Phase 8C is complete for the current implementation boundary. The user-facing
+documentation layer covers Getting Started, CLI usage, manifest authoring,
+and diagnostics/troubleshooting. Documentation describes implemented behavior
+without inventing persistent configuration or update/install interfaces.
 
-The current full-suite regression checkpoint is 331/331 green after the latest
-public-contract and documentation changes.
+Phase 8D is complete and locked. Release packaging is deterministic at the
+file-selection and relative-layout level, with the Core module manifest as the
+authoritative version source. The distributable boundary preserves required
+runtime and documentation assets while excluding development material and
+repository placeholders. The independent validator enforces the documented
+boundary and public export surface. The builder preflights source assets,
+protects the output boundary, refuses overwrites, validates before archiving,
+and cleans partial output after post-creation failure. The final Phase 8D
+regression checkpoint is 356/356 green.
+
+Phase 8E is now the active phase. It owns the upgrade and persistence contract:
+classifying program files, user configuration, application state, logs, caches,
+manifests, and temporary artifacts; defining safe replacement and preservation
+behavior; establishing the authoritative installed-application state boundary
+needed by update orchestration; and validating a supported N→N+1 upgrade path
+without introducing speculative persistence infrastructure.
 
 The repository is authoritative over this context. When this file conflicts
 with implementation, contracts, or tests, inspect the repository and update
