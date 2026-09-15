@@ -40,13 +40,13 @@ The durable state boundary consists of:
 
 Caches and temporary files are outside the durable contract. They may be recreated or discarded without changing the authoritative meaning of a managed application.
 
-The implementation may choose separate files or another local persistence mechanism later. The storage technology must not leak into Phase 4 decision logic or the public command contract.
+The current implementation uses a small local JSON store for installed application state. The storage technology is an implementation detail and must not leak into Phase 4 decision logic or the public command contract.
 
 ## Authoritative installed state
 
 The authoritative Core representation is the existing `InstalledApplicationState` contract. Its stable application identity is the manifest `ApplicationId`; it does not use provider-specific identifiers as a second Core identity.
 
-A persisted record represents the latest state established by a Wintainium state source. The state source is responsible for observation; the persistence layer is responsible for durable storage and retrieval; Core update-decision logic is responsible for interpreting the normalized state.
+A persisted record represents the latest state established by a Wintainium-managed state writer. The persistence layer is responsible for durable storage and retrieval; the managed-state source exposes that persisted observation to Core composition; Core update-decision logic is responsible for interpreting the normalized state.
 
 The normalized state has these fields:
 
@@ -62,11 +62,13 @@ Unknown observations remain unknown. Persistence must not turn missing data into
 
 ## State-source boundary
 
-Phase 8E does not create a Windows-wide inventory subsystem. A state source may use registry/uninstall information, MSI, AppX/MSIX, installer records, portable application records, or another explicitly implemented mechanism.
+The current supported state source is deliberately narrow: the Core managed-state source reads the authoritative Wintainium state record for a requested `ApplicationId`. It does not scan Windows, infer installation state from arbitrary files, or introduce a second identity system.
 
-Each source must translate its observation into `InstalledApplicationState`. Source-specific identifiers and discovery rules remain outside the Core update decision contract.
+The persisted record is authoritative only when it was established by an explicit Wintainium state writer or a future state source that conforms to this contract. A missing record returns `Unknown`.
 
-The first supported state source should be selected according to the actual application/installer contract being managed rather than by building a generic inventory framework in advance.
+Future concrete sources may use registry/uninstall information, MSI, AppX/MSIX, installer records, portable application records, or another explicitly implemented mechanism. Each source must translate its observation into `InstalledApplicationState` before Core decision logic consumes it.
+
+The first implementation intentionally avoids building a generic inventory framework before a real managed application requires one.
 
 ## State write rules
 
@@ -81,13 +83,15 @@ A `NotInstalled` record must not carry an invented installed version.
 ```text
 Manifest
    +
-State source -> InstalledApplicationState <- Persistence
+Managed state source -> InstalledApplicationState <- Persistence
    +
 Provider discovery -> ProviderResult
    |
    v
 Phase 4 Update Decision
 ```
+
+`Get-WintainiumApplicationUpdateDecision` is the current Core-owned composition boundary for this path. It obtains release discovery, retrieves installed state by manifest identity, constructs the internal `UpdateDecisionInput`, and delegates the decision to the locked Phase 4 operation.
 
 Persistence and state-source components provide observations. They do not make update decisions. `Get-WintainiumUpdateDecision` remains the sole owner of the Phase 4 decision rules.
 
@@ -128,6 +132,6 @@ Persistence is storage, not trust. Stored provider metadata, installation locati
 
 ## Phase boundary
 
-Phase 8E establishes the persistence ownership model, authoritative installed-state boundary, and supported N→N+1 upgrade semantics needed by the public engine. It does not implement a general inventory product, cloud synchronization, telemetry, scheduling, update-all behavior, or GUI.
+Phase 8E establishes the persistence ownership model, authoritative installed-state boundary, a minimal managed-state source, and the supported N→N+1 upgrade semantics needed by the public engine. It does not implement a general inventory product, cloud synchronization, telemetry, scheduling, update-all behavior, or GUI.
 
-The next implementation work should create the smallest concrete local state source/persistence boundary needed to support a real end-to-end composition, then validate it with focused tests before exposing a public update operation.
+The remaining implementation work is the controlled N→N+1 program-file replacement path and the final end-to-end composition audit. The public update command remains deferred until verification and post-install state reconciliation have concrete composition contracts.
