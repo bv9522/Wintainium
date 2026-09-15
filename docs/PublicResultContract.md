@@ -1,6 +1,8 @@
 # Public PowerShell Result Contract
 
-Phase 8B defines the result boundary consumed by the PowerShell CLI and the future C#/.NET presentation layer.
+Phase 8F — GUI readiness audit: **in progress**.
+
+Phase 8B established the result boundary consumed by the PowerShell CLI and the future C#/.NET presentation layer. Phase 8E has since established the managed installed-state composition boundary without exposing it publicly.
 
 ## Common shape
 
@@ -74,7 +76,9 @@ The eventual public update command must accept stable application-management inp
 
 The Phase 7 lifecycle primitive intentionally requires those internal dependencies. Therefore it is not itself a public CLI contract. A dedicated internal composition boundary must first assemble the real stage executors and dependencies. Only then should a public orchestration command be exposed.
 
-The current blocker is authoritative installed-application state: Phase 4 update decision requires it, while the repository currently has only the installed-state constructor and no authoritative retrieval/persistence boundary. Phase 8B therefore does not invent a default state or make internal state construction a caller responsibility. The state boundary is planned for Phase 8E.
+Phase 8E now provides the first caller-independent composition boundary: `Get-WintainiumApplicationUpdateDecision` combines provider discovery with the Wintainium-managed installed-state source and delegates the actual update decision to the locked Phase 4 rules. It remains private.
+
+The remaining prerequisite for a public end-to-end update operation is authoritative composition of downloaded-byte verification and post-install installed-state reconciliation. The current public surface therefore remains deliberately limited to manifest discovery, application validation, and release discovery. A missing managed state record is `Unknown`, not `NotInstalled`, and the public contract must not manufacture state to make an update appear actionable.
 
 ## Pipeline compatibility
 
@@ -90,4 +94,4 @@ Examples demonstrate public inputs only. They do not expose private orchestratio
 
 ## Non-goals
 
-This contract does not introduce scheduling, update-all orchestration, persistence infrastructure, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI.
+This contract does not introduce scheduling, update-all orchestration, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI. Persistence is limited to the explicitly defined Phase 8E managed installed-state boundary and does not imply general inventory, synchronization, or database infrastructure.
