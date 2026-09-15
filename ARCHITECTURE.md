@@ -6,6 +6,12 @@ The PowerShell engine owns discovery, trust evaluation, validation, downloads,
 installation coordination, configuration, and logging. A future GUI is a
 client of that engine and must not duplicate engine rules.
 
+Configuration is an engine responsibility, but the current public contract does
+not yet expose a general-purpose configuration command or persistence surface.
+The concrete configuration/state boundary is intentionally deferred to the
+appropriate later phase rather than being implied by this architectural
+statement.
+
 ## Main components
 
 | Component | Responsibility |
@@ -15,7 +21,7 @@ client of that engine and must not duplicate engine rules.
 | Installer plugins | Validate and apply a downloaded artifact according to its format. |
 | Application manifests | Declare portable application-management intent and select compatible plugins. |
 | Manifest repositories | Store and distribute Wintainium application manifests. |
-| Configuration | Holds user-selected paths, policies, and enabled plugins. |
+| Configuration | Holds user-selected paths, policies, and enabled plugins when that configuration surface is established. |
 
 ## Repositories and providers
 
