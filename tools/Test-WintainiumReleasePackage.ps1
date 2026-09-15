@@ -9,6 +9,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $root = (Resolve-Path -LiteralPath $PackageRoot -ErrorAction Stop).Path
+
+foreach ($excludedDirectory in @('.git', '.github', 'tests')) {
+    if (Test-Path -LiteralPath (Join-Path $root $excludedDirectory)) {
+        throw "Release package validation failed: development directory '$excludedDirectory' is present."
+    }
+}
+
 $moduleManifestPath = Join-Path $root 'core/Wintainium.Core/Wintainium.Core.psd1'
 $moduleManifest = Import-PowerShellDataFile -LiteralPath $moduleManifestPath
 
@@ -34,7 +41,8 @@ $expectedExports = @(
     'Test-WintainiumApplicationDefinition'
     'Get-WintainiumApplicationRelease'
 )
-if (@($moduleManifest.FunctionsToExport) -cne $expectedExports) {
+$actualExports = @($moduleManifest.FunctionsToExport | ForEach-Object { [string]$_ })
+if (($actualExports -join "`n") -cne ($expectedExports -join "`n")) {
     throw 'Release package validation failed: exported public command surface does not match the supported contract.'
 }
 
@@ -52,12 +60,6 @@ $requiredFiles = @(
 foreach ($relativePath in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $root $relativePath) -PathType Leaf)) {
         throw "Release package validation failed: required asset '$relativePath' is missing."
-    }
-}
-
-foreach ($excludedDirectory in @('.git', '.github', 'tests')) {
-    if (Test-Path -LiteralPath (Join-Path $root $excludedDirectory)) {
-        throw "Release package validation failed: development directory '$excludedDirectory' is present."
     }
 }
 
