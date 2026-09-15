@@ -104,12 +104,23 @@ Wintainium/
 `tests/` and repository metadata may remain present in a source checkout but
 are outside this distributable package shape.
 
-## Future release tooling
+## Release tooling
 
-A later packaging implementation may materialize this boundary as a
-repeatable archive/build command. Such tooling must consume the authoritative
-version and this documented file boundary rather than embedding a second,
-independent list of runtime behavior or inventing package-time configuration.
+`tools/New-WintainiumReleasePackage.ps1` materializes this boundary from a
+repository checkout. It reads the Core `ModuleVersion`, creates a versioned
+package directory and ZIP archive, copies only the documented root files and
+runtime directories, omits repository placeholders such as `.gitkeep`, and
+runs `tools/Test-WintainiumReleasePackage.ps1` against the assembled package
+before producing the archive.
+
+The builder is intentionally a release-development tool outside the runtime
+package. It refuses to overwrite an existing versioned package directory or
+archive, so each release assembly is an explicit operation.
+
+The resulting package contains no `tests/`, repository metadata, local state,
+or release-tooling directory. Empty `plugins/` and `manifests/` directories may
+remain in the materialized package when the repository has no shipped files
+there; placeholder files are not copied.
 
 Installer/upgrade behavior is intentionally outside this document. Phase 8E
 will define which user-owned state is preserved or replaced during an actual
