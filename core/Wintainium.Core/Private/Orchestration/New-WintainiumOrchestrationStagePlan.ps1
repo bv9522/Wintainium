@@ -58,6 +58,7 @@ function New-WintainiumOrchestrationStagePlan {
         'Verification'
         'InstallerSelection'
         'Installation'
+        'Reconciliation'
     )
 
     $stages = for ($index = 0; $index -lt $stageNames.Count; $index++) {
