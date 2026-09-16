@@ -22,10 +22,11 @@ This is deliberately narrower than a general signature/trust framework. Signatur
 - Exact downloaded bytes are hashed by Core.
 - Matching SHA-256 evidence produces `Verified`.
 - Missing, malformed, unsupported, or mismatched evidence produces a structured failure.
+- Invalid download-result structure cannot bypass verification.
 - Download success cannot bypass verification.
 - Verification never executes or relocates the artifact.
-- OperationId can be supplied by the lifecycle and is preserved.
-- Regression tests cover success, mismatch, missing evidence, malformed evidence, unsupported algorithms, incomplete download, dictionary metadata, and non-execution behavior.
+- An explicit lifecycle `OperationId` is preserved without creating a competing identity.
+- Regression tests cover success, mismatch, missing evidence, malformed evidence, unsupported algorithms, incomplete download, missing destination, invalid result structure, dictionary metadata, multiple SHA-256 claims, explicit OperationId propagation, and non-execution behavior.
 
 ## Follow-on
 
