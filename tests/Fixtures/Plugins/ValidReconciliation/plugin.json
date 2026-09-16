@@ -1,0 +1,9 @@
+{
+  "pluginId": "Wintainium.reconciliation.valid-fixture",
+  "pluginType": "Reconciliation",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.reconciliation.valid-fixture.psm1",
+  "capabilities": {
+    "applicationState": true
+  }
+}
