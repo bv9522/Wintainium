@@ -17,12 +17,12 @@ function Test-WintainiumPluginDescriptor {
     }
 
     if ($null -ne $descriptor) {
-        if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
+        if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer|reconciliation)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginIdInvalid'; Message = 'pluginId is missing or invalid.' })
         }
 
-        if (-not $descriptor.ContainsKey('pluginType') -or $descriptor.pluginType -notin @('Provider', 'Installer')) {
-            $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginTypeInvalid'; Message = 'pluginType must be Provider or Installer.' })
+        if (-not $descriptor.ContainsKey('pluginType') -or $descriptor.pluginType -notin @('Provider', 'Installer', 'Reconciliation')) {
+            $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginTypeInvalid'; Message = 'pluginType must be Provider, Installer, or Reconciliation.' })
         }
 
         if (-not $descriptor.ContainsKey('contractVersions') -or $descriptor.contractVersions.Count -eq 0 -or @($descriptor.contractVersions | Where-Object { $_ -notmatch '^[1-9][0-9]*$' }).Count -gt 0) {
@@ -52,6 +52,20 @@ function Test-WintainiumPluginDescriptor {
                 if (-not $capabilities.ContainsKey('artifactDiscovery') -or $capabilities.artifactDiscovery -ne $true) {
                     $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
                 }
+            }
+        }
+
+        if ($pluginType -eq 'Reconciliation') {
+            if (-not $descriptor.ContainsKey('entryPoint') -or
+                $descriptor.entryPoint -isnot [string] -or
+                $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or
+                $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
+                $errors.Add([pscustomobject]@{ Code = 'DescriptorReconciliationEntryPointInvalid'; Message = 'Reconciliation descriptors require a relative .psm1 entryPoint without parent-directory traversal.' })
+            }
+
+            if ($null -ne $capabilities -and
+                (-not $capabilities.ContainsKey('applicationState') -or $capabilities.applicationState -ne $true)) {
+                $errors.Add([pscustomobject]@{ Code = 'DescriptorReconciliationApplicationStateMissing'; Message = 'Reconciliation descriptors require capabilities.applicationState=true.' })
             }
         }
 
