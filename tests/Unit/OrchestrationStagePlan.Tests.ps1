@@ -27,7 +27,7 @@ Describe 'Wintainium orchestration stage plan' {
 
         $result.IsValid | Should -BeTrue
         $result.Errors | Should -HaveCount 0
-        @($result.Plan.Stages).Count | Should -Be 7
+        @($result.Plan.Stages).Count | Should -Be 8
         @($result.Plan.Stages.Name) | Should -Be @(
             'ManifestValidation'
             'ReleaseDiscovery'
@@ -36,9 +36,10 @@ Describe 'Wintainium orchestration stage plan' {
             'Verification'
             'InstallerSelection'
             'Installation'
+            'Reconciliation'
         )
-        @($result.Plan.Stages.Sequence) | Should -Be @(1, 2, 3, 4, 5, 6, 7)
-        @($result.Plan.Stages.Required) | Should -Be @( $true, $true, $true, $true, $true, $true, $true )
+        @($result.Plan.Stages.Sequence) | Should -Be @(1, 2, 3, 4, 5, 6, 7, 8)
+        @($result.Plan.Stages.Required) | Should -Be @( $true, $true, $true, $true, $true, $true, $true, $true )
     }
 
     It 'preserves the parent orchestration context without creating a second operation identifier' {
@@ -118,6 +119,7 @@ Describe 'Wintainium orchestration stage plan' {
         $result.IsValid | Should -BeTrue
         $result.Plan.Stages[0].Name | Should -Be 'ManifestValidation'
         $result.Plan.Stages[4].Name | Should -Be 'Verification'
+        $result.Plan.Stages[7].Name | Should -Be 'Reconciliation'
     }
 
     It 'keeps verification as a required stage between download and installer selection' {
@@ -130,5 +132,16 @@ Describe 'Wintainium orchestration stage plan' {
         $result.Plan.Stages[4].Name | Should -Be 'Verification'
         $result.Plan.Stages[4].Required | Should -BeTrue
         $result.Plan.Stages[5].Name | Should -Be 'InstallerSelection'
+    }
+
+    It 'places reconciliation after installation as the authoritative observation boundary' {
+        $result = InModuleScope Wintainium.Core -Parameters @{ OrchestrationRequest = $validRequest } {
+            param($OrchestrationRequest)
+            New-WintainiumOrchestrationStagePlan -OrchestrationRequest $OrchestrationRequest
+        }
+
+        $result.Plan.Stages[6].Name | Should -Be 'Installation'
+        $result.Plan.Stages[7].Name | Should -Be 'Reconciliation'
+        $result.Plan.Stages[7].Required | Should -BeTrue
     }
 }
