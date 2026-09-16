@@ -8,7 +8,7 @@ function Resolve-WintainiumPlugin {
         [string]$PluginId,
 
         [Parameter(Mandatory)]
-        [ValidateSet('Provider', 'Installer')]
+        [ValidateSet('Provider', 'Installer', 'Reconciliation')]
         [string]$PluginType,
 
         [Parameter(Mandatory)]
@@ -22,7 +22,11 @@ function Resolve-WintainiumPlugin {
         })
 
     if ($pluginsByIdentity.Count -eq 0) {
-        $errorCode = if ($PluginType -eq 'Provider') { 'ProviderNotRegistered' } else { 'PluginNotResolved' }
+        $errorCode = switch ($PluginType) {
+            'Provider' { 'ProviderNotRegistered' }
+            'Reconciliation' { 'ReconciliationNotRegistered' }
+            default { 'PluginNotResolved' }
+        }
         return [pscustomobject]@{
             IsResolved = $false
             Plugin = $null
@@ -38,7 +42,11 @@ function Resolve-WintainiumPlugin {
         })
 
     if ($compatiblePlugins.Count -eq 0) {
-        $errorCode = if ($PluginType -eq 'Provider') { 'ProviderContractIncompatible' } else { 'PluginNotResolved' }
+        $errorCode = switch ($PluginType) {
+            'Provider' { 'ProviderContractIncompatible' }
+            'Reconciliation' { 'ReconciliationContractIncompatible' }
+            default { 'PluginNotResolved' }
+        }
         return [pscustomobject]@{
             IsResolved = $false
             Plugin = $null
@@ -57,11 +65,16 @@ function Resolve-WintainiumPlugin {
 
     if ($capabilityCompatiblePlugins.Count -eq 0) {
         $required = ($RequiredCapabilities -join ', ')
+        $errorCode = switch ($PluginType) {
+            'Provider' { 'ProviderCapabilityUnsupported' }
+            'Reconciliation' { 'ReconciliationCapabilityUnsupported' }
+            default { 'PluginNotResolved' }
+        }
         return [pscustomobject]@{
             IsResolved = $false
             Plugin = $null
             Error = [pscustomobject]@{
-                Code = if ($PluginType -eq 'Provider') { 'ProviderCapabilityUnsupported' } else { 'PluginNotResolved' }
+                Code = $errorCode
                 Message = "No compatible $PluginType plugin for '$PluginId' declares all required capabilities: $required."
             }
         }
@@ -75,4 +88,3 @@ function Resolve-WintainiumPlugin {
         Error = $null
     }
 }
-
