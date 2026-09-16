@@ -42,6 +42,13 @@ Describe 'Wintainium artifact verification' {
         $result.FailureKind | Should -Be 'DownloadNotCompleted'
     }
 
+    It 'rejects a download result missing Status' {
+        $download.PSObject.Properties.Remove('Status')
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InputInvalid'
+    }
+
     It 'rejects a completed download with a missing destination' {
         $download.DestinationPath = Join-Path $TestDrive 'missing.bin'
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
@@ -64,6 +71,13 @@ Describe 'Wintainium artifact verification' {
     It 'rejects malformed SHA256 evidence' {
         $artifact.Hashes = @([pscustomobject]@{ Algorithm='SHA256'; Value='not-a-digest' })
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.FailureKind | Should -Be 'VerificationMetadataInvalid'
+    }
+
+    It 'rejects a hash claim missing its required fields' {
+        $artifact.Hashes = @([pscustomobject]@{ Algorithm='SHA256' })
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.Status | Should -Be 'Failed'
         $result.FailureKind | Should -Be 'VerificationMetadataInvalid'
     }
 
