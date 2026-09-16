@@ -20,17 +20,33 @@ Describe 'Wintainium artifact verification' {
         $result.OperationId | Should -Be 'operation-1'
     }
 
+    It 'preserves an explicitly supplied OperationId' {
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -OperationId 'operation-explicit' }
+        $result.Status | Should -Be 'Verified'
+        $result.OperationId | Should -Be 'operation-explicit'
+    }
+
     It 'rejects a hash mismatch' {
         $artifact.Hashes[0].Value = ('0' * 64)
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
         $result.Status | Should -Be 'Failed'
         $result.FailureKind | Should -Be 'HashMismatch'
+        $result.Algorithm | Should -Be 'SHA256'
+        $result.ExpectedHash | Should -Be ('0' * 64)
+        $result.ActualHash | Should -Be $hash
     }
 
     It 'rejects a download that did not complete' {
         $download.Status = 'Failed'
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
         $result.FailureKind | Should -Be 'DownloadNotCompleted'
+    }
+
+    It 'rejects a completed download with a missing destination' {
+        $download.DestinationPath = Join-Path $TestDrive 'missing.bin'
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'DestinationMissing'
     }
 
     It 'rejects missing hash evidence instead of treating download success as verification' {
@@ -55,6 +71,17 @@ Describe 'Wintainium artifact verification' {
         $artifact.Hashes = @{ sha256 = $hash }
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
         $result.Status | Should -Be 'Verified'
+        $result.OperationId | Should -Be 'operation-1'
+    }
+
+    It 'requires every declared SHA256 claim to match' {
+        $artifact.Hashes = @(
+            [pscustomobject]@{ Algorithm='SHA256'; Value=$hash }
+            [pscustomobject]@{ Algorithm='sha256'; Value=('0' * 64) }
+        )
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'HashMismatch'
     }
 
     It 'does not execute the artifact while verifying it' {
