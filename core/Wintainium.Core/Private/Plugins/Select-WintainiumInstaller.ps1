@@ -2,18 +2,31 @@ function Select-WintainiumInstaller {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [System.Collections.IDictionary]$Manifest,
+        [psobject]$Manifest,
 
         [Parameter(Mandatory)]
-        [System.Collections.IDictionary]$Artifact,
+        [psobject]$Artifact,
 
         [Parameter(Mandatory)]
         [object[]]$Plugins
     )
 
-    $pluginId = $Manifest.installer.pluginId
-    $requiredContractVersion = $Manifest.installer.requiredContractVersion
-    $artifactFormat = if ($Artifact.Contains('format')) { [string]$Artifact['format'] } else { $null }
+    $getValue = {
+        param([object]$Object, [string]$Name)
+        if ($null -eq $Object) { return $null }
+        if ($Object -is [System.Collections.IDictionary]) {
+            if ($Object.Contains($Name)) { return $Object[$Name] }
+            return $null
+        }
+        $property = $Object.PSObject.Properties[$Name]
+        if ($null -ne $property) { return $property.Value }
+        return $null
+    }
+
+    $installer = & $getValue $Manifest 'installer'
+    $pluginId = [string](& $getValue $installer 'pluginId')
+    $requiredContractVersion = [string](& $getValue $installer 'requiredContractVersion')
+    $artifactFormat = [string](& $getValue $Artifact 'format')
 
     if ([string]::IsNullOrWhiteSpace($artifactFormat)) {
         return [pscustomobject][ordered]@{
