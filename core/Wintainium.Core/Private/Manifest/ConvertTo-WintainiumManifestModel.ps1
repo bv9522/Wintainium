@@ -20,8 +20,8 @@ function ConvertTo-WintainiumManifestModel {
         Deprecated = $Manifest['deprecated']
         Source = $Manifest['source']
         Installer = $Manifest['installer']
+        Reconciliation = $Manifest['reconciliation']
         Release = $Manifest['release']
         Artifact = $Manifest['artifact']
     }
 }
-
