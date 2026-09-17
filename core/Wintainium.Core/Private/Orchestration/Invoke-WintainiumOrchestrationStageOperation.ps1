@@ -1,33 +1,13 @@
 function Invoke-WintainiumOrchestrationStageOperation {
     [CmdletBinding()]
     param(
-        [AllowNull()]
-        [Parameter(Mandatory)]
-        [psobject]$OperationState,
-
-        [AllowNull()]
-        [Parameter(Mandatory)]
-        [psobject]$StagePlan,
-
-        [AllowNull()]
-        [Parameter(Mandatory)]
-        [psobject]$CancellationContext,
-
-        [Parameter(Mandatory)]
-        [ValidateRange(1, 2147483647)]
-        [int]$StageSequence,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$StageName,
-
-        [AllowNull()]
-        [Parameter(Mandatory)]
-        [psobject]$StageInput,
-
-        [AllowNull()]
-        [Parameter(Mandatory)]
-        [scriptblock]$StageExecutor
+        [AllowNull()] [Parameter(Mandatory)] [psobject]$OperationState,
+        [AllowNull()] [Parameter(Mandatory)] [psobject]$StagePlan,
+        [AllowNull()] [Parameter(Mandatory)] [psobject]$CancellationContext,
+        [Parameter(Mandatory)] [ValidateRange(1, 2147483647)] [int]$StageSequence,
+        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$StageName,
+        [AllowNull()] [Parameter(Mandatory)] [psobject]$StageInput,
+        [AllowNull()] [Parameter(Mandatory)] [scriptblock]$StageExecutor
     )
 
     $operationId = if ($null -ne $OperationState -and $OperationState.PSObject.Properties['OperationId']) { [string]$OperationState.OperationId } else { $null }
@@ -58,6 +38,18 @@ function Invoke-WintainiumOrchestrationStageOperation {
         -StageName $StageName `
         -StageInput $StageInput `
         -StageExecutor $StageExecutor
+
+    if ($execution.IsSuccessful -and $null -ne $execution.Result -and $execution.Result.PSObject.Properties['IsSuccessful'] -and -not [bool]$execution.Result.IsSuccessful) {
+        $execution = [pscustomobject][ordered]@{
+            IsSuccessful = $false
+            WasCancelled = if ($execution.Result.PSObject.Properties['WasCancelled']) { [bool]$execution.Result.WasCancelled } else { $false }
+            OperationId = $execution.OperationId
+            StageSequence = $execution.StageSequence
+            StageName = $execution.StageName
+            Result = $execution.Result
+            Error = if ($execution.Result.PSObject.Properties['Error'] -and $null -ne $execution.Result.Error) { $execution.Result.Error } else { [pscustomobject]@{ Code = 'OrchestrationStageStructuredFailure'; Message = 'The stage returned a structured unsuccessful result.' } }
+        }
+    }
 
     if (-not $execution.IsSuccessful) {
         if ($execution.WasCancelled) {
