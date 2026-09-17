@@ -1,5 +1,5 @@
 {
-  "manifestVersion": "1.0",
+  "manifestVersion": "1.1",
   "id": "org.example.incompatible",
   "name": "Incompatible Installer",
   "source": {
@@ -9,6 +9,11 @@
   },
   "installer": {
     "pluginId": "Wintainium.installer.msi-only",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.valid-fixture",
     "requiredContractVersion": "1",
     "settings": {}
   },
