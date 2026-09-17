@@ -2,36 +2,6 @@ function Test-WintainiumApplicationDefinition {
     <#
     .SYNOPSIS
     Validates an offline Wintainium application manifest and resolves its required plugins.
-
-    .DESCRIPTION
-    Validates the application definition and resolves the provider and installer
-    capabilities declared by the manifest. This command performs no network,
-    download, installation, or installed-state management work.
-
-    The command returns a structured result for both interactive PowerShell use and
-    future presentation clients. Use IsValid to determine whether the definition
-    can proceed and inspect Errors by Code rather than parsing diagnostic Message text.
-
-    .PARAMETER ManifestPath
-    Path to the Wintainium application manifest to validate.
-
-    .PARAMETER PluginRoot
-    Root directory containing the provider and installer plugins required by the manifest.
-
-    .PARAMETER SchemaPath
-    Path to the application manifest JSON schema used during validation.
-
-    .OUTPUTS
-    PSCustomObject. The result contains OperationId, IsValid, Manifest, ProviderPlugin,
-    InstallerPlugin, Errors, Warnings, and LogEvents.
-
-    Errors are structured objects with a stable Code and human-readable Message.
-    Collection-valued properties are returned as arrays, including when empty.
-
-    .EXAMPLE
-    Test-WintainiumApplicationDefinition -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
-
-    Validates an application definition offline and reports structured validation data.
     #>
     [CmdletBinding()]
     param(
@@ -41,10 +11,29 @@ function Test-WintainiumApplicationDefinition {
 
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
 
-        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
+        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
+
+        [string]$OperationId
     )
 
-    $operationId = [guid]::NewGuid().Guid
+    $resolvedOperationId = [guid]::Empty
+    if ([string]::IsNullOrWhiteSpace($OperationId)) {
+        $resolvedOperationId = [guid]::NewGuid()
+    }
+    elseif (-not [guid]::TryParse($OperationId, [ref]$resolvedOperationId)) {
+        return [pscustomobject][ordered]@{
+            OperationId = $OperationId
+            IsValid = $false
+            Manifest = $null
+            ProviderPlugin = $null
+            InstallerPlugin = $null
+            Errors = @([pscustomobject][ordered]@{ Code = 'OperationIdInvalid'; Path = '$.OperationId'; Message = 'OperationId must be a valid GUID.' })
+            Warnings = @()
+            LogEvents = @()
+        }
+    }
+    $resolvedOperationId = $resolvedOperationId.ToString()
+
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
     $logEvents = [System.Collections.Generic.List[object]]::new()
@@ -52,7 +41,7 @@ function Test-WintainiumApplicationDefinition {
     $provider = $null
     $installer = $null
 
-    $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
+    $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
 
     try {
         $manifestLoad = Import-WintainiumManifest -Path $ManifestPath -SchemaPath $SchemaPath
@@ -62,11 +51,7 @@ function Test-WintainiumApplicationDefinition {
         }
     }
     catch {
-        $errors.Add([pscustomobject][ordered]@{
-                Code = 'ManifestValidationFailed'
-                Path = '$'
-                Message = $_.Exception.Message
-            })
+        $errors.Add([pscustomobject][ordered]@{ Code = 'ManifestValidationFailed'; Path = '$'; Message = $_.Exception.Message })
     }
 
     if ($errors.Count -eq 0) {
@@ -76,33 +61,24 @@ function Test-WintainiumApplicationDefinition {
         }
 
         $providerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.source.pluginId -PluginType 'Provider' -RequiredContractVersion $manifest.source.requiredContractVersion
-        if ($providerResolution.IsResolved) {
-            $provider = $providerResolution.Plugin
-        }
-        else {
-            $errors.Add($providerResolution.Error)
-        }
+        if ($providerResolution.IsResolved) { $provider = $providerResolution.Plugin } else { $errors.Add($providerResolution.Error) }
 
         $installerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.installer.pluginId -PluginType 'Installer' -RequiredContractVersion $manifest.installer.requiredContractVersion
         if ($installerResolution.IsResolved) {
             $installer = $installerResolution.Plugin
             $compatibility = Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer
-            if (-not $compatibility.IsCompatible) {
-                $errors.Add($compatibility.Error)
-            }
+            if (-not $compatibility.IsCompatible) { $errors.Add($compatibility.Error) }
         }
-        else {
-            $errors.Add($installerResolution.Error)
-        }
+        else { $errors.Add($installerResolution.Error) }
     }
 
     $severity = if ($errors.Count -eq 0) { 'Information' } else { 'Error' }
     $eventName = if ($errors.Count -eq 0) { 'ValidationSucceeded' } else { 'ValidationFailed' }
     $message = if ($errors.Count -eq 0) { 'Application definition is valid.' } else { 'Application definition is invalid.' }
-    $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $operationId -Component 'Core' -EventName $eventName -Message $message -Context @{ ErrorCount = $errors.Count; WarningCount = $warnings.Count }))
+    $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $resolvedOperationId -Component 'Core' -EventName $eventName -Message $message -Context @{ ErrorCount = $errors.Count; WarningCount = $warnings.Count }))
 
     [pscustomobject][ordered]@{
-        OperationId = $operationId
+        OperationId = $resolvedOperationId
         IsValid = $errors.Count -eq 0
         Manifest = $manifest
         ProviderPlugin = $provider
