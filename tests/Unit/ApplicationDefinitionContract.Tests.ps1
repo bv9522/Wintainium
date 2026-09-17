@@ -20,6 +20,7 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.PSObject.Properties.Name | Should -Contain 'Manifest'
         $result.PSObject.Properties.Name | Should -Contain 'ProviderPlugin'
         $result.PSObject.Properties.Name | Should -Contain 'InstallerPlugin'
+        $result.PSObject.Properties.Name | Should -Contain 'ReconciliationPlugin'
         $result.PSObject.Properties.Name | Should -Contain 'Errors'
         $result.PSObject.Properties.Name | Should -Contain 'Warnings'
         $result.PSObject.Properties.Name | Should -Contain 'LogEvents'
@@ -27,8 +28,11 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.OperationId | Should -Not -BeNullOrEmpty
         $result.IsValid | Should -Be $true
         $result.Manifest | Should -Not -BeNullOrEmpty
+        $result.Manifest.ManifestVersion | Should -Be '1.1'
+        $result.Manifest.Reconciliation | Should -Not -BeNullOrEmpty
         $result.ProviderPlugin | Should -Not -BeNullOrEmpty
         $result.InstallerPlugin | Should -Not -BeNullOrEmpty
+        $result.ReconciliationPlugin | Should -Not -BeNullOrEmpty
         $result.Errors.Count | Should -Be 0
     }
 
@@ -45,6 +49,7 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.PSObject.Properties.Name | Should -Contain 'Manifest'
         $result.PSObject.Properties.Name | Should -Contain 'ProviderPlugin'
         $result.PSObject.Properties.Name | Should -Contain 'InstallerPlugin'
+        $result.PSObject.Properties.Name | Should -Contain 'ReconciliationPlugin'
         $result.PSObject.Properties.Name | Should -Contain 'Errors'
         $result.PSObject.Properties.Name | Should -Contain 'Warnings'
         $result.PSObject.Properties.Name | Should -Contain 'LogEvents'
@@ -54,6 +59,7 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.Manifest | Should -BeNullOrEmpty
         $result.ProviderPlugin | Should -BeNullOrEmpty
         $result.InstallerPlugin | Should -BeNullOrEmpty
+        $result.ReconciliationPlugin | Should -BeNullOrEmpty
         $result.Errors.Count | Should -BeGreaterThan 0
         $result.LogEvents.Count | Should -BeGreaterThan 0
     }
@@ -62,16 +68,30 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $manifest = Join-Path -Path $TestDrive -ChildPath 'missing-plugin.json'
         @'
 {
-  "manifestVersion": "1.0",
+  "manifestVersion": "1.1",
   "id": "org.example.missing-plugin",
   "name": "Missing Plugin Example",
   "source": {
     "pluginId": "provider.does-not-exist",
-    "requiredContractVersion": "1.0"
+    "requiredContractVersion": "1.0",
+    "settings": {}
   },
   "installer": {
     "pluginId": "installer.does-not-exist",
-    "requiredContractVersion": "1.0"
+    "requiredContractVersion": "1.0",
+    "settings": {}
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.does-not-exist",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"]
   }
 }
 '@ | Set-Content -LiteralPath $manifest -Encoding utf8
