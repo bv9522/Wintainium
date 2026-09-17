@@ -158,7 +158,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
             default { throw "Unsupported application lifecycle stage '$($stage.Name)'." }
         }
 
-        [pscustomobject][ordered]@{ StageInput=$result; StageExecutor=$executor }
+        [pscustomobject][ordered]@{ StageInput=$result; StageExecutor=$executor.GetNewClosure() }
     }
 
     Invoke-WintainiumOrchestrationLifecycle -Request $request -StagePlan $plan -CancellationContext $cancellationContext -StageFactory $stageFactory
