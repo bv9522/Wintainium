@@ -60,8 +60,8 @@ Describe 'Wintainium application update lifecycle composition' {
             $result.OperationId | Should -Be $operationId
             $result.State.Status | Should -Be 'Completed'
             @($result.StageResults).Count | Should -Be 8
-            @($result.StageResults | Where-Object Name -eq 'Reconciliation').Count | Should -Be 1
-            $result.StageResults[-1].Result.Evidence.InstallationState | Should -Be 'Installed'
+            @($result.StageResults | Where-Object { $_.Execution.Result.Name -eq 'Reconciliation' }).Count | Should -Be 1
+            $result.StageResults[-1].Execution.Result.Evidence.InstallationState | Should -Be 'Installed'
             Should -Invoke New-WintainiumDownloadRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId }
             Should -Invoke New-WintainiumInstallerRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId }
             Should -Invoke Invoke-WintainiumReconciliationOperation -Times 1 -Exactly -ParameterFilter { $Request.OperationId -eq $operationId }
@@ -109,7 +109,7 @@ Describe 'Wintainium application update lifecycle composition' {
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
             @($result.StageResults).Count | Should -Be 8
-            @($result.StageResults | Where-Object { $_.Result.Status -eq 'Skipped' }).Count | Should -Be 5
+            @($result.StageResults | Where-Object { $_.Execution.Result.Status -eq 'Skipped' }).Count | Should -Be 5
             Should -Invoke Invoke-WintainiumDownload -Times 0 -Exactly
             Should -Invoke Invoke-WintainiumArtifactVerification -Times 0 -Exactly
             Should -Invoke Select-WintainiumInstaller -Times 0 -Exactly
