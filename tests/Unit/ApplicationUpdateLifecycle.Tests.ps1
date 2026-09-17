@@ -46,11 +46,13 @@ Describe 'Wintainium application update lifecycle composition' {
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
                 $stageDetail = '<none>'
-                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or [string]$_.Execution.StageName -eq $failedStage } | Select-Object -Last 1)
+                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or ($null -ne $_.PSObject.Properties['Execution'] -and [string]$_.Execution.StageName -eq $failedStage) } | Select-Object -Last 1)
                 if ($failedResult.Count -gt 0) {
                     $failedOperation = $failedResult[0]
-                    if ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Error) { $stageDetail = ($failedOperation.Execution.Error | Out-String).Trim() }
-                    elseif ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Result) { $stageDetail = ($failedOperation.Execution.Result | Out-String).Trim() }
+                    $execution = $failedOperation.Execution
+                    if ($null -ne $execution -and $null -ne $execution.PSObject.Properties['Error'] -and $null -ne $execution.Error) { $stageDetail = ($execution.Error | Out-String).Trim() }
+                    elseif ($null -ne $execution -and $null -ne $execution.PSObject.Properties['Result'] -and $null -ne $execution.Result) { $stageDetail = ($execution.Result | Out-String).Trim() }
+                    elseif ($null -ne $execution) { $stageDetail = ($execution | Out-String).Trim() }
                 }
                 throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FailedStageDetail=$stageDetail"
             }
@@ -94,11 +96,13 @@ Describe 'Wintainium application update lifecycle composition' {
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
                 $stageDetail = '<none>'
-                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or [string]$_.Execution.StageName -eq $failedStage } | Select-Object -Last 1)
+                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or ($null -ne $_.PSObject.Properties['Execution'] -and [string]$_.Execution.StageName -eq $failedStage) } | Select-Object -Last 1)
                 if ($failedResult.Count -gt 0) {
                     $failedOperation = $failedResult[0]
-                    if ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Error) { $stageDetail = ($failedOperation.Execution.Error | Out-String).Trim() }
-                    elseif ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Result) { $stageDetail = ($failedOperation.Execution.Result | Out-String).Trim() }
+                    $execution = $failedOperation.Execution
+                    if ($null -ne $execution -and $null -ne $execution.PSObject.Properties['Error'] -and $null -ne $execution.Error) { $stageDetail = ($execution.Error | Out-String).Trim() }
+                    elseif ($null -ne $execution -and $null -ne $execution.PSObject.Properties['Result'] -and $null -ne $execution.Result) { $stageDetail = ($execution.Result | Out-String).Trim() }
+                    elseif ($null -ne $execution) { $stageDetail = ($execution | Out-String).Trim() }
                 }
                 throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FailedStageDetail=$stageDetail"
             }
