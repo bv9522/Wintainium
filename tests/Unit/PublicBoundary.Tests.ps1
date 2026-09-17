@@ -1,9 +1,8 @@
-$testRoot = Split-Path -Parent $PSScriptRoot
-$modulePath = Join-Path (Split-Path -Parent $testRoot) 'core/Wintainium.Core/Wintainium.Core.psd1'
-
 Describe 'Wintainium public Core boundary' {
     BeforeAll {
-        Import-Module $modulePath -Force
+        $script:testRoot = Split-Path -Path (Split-Path -Parent $PSScriptRoot) -Parent
+        $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+        Import-Module $script:modulePath -Force
     }
 
     It 'exports only the established public Core commands' {
