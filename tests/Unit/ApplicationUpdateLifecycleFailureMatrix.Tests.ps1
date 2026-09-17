@@ -28,7 +28,6 @@ Describe 'Wintainium application update lifecycle failure matrix' {
         }
         $script:decision = [pscustomobject]@{ OperationId=$script:operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$script:release.Releases[0]; SelectedArtifact=$script:release.Releases[0].Artifacts[0] }
 
-        Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
         Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
         Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' } }
         Mock Get-WintainiumUpdateDecision { $script:decision }
