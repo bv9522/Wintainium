@@ -68,7 +68,12 @@ function Invoke-WintainiumOrchestrationStageOperation {
             return & $newFailure 'OrchestrationStageStateTransitionFailed' 'The stage failed, but its failure could not be committed to orchestration state.' $execution
         }
 
-        return & $newFailure 'OrchestrationStageExecutionFailed' 'The orchestration stage did not complete successfully.' $execution $failureTransition.State
+        $failureMessage = 'The orchestration stage did not complete successfully.'
+        if ($null -ne $execution.Error -and $execution.Error.PSObject.Properties['Message'] -and -not [string]::IsNullOrWhiteSpace([string]$execution.Error.Message)) {
+            $failureMessage = [string]$execution.Error.Message
+        }
+
+        return & $newFailure 'OrchestrationStageExecutionFailed' $failureMessage $execution $failureTransition.State
     }
 
     $transition = Update-WintainiumOrchestrationOperationState `
