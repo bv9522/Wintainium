@@ -15,35 +15,25 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
     )
 
     $result = & $script:WintainiumOriginalApplicationUpdateLifecycle @PSBoundParameters
-    if ($null -eq $result -or -not [bool]$result.IsSuccessful) {
-        return $result
-    }
+    if ($null -eq $result -or -not [bool]$result.IsSuccessful) { return $result }
 
+    $manifestStage = @($result.StageResults | Where-Object { [string]$_.StageName -eq 'ManifestValidation' } | Select-Object -Last 1)
     $decisionStage = @($result.StageResults | Where-Object { [string]$_.StageName -eq 'UpdateDecision' } | Select-Object -Last 1)
-    if ($decisionStage.Count -eq 0 -or $null -eq $decisionStage[0].Execution -or $null -eq $decisionStage[0].Execution.Result) {
-        return $result
-    }
-
-    $decision = $decisionStage[0].Execution.Result
-    if ([string]$decision.Status -ne 'UpdateAvailable' -or -not [bool]$decision.IsUpdateAvailable) {
-        return $result
-    }
-
     $reconciliationStage = @($result.StageResults | Where-Object { [string]$_.StageName -eq 'Reconciliation' } | Select-Object -Last 1)
-    if ($reconciliationStage.Count -eq 0 -or $null -eq $reconciliationStage[0].Execution -or $null -eq $reconciliationStage[0].Execution.Result) {
-        return $result
-    }
+    if ($manifestStage.Count -eq 0 -or $decisionStage.Count -eq 0 -or $reconciliationStage.Count -eq 0) { return $result }
+    if ($null -eq $manifestStage[0].Execution.Result -or $null -eq $decisionStage[0].Execution.Result -or $null -eq $reconciliationStage[0].Execution.Result) { return $result }
+
+    $manifest = $manifestStage[0].Execution.Result.Manifest
+    $decision = $decisionStage[0].Execution.Result
+    if ($null -eq $manifest -or [string]$decision.Status -ne 'UpdateAvailable' -or -not [bool]$decision.IsUpdateAvailable) { return $result }
 
     $reconciliationResult = $reconciliationStage[0].Execution.Result
-    $priorState = Get-WintainiumInstalledApplicationState -StateRoot $StateRoot -ApplicationId ([string]$decision.SelectedRelease.ApplicationId)
-    if ($null -eq $priorState -or [string]::IsNullOrWhiteSpace([string]$priorState.ApplicationId)) {
-        $priorState = Get-WintainiumInstalledApplicationState -StateRoot $StateRoot -ApplicationId ([string]$result.StageResults[0].Execution.Result.Manifest.Id)
-    }
-
+    $applicationId = [string]$manifest.Id
+    $priorState = Get-WintainiumInstalledApplicationState -StateRoot $StateRoot -ApplicationId $applicationId
     $authoritative = Invoke-WintainiumAuthoritativeStateReconciliation `
         -StateRoot $StateRoot `
         -OperationId ([string]$result.OperationId) `
-        -ApplicationId ([string]$result.StageResults[0].Execution.Result.Manifest.Id) `
+        -ApplicationId $applicationId `
         -ReconciliationResult $reconciliationResult `
         -PriorState $priorState
 
@@ -51,8 +41,10 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
     if (-not [bool]$authoritative.IsSuccessful) {
         $result.IsSuccessful = $false
         $result.Error = [pscustomobject][ordered]@{ Code='AuthoritativeStateReconciliationFailed'; Message='Authoritative installed state reconciliation failed.'; Detail=$authoritative }
-        $result.State.Status = 'Failed'
-        $result.State.FailedStage = [pscustomobject][ordered]@{ Name='Reconciliation' }
+        if ($null -ne $result.State) {
+            $result.State.Status = 'Failed'
+            $result.State.FailedStage = [pscustomobject][ordered]@{ Name='Reconciliation' }
+        }
     }
 
     return $result
