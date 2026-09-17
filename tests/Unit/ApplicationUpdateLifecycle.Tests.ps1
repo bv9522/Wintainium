@@ -45,7 +45,17 @@ Describe 'Wintainium application update lifecycle composition' {
                 $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
-                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage"
+                $stageDetail = '<none>'
+                if (@($result.StageResults).Count -gt 0) {
+                    $first = @($result.StageResults)[0]
+                    if ($null -ne $first.Execution -and $null -ne $first.Execution.Result) {
+                        $stageDetail = ($first.Execution.Result | Out-String).Trim()
+                    }
+                    elseif ($null -ne $first.Execution -and $null -ne $first.Execution.Error) {
+                        $stageDetail = ($first.Execution.Error | Out-String).Trim()
+                    }
+                }
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FirstStageDetail=$stageDetail"
             }
             $result.IsSuccessful | Should -BeTrue
             $result.OperationId | Should -Be $operationId
@@ -86,7 +96,17 @@ Describe 'Wintainium application update lifecycle composition' {
                 $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
-                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage"
+                $stageDetail = '<none>'
+                if (@($result.StageResults).Count -gt 0) {
+                    $first = @($result.StageResults)[0]
+                    if ($null -ne $first.Execution -and $null -ne $first.Execution.Result) {
+                        $stageDetail = ($first.Execution.Result | Out-String).Trim()
+                    }
+                    elseif ($null -ne $first.Execution -and $null -ne $first.Execution.Error) {
+                        $stageDetail = ($first.Execution.Error | Out-String).Trim()
+                    }
+                }
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FirstStageDetail=$stageDetail"
             }
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
