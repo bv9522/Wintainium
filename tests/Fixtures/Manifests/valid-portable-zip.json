@@ -1,5 +1,5 @@
 {
-  "manifestVersion": "1.0",
+  "manifestVersion": "1.1",
   "id": "org.neovim.neovim",
   "name": "Neovim",
   "homepage": "https://neovim.io/",
@@ -16,6 +16,11 @@
     "settings": {
       "entryPoint": "nvim-win64/bin/nvim.exe"
     }
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.valid-fixture",
+    "requiredContractVersion": "1",
+    "settings": {}
   },
   "release": {
     "channel": "stable"
