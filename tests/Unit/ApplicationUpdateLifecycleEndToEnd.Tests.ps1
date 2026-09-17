@@ -19,7 +19,7 @@ Describe 'Wintainium application update lifecycle end-to-end regression' {
             $reconciliation=[pscustomobject]@{ PluginId='Wintainium.reconciliation.valid-fixture'; PluginType='Reconciliation' }
             $release=[pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='DiscoveryCompleted'; Releases=@([pscustomobject]@{ ReleaseId='release-2'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{ Uri='https://example.test/app.exe'; Format='exe'; Architecture='x64'; Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('a'*64) }) }) }); Errors=@(); Warnings=@(); LogEvents=@() }
             $decision=[pscustomobject]@{ OperationId=$operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$release.Releases[0]; SelectedArtifact=$release.Releases[0].Artifacts[0] }
-            $download=[pscustomobject]@{ OperationId=$operationId; Status='Downloaded'; OperationId=$operationId; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
+            $download=[pscustomobject]@{ OperationId=$operationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
             $verification=[pscustomobject]@{ OperationId=$operationId; Status='Verified'; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
             $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$installer; ArtifactFormat='exe' }
             $installation=[pscustomobject]@{ OperationId=$operationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
@@ -49,7 +49,7 @@ Describe 'Wintainium application update lifecycle end-to-end regression' {
             @($result.StageResults).Count | Should -Be 8
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.Status | Should -Be 'Persisted'
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.State.Version | Should -Be '2.0.0'
-            Should -Invoke Invoke-WintainumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId -and $ApplicationId -eq 'example.app' }
+            Should -Invoke Invoke-WintainiumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId -and $ApplicationId -eq 'example.app' }
             Should -Invoke Invoke-WintainiumArtifactVerification -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId }
             Should -Invoke Invoke-WintainiumReconciliationOperation -Times 1 -Exactly -ParameterFilter { $Request.OperationId -eq $operationId }
         }
@@ -66,7 +66,7 @@ Describe 'Wintainium application update lifecycle end-to-end regression' {
                 )
                 State=[pscustomobject]@{ Status='Completed' }
             }
-            Mock Get-WintainianInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
+            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { [pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='Preserved'; Persisted=$false; ReasonCode='UnknownEvidencePreserved'; State=[pscustomobject]@{ Version='1.0.0' }; Errors=@() } }
             $original=$script:WintainiumOriginalApplicationUpdateLifecycle
             try {
