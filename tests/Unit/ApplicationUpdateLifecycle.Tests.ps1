@@ -41,6 +41,12 @@ Describe 'Wintainium application update lifecycle composition' {
 
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
+            if (-not $result.IsSuccessful) {
+                $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
+                $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
+                $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage"
+            }
             $result.IsSuccessful | Should -BeTrue
             $result.OperationId | Should -Be $operationId
             $result.State.Status | Should -Be 'Completed'
@@ -76,6 +82,12 @@ Describe 'Wintainium application update lifecycle composition' {
 
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
+            if (-not $result.IsSuccessful) {
+                $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
+                $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
+                $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage"
+            }
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
             @($result.StageResults).Count | Should -Be 8
