@@ -6,7 +6,8 @@ function ConvertTo-WintainiumManifestModel {
     )
 
     # Schema validation occurs before this conversion. Keeping the full declarative
-    # shape avoids embedding assumptions about any provider or installer plugin.
+    # shape avoids embedding assumptions about any provider, installer, or
+    # reconciliation plugin.
     [pscustomobject][ordered]@{
         ManifestVersion = $Manifest['manifestVersion']
         Id = $Manifest['id']
@@ -20,8 +21,8 @@ function ConvertTo-WintainiumManifestModel {
         Deprecated = $Manifest['deprecated']
         Source = $Manifest['source']
         Installer = $Manifest['installer']
+        Reconciliation = $Manifest['reconciliation']
         Release = $Manifest['release']
         Artifact = $Manifest['artifact']
     }
 }
-
