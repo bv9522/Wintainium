@@ -18,7 +18,7 @@ Describe 'Wintainium application update lifecycle composition' {
             $installer = [pscustomobject]@{ PluginId='Wintainium.installer.valid-fixture'; PluginType='Installer'; EntryPoint='installer.psm1'; DescriptorPath='/tmp/installer/plugin.json' }
             $reconciliation = [pscustomobject]@{ PluginId='Wintainium.reconciliation.valid-fixture'; PluginType='Reconciliation'; EntryPoint='reconciliation.psm1'; DescriptorPath='/tmp/reconciliation/plugin.json' }
             $release = [pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='DiscoveryCompleted'; Releases=@([pscustomobject]@{ ReleaseId='release-2'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{ Uri='https://example.test/app.exe'; Format='exe'; Architecture='x64'; Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('a'*64) }) }) }); Errors=@(); Warnings=@(); LogEvents=@() }
-            $decision = [pscustomobject]@{ Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$release.Releases[0]; SelectedArtifact=$release.Releases[0].Artifacts[0] }
+            $decision = [pscustomobject]@{ OperationId=$operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$release.Releases[0]; SelectedArtifact=$release.Releases[0].Artifacts[0] }
             $download = [pscustomobject]@{ OperationId=$operationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
             $verification = [pscustomobject]@{ OperationId=$operationId; Status='Verified'; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
             $selection = [pscustomobject]@{ IsSelected=$true; InstallerPlugin=$installer; ArtifactFormat='exe' }
@@ -46,16 +46,13 @@ Describe 'Wintainium application update lifecycle composition' {
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
                 $stageDetail = '<none>'
-                if (@($result.StageResults).Count -gt 0) {
-                    $first = @($result.StageResults)[0]
-                    if ($null -ne $first.Execution -and $null -ne $first.Execution.Result) {
-                        $stageDetail = ($first.Execution.Result | Out-String).Trim()
-                    }
-                    elseif ($null -ne $first.Execution -and $null -ne $first.Execution.Error) {
-                        $stageDetail = ($first.Execution.Error | Out-String).Trim()
-                    }
+                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or [string]$_.Execution.StageName -eq $failedStage } | Select-Object -Last 1)
+                if ($failedResult.Count -gt 0) {
+                    $failedOperation = $failedResult[0]
+                    if ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Error) { $stageDetail = ($failedOperation.Execution.Error | Out-String).Trim() }
+                    elseif ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Result) { $stageDetail = ($failedOperation.Execution.Result | Out-String).Trim() }
                 }
-                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FirstStageDetail=$stageDetail"
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FailedStageDetail=$stageDetail"
             }
             $result.IsSuccessful | Should -BeTrue
             $result.OperationId | Should -Be $operationId
@@ -77,12 +74,12 @@ Describe 'Wintainium application update lifecycle composition' {
             $installer = [pscustomobject]@{ PluginId='installer'; PluginType='Installer' }
             $reconciliation = [pscustomobject]@{ PluginId='reconciliation'; PluginType='Reconciliation' }
             $release = [pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='DiscoveryCompleted'; Releases=@(); Errors=@(); Warnings=@(); LogEvents=@() }
-            $decision = [pscustomobject]@{ Status='NoUpdateAvailable'; IsUpdateAvailable=$false; SelectedRelease=$null; SelectedArtifact=$null }
+            $decision = [pscustomobject]@{ OperationId=$operationId; Status='NoUpdateAvailable'; IsUpdateAvailable=$false; SelectedRelease=$null; SelectedArtifact=$null }
 
             Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
             Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$operationId; IsValid=$true; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; ReconciliationPlugin=$reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation { $release }
-            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
+            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' } }
             Mock Get-WintainiumUpdateDecision { $decision }
             Mock Invoke-WintainiumDownload { throw 'should not execute' }
             Mock Invoke-WintainiumArtifactVerification { throw 'should not execute' }
@@ -97,16 +94,13 @@ Describe 'Wintainium application update lifecycle composition' {
                 $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
                 $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
                 $stageDetail = '<none>'
-                if (@($result.StageResults).Count -gt 0) {
-                    $first = @($result.StageResults)[0]
-                    if ($null -ne $first.Execution -and $null -ne $first.Execution.Result) {
-                        $stageDetail = ($first.Execution.Result | Out-String).Trim()
-                    }
-                    elseif ($null -ne $first.Execution -and $null -ne $first.Execution.Error) {
-                        $stageDetail = ($first.Execution.Error | Out-String).Trim()
-                    }
+                $failedResult = @($result.StageResults | Where-Object { [string]$_.StageName -eq $failedStage -or [string]$_.Execution.StageName -eq $failedStage } | Select-Object -Last 1)
+                if ($failedResult.Count -gt 0) {
+                    $failedOperation = $failedResult[0]
+                    if ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Error) { $stageDetail = ($failedOperation.Execution.Error | Out-String).Trim() }
+                    elseif ($null -ne $failedOperation.Execution -and $null -ne $failedOperation.Execution.Result) { $stageDetail = ($failedOperation.Execution.Result | Out-String).Trim() }
                 }
-                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FirstStageDetail=$stageDetail"
+                throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FailedStageDetail=$stageDetail"
             }
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
