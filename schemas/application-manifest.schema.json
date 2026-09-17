@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://Wintainium.dev/schemas/application-manifest-1.0.json",
+  "$id": "https://Wintainium.dev/schemas/application-manifest-1.1.json",
   "title": "Wintainium Application Manifest",
   "description": "A portable declaration of application management intent.",
   "type": "object",
@@ -11,12 +11,13 @@
     "name",
     "source",
     "installer",
+    "reconciliation",
     "release",
     "artifact"
   ],
   "properties": {
     "manifestVersion": {
-      "const": "1.0"
+      "const": "1.1"
     },
     "id": {
       "type": "string",
@@ -69,6 +70,9 @@
     },
     "installer": {
       "$ref": "#/$defs/installerPluginReference"
+    },
+    "reconciliation": {
+      "$ref": "#/$defs/reconciliationPluginReference"
     },
     "release": {
       "type": "object",
@@ -134,6 +138,24 @@
         "pluginId": {
           "type": "string",
           "pattern": "^Wintainium\\.installer\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
+        },
+        "requiredContractVersion": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "settings": {
+          "type": "object"
+        }
+      }
+    },
+    "reconciliationPluginReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pluginId", "requiredContractVersion", "settings"],
+      "properties": {
+        "pluginId": {
+          "type": "string",
+          "pattern": "^Wintainium\\.reconciliation\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*$"
         },
         "requiredContractVersion": {
           "type": "string",
