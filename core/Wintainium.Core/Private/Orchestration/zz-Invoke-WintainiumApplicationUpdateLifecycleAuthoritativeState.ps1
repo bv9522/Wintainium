@@ -40,10 +40,10 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
     $reconciliationStage[0].Execution.Result | Add-Member -NotePropertyName AuthoritativeStateResult -NotePropertyValue $authoritative -Force
     if (-not [bool]$authoritative.IsSuccessful) {
         $result.IsSuccessful = $false
-        $result.Error = [pscustomobject][ordered]@{ Code='AuthoritativeStateReconciliationFailed'; Message='Authoritative installed state reconciliation failed.'; Detail=$authoritative }
+        $result | Add-Member -NotePropertyName Error -NotePropertyValue ([pscustomobject][ordered]@{ Code='AuthoritativeStateReconciliationFailed'; Message='Authoritative installed state reconciliation failed.'; Detail=$authoritative }) -Force
         if ($null -ne $result.State) {
             $result.State.Status = 'Failed'
-            $result.State.FailedStage = [pscustomobject][ordered]@{ Name='Reconciliation' }
+            $result.State | Add-Member -NotePropertyName FailedStage -NotePropertyValue ([pscustomobject][ordered]@{ Name='Reconciliation' }) -Force
         }
     }
 
