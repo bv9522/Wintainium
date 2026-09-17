@@ -46,6 +46,23 @@ Describe 'Wintainium installer selection' {
         $result.Error | Should -Be $null
     }
 
+    It 'accepts the canonical manifest and artifact model objects used by lifecycle composition' {
+        $manifest = [pscustomobject]@{
+            Installer = [pscustomobject]@{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '1'
+                settings = [pscustomobject]@{}
+            }
+        }
+        $artifact = [pscustomobject]@{ format = 'exe' }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $manifest; Artifact = $artifact; Plugins = @($script:exePlugin) } {
+            Select-WintainiumInstaller -Manifest $Manifest -Artifact $Artifact -Plugins $Plugins
+        }
+
+        $result.IsSelected | Should -Be $true
+        $result.InstallerPlugin.PluginId | Should -Be 'Wintainium.installer.exe'
+    }
+
     It 'matches artifact formats case-insensitively' {
         $artifact = [ordered]@{ format = 'EXE' }
         $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $script:manifest; Artifact = $artifact; Plugins = @($script:exePlugin) } {
