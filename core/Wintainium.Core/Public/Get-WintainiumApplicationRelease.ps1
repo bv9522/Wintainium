@@ -1,77 +1,24 @@
 function Get-WintainiumApplicationRelease {
-    <#
-    .SYNOPSIS
-    Validates an application manifest, resolves its provider, and discovers releases.
-
-    .DESCRIPTION
-    Validates the application definition and resolves its provider before invoking
-    provider-backed release discovery. The provider receives only a purpose-built
-    discovery request, and its normalized result is returned through the Core
-    operation boundary.
-
-    This command discovers upstream release information only. It does not decide
-    whether an installed application needs an update, download an artifact, verify
-    an artifact, or install anything.
-
-    The command returns a structured result for both interactive PowerShell use and
-    future presentation clients. Use IsSuccessful and Status for control flow and
-    inspect Errors by Code rather than parsing diagnostic Message text.
-
-    .PARAMETER ManifestPath
-    Path to the Wintainium application manifest whose releases should be discovered.
-
-    .PARAMETER PluginRoot
-    Root directory containing the provider and installer plugins required by the manifest.
-
-    .PARAMETER SchemaPath
-    Path to the application manifest JSON schema used during validation.
-
-    .OUTPUTS
-    PSCustomObject. The result contains OperationId, IsSuccessful, Status, Manifest,
-    ProviderPlugin, Releases, Errors, Warnings, and LogEvents.
-
-    Errors are structured objects with a stable Code and human-readable Message.
-    Collection-valued properties are returned as arrays, including when empty.
-
-    .EXAMPLE
-    Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
-
-    Validates the manifest and discovers normalized upstream releases through its provider.
-    #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ManifestPath,
-
+        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$ManifestPath,
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
-
-        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
+        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
+        [string]$OperationId
     )
 
-    $validation = Test-WintainiumApplicationDefinition -ManifestPath $ManifestPath -PluginRoot $PluginRoot -SchemaPath $SchemaPath
+    $validation = Test-WintainiumApplicationDefinition -ManifestPath $ManifestPath -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
     $operationId = $validation.OperationId
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
     $logEvents = [System.Collections.Generic.List[object]]::new()
     $releases = [System.Collections.Generic.List[object]]::new()
-
     foreach ($item in @($validation.Errors)) { $errors.Add($item) }
     foreach ($item in @($validation.Warnings)) { $warnings.Add($item) }
     foreach ($item in @($validation.LogEvents)) { $logEvents.Add($item) }
 
     if (-not $validation.IsValid) {
-        return [pscustomobject][ordered]@{
-            OperationId = $operationId
-            IsSuccessful = $false
-            Status = 'ApplicationDefinitionInvalid'
-            Manifest = $validation.Manifest
-            ProviderPlugin = $validation.ProviderPlugin
-            Releases = $releases.ToArray()
-            Errors = $errors.ToArray()
-            Warnings = $warnings.ToArray()
-            LogEvents = $logEvents.ToArray()
-        }
+        return [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$false; Status='ApplicationDefinitionInvalid'; Manifest=$validation.Manifest; ProviderPlugin=$validation.ProviderPlugin; Releases=$releases.ToArray(); Errors=$errors.ToArray(); Warnings=$warnings.ToArray(); LogEvents=$logEvents.ToArray() }
     }
 
     $manifest = $validation.Manifest
@@ -91,7 +38,6 @@ function Get-WintainiumApplicationRelease {
     }
 
     $providerResult = Invoke-WintainiumProviderOperation -Provider $provider -Request $request
-
     foreach ($item in @($providerResult.Releases)) { $releases.Add($item) }
     foreach ($item in @($providerResult.Errors)) { $errors.Add($item) }
     foreach ($item in @($providerResult.Warnings)) { $warnings.Add($item) }
