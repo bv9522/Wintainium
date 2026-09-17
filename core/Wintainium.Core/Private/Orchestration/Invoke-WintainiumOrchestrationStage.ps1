@@ -150,6 +150,7 @@ function Invoke-WintainiumOrchestrationStage {
         }
     }
     catch {
+        $detail = if ($null -ne $_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) { [string]$_.Exception.Message } else { 'No exception detail was provided.' }
         return [pscustomobject][ordered]@{
             IsSuccessful = $false
             WasCancelled = $false
@@ -159,7 +160,7 @@ function Invoke-WintainiumOrchestrationStage {
             Result = $null
             Error = [pscustomobject][ordered]@{
                 Code = 'OrchestrationStageExecutorError'
-                Message = 'The orchestration stage executor failed.'
+                Message = "The orchestration stage executor failed: $detail"
             }
         }
     }
