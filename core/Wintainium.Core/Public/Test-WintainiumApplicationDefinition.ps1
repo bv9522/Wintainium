@@ -27,6 +27,7 @@ function Test-WintainiumApplicationDefinition {
             Manifest = $null
             ProviderPlugin = $null
             InstallerPlugin = $null
+            ReconciliationPlugin = $null
             Errors = @([pscustomobject][ordered]@{ Code = 'OperationIdInvalid'; Path = '$.OperationId'; Message = 'OperationId must be a valid GUID.' })
             Warnings = @()
             LogEvents = @()
@@ -40,6 +41,7 @@ function Test-WintainiumApplicationDefinition {
     $manifest = $null
     $provider = $null
     $installer = $null
+    $reconciliation = $null
 
     $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
 
@@ -70,6 +72,9 @@ function Test-WintainiumApplicationDefinition {
             if (-not $compatibility.IsCompatible) { $errors.Add($compatibility.Error) }
         }
         else { $errors.Add($installerResolution.Error) }
+
+        $reconciliationResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType 'Reconciliation' -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
+        if ($reconciliationResolution.IsResolved) { $reconciliation = $reconciliationResolution.Plugin } else { $errors.Add($reconciliationResolution.Error) }
     }
 
     $severity = if ($errors.Count -eq 0) { 'Information' } else { 'Error' }
@@ -83,6 +88,7 @@ function Test-WintainiumApplicationDefinition {
         Manifest = $manifest
         ProviderPlugin = $provider
         InstallerPlugin = $installer
+        ReconciliationPlugin = $reconciliation
         Errors = $errors.ToArray()
         Warnings = $warnings.ToArray()
         LogEvents = $logEvents.ToArray()
