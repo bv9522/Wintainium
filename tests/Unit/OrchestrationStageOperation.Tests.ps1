@@ -1,3 +1,10 @@
+BeforeAll {
+    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+
+    Import-Module $script:modulePath -Force
+}
+
 Describe 'Invoke-WintainiumOrchestrationStageOperation' {
     BeforeAll {
         function New-TestStagePlan {
