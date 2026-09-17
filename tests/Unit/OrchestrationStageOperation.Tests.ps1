@@ -78,6 +78,29 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         $result.State.StageResults.Count | Should -Be 1
     }
 
+    It 'commits a structured unsuccessful stage result without exception-message parsing' {
+        $operationId = [guid]::NewGuid().Guid
+        $state = New-TestState -OperationId $operationId
+        $plan = New-TestStagePlan -OperationId $operationId
+        $context = New-TestContext -OperationId $operationId
+        $result = InModuleScope Wintainium.Core -Parameters @{ OperationState = $state; StagePlan = $plan; CancellationContext = $context } {
+            param($OperationState, $StagePlan, $CancellationContext)
+            Invoke-WintainiumOrchestrationStageOperation -OperationState $OperationState -StagePlan $StagePlan -CancellationContext $CancellationContext -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor {
+                [pscustomobject][ordered]@{
+                    IsSuccessful = $false
+                    Status = 'ValidationFailed'
+                    Error = [pscustomobject][ordered]@{ Code = 'FixtureValidationFailed'; Message = 'Structured fixture failure.' }
+                }
+            }
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Error.Code | Should -Be 'OrchestrationStageExecutionFailed'
+        $result.Execution.Error.Code | Should -Be 'FixtureValidationFailed'
+        $result.State.Status | Should -Be 'Failed'
+        $result.State.StageResults[0].Result.Status | Should -Be 'ValidationFailed'
+    }
+
     It 'does not transition state when execution is cancelled before start' {
         $operationId = [guid]::NewGuid().Guid
         $state = New-TestState -OperationId $operationId
