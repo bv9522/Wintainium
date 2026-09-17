@@ -44,13 +44,12 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
             return $entry.Result
         }
 
-        $result = $null
+        $result = [pscustomobject][ordered]@{}
         $executor = $null
         $operationId = [string]$request.OperationId
 
         switch ([string]$stage.Name) {
             'ManifestValidation' {
-                $result = [pscustomobject][ordered]@{ }
                 $executor = {
                     param($StageInput, $CancellationToken)
                     Test-WintainiumApplicationDefinition -ManifestPath $request.ManifestPath -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $operationId
@@ -140,7 +139,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                         return [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$true; Status='Skipped'; ReasonCode='NoUpdateAvailable' }
                     }
                     if ($null -eq $verification -or [string]$verification.Status -ne 'Verified') {
-                        return [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$false; Status='Blocked'; FailureKind='VerificationRequired'; OperationId=$operationId; ErrorMessage='Installation requires successful artifact verification.' }
+                        return [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$false; Status='Blocked'; FailureKind='VerificationRequired'; ErrorMessage='Installation requires successful artifact verification.' }
                     }
                     $installerRequestResult = New-WintainiumInstallerRequest -DownloadResult $download -Manifest $validation.Manifest -OperationId $operationId
                     if (-not $installerRequestResult.IsValid) {
