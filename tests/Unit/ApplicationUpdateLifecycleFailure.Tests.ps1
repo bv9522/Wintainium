@@ -47,7 +47,7 @@ Describe 'Wintainium application update lifecycle failure boundaries' {
             $result.StageResults[-1].Execution.Result.Status | Should -Be 'Failed'
             $result.StageResults[-1].Execution.Result.FailureKind | Should -Be 'HashMismatch'
             @($result.StageResults).Count | Should -Be 5
-            Should -Invoke Invoke-WintainniumInstallerOperation -Times 0 -Exactly
+            Should -Invoke Invoke-WintainiumInstallerOperation -Times 0 -Exactly
             Should -Invoke Invoke-WintainiumReconciliationOperation -Times 0 -Exactly
             Should -Invoke New-WintainiumInstallerRequest -Times 0 -Exactly
             Should -Invoke Invoke-WintainiumArtifactVerification -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId }
