@@ -1,5 +1,5 @@
 {
-  "manifestVersion": "1.0",
+  "manifestVersion": "1.1",
   "id": "org.example.no-provider",
   "name": "No Provider",
   "source": {
@@ -9,6 +9,11 @@
   },
   "installer": {
     "pluginId": "Wintainium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.valid-fixture",
     "requiredContractVersion": "1",
     "settings": {}
   },
