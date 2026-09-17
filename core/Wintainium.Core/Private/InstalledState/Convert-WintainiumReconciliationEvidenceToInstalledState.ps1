@@ -24,18 +24,37 @@ function Convert-WintainiumReconciliationEvidenceToInstalledState {
         throw [System.ArgumentException]::new('Reconciliation evidence ApplicationId does not match the requested application.')
     }
 
-    $architecture = if ($null -ne $Evidence.PSObject.Properties['Architecture'] -and -not [string]::IsNullOrWhiteSpace([string]$Evidence.Architecture)) { [string]$Evidence.Architecture } else { 'unknown' }
-    $channel = if ($null -ne $Evidence.PSObject.Properties['Channel'] -and -not [string]::IsNullOrWhiteSpace([string]$Evidence.Channel)) { [string]$Evidence.Channel } else { 'unknown' }
-    $version = if ($null -ne $Evidence.PSObject.Properties['Version']) { $Evidence.Version } else { $null }
-    $versionSource = if ($null -ne $Evidence.PSObject.Properties['VersionSource']) { $Evidence.VersionSource } else { $null }
-    $location = if ($null -ne $Evidence.PSObject.Properties['InstallationLocation']) { $Evidence.InstallationLocation } else { $null }
+    $architecture = 'unknown'
+    if ($null -ne $Evidence.PSObject.Properties['Architecture'] -and -not [string]::IsNullOrWhiteSpace([string]$Evidence.Architecture)) {
+        $architecture = [string]$Evidence.Architecture
+    }
+
+    $channel = 'unknown'
+    if ($null -ne $Evidence.PSObject.Properties['Channel'] -and -not [string]::IsNullOrWhiteSpace([string]$Evidence.Channel)) {
+        $channel = [string]$Evidence.Channel
+    }
+
+    $version = ''
+    if ($null -ne $Evidence.PSObject.Properties['Version'] -and $null -ne $Evidence.Version) {
+        $version = [string]$Evidence.Version
+    }
+
+    $versionSource = ''
+    if ($null -ne $Evidence.PSObject.Properties['VersionSource'] -and $null -ne $Evidence.VersionSource) {
+        $versionSource = [string]$Evidence.VersionSource
+    }
+
+    $location = ''
+    if ($null -ne $Evidence.PSObject.Properties['InstallationLocation'] -and $null -ne $Evidence.InstallationLocation) {
+        $location = [string]$Evidence.InstallationLocation
+    }
 
     New-WintainiumInstalledApplicationState `
         -ApplicationId $ApplicationId `
         -InstallationState ([string]$Evidence.InstallationState) `
-        -Version (if ($null -eq $version) { '' } else { [string]$version }) `
-        -VersionSource (if ($null -eq $versionSource) { '' } else { [string]$versionSource }) `
+        -Version $version `
+        -VersionSource $versionSource `
         -Architecture $architecture `
         -Channel $channel `
-        -InstallationLocation (if ($null -eq $location) { '' } else { [string]$location })
+        -InstallationLocation $location
 }
