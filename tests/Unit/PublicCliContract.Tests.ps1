@@ -86,6 +86,17 @@ Describe 'Wintainium public CLI contract' {
         $helpText | Should -Match 'performs update execution'
     }
 
+    It 'documents the public application update structured output contract' {
+        $helpText = Get-Help -Name Invoke-WintainiumApplicationUpdate -Full | Out-String
+
+        foreach ($property in @('OperationId', 'IsSuccessful', 'WasCancelled', 'Status', 'ApplicationId', 'Stages', 'Errors', 'Warnings', 'LogEvents', 'Error')) {
+            $helpText | Should -Match $property
+        }
+
+        $helpText | Should -Match 'stable, presentation-neutral public result projection'
+        $helpText | Should -Match 'Internal orchestration state and stage-operation objects are not exposed'
+    }
+
     It 'provides discoverable help for the public manifest command' {
         $help = Get-Help -Name Get-WintainiumManifest -Full
         $help.Synopsis | Should -Match 'Discovers and imports'
