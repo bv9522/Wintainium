@@ -42,9 +42,8 @@ Maximum installer execution time in milliseconds. The default is 600000.
 Optional cancellation token propagated through the update lifecycle.
 
 .OUTPUTS
-PSCustomObject. The current lifecycle result is returned unchanged at this
-public-operation boundary. The stable public result projection is established
-by the Phase 10 public result contract.
+PSCustomObject. The command returns a stable, presentation-neutral public result projection.
+Internal orchestration state and stage-operation objects are not exposed.
 
 .EXAMPLE
 Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads'
