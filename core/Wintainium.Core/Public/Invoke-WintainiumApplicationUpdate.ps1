@@ -42,7 +42,7 @@ Maximum installer execution time in milliseconds. The default is 600000.
 Optional cancellation token propagated through the update lifecycle.
 
 .OUTPUTS
-PSCustomObject. The command returns a stable, presentation-neutral public result projection.
+PSCustomObject. The command returns a stable, presentation-neutral public result projection with OperationId, IsSuccessful, WasCancelled, Status, ApplicationId, Stages, Errors, Warnings, LogEvents, and Error properties.
 Internal orchestration state and stage-operation objects are not exposed.
 
 .EXAMPLE
