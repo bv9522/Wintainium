@@ -4,6 +4,7 @@ Import-Module $modulePath -Force
 
 Describe 'Wintainium application update lifecycle failure matrix' {
     BeforeEach {
+        InModuleScope Wintainium.Core {
         $script:operationId = [guid]::NewGuid().ToString()
         $script:manifest = [pscustomobject]@{
             Id = 'example.app'
@@ -27,7 +28,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             Errors=@(); Warnings=@(); LogEvents=@()
         }
         $script:decision = [pscustomobject]@{ OperationId=$script:operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$script:release.Releases[0]; SelectedArtifact=$script:release.Releases[0].Artifacts[0] }
-
+        }
     }
 
     It 'blocks update execution when provider discovery fails' {
