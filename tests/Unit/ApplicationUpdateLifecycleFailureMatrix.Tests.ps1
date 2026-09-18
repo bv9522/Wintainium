@@ -55,8 +55,12 @@ Describe 'Wintainium application update lifecycle failure matrix' {
 
     It 'blocks verification, installation, and reconciliation when download fails' {
         InModuleScope Wintainium.Core {
-        Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation { $script:release }
+            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' } }
+            Mock Get-WintainiumUpdateDecision { $script:decision }
+            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$script:operationId; UpdateDecision=$script:decision; SelectedRelease=$script:decision.SelectedRelease; SelectedArtifact=$script:decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload {
                 [pscustomobject]@{
                     OperationId=$script:operationId; IsSuccessful=$false; Status='Failed'
@@ -73,6 +77,11 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             $result.StageResults[-1].Execution.Result.Status | Should -Be 'Failed'
             $result.StageResults[-1].Execution.Result.FailureKind | Should -Be 'DownloadFailed'
             Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly
-            Should -Invoke New-WintainiumDownloadRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $script:operationId }        }
+            Should -Invoke New-WintainiumDownloadRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $script:operationId }
+            Should -Invoke Invoke-WintainiumDownload -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumArtifactVerification -Times 0 -Exactly
+            Should -Invoke Select-WintainiumInstaller -Times 0 -Exactly
+            Should -Invoke Invoke-WintainiumInstallerOperation -Times 0 -Exactly
+            Should -Invoke Invoke-WintainiumReconciliationOperation -Times 0 -Exactly        }
     }
 }
