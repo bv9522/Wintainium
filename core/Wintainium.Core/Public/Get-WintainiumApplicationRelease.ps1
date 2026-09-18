@@ -1,34 +1,35 @@
+<#
+.SYNOPSIS
+Validates an application manifest and discovers releases declared by its provider.
+
+.DESCRIPTION
+Validates the application manifest and performs provider release discovery.
+This command does not decide whether an update is available, download an
+artifact, or install anything.
+
+.PARAMETER ManifestPath
+Path to the application manifest.
+
+.PARAMETER PluginRoot
+Root directory containing Wintainium plugins.
+
+.PARAMETER SchemaPath
+Path to the application manifest JSON schema.
+
+.PARAMETER OperationId
+Optional lifecycle correlation identifier. When supplied, it is preserved.
+
+.OUTPUTS
+PSCustomObject. The result contains OperationId, IsSuccessful, Status,
+Manifest, ProviderPlugin, Releases, Errors, Warnings, and LogEvents.
+
+.EXAMPLE
+Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
+
+Validates the manifest and asks its declared provider to discover releases.
+#>
 function Get-WintainiumApplicationRelease {
-    <#
-    .SYNOPSIS
-    Validates an application manifest and discovers releases declared by its provider.
 
-    .DESCRIPTION
-    Validates the application manifest and performs provider release discovery.
-    This command does not decide whether an update is available, download an
-    artifact, or install anything.
-
-    .PARAMETER ManifestPath
-    Path to the application manifest.
-
-    .PARAMETER PluginRoot
-    Root directory containing Wintainium plugins.
-
-    .PARAMETER SchemaPath
-    Path to the application manifest JSON schema.
-
-    .PARAMETER OperationId
-    Optional lifecycle correlation identifier. When supplied, it is preserved.
-
-    .OUTPUTS
-    PSCustomObject. The result contains OperationId, IsSuccessful, Status,
-    Manifest, ProviderPlugin, Releases, Errors, Warnings, and LogEvents.
-
-    .EXAMPLE
-    Get-WintainiumApplicationRelease -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
-
-    Validates the manifest and asks its declared provider to discover releases.
-    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$ManifestPath,
