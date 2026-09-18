@@ -1,6 +1,6 @@
 # Public PowerShell Result Contract
 
-Phase 8F completed the result-boundary audit established in Phase 8B. Phase 9 now supplies the missing internal verification, post-install reconciliation, and authoritative managed-state lifecycle needed beneath the future public update operation.
+Phase 8F completed the result-boundary audit established in Phase 8B. Phase 9 supplied the internal verification, post-install reconciliation, and authoritative managed-state lifecycle that now underpin the public update operation.
 
 ## Common shape
 
