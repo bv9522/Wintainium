@@ -11,6 +11,7 @@ Describe 'Wintainium public Core boundary' {
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
             'Test-WintainiumApplicationDefinition'
+            'Invoke-WintainiumApplicationUpdate'
         )
     }
 
@@ -18,3 +19,14 @@ Describe 'Wintainium public Core boundary' {
         @(Get-Command Invoke-WintainiumApplicationUpdateLifecycle -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 }
+
+    
+    It 'does not expose internal lifecycle dependencies through the public update command' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -Module Wintainium.Core
+
+        $command.Parameters.Keys | Should -Not -Contain 'OperationId'
+        $command.Parameters.Keys | Should -Not -Contain 'HttpClient'
+        $command.Parameters.Keys | Should -Not -Contain 'Request'
+        $command.Parameters.Keys | Should -Not -Contain 'StagePlan'
+        $command.Parameters.Keys | Should -Not -Contain 'StageFactory'
+    }
