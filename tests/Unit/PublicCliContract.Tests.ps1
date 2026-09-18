@@ -105,7 +105,7 @@ Describe 'Wintainium public CLI contract' {
     It 'documents that release discovery does not perform update execution' {
         $helpText = Get-Help -Name Get-WintainiumApplicationRelease -Full | Out-String
         $helpText | Should -Match 'does not decide'
-        $helpText | Should -Match 'download an artifact'
-        $helpText | Should -Match 'install anything'
+        $helpText | Should -Match 'download\s+an\s+artifact'
+        $helpText | Should -Match 'install\s+anything'
     }
 }
