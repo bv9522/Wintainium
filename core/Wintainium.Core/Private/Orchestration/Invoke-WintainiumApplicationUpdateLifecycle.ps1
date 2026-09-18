@@ -260,13 +260,54 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                         [pscustomobject]$copy
                     }
                     $decision = $StageInput.Decision
-                    if ($null -eq $decision -or [string]$decision.Status -ne 'UpdateAvailable' -or -not [bool]$decision.IsUpdateAvailable) { return [pscustomobject][ordered]@{ OperationId=$StageInput.OperationId; IsSuccessful=$true; Status='Skipped'; ReasonCode='NoUpdateAvailable' } }
-                    if ($null -eq $StageInput.Installation -or [string]$StageInput.Installation.Status -ne 'Completed') { return [pscustomobject][ordered]@{ OperationId=$StageInput.OperationId; IsSuccessful=$false; Status='Blocked'; FailureKind='InstallationRequired'; ErrorMessage='Reconciliation requires a completed installation.' } }
+                    if ($null -eq $decision -or [string]$decision.Status -ne 'UpdateAvailable' -or -not [bool]$decision.IsUpdateAvailable) {
+                        return [pscustomobject][ordered]@{
+                            OperationId=[string]$StageInput.OperationId
+                            IsSuccessful=$true
+                            Status='Skipped'
+                            ReasonCode='NoUpdateAvailable'
+                        }
+                    }
+                    if ($null -eq $StageInput.Installation -or [string]$StageInput.Installation.Status -ne 'Completed') {
+                        return [pscustomobject][ordered]@{
+                            OperationId=[string]$StageInput.OperationId
+                            IsSuccessful=$false
+                            Status='Blocked'
+                            FailureKind='InstallationRequired'
+                            ErrorMessage='Reconciliation requires a completed installation.'
+                        }
+                    }
+
                     $applicationId = [string]$StageInput.Validation.Manifest.Id
                     $priorState = Get-WintainiumInstalledApplicationState -StateRoot $StageInput.StateRoot -ApplicationId $applicationId
-                    $reconciliationRequest = [pscustomobject][ordered]@{ OperationId=$StageInput.OperationId; ApplicationId=$applicationId; Manifest=$StageInput.Validation.Manifest; PriorState=$priorState }
+                    $reconciliationRequest = [pscustomobject][ordered]@{
+                        OperationId=$StageInput.OperationId
+                        ApplicationId=$applicationId
+                        Manifest=$StageInput.Validation.Manifest
+                        PriorState=$priorState
+                    }
                     $reconciliation = Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $StageInput.Validation.ReconciliationPlugin -Request $reconciliationRequest
-                    & $normalize $reconciliation ([bool]$reconciliation.IsSuccessful)
+                    $reconciliationSuccessful = [bool]$reconciliation.IsSuccessful
+                    $reconciliation = & $normalize $reconciliation $reconciliationSuccessful
+                    if (-not $reconciliationSuccessful) {
+                        return $reconciliation
+                    }
+
+                    $authoritative = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $StageInput.StateRoot -OperationId $StageInput.OperationId -ApplicationId $applicationId -ReconciliationResult $reconciliation -PriorState $priorState
+
+                    $reconciliation | Add-Member -NotePropertyName AuthoritativeStateResult -NotePropertyValue $authoritative -Force
+                    if (-not [bool]$authoritative.IsSuccessful) {
+                        $reconciliation.IsSuccessful = $false
+                        $reconciliation.Status = 'Failed'
+                        $reconciliation | Add-Member -NotePropertyName FailureKind -NotePropertyValue 'AuthoritativeStateReconciliationFailed' -Force
+                        $reconciliation | Add-Member -NotePropertyName Error -NotePropertyValue ([pscustomobject][ordered]@{
+                            Code='AuthoritativeStateReconciliationFailed'
+                            Message='Authoritative installed state reconciliation failed.'
+                            Detail=$authoritative
+                        }) -Force
+                    }
+
+                    $reconciliation
                 }
             }
             default { throw "Unsupported application lifecycle stage '$($stage.Name)'." }
