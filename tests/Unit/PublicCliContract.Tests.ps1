@@ -80,7 +80,7 @@ Describe 'Wintainium public CLI contract' {
 
     It 'documents the complete structured output contract for the public application validation command' {
         $helpText = Get-Help -Name Test-WintainiumApplicationDefinition -Full | Out-String
-        foreach ($property in @('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'Errors', 'Warnings', 'LogEvents')) {
+        foreach ($property in @('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'ReconciliationPlugin', 'Errors', 'Warnings', 'LogEvents')) {
             $helpText | Should -Match $property
         }
     }
