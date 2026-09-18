@@ -132,4 +132,66 @@ Describe 'Wintainium public application update result' {
         }
     }
 
+
+    It 'projects a staged failure without leaking internal stage operation objects' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$false
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        Stage=[pscustomobject]@{ Sequence=1; Name='ManifestValidation'; InternalFactory='secret' }
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$true
+                            WasCancelled=$false
+                            Status='Completed'
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                Status='Validated'
+                                Manifest=[pscustomobject]@{ Id='example.app' }
+                                Errors=@()
+                                Warnings=@()
+                                LogEvents=@()
+                                PrivateRequest='secret'
+                            }
+                            PrivateDependency='secret'
+                        }
+                    },
+                    [pscustomobject]@{
+                        Stage=[pscustomobject]@{ Sequence=2; Name='ReleaseDiscovery' }
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$false
+                            WasCancelled=$false
+                            Status='Failed'
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$false
+                                Status='DiscoveryFailed'
+                                Error=[pscustomobject]@{ Code='ProviderDiscoveryFailed'; Message='Provider failed.' }
+                                Errors=@([pscustomobject]@{ Code='ProviderDiscoveryFailed'; Message='Provider failed.' })
+                                Warnings=@()
+                                LogEvents=@()
+                                PrivateRequest='secret'
+                            }
+                            PrivateDependency='secret'
+                        }
+                    }
+                )
+                State=[pscustomobject]@{ Status='Failed' }
+                Request=[pscustomobject]@{ ManifestPath='secret' }
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $result.Status | Should -Be 'Failed'
+            $result.Stages[1].Status | Should -Be 'DiscoveryFailed'
+            $result.Stages[1].IsSuccessful | Should -BeFalse
+            $result.Stages[1].Error.Code | Should -Be 'ProviderDiscoveryFailed'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'State'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'Request'
+            $result.Stages[0].PSObject.Properties.Name | Should -Not -Contain 'InternalFactory'
+            $result.Stages[0].PSObject.Properties.Name | Should -Not -Contain 'PrivateRequest'
+        }
+    }
+
 }
