@@ -58,6 +58,7 @@ Describe 'Wintainium release packaging boundary' {
             'Get-WintainiumManifest'
             'Test-WintainiumApplicationDefinition'
             'Get-WintainiumApplicationRelease'
+            'Invoke-WintainiumApplicationUpdate'
         )
     }
 }
