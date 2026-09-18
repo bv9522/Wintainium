@@ -33,8 +33,21 @@ Describe 'Wintainium application update lifecycle failure matrix' {
 
     It 'blocks update execution when provider discovery fails' {
         InModuleScope Wintainium.Core {
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
-            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            $operationId = [guid]::NewGuid().ToString()
+            $manifest = [pscustomobject]@{
+                Id = 'example.app'
+                Source = [pscustomobject]@{ pluginId='Wintainium.provider.valid-fixture'; requiredContractVersion='1'; settings=@{} }
+                Installer = [pscustomobject]@{ pluginId='Wintainium.installer.valid-fixture'; requiredContractVersion='1'; settings=@{} }
+                Reconciliation = [pscustomobject]@{ pluginId='Wintainium.reconciliation.valid-fixture'; requiredContractVersion='1'; settings=@{} }
+                Release = [pscustomobject]@{ channel='stable' }
+                Artifact = [pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $provider = [pscustomobject]@{ PluginId='Wintainium.provider.valid-fixture'; PluginType='Provider' }
+            $installer = [pscustomobject]@{ PluginId='Wintainium.installer.valid-fixture'; PluginType='Installer' }
+            $reconciliation = [pscustomobject]@{ PluginId='Wintainium.reconciliation.valid-fixture'; PluginType='Reconciliation' }
+
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; ReconciliationPlugin=$reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation {
                 [pscustomobject]@{
                     OperationId=$script:operationId; IsSuccessful=$false; Status='DiscoveryFailed'
