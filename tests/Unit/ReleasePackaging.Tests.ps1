@@ -25,6 +25,7 @@ Describe 'Wintainium release packaging boundary' {
             'docs/ManifestAuthoring.md'
             'docs/Diagnostics.md'
             'docs/PublicResultContract.md'
+            'docs/PublicApplicationUpdateResult.md'
             'docs/PublicPowerShellContract.md'
             'docs/ReleasePackaging.md'
             'core/Wintainium.Core/Wintainium.Core.psd1'
