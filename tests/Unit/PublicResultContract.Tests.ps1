@@ -3,6 +3,55 @@ BeforeAll {
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 
     Import-Module $script:modulePath -Force
+    It 'keeps the public update result property set stable at the command boundary' {
+        InModuleScope Wintainium.Core {
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                [pscustomobject][ordered]@{
+                    OperationId='operation-10b-contract'
+                    IsSuccessful=$false
+                    WasCancelled=$false
+                    StageResults=@(
+                        [pscustomobject]@{
+                            Stage=[pscustomobject]@{ Sequence=1; Name='ManifestValidation' }
+                            Execution=[pscustomobject]@{
+                                IsSuccessful=$false
+                                WasCancelled=$false
+                                Result=[pscustomobject]@{
+                                    IsSuccessful=$false
+                                    Status='ValidationFailed'
+                                    Manifest=[pscustomobject]@{ Id='example.app' }
+                                    Errors=@([pscustomobject]@{ Code='ManifestValidationFailed'; Message='Invalid manifest.' })
+                                    Warnings=@()
+                                    LogEvents=@()
+                                }
+                            }
+                        }
+                    )
+                    Error=[pscustomobject]@{ Code='ManifestValidationFailed'; Message='Invalid manifest.' }
+                }
+            }
+            $result = Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\example.json' -StateRoot 'C:\Wintainium\state' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\downloads'
+            @($result.PSObject.Properties.Name | Sort-Object) | Should -Be @(
+                'ApplicationId'
+                'Error'
+                'Errors'
+                'IsSuccessful'
+                'LogEvents'
+                'OperationId'
+                'Stages'
+                'Status'
+                'WasCancelled'
+                'Warnings'
+            )
+            $result.Status | Should -Be 'Failed'
+            $result.ApplicationId | Should -Be 'example.app'
+            $result.Stages[0].Error.Code | Should -Be 'ManifestValidationFailed'
+            $result.Errors[0].Code | Should -Be 'ManifestValidationFailed'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'State'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'Request'
+            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly
+        }
+    }
 }
 
 Describe 'Wintainium public result contract' {
