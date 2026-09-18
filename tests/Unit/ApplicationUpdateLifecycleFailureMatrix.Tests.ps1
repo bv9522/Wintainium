@@ -33,16 +33,33 @@ Describe 'Wintainium application update lifecycle failure matrix' {
 
     It 'blocks update execution when provider discovery fails' {
         InModuleScope Wintainium.Core {
-        Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-            Mock Invoke-WintainiumProviderOperation {
+            Mock Test-WintainiumApplicationDefinition {
+                param($ManifestPath, $PluginRoot, $SchemaPath, $OperationId)
                 [pscustomobject]@{
-                    OperationId=$script:operationId; IsSuccessful=$false; Status='DiscoveryFailed'
+                    OperationId=$OperationId
+                    IsValid=$true
+                    Manifest=$script:manifest
+                    ProviderPlugin=$script:provider
+                    InstallerPlugin=$script:installer
+                    ReconciliationPlugin=$script:reconciliation
+                    Errors=@()
+                    Warnings=@()
+                    LogEvents=@()
+                }
+            }
+            Mock Invoke-WintainiumProviderOperation {
+                param($Provider, $Request)
+                [pscustomobject]@{
+                    OperationId=$Request.OperationId
+                    IsSuccessful=$false
+                    Status='DiscoveryFailed'
                     Errors=@([pscustomobject]@{ Code='ProviderDiscoveryFailed'; Message='Provider fixture failure.' })
-                    Warnings=@(); LogEvents=@()
+                    Warnings=@()
+                    LogEvents=@()
                 }
             }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath 'C:\Wintainium\example.json' -StateRoot 'C:\Wintainium\state' -MachineArchitecture x64 -DownloadRoot 'C:\Wintainium\downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
