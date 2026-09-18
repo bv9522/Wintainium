@@ -14,6 +14,7 @@ Describe 'Wintainium GUI-facing public boundary' {
         $exported | Should -Be @(
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
+            'Invoke-WintainiumApplicationUpdate'
             'Test-WintainiumApplicationDefinition'
         )
     }
