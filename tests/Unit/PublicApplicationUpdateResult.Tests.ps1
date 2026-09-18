@@ -85,4 +85,51 @@ Describe 'Wintainium public application update result' {
             @($result.Errors).Count | Should -Be 1
         }
     }
+    It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
+        InModuleScope Wintainium.Core {
+            $operationId = [guid]::NewGuid().ToString()
+
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                [pscustomobject][ordered]@{
+                    OperationId=$operationId
+                    IsSuccessful=$true
+                    WasCancelled=$false
+                    State=[pscustomobject]@{ Status='Completed' }
+                    StageResults=@(
+                        [pscustomobject]@{
+                            Stage=[pscustomobject]@{ Sequence=1; Name='ManifestValidation' }
+                            Execution=[pscustomobject]@{
+                                IsSuccessful=$true
+                                WasCancelled=$false
+                                Result=[pscustomobject]@{
+                                    IsSuccessful=$true
+                                    Status='Validated'
+                                    Manifest=[pscustomobject]@{ Id='example.app' }
+                                    Errors=@()
+                                    Warnings=@()
+                                    LogEvents=@()
+                                }
+                            }
+                        }
+                    )
+                    Error=$null
+                }
+            }
+
+            $result = Invoke-WintainiumApplicationUpdate `
+                -ManifestPath 'C:\Wintainium\example.json' `
+                -StateRoot 'C:\Wintainium\state' `
+                -MachineArchitecture 'x64' `
+                -DownloadRoot 'C:\Wintainium\downloads'
+
+            $result.OperationId | Should -Be $operationId
+            $result.Status | Should -Be 'Completed'
+            $result.ApplicationId | Should -Be 'example.app'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'State'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'Request'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'StageResults'
+            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly
+        }
+    }
+
 }
