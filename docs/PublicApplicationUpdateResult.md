@@ -13,10 +13,10 @@ stable result projection over the internal lifecycle result.
 - `Status` — `Completed`, `Failed`, or `Cancelled`.
 - `ApplicationId` — manifest application identity when definition validation produced one; otherwise null.
 - `Stages` — ordered public stage summaries.
-- `Errors` — structured errors owned by the lifecycle/public boundary.
+- `Errors` — aggregate structured errors emitted by lifecycle stages and the lifecycle boundary; callers should use this collection for error enumeration.
 - `Warnings` — structured warnings.
 - `LogEvents` — structured diagnostic events.
-- `Error` — terminal structured error when the lifecycle itself has one; otherwise null.
+- `Error` — the lifecycle's terminal structured error when one exists; otherwise null. This is a convenience field for the terminal failure, while `Errors` remains the enumerable error collection.
 
 ### Stage summary
 
@@ -49,3 +49,9 @@ The public result is a projection, not a pass-through of the internal orchestrat
 object. Internal implementation properties may change without becoming public API.
 Consumers should use documented properties and structured error codes rather than
 parse formatted output or exception messages.
+
+### Collection semantics
+
+`Stages`, `Errors`, `Warnings`, and `LogEvents` are always arrays, including when no entries exist. `Error` is a single object or `$null`; it is not an array.
+
+The public projection copies only documented values from internal lifecycle results. Additional properties present on lifecycle, stage, execution, or private result objects are intentionally discarded rather than forwarded.
