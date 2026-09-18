@@ -33,7 +33,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
 
     It 'blocks update execution when provider discovery fails' {
         InModuleScope Wintainium.Core {
-            $operationId = [guid]::NewGuid().ToString()
+            $script:operationId = [guid]::NewGuid().ToString()
             $manifest = [pscustomobject]@{
                 Id = 'example.app'
                 Source = [pscustomobject]@{ pluginId='Wintainium.provider.valid-fixture'; requiredContractVersion='1'; settings=@{} }
@@ -46,7 +46,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             $installer = [pscustomobject]@{ PluginId='Wintainium.installer.valid-fixture'; PluginType='Installer' }
             $reconciliation = [pscustomobject]@{ PluginId='Wintainium.reconciliation.valid-fixture'; PluginType='Reconciliation' }
 
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
             Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; ReconciliationPlugin=$reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation {
                 [pscustomobject]@{
