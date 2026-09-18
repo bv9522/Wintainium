@@ -148,7 +148,8 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                     $parameters = @{ DownloadRequest=$downloadRequest; DownloadRoot=$StageInput.DownloadRoot; CancellationToken=$CancellationToken }
                     if ($null -ne $StageInput.HttpClient) { $parameters.HttpClient=$StageInput.HttpClient }
                     $downloadResult = Invoke-WintainiumDownload @parameters
-                    & $normalize $downloadResult ([string]$downloadResult.Status -eq 'Downloaded')
+                    $downloadSuccessful = if ($null -ne $downloadResult -and $downloadResult.PSObject.Properties['IsSuccessful']) { [bool]$downloadResult.IsSuccessful } else { [string]$downloadResult.Status -eq 'Downloaded' }
+                    & $normalize $downloadResult $downloadSuccessful
                 }
             }
             'Verification' {
@@ -172,7 +173,8 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                     $decision = $StageInput.Decision
                     if ($null -eq $decision -or [string]$decision.Status -ne 'UpdateAvailable' -or -not [bool]$decision.IsUpdateAvailable) { return [pscustomobject][ordered]@{ OperationId=$StageInput.OperationId; IsSuccessful=$true; Status='Skipped'; ReasonCode='NoUpdateAvailable' } }
                     $verification = Invoke-WintainiumArtifactVerification -DownloadResult $StageInput.Download -SelectedArtifact $decision.SelectedArtifact -OperationId $StageInput.OperationId
-                    & $normalize $verification ([string]$verification.Status -eq 'Verified')
+                    $verificationSuccessful = if ($null -ne $verification -and $verification.PSObject.Properties['IsSuccessful']) { [bool]$verification.IsSuccessful } else { [string]$verification.Status -eq 'Verified' }
+                    & $normalize $verification $verificationSuccessful
                 }
             }
             'InstallerSelection' {
@@ -232,7 +234,8 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                     $invocationResult = New-WintainiumInstallerInvocation -Selection $StageInput.Selection -Request $installerRequestResult.Request
                     if (-not $invocationResult.IsValid) { return [pscustomobject][ordered]@{ OperationId=$StageInput.OperationId; IsSuccessful=$false; Status='Failed'; FailureKind='InstallerInvocationInvalid'; Error=$invocationResult.Error } }
                     $installation = Invoke-WintainiumInstallerOperation -Invocation $invocationResult.Invocation -TimeoutMilliseconds $StageInput.InstallerTimeoutMilliseconds -CancellationToken $CancellationToken
-                    & $normalize $installation ([string]$installation.Status -eq 'Completed')
+                    $installationSuccessful = if ($null -ne $installation -and $installation.PSObject.Properties['IsSuccessful']) { [bool]$installation.IsSuccessful } else { [string]$installation.Status -eq 'Completed' }
+                    & $normalize $installation $installationSuccessful
                 }
             }
             'Reconciliation' {
