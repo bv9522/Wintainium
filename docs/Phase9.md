@@ -35,11 +35,20 @@ The public update command remains deferred until the complete internal lifecycle
 
 ### 9D — Complete Core Composition
 
-- Bind the existing manifest validation, provider discovery, decision, download, verification, installer, and reconciliation operations through Core-owned composition.
+- Bind manifest validation, provider discovery, update decision, download, verification, installer selection/execution, and reconciliation through Core-owned composition.
 - Add post-install reconciliation to the concrete lifecycle without moving traversal policy into the caller.
-- Preserve one orchestration-owned OperationId across all compatible stage boundaries.
+- Preserve one orchestration-owned OperationId across compatible stage boundaries.
 - Pass outputs forward only through defined contracts.
 - Ensure a failed verification cannot reach installation.
+- The concrete lifecycle now uses eight stages:
+  1. ManifestValidation
+  2. ReleaseDiscovery
+  3. UpdateDecision
+  4. Download
+  5. Verification
+  6. InstallerSelection
+  7. Installation
+  8. Reconciliation
 
 ### 9E — Authoritative State Reconciliation and Persistence
 
@@ -48,38 +57,77 @@ The public update command remains deferred until the complete internal lifecycle
 - Never invent an installed version from the selected release.
 - Never convert `Unknown` into `Installed` or `NotInstalled` by assumption.
 - Preserve existing authoritative state when a new observation cannot establish a replacement state.
+- Keep authoritative persistence outside the reconciliation provider itself; Core owns the decision to persist.
 
 ### 9F — Failure, Cancellation, and Boundary Hardening
 
 - Exercise provider, download, verification, installer, reconciliation, persistence, and cancellation failures through the complete composition.
 - Audit OperationId propagation at every request/result boundary.
-- Resolve the legacy/new `New-WintainiumInstallerRequest` OperationId behavior according to actual call-path usage.
-- Resolve the analogous `New-WintainiumDownloadRequest` fresh-OperationId behavior discovered during the 9B audit; orchestration must remain the single lifecycle owner.
+- Preserve the orchestration-owned OperationId when creating download and installer requests; standalone helper calls may still create their own identifiers.
 - Keep structured failure categories intact and avoid exception-message parsing.
+- Block downstream lifecycle stages after a failure or cancellation boundary.
 
 ### 9G — End-to-End Regression and Public Boundary Preparation
 
-- Add complete lifecycle regression coverage for normal update, no-update, provider failure, download failure, verification failure, installer failure, cancellation, reconciliation success/failure, Unknown preservation, Installed/NotInstalled semantics, persistence, and OperationId correlation.
-- Run the complete Phase 1–9 regression suite at the final checkpoint.
-- Audit the public result shape and only then determine whether the internal lifecycle is mature enough to design the public update command.
-- Do not expose `Invoke-WintainiumApplicationUpdate` merely because the internal plumbing exists.
+The Phase 9 lifecycle implementation and focused 9G regression set cover:
 
-## Phase 9 audit findings
+- normal update through reconciliation
+- no-update execution
+- provider discovery failure
+- download failure
+- verification failure
+- installer failure boundary
+- reconciliation failure boundary
+- cancellation boundary
+- authoritative persistence failure
+- Installed evidence persistence
+- NotInstalled evidence persistence
+- Unknown evidence preservation
+- OperationId identity and propagation
+- public Core export boundary
+- public command parameter contracts
+- public command help and structured output contracts
+
+Representative focused regression files include:
+
+- `ApplicationUpdateLifecycle.Tests.ps1`
+- `ApplicationUpdateLifecycleEndToEnd.Tests.ps1`
+- `ApplicationUpdateLifecycleFailure.Tests.ps1`
+- `ApplicationUpdateLifecycleFailureMatrix.Tests.ps1`
+- `ApplicationUpdateLifecycleAuthoritativeState.Tests.ps1`
+- `AuthoritativeStateReconciliation.Tests.ps1`
+- `OperationIdentityBoundary.Tests.ps1`
+- `PublicBoundary.Tests.ps1`
+- `PublicCliContract.Tests.ps1`
+
+The final Phase 9 gate is the complete Phase 1–9 Pester regression suite. Phase 9 is not locked until that suite is green.
+
+## Phase 9 audit findings and resolutions
 
 ### Confirmed architectural gaps
 
-1. No standalone Core verification engine/contract existed before 9B.
-2. No post-install reconciliation declaration/mechanism existed in the manifest or Core lifecycle before 9C.
-3. The current seven-stage plan stops at Installation and therefore lacks an explicit reconciliation operation until 9C/9D define its boundary.
+1. No standalone Core verification engine/contract existed before 9B. Resolved by the Phase 9B verification contract and engine.
+2. No post-install reconciliation declaration/mechanism existed in the manifest or Core lifecycle before 9C. Resolved by the dedicated reconciliation contract, manifest schema 1.1 declaration, and lifecycle stage.
+3. The original seven-stage plan stopped at Installation. Resolved by the explicit eight-stage lifecycle with Reconciliation.
 
 ### Operation identity audit findings
 
-The Phase 7 architecture requires one orchestration-owned OperationId. During the 9B audit, two additional request helpers were found to create fresh identifiers:
+The Phase 7 architecture requires one orchestration-owned OperationId. During the 9B audit, two request helpers were found to create fresh identifiers when called standalone:
 
-- `New-WintainiumInstallerRequest` creates a new `OperationId` while retaining `DownloadOperationId`.
-- `New-WintainiumDownloadRequest` also creates a new `OperationId` while retaining the decision object.
+- `New-WintainiumInstallerRequest` creates a new OperationId while retaining `DownloadOperationId`.
+- `New-WintainiumDownloadRequest` creates a new OperationId when no lifecycle OperationId is supplied.
 
-These are not automatically Phase 6/5 defects because the actual Phase 9 composition path has not yet been established. They are Phase 9F audit items: determine active usage and ensure the production lifecycle never substitutes helper-created identifiers for the orchestration-owned identity.
+These helpers were updated to accept and preserve an explicit OperationId. The production Phase 9 lifecycle supplies the orchestration-owned identifier, and focused regression tests verify preservation and rejection of invalid explicit identifiers.
+
+### Public boundary audit
+
+The public Core module intentionally exports only:
+
+- `Get-WintainiumManifest`
+- `Test-WintainiumApplicationDefinition`
+- `Get-WintainiumApplicationRelease`
+
+The internal `Invoke-WintainiumApplicationUpdateLifecycle` command remains unexported. The public update command is deliberately deferred to a later phase so that its contract can be designed from a locked internal lifecycle rather than becoming the lifecycle itself.
 
 ## Architectural non-goals
 
