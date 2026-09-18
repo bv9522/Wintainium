@@ -4,7 +4,9 @@
 
 Phase 8F — GUI readiness audit: **complete**.
 
-Phase 8B established the public CLI and result contract; this document records the synchronized boundary consumed by the current PowerShell presentation layer and the future C#/.NET GUI.
+Phase 9 — Complete Update Lifecycle: **internal lifecycle complete; public update API intentionally deferred**.
+
+Phase 8B established the public CLI and result contract. Phase 9 completed the missing Core-owned artifact verification, post-install reconciliation, authoritative state reconciliation, and lifecycle failure/cancellation boundaries beneath that future public operation.
 
 This document defines the stable public PowerShell boundary for Wintainium's engine. It is an API contract decision, not a promise that every conceptual operation is already exposed as a user-facing command.
 
@@ -12,7 +14,7 @@ This document defines the stable public PowerShell boundary for Wintainium's eng
 
 The PowerShell module is the engine's public presentation-neutral API. Commands accept explicit inputs, invoke Core-owned business rules, and return structured results. Human-readable presentation belongs above the engine boundary and must not change business decisions.
 
-The future C#/.NET GUI is another client of this same boundary. It must not need to call providers, installers, stage operations, or private orchestration helpers directly.
+The future C#/.NET GUI is another client of this same boundary. It must not need to call providers, installers, reconciliation adapters, stage operations, or private orchestration helpers directly.
 
 ## Current exported surface
 
@@ -34,11 +36,11 @@ The stable user-facing surface is intended to cover these conceptual operations:
 3. **Release discovery** — obtain normalized upstream release observations through the provider boundary.
 4. **Application update lifecycle** — execute the Core-owned orchestration lifecycle for an application update.
 
-The fourth operation remains intentionally absent from the public surface. Phase 8E now provides a Core-owned composition boundary for update decisions: `Get-WintainiumApplicationUpdateDecision` combines provider discovery with the managed installed-state source and delegates the decision to the locked Phase 4 rules. It is private and must remain so.
+The fourth operation remains intentionally absent from the public surface even though its internal implementation is now complete. Phase 9 established a Core-owned composition boundary that assembles validation, discovery, decision, download, verification, installation, reconciliation, and authoritative managed state without requiring callers to construct internal stage objects.
 
-A public end-to-end update operation must not be exposed until Core can compose the remaining verification and post-install state-reconciliation behavior authoritatively. Callers will not be required to know the internal `StagePlan`, `StageFactory`, `CancellationContext`, or stage-operation contracts.
+A future public end-to-end update operation must not expose `StagePlan`, `StageFactory`, `CancellationContext`, stage-operation contracts, provider requests, download requests, installer requests, or reconciliation requests. The caller should express application-management intent; Core should continue to own lifecycle traversal.
 
-The managed installed-state source established by Phase 8E is intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`, and the engine must never manufacture installed state merely to make an update appear available.
+The managed installed-state source remains intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`, and the engine must never manufacture installed state merely to make an update appear available.
 
 ## Deliberately non-public
 
@@ -46,9 +48,11 @@ The following remain private implementation details:
 
 - provider registry and provider invocation helpers;
 - installer registry, selection, and process helpers;
+- reconciliation registry, resolution, and adapter invocation helpers;
 - manifest import/validation helpers beneath the public validation boundary;
 - download and verification stage operations;
 - orchestration stage operations, state transitions, workflow coordination, lifecycle helpers, and factories;
+- authoritative installed-state reconciliation and persistence helpers;
 - log-event construction and other internal plumbing;
 - filesystem, process, and plugin-loading helpers.
 
@@ -98,6 +102,7 @@ The public boundary recognizes these semantic error categories:
 - acquisition;
 - verification;
 - installer;
+- reconciliation;
 - cancellation;
 - internal/unexpected engine failure.
 
@@ -113,19 +118,19 @@ Structured results remain usable with normal PowerShell tooling such as `Select-
 
 The engine returns data. A future CLI presentation layer may render that data for people or serialize it for automation. No business decision may depend on a human/machine output switch.
 
-The current public commands therefore expose one semantic result contract rather than separate human and machine execution paths. Any future presentation mode must consume that same result data and must not alter provider selection, update decisions, download behavior, verification requirements, installer selection, cancellation semantics, or other business rules.
+The current public commands therefore expose one semantic result contract rather than separate human and machine execution paths. Any future presentation mode must consume that same result data and must not alter provider selection, update decisions, download behavior, verification requirements, installer selection, cancellation semantics, reconciliation semantics, or other business rules.
 
 ## GUI seam
 
-A future GUI should be able to use stable public requests and structured results. It should not need to know the implementation sequence `ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation`.
+A future GUI should be able to use stable public requests and structured results. It should not need to know the implementation sequence `ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation -> Reconciliation`.
 
-That sequence remains an engine concern. The GUI may display stage progress because the engine reports it, but the GUI does not own the stage policy.
+That sequence remains an engine concern. The GUI may display stage progress because the engine reports it, but the GUI does not own the stage policy or decide authoritative installed state.
 
 ## Documentation and help
 
 The three currently supported public commands use comment-based help as the authoritative local CLI guidance for their implemented behavior. Each command documents its purpose, public parameters, structured output, and a copy/paste-oriented example.
 
-Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update.
+Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update. A future public update command will receive its own explicit request/result documentation when its API is designed.
 
 ## Explicit non-goals for Phase 8
 
@@ -134,7 +139,7 @@ This contract does not introduce:
 - a C#/.NET GUI;
 - scheduling;
 - update-all orchestration;
-- persistence beyond the explicitly defined Phase 8E managed-state boundary;
+- persistence redesign;
 - a plugin marketplace;
 - cloud services;
 - telemetry;
