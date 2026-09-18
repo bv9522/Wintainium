@@ -1,7 +1,7 @@
 function Get-WintainiumApplicationRelease {
     <#
     .SYNOPSIS
-    Discovers releases declared by an application provider.
+    Validates an application manifest and discovers releases declared by its provider.
 
     .DESCRIPTION
     Validates the application manifest and performs provider release discovery.
