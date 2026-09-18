@@ -1,35 +1,36 @@
+<#
+.SYNOPSIS
+Validates an offline Wintainium application manifest and resolves its required plugins.
+
+.DESCRIPTION
+Validates the application manifest against the Wintainium schema and resolves the
+declared Provider, Installer, and Reconciliation plugins. This command performs
+no network, download, installation, or installed-state management work.
+
+.PARAMETER ManifestPath
+Path to the application manifest.
+
+.PARAMETER PluginRoot
+Root directory containing Wintainium plugins.
+
+.PARAMETER SchemaPath
+Path to the application manifest JSON schema.
+
+.PARAMETER OperationId
+Optional lifecycle correlation identifier. When supplied, it is preserved.
+
+.OUTPUTS
+PSCustomObject. The result contains OperationId, IsValid, Manifest,
+ProviderPlugin, InstallerPlugin, ReconciliationPlugin, Errors, Warnings,
+and LogEvents.
+
+.EXAMPLE
+Test-WintainiumApplicationDefinition -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
+
+Validates one application definition and resolves its required plugins.
+#>
 function Test-WintainiumApplicationDefinition {
-    <#
-    .SYNOPSIS
-    Validates an offline Wintainium application manifest and resolves its required plugins.
 
-    .DESCRIPTION
-    Validates the application manifest against the Wintainium schema and resolves the
-    declared Provider, Installer, and Reconciliation plugins. This command performs
-    no network, download, installation, or installed-state management work.
-
-    .PARAMETER ManifestPath
-    Path to the application manifest.
-
-    .PARAMETER PluginRoot
-    Root directory containing Wintainium plugins.
-
-    .PARAMETER SchemaPath
-    Path to the application manifest JSON schema.
-
-    .PARAMETER OperationId
-    Optional lifecycle correlation identifier. When supplied, it is preserved.
-
-    .OUTPUTS
-    PSCustomObject. The result contains OperationId, IsValid, Manifest,
-    ProviderPlugin, InstallerPlugin, ReconciliationPlugin, Errors, Warnings,
-    and LogEvents.
-
-    .EXAMPLE
-    Test-WintainiumApplicationDefinition -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
-
-    Validates one application definition and resolves its required plugins.
-    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$ManifestPath,
