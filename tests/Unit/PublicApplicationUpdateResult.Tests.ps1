@@ -224,6 +224,23 @@ Describe 'Wintainium public application update result' {
     }
 
 
+    It 'preserves OperationId exactly and does not generate a replacement identifier' {
+        InModuleScope Wintainium.Core {
+            $operationId = 'operation-10b-stable-id'
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=$operationId
+                IsSuccessful=$true
+                WasCancelled=$false
+                StageResults=@()
+                Error=$null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $result.OperationId | Should -BeExactly $operationId
+        }
+    }
+
     It 'projects a staged failure without leaking internal stage operation objects' {
         InModuleScope Wintainium.Core {
             $lifecycle = [pscustomobject][ordered]@{
