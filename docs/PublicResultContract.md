@@ -20,13 +20,14 @@ Collection-valued result properties are returned as arrays, including when empty
 
 ## Supported command contracts
 
-The current public surface has three supported operations. Their top-level result properties are intentionally explicit so a CLI, script, or future GUI can bind to the same semantic data.
+The current public surface has four supported operations. Their top-level result properties are intentionally explicit so a CLI, script, or future GUI can bind to the same semantic data.
 
 | Command | Correlation | Success/validity | Status | Operation data | Diagnostics |
 | --- | --- | --- | --- | --- | --- |
 | `Get-WintainiumManifest` | `OperationId` | `IsSuccessful` | — | `Candidates`, `ManifestPaths`, `Manifests` | `Errors`, `Warnings`, `LogEvents` |
 | `Test-WintainiumApplicationDefinition` | `OperationId` | `IsValid` | — | `Manifest`, `ProviderPlugin`, `InstallerPlugin`, `ReconciliationPlugin` | `Errors`, `Warnings`, `LogEvents` |
 | `Get-WintainiumApplicationRelease` | `OperationId` | `IsSuccessful` | `Status` | `Manifest`, `ProviderPlugin`, `Releases` | `Errors`, `Warnings`, `LogEvents` |
+| `Invoke-WintainiumApplicationUpdate` | `OperationId` | `IsSuccessful` | `Status` | `ApplicationId`, `Stages` | `Errors`, `Warnings`, `LogEvents`, `Error` |
 
 A consumer should branch on the documented success/validity property and, where provided, `Status`. It should inspect structured error codes for failure handling rather than parse `Message` text.
 
@@ -73,11 +74,9 @@ Presentation mode must never change provider selection, update decisions, downlo
 
 ## End-to-end update operation
 
-The eventual public update command must accept stable application-management inputs and return a stable orchestration result. Callers must not be required to construct `StagePlan`, `CancellationContext`, stage bindings, provider requests, download requests, installer requests, reconciliation requests, or other private contracts.
+`Invoke-WintainiumApplicationUpdate` accepts stable application-management inputs and returns the Phase 10B public result projection. Callers are not required to construct `StagePlan`, `CancellationContext`, stage bindings, provider requests, download requests, installer requests, reconciliation requests, or other private contracts.
 
-Phase 9 now provides the missing internal composition: verification is Core-owned and mandatory before installation, reconciliation is an application-scoped evidence boundary, and authoritative installed-state persistence remains Core-owned. The internal lifecycle is therefore complete enough to serve as the implementation basis for a future public update command.
-
-The public update command remains intentionally deferred to a subsequent API-design phase. This prevents the public interface from becoming a premature copy of internal stage wiring and keeps the public contract centered on application-management intent rather than engine implementation details.
+Phase 9 provides the internal composition beneath this boundary: verification is Core-owned and mandatory before installation, reconciliation is an application-scoped evidence boundary, and authoritative installed-state persistence remains Core-owned. Phase 10B deliberately projects that lifecycle into a smaller public shape so internal stage wiring can evolve without becoming public API.
 
 The managed installed-state source remains intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`, and authoritative state is never manufactured merely to make an update appear available.
 
@@ -91,7 +90,7 @@ Structured results should remain usable with `Select-Object`, `Where-Object`, `F
 
 Public commands use comment-based help as the authoritative local CLI guidance for their currently implemented behavior. Each supported command documents its purpose, public parameters, structured output, and at least one copy/paste-oriented example.
 
-Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update until the dedicated public update contract is introduced.
+Examples demonstrate public inputs only. The update command's result is documented separately in `docs/PublicApplicationUpdateResult.md`; examples do not expose private orchestration dependencies.
 
 ## Non-goals
 
