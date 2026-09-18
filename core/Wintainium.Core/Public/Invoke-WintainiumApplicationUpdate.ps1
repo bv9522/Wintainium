@@ -71,5 +71,6 @@ function Invoke-WintainiumApplicationUpdate {
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
-    Invoke-WintainiumApplicationUpdateLifecycle @PSBoundParameters
+    $lifecycleResult = Invoke-WintainiumApplicationUpdateLifecycle @PSBoundParameters
+    ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycleResult
 }
