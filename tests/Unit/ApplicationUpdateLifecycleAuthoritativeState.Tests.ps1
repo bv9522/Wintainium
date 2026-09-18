@@ -5,7 +5,8 @@ Import-Module $modulePath -Force
 Describe 'Wintainium application lifecycle authoritative state integration' {
     BeforeAll {
         InModuleScope Wintainium.Core {
-            function New-AuthoritativeLifecycleFixture {
+            $script:AuthoritativeLifecycleFixtureFactory = {
+
                 $operationId = [guid]::NewGuid().ToString()
                 $manifest = [pscustomobject]@{
                     Id='example.app'
@@ -60,7 +61,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'persists authoritative installed evidence inside the Reconciliation stage' {
         InModuleScope Wintainium.Core {
-            $fixture = New-AuthoritativeLifecycleFixture
+            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $priorState=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' }
             $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
             $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
@@ -97,7 +98,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'preserves a successful lifecycle when authoritative reconciliation preserves Unknown evidence' {
         InModuleScope Wintainium.Core {
-            $fixture = New-AuthoritativeLifecycleFixture
+            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
             $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
             $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$fixture.Installer; ArtifactFormat='exe' }
@@ -131,7 +132,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'turns authoritative persistence failure into a native Reconciliation stage failure' {
         InModuleScope Wintainium.Core {
-            $fixture = New-AuthoritativeLifecycleFixture
+            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
             $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
             $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$fixture.Installer; ArtifactFormat='exe' }
@@ -169,7 +170,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'does not reconcile or persist state for a no-update lifecycle' {
         InModuleScope Wintainium.Core {
-            $fixture = New-AuthoritativeLifecycleFixture
+            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $decision = [pscustomobject]@{
                 OperationId=$fixture.OperationId
                 Status='NoUpdateAvailable'
