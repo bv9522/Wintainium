@@ -12,8 +12,8 @@ Describe 'Wintainium public CLI contract' {
         $commands | Should -Be @(
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
-            'Test-WintainiumApplicationDefinition'
             'Invoke-WintainiumApplicationUpdate'
+            'Test-WintainiumApplicationDefinition'
         )
     }
 
