@@ -1,6 +1,6 @@
 # Public PowerShell Result Contract
 
-Phase 8F completes the result-boundary audit established in Phase 8B. This contract is consumed by the PowerShell CLI and the future C#/.NET presentation layer.
+Phase 8F completed the result-boundary audit established in Phase 8B. Phase 9 now supplies the missing internal verification, post-install reconciliation, and authoritative managed-state lifecycle needed beneath the future public update operation.
 
 ## Common shape
 
@@ -25,7 +25,7 @@ The current public surface has three supported operations. Their top-level resul
 | Command | Correlation | Success/validity | Status | Operation data | Diagnostics |
 | --- | --- | --- | --- | --- | --- |
 | `Get-WintainiumManifest` | `OperationId` | `IsSuccessful` | — | `Candidates`, `ManifestPaths`, `Manifests` | `Errors`, `Warnings`, `LogEvents` |
-| `Test-WintainiumApplicationDefinition` | `OperationId` | `IsValid` | — | `Manifest`, `ProviderPlugin`, `InstallerPlugin` | `Errors`, `Warnings`, `LogEvents` |
+| `Test-WintainiumApplicationDefinition` | `OperationId` | `IsValid` | — | `Manifest`, `ProviderPlugin`, `InstallerPlugin`, `ReconciliationPlugin` | `Errors`, `Warnings`, `LogEvents` |
 | `Get-WintainiumApplicationRelease` | `OperationId` | `IsSuccessful` | `Status` | `Manifest`, `ProviderPlugin`, `Releases` | `Errors`, `Warnings`, `LogEvents` |
 
 A consumer should branch on the documented success/validity property and, where provided, `Status`. It should inspect structured error codes for failure handling rather than parse `Message` text.
@@ -46,11 +46,12 @@ The stable error categories recognized by the public boundary are:
 | --- | --- | --- |
 | Caller input | The requested operation cannot begin because a public input is invalid or unusable | `ManifestCollectionNotFound`, `ManifestCollectionPathInvalid` |
 | Application definition | The manifest cannot be used as an application definition | `ManifestValidationFailed`, schema/definition validation codes |
-| Plugin capability | A required provider or installer capability cannot be resolved or is incompatible | plugin resolution/compatibility codes |
+| Plugin capability | A required provider, installer, or reconciliation capability cannot be resolved or is incompatible | plugin resolution/compatibility codes |
 | Provider/discovery | Upstream release discovery failed after the application definition was accepted | provider-defined discovery codes |
 | Acquisition | A release artifact could not be obtained | download failure codes |
-| Verification | An obtained artifact could not establish the required trust result | verification failure codes |
+| Verification | An obtained artifact could not establish the required integrity result | verification failure codes |
 | Installer | Installation could not be selected or applied | installer failure codes |
+| Reconciliation | Post-install observation could not establish a valid reconciliation result | reconciliation failure codes |
 | Cancellation | Work stopped because cancellation was requested | cancellation codes |
 | Internal | An unexpected engine failure escaped normal operation handling | unexpected internal failure codes |
 
@@ -62,19 +63,23 @@ An operation that performs or coordinates work must expose its `OperationId` in 
 
 The public client must not generate or replace Core-owned operation identifiers. When one public command delegates to another Core operation, the outer operation boundary should preserve the identifier when that operation is intentionally the same logical operation.
 
+The Phase 9 internal lifecycle preserves one orchestration-owned OperationId through manifest validation, discovery, decision, download, verification, installer execution, reconciliation, and authoritative-state handling.
+
 ## Presentation boundary
 
 Human-readable presentation and machine-readable serialization belong outside the business rules. The Core returns structured objects; a CLI presentation layer may format those objects for a terminal, while a future GUI may bind directly to the same semantic data.
 
-Presentation mode must never change provider selection, update decisions, download behavior, verification requirements, installer selection, cancellation semantics, or other business rules.
+Presentation mode must never change provider selection, update decisions, download behavior, verification requirements, installer selection, cancellation semantics, reconciliation semantics, or other business rules.
 
 ## End-to-end update operation
 
-The eventual public update command must accept stable application-management inputs and return a stable orchestration result. Callers must not be required to construct `StagePlan`, `CancellationContext`, stage bindings, provider requests, download requests, installer requests, or other private contracts.
+The eventual public update command must accept stable application-management inputs and return a stable orchestration result. Callers must not be required to construct `StagePlan`, `CancellationContext`, stage bindings, provider requests, download requests, installer requests, reconciliation requests, or other private contracts.
 
-The Phase 7 lifecycle primitive intentionally requires those internal dependencies. Therefore it is not itself a public CLI contract. A dedicated internal composition boundary must first assemble the real stage executors and dependencies. Only then should a public orchestration command be exposed.
+Phase 9 now provides the missing internal composition: verification is Core-owned and mandatory before installation, reconciliation is an application-scoped evidence boundary, and authoritative installed-state persistence remains Core-owned. The internal lifecycle is therefore complete enough to serve as the implementation basis for a future public update command.
 
-Phase 8E now supplies the missing managed installed-state boundary and the internal update-decision composition seam. The managed state source is intentionally narrow and returns `Unknown` when a record is absent; it does not represent Windows-wide inventory. The remaining prerequisite for a public end-to-end update operation is authoritative composition of artifact verification and post-install state reconciliation. Phase 8F therefore keeps the public update operation deferred rather than exposing a caller-constructed or otherwise incomplete lifecycle.
+The public update command remains intentionally deferred to a subsequent API-design phase. This prevents the public interface from becoming a premature copy of internal stage wiring and keeps the public contract centered on application-management intent rather than engine implementation details.
+
+The managed installed-state source remains intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`, and authoritative state is never manufactured merely to make an update appear available.
 
 ## Pipeline compatibility
 
@@ -86,8 +91,8 @@ Structured results should remain usable with `Select-Object`, `Where-Object`, `F
 
 Public commands use comment-based help as the authoritative local CLI guidance for their currently implemented behavior. Each supported command documents its purpose, public parameters, structured output, and at least one copy/paste-oriented example.
 
-Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update.
+Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update until the dedicated public update contract is introduced.
 
 ## Non-goals
 
-This contract does not introduce scheduling, update-all orchestration, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI. The explicitly defined Phase 8E managed-state persistence boundary is part of the internal engine contract but is not a general-purpose public configuration or inventory API.
+This contract does not introduce scheduling, update-all orchestration, cloud services, telemetry, marketplace behavior, arbitrary shell execution, or a C#/.NET GUI. The explicitly defined managed-state persistence boundary is part of the internal engine contract but is not a general-purpose public configuration or inventory API.
