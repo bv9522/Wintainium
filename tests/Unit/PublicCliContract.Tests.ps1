@@ -13,6 +13,7 @@ Describe 'Wintainium public CLI contract' {
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
             'Test-WintainiumApplicationDefinition'
+            'Invoke-WintainiumApplicationUpdate'
         )
     }
 
@@ -51,6 +52,38 @@ Describe 'Wintainium public CLI contract' {
         $command.Parameters.Keys | Should -Contain 'ManifestPath'
         $command.Parameters.Keys | Should -Contain 'PluginRoot'
         $command.Parameters.Keys | Should -Contain 'SchemaPath'
+    }
+
+    It 'uses the approved parameter contract on the public application update command' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -Module Wintainium.Core
+
+        $command.Parameters.Keys | Should -Contain 'ManifestPath'
+        $command.Parameters.Keys | Should -Contain 'StateRoot'
+        $command.Parameters.Keys | Should -Contain 'MachineArchitecture'
+        $command.Parameters.Keys | Should -Contain 'DownloadRoot'
+        $command.Parameters.Keys | Should -Contain 'PluginRoot'
+        $command.Parameters.Keys | Should -Contain 'SchemaPath'
+        $command.Parameters.Keys | Should -Contain 'InstallerTimeoutMilliseconds'
+        $command.Parameters.Keys | Should -Contain 'CancellationToken'
+
+        $command.Parameters.Keys | Should -Not -Contain 'OperationId'
+        $command.Parameters.Keys | Should -Not -Contain 'HttpClient'
+        $command.Parameters.Keys | Should -Not -Contain 'WhatIf'
+    }
+
+    It 'provides discoverable help for the public application update command' {
+        $help = Get-Help -Name Invoke-WintainiumApplicationUpdate -Full
+
+        $help.Synopsis | Should -Match 'complete application update lifecycle'
+        $help.Examples.Example | Should -Not -BeNullOrEmpty
+
+        $helpText = $help | Out-String
+        foreach ($parameter in @('ManifestPath', 'StateRoot', 'MachineArchitecture', 'DownloadRoot', 'PluginRoot', 'SchemaPath', 'InstallerTimeoutMilliseconds', 'CancellationToken')) {
+            $helpText | Should -Match $parameter
+        }
+
+        $helpText | Should -Match 'does not supply an OperationId'
+        $helpText | Should -Match 'performs update execution'
     }
 
     It 'provides discoverable help for the public manifest command' {
