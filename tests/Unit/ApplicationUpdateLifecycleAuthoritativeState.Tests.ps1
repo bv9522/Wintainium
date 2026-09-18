@@ -61,26 +61,26 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'persists authoritative installed evidence inside the Reconciliation stage' {
         InModuleScope Wintainium.Core {
-            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
+            $script:fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $priorState=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' }
-            $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
-            $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
-            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$fixture.Installer; ArtifactFormat='exe' }
-            $installation=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
-            $reconciliationResult=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
-            $authoritative=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$true; Status='Persisted'; State=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' }; Persisted=$true; ReasonCode='AuthoritativeEvidencePersisted'; Errors=@() }
+            $download=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
+            $verification=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
+            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$script:fixture.Installer; ArtifactFormat='exe' }
+            $installation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
+            $reconciliationResult=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
+            $authoritative=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$true; Status='Persisted'; State=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; VersionSource='Fixture'; Architecture='x64'; Channel='stable'; InstallationLocation='/opt/example' }; Persisted=$true; ReasonCode='AuthoritativeEvidencePersisted'; Errors=@() }
 
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
-            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$fixture.OperationId; IsValid=$true; Manifest=$fixture.Manifest; ProviderPlugin=$fixture.Provider; InstallerPlugin=$fixture.Installer; ReconciliationPlugin=$fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-            Mock Invoke-WintainiumProviderOperation { $fixture.Release }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:fixture.OperationId; IsValid=$true; Manifest=$script:fixture.Manifest; ProviderPlugin=$script:fixture.Provider; InstallerPlugin=$script:fixture.Installer; ReconciliationPlugin=$script:fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            Mock Invoke-WintainiumProviderOperation { $script:fixture.Release }
             Mock Get-WintainiumInstalledApplicationState { $priorState }
-            Mock Get-WintainiumUpdateDecision { $fixture.Decision }
-            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$fixture.OperationId; UpdateDecision=$fixture.Decision; SelectedRelease=$fixture.Decision.SelectedRelease; SelectedArtifact=$fixture.Decision.SelectedArtifact } }
+            Mock Get-WintainiumUpdateDecision { $script:fixture.Decision }
+            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$script:fixture.OperationId; UpdateDecision=$script:fixture.Decision; SelectedRelease=$script:fixture.Decision.SelectedRelease; SelectedArtifact=$script:fixture.Decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload { $download }
             Mock Invoke-WintainiumArtifactVerification { $verification }
             Mock Select-WintainiumInstaller { $selection }
-            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; Manifest=$fixture.Manifest; Installer=$fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
-            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; PluginId=$fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
+            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; Manifest=$script:fixture.Manifest; Installer=$script:fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
+            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; PluginId=$script:fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
@@ -88,35 +88,35 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeTrue
-            $result.OperationId | Should -Be $fixture.OperationId
+            $result.OperationId | Should -Be $script:fixture.OperationId
             $result.State.Status | Should -Be 'Completed'
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.Status | Should -Be 'Persisted'
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.State.Version | Should -Be '2.0.0'
-            Should -Invoke Invoke-WintainiumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $fixture.OperationId -and $ApplicationId -eq 'example.app' -and $ReconciliationResult.OperationId -eq $fixture.OperationId -and $PriorState.Version -eq '1.0.0' }
+            Should -Invoke Invoke-WintainiumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $script:fixture.OperationId -and $ApplicationId -eq 'example.app' -and $ReconciliationResult.OperationId -eq $script:fixture.OperationId -and $PriorState.Version -eq '1.0.0' }
         }
     }
 
     It 'preserves a successful lifecycle when authoritative reconciliation preserves Unknown evidence' {
         InModuleScope Wintainium.Core {
-            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
-            $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
-            $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
-            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$fixture.Installer; ArtifactFormat='exe' }
-            $installation=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
-            $reconciliationResult=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Unknown'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
-            $authoritative=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$true; Status='Preserved'; State=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' }; Persisted=$false; ReasonCode='UnknownEvidencePreserved'; Errors=@() }
+            $script:fixture = & $script:AuthoritativeLifecycleFixtureFactory
+            $download=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
+            $verification=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
+            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$script:fixture.Installer; ArtifactFormat='exe' }
+            $installation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
+            $reconciliationResult=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Unknown'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
+            $authoritative=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$true; Status='Preserved'; State=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' }; Persisted=$false; ReasonCode='UnknownEvidencePreserved'; Errors=@() }
 
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
-            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$fixture.OperationId; IsValid=$true; Manifest=$fixture.Manifest; ProviderPlugin=$fixture.Provider; InstallerPlugin=$fixture.Installer; ReconciliationPlugin=$fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-            Mock Invoke-WintainiumProviderOperation { $fixture.Release }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:fixture.OperationId; IsValid=$true; Manifest=$script:fixture.Manifest; ProviderPlugin=$script:fixture.Provider; InstallerPlugin=$script:fixture.Installer; ReconciliationPlugin=$script:fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            Mock Invoke-WintainiumProviderOperation { $script:fixture.Release }
             Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
-            Mock Get-WintainiumUpdateDecision { $fixture.Decision }
-            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$fixture.OperationId; UpdateDecision=$fixture.Decision; SelectedRelease=$fixture.Decision.SelectedRelease; SelectedArtifact=$fixture.Decision.SelectedArtifact } }
+            Mock Get-WintainiumUpdateDecision { $script:fixture.Decision }
+            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$script:fixture.OperationId; UpdateDecision=$script:fixture.Decision; SelectedRelease=$script:fixture.Decision.SelectedRelease; SelectedArtifact=$script:fixture.Decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload { $download }
             Mock Invoke-WintainiumArtifactVerification { $verification }
             Mock Select-WintainiumInstaller { $selection }
-            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; Manifest=$fixture.Manifest; Installer=$fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
-            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; PluginId=$fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
+            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; Manifest=$script:fixture.Manifest; Installer=$script:fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
+            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; PluginId=$script:fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
@@ -132,25 +132,25 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'turns authoritative persistence failure into a native Reconciliation stage failure' {
         InModuleScope Wintainium.Core {
-            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
-            $download=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
-            $verification=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
-            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$fixture.Installer; ArtifactFormat='exe' }
-            $installation=[pscustomobject]@{ OperationId=$fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
-            $reconciliationResult=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
-            $authoritative=[pscustomobject]@{ OperationId=$fixture.OperationId; IsSuccessful=$false; Status='Failed'; Persisted=$false; ReasonCode='InstalledStatePersistenceFailed'; Errors=@([pscustomobject]@{ Code='InstalledStatePersistenceFailed'; Message='fixture persistence failure' }) }
+            $script:fixture = & $script:AuthoritativeLifecycleFixtureFactory
+            $download=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Downloaded'; Uri='https://example.test/app.exe'; FileName='app.exe'; DestinationPath='/tmp/app.exe'; BytesWritten=10 }
+            $verification=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Verified'; IsSuccessful=$true; Algorithm='SHA256'; ExpectedHash=('a'*64); ActualHash=('a'*64); DestinationPath='/tmp/app.exe' }
+            $selection=[pscustomobject]@{ IsSelected=$true; InstallerPlugin=$script:fixture.Installer; ArtifactFormat='exe' }
+            $installation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; Status='Completed'; IsSuccessful=$true; ExitCode=0 }
+            $reconciliationResult=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$true; Status='Reconciled'; Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='2.0.0'; EvidenceSource='Fixture' }; Errors=@(); Warnings=@(); LogEvents=@() }
+            $authoritative=[pscustomobject]@{ OperationId=$script:fixture.OperationId; IsSuccessful=$false; Status='Failed'; Persisted=$false; ReasonCode='InstalledStatePersistenceFailed'; Errors=@([pscustomobject]@{ Code='InstalledStatePersistenceFailed'; Message='fixture persistence failure' }) }
 
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
-            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$fixture.OperationId; IsValid=$true; Manifest=$fixture.Manifest; ProviderPlugin=$fixture.Provider; InstallerPlugin=$fixture.Installer; ReconciliationPlugin=$fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-            Mock Invoke-WintainiumProviderOperation { $fixture.Release }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:fixture.OperationId; IsValid=$true; Manifest=$script:fixture.Manifest; ProviderPlugin=$script:fixture.Provider; InstallerPlugin=$script:fixture.Installer; ReconciliationPlugin=$script:fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            Mock Invoke-WintainiumProviderOperation { $script:fixture.Release }
             Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
-            Mock Get-WintainiumUpdateDecision { $fixture.Decision }
-            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$fixture.OperationId; UpdateDecision=$fixture.Decision; SelectedRelease=$fixture.Decision.SelectedRelease; SelectedArtifact=$fixture.Decision.SelectedArtifact } }
+            Mock Get-WintainiumUpdateDecision { $script:fixture.Decision }
+            Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$script:fixture.OperationId; UpdateDecision=$script:fixture.Decision; SelectedRelease=$script:fixture.Decision.SelectedRelease; SelectedArtifact=$script:fixture.Decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload { $download }
             Mock Invoke-WintainiumArtifactVerification { $verification }
             Mock Select-WintainiumInstaller { $selection }
-            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; Manifest=$fixture.Manifest; Installer=$fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
-            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$fixture.OperationId; DownloadOperationId=$fixture.OperationId; PluginId=$fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
+            Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; Manifest=$script:fixture.Manifest; Installer=$script:fixture.Manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
+            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$script:fixture.OperationId; DownloadOperationId=$script:fixture.OperationId; PluginId=$script:fixture.Installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
@@ -170,18 +170,18 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
 
     It 'does not reconcile or persist state for a no-update lifecycle' {
         InModuleScope Wintainium.Core {
-            $fixture = & $script:AuthoritativeLifecycleFixtureFactory
+            $script:fixture = & $script:AuthoritativeLifecycleFixtureFactory
             $decision = [pscustomobject]@{
-                OperationId=$fixture.OperationId
+                OperationId=$script:fixture.OperationId
                 Status='NoUpdateAvailable'
                 IsUpdateAvailable=$false
                 SelectedRelease=$null
                 SelectedArtifact=$null
             }
 
-            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
-            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$fixture.OperationId; IsValid=$true; Manifest=$fixture.Manifest; ProviderPlugin=$fixture.Provider; InstallerPlugin=$fixture.Installer; ReconciliationPlugin=$fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-            Mock Invoke-WintainiumProviderOperation { $fixture.Release }
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:fixture.OperationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:fixture.OperationId; IsValid=$true; Manifest=$script:fixture.Manifest; ProviderPlugin=$script:fixture.Provider; InstallerPlugin=$script:fixture.Installer; ReconciliationPlugin=$script:fixture.Reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
+            Mock Invoke-WintainiumProviderOperation { $script:fixture.Release }
             Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed'; Version='1.0.0' } }
             Mock Get-WintainiumUpdateDecision { $decision }
             Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute for a no-update lifecycle' }
