@@ -85,6 +85,63 @@ Describe 'Wintainium public application update result' {
             @($result.Errors).Count | Should -Be 1
         }
     }
+    It 'exposes exactly the documented top-level properties and preserves empty collections as arrays' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$true
+                WasCancelled=$false
+                StageResults=@()
+                Error=$null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            @($result.PSObject.Properties.Name) | Should -Be @(
+                'OperationId'
+                'IsSuccessful'
+                'WasCancelled'
+                'Status'
+                'ApplicationId'
+                'Stages'
+                'Errors'
+                'Warnings'
+                'LogEvents'
+                'Error'
+            )
+            $result.Status | Should -Be 'Completed'
+            $result.Stages.GetType().Name | Should -Be 'Object[]'
+            $result.Errors.GetType().Name | Should -Be 'Object[]'
+            $result.Warnings.GetType().Name | Should -Be 'Object[]'
+            $result.LogEvents.GetType().Name | Should -Be 'Object[]'
+        }
+    }
+
+    It 'maps lifecycle state to the stable public status vocabulary' {
+        InModuleScope Wintainium.Core {
+            $cases = @(
+                [pscustomobject]@{ IsSuccessful=$true; WasCancelled=$false; Expected='Completed' }
+                [pscustomobject]@{ IsSuccessful=$false; WasCancelled=$false; Expected='Failed' }
+                [pscustomobject]@{ IsSuccessful=$true; WasCancelled=$true; Expected='Cancelled' }
+                [pscustomobject]@{ IsSuccessful=$false; WasCancelled=$true; Expected='Cancelled' }
+            )
+
+            foreach ($case in $cases) {
+                $lifecycle = [pscustomobject][ordered]@{
+                    OperationId=[guid]::NewGuid().ToString()
+                    IsSuccessful=$case.IsSuccessful
+                    WasCancelled=$case.WasCancelled
+                    StageResults=@()
+                    Error=$null
+                }
+
+                $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+                $result.Status | Should -Be $case.Expected
+            }
+        }
+    }
+
     It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
         InModuleScope Wintainium.Core {
             $operationId = [guid]::NewGuid().ToString()
