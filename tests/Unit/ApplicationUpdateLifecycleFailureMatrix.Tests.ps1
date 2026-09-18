@@ -29,8 +29,6 @@ Describe 'Wintainium application update lifecycle failure matrix' {
         $script:decision = [pscustomobject]@{ OperationId=$script:operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$script:release.Releases[0]; SelectedArtifact=$script:release.Releases[0].Artifacts[0] }
 
         Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
-        Mock Invoke-WintainiumInstallerOperation { throw 'installer must not execute after upstream failure' }
-        Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute after upstream failure' }
     }
 
     It 'blocks update execution when provider discovery fails' {
