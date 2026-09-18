@@ -67,6 +67,10 @@ Describe 'Wintainium application update lifecycle failure matrix' {
                     FailureKind='DownloadFailed'; ErrorMessage='Download fixture failure.'
                 }
             }
+            Mock Invoke-WintainiumArtifactVerification { throw 'verification must not execute after download failure' }
+            Mock Select-WintainiumInstaller { throw 'installer selection must not execute after download failure' }
+            Mock Invoke-WintainiumInstallerOperation { throw 'installer must not execute after download failure' }
+            Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute after download failure' }
 
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
