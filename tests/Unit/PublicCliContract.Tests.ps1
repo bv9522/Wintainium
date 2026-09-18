@@ -2,6 +2,7 @@ BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 
+    Remove-Module -Name Wintainium.Core -Force -ErrorAction SilentlyContinue
     Import-Module $script:modulePath -Force
 }
 
