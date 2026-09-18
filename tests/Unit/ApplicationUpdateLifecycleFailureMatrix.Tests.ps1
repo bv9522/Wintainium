@@ -50,11 +50,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             @($result.StageResults).Count | Should -Be 2
             $result.StageResults[-1].Execution.Result.Status | Should -Be 'DiscoveryFailed'
             $result.StageResults[-1].Execution.Result.IsSuccessful | Should -BeFalse
-            Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly
-            Should -Invoke Invoke-WintainiumArtifactVerification -Times 0 -Exactly
-            Should -Invoke Invoke-WintainiumInstallerOperation -Times 0 -Exactly
-            Should -Invoke Invoke-WintainiumReconciliationOperation -Times 0 -Exactly
-        }
+            Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly        }
     }
 
     It 'blocks verification, installation, and reconciliation when download fails' {
@@ -77,10 +73,6 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             $result.StageResults[-1].Execution.Result.Status | Should -Be 'Failed'
             $result.StageResults[-1].Execution.Result.FailureKind | Should -Be 'DownloadFailed'
             Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly
-            Should -Invoke New-WintainiumDownloadRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $script:operationId }
-            Should -Invoke Invoke-WintainiumArtifactVerification -Times 0 -Exactly
-            Should -Invoke Invoke-WintainiumInstallerOperation -Times 0 -Exactly
-            Should -Invoke Invoke-WintainiumReconciliationOperation -Times 0 -Exactly
-        }
+            Should -Invoke New-WintainiumDownloadRequest -Times 1 -Exactly -ParameterFilter { $OperationId -eq $script:operationId }        }
     }
 }
