@@ -96,7 +96,6 @@ Representative focused regression files include:
 - `ApplicationUpdateLifecycleFailureMatrix.Tests.ps1`
 - `ApplicationUpdateLifecycleAuthoritativeState.Tests.ps1`
 - `AuthoritativeStateReconciliation.Tests.ps1`
-- `ApplicationUpdateLifecycleEndToEnd.Tests.ps1`
 - `PublicBoundary.Tests.ps1`
 - `PublicCliContract.Tests.ps1`
 
