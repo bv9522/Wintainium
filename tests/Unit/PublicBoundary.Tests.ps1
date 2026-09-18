@@ -10,8 +10,8 @@ Describe 'Wintainium public Core boundary' {
         $exported | Should -Be @(
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
-            'Test-WintainiumApplicationDefinition'
             'Invoke-WintainiumApplicationUpdate'
+            'Test-WintainiumApplicationDefinition'
         )
     }
 
