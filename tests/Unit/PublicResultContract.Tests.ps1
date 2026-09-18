@@ -54,8 +54,6 @@ BeforeAll {
     }
 }
 
-}
-
 Describe 'Wintainium public result contract'{
     It 'returns a structured manifest-discovery result with correlation and diagnostics fields' {
         $path = Join-Path -Path $TestDrive -ChildPath 'manifests'
