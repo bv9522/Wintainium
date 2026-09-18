@@ -19,6 +19,10 @@ Describe 'Wintainium public Core boundary' {
         @(Get-Command Invoke-WintainiumApplicationUpdateLifecycle -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
+    It 'does not expose the public result projection helper as a public command' {
+        @(Get-Command ConvertTo-WintainiumPublicApplicationUpdateResult -ErrorAction SilentlyContinue).Count | Should -Be 0
+    }
+
     It 'does not expose internal lifecycle dependencies through the public update command' {
         $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -Module Wintainium.Core
 
