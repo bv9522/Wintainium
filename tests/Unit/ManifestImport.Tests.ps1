@@ -16,7 +16,7 @@ Describe 'Wintainium manifest import' {
 
         $result.IsValid | Should -Be $true
         $result.Manifest | Should -Not -BeNullOrEmpty
-        $result.Manifest.ManifestVersion | Should -Be '1.0'
+        $result.Manifest.ManifestVersion | Should -Be '1.1'
         $result.Manifest.Id | Should -Be 'org.neovim.neovim'
         $result.Manifest.Name | Should -Be 'Neovim'
         $result.Errors.Count | Should -Be 0
