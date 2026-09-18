@@ -99,7 +99,7 @@ Representative focused regression files include:
 - `PublicBoundary.Tests.ps1`
 - `PublicCliContract.Tests.ps1`
 
-The final Phase 9 gate is the complete Phase 1–9 Pester regression suite. Phase 9 is not locked until that suite is green.
+The final Phase 9 gate is the complete Phase 1–9 Pester regression suite. The final suite completed with **428/428 tests passing, 0 failed, and 0 skipped**. Phase 9 is therefore locked.
 
 ## Phase 9 audit findings and resolutions
 
