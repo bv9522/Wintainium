@@ -13,7 +13,7 @@ Describe 'Wintainium plugin registry' {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
 
-        $registry.Plugins.Count | Should -Be 5
+        $registry.Plugins.Count | Should -Be 6
         $registry.DescriptorErrors.Count | Should -Be 1
     }
 
