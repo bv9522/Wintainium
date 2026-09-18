@@ -4,8 +4,9 @@
 
 **Project:** Wintainium
 **Phase:** 9
-**Status:** In progress
+**Status:** Locked
 **Branch:** `phase-9-complete-update-lifecycle`
+**Final regression:** 428/428 tests passing
 **Baseline:** Phase 8F locked at commit `dfe71abfe1a6c0a9cc5d6c00d09b6ef1b1ae11d8` with 382/382 tests passing.
 
 ### Product Owner decision
