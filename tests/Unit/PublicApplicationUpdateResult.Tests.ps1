@@ -142,6 +142,40 @@ Describe 'Wintainium public application update result' {
         }
     }
 
+    It 'exposes exactly the documented stage summary properties' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$true
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        Stage=[pscustomobject]@{ Sequence=1; Name='ManifestValidation'; InternalOnly='secret' }
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$true
+                            WasCancelled=$false
+                            Result=[pscustomobject]@{ IsSuccessful=$true; Status='Validated'; Errors=@(); Warnings=@(); LogEvents=@() }
+                            InternalOnly='secret'
+                        }
+                    }
+                )
+                Error=$null
+                InternalState='secret'
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            @($result.Stages[0].PSObject.Properties.Name) | Should -Be @(
+                'Sequence'
+                'Name'
+                'Status'
+                'IsSuccessful'
+                'WasCancelled'
+                'Error'
+            )
+        }
+    }
+
     It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
         InModuleScope Wintainium.Core {
             $operationId = [guid]::NewGuid().ToString()
