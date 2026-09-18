@@ -28,11 +28,11 @@ Describe 'Wintainium application update lifecycle failure matrix' {
         }
         $script:decision = [pscustomobject]@{ OperationId=$script:operationId; Status='UpdateAvailable'; IsUpdateAvailable=$true; SelectedRelease=$script:release.Releases[0]; SelectedArtifact=$script:release.Releases[0].Artifacts[0] }
 
-        Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
     }
 
     It 'blocks update execution when provider discovery fails' {
         InModuleScope Wintainium.Core {
+        Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation {
                 [pscustomobject]@{
                     OperationId=$script:operationId; IsSuccessful=$false; Status='DiscoveryFailed'
@@ -58,6 +58,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
 
     It 'blocks verification, installation, and reconciliation when download fails' {
         InModuleScope Wintainium.Core {
+        Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$script:operationId; IsValid=$true; Manifest=$script:manifest; ProviderPlugin=$script:provider; InstallerPlugin=$script:installer; ReconciliationPlugin=$script:reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation { $script:release }
             Mock Invoke-WintainiumDownload {
                 [pscustomobject]@{
