@@ -20,6 +20,7 @@ Describe 'Wintainium Core module metadata' {
             'Get-WintainiumManifest'
             'Test-WintainiumApplicationDefinition'
             'Get-WintainiumApplicationRelease'
+            'Invoke-WintainiumApplicationUpdate'
         )
         @($manifest.CmdletsToExport) | Should -BeNullOrEmpty
         @($manifest.AliasesToExport) | Should -BeNullOrEmpty
