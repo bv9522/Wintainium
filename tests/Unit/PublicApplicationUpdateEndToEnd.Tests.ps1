@@ -52,7 +52,7 @@ Describe 'Wintainium public application update end-to-end regression' {
             $result.Stages[0].Name | Should -Be 'ManifestValidation'
             $result.Stages[4].Name | Should -Be 'Verification'
             $result.Stages[7].Name | Should -Be 'Reconciliation'
-            $result.Stages[7].Status | Should -Be 'Completed'
+            $result.Stages[7].Status | Should -Be 'Reconciled'
             @($result.Errors).Count | Should -Be 0
             Should -Invoke Invoke-WintainiumArtifactVerification -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId }
             Should -Invoke Invoke-WintainiumInstallerOperation -Times 1 -Exactly -ParameterFilter { $Invocation.OperationId -eq $operationId }
