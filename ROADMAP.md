@@ -111,4 +111,4 @@ Phase 10 exposes the completed lifecycle through a stable public PowerShell comm
 - Keep lifecycle-layer failure tests as the detailed engine regression while adding public-command entrypoint coverage.
 - Run the full Phase 1–10 regression before locking Phase 10.
 
-**Status: Implementation and regression coverage complete; awaiting final full-suite Pester checkpoint.** Public-command end-to-end coverage now exercises the successful complete lifecycle and no-update path. Existing lifecycle end-to-end/failure-matrix/authoritative-state coverage supplies the specified failure, cancellation, Unknown-evidence, OperationId, and verification hard-gate scenarios.
+**Status: Complete and locked.** Public-command end-to-end coverage exercises the successful complete lifecycle and no-update path. Existing lifecycle end-to-end/failure-matrix/authoritative-state coverage supplies the specified failure, cancellation, Unknown-evidence, OperationId, persistence, and verification hard-gate scenarios. The full Phase 1–10 regression is **454/454 green**.
