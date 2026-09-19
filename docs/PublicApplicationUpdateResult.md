@@ -7,7 +7,7 @@ stable result projection over the internal lifecycle result.
 
 ### Top-level result
 
-- `OperationId` — Core-generated correlation identifier.
+- `OperationId` — Core-generated correlation identifier. It is null when execution fails before Core creates the orchestration request; otherwise it is preserved for the operation.
 - `IsSuccessful` — true only when the lifecycle completed successfully.
 - `WasCancelled` — true when cancellation stopped the lifecycle.
 - `Status` — `Completed`, `Failed`, or `Cancelled`.
