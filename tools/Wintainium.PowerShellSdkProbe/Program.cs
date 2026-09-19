@@ -1,4 +1,5 @@
 using System.Management.Automation;
+using System.Management.Automation.Runspaces;
 
 if (args.Length != 1)
 {
@@ -9,7 +10,7 @@ if (args.Length != 1)
 var modulePath = Path.GetFullPath(args[0]);
 
 var initialState = InitialSessionState.CreateDefault();
-initialState.ExecutionPolicy = ExecutionPolicy.Unrestricted;
+initialState.ExecutionPolicy = Microsoft.PowerShell.ExecutionPolicy.Unrestricted;
 
 using var powershell = PowerShell.Create(initialState);
 
