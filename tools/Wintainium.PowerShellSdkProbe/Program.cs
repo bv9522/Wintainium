@@ -35,7 +35,7 @@ powershell.AddCommand("Import-Module")
     .AddParameter("Name", modulePath)
     .AddParameter("Force");
 
-var importResults = powershell.Invoke();
+_ = powershell.Invoke();
 if (powershell.HadErrors)
 {
     Console.Error.WriteLine("PowerShell module import failed.");
@@ -89,17 +89,32 @@ try
         return 1;
     }
 
-    var result = results[0].BaseObject;
-    var operationId = result.GetType().GetProperty("OperationId")?.GetValue(result);
-    var isSuccessful = result.GetType().GetProperty("IsSuccessful")?.GetValue(result);
-    var manifestPaths = result.GetType().GetProperty("ManifestPaths")?.GetValue(result);
+    var pipelineResult = results[0];
+    var baseObject = pipelineResult.BaseObject;
+    var runtimeType = baseObject.GetType();
 
     Console.WriteLine("PowerShell SDK hosting: PASS");
     Console.WriteLine($"Imported module: {modulePath}");
     Console.WriteLine("Public command resolved: Get-WintainiumManifest");
-    Console.WriteLine($"OperationId type: {operationId?.GetType().FullName ?? "<null>"}");
-    Console.WriteLine($"IsSuccessful: {isSuccessful}");
-    Console.WriteLine($"ManifestPaths type: {manifestPaths?.GetType().FullName ?? "<null>"}");
+    Console.WriteLine($"Pipeline result type: {pipelineResult.GetType().FullName}");
+    Console.WriteLine($"Base object type: {runtimeType.FullName}");
+    Console.WriteLine($"Base object string: {baseObject}");
+
+    var properties = pipelineResult.Properties
+        .Select(property => new
+        {
+            property.Name,
+            ValueType = property.Value?.GetType().FullName ?? "<null>",
+            Value = property.Value?.ToString() ?? "<null>"
+        })
+        .OrderBy(property => property.Name)
+        .ToArray();
+
+    Console.WriteLine("Returned properties:");
+    foreach (var property in properties)
+    {
+        Console.WriteLine($"  {property.Name}: {property.ValueType} = {property.Value}");
+    }
 
     return 0;
 }
