@@ -30,6 +30,9 @@ Use this file as a compact orientation guide when assisting with Wintainium.
 
 ## Current state
 
+Phase 10 is complete and locked. The public PowerShell surface now contains exactly four commands: Get-WintainiumManifest, Test-WintainiumApplicationDefinition, Get-WintainiumApplicationRelease, and Invoke-WintainiumApplicationUpdate. The public update command invokes the complete Core-owned lifecycle and projects its internal result into the stable PublicApplicationUpdateResult contract. Phase 11A has now validated the planned C#/.NET integration mechanism with an isolated .NET 10 probe using Microsoft.PowerShell.SDK 7.6.6; embedded runspace hosting can import Wintainium.Core, resolve a public command, execute it, and receive structured results without changing the machine execution policy. The probe is an audit artifact for Phase 11A and is not the production GUI.
+
+
 Phases 1–4 are implemented, tested, and locked. Phase 3 includes the versioned
 provider contract and GitHub Releases reference provider. Phase 4 produces a
 structured update decision from validated manifest policy, installed state, and
@@ -58,18 +61,11 @@ and a lifecycle entry boundary that initializes state once and delegates the
 complete operation to the workflow coordinator. The workflow preserves the
 mandatory verification boundary and does not infer trust from download success.
 
-Phase 8A is complete. The public PowerShell surface is intentionally limited to
-`Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`, and
-`Get-WintainiumApplicationRelease`. Low-level installer-request construction is
-internal. The exported module boundary is presentation-neutral and returns
-structured objects rather than formatted output.
+Phase 8A is complete. The public PowerShell surface was intentionally limited to the supported presentation-neutral commands at that time. Low-level installer-request construction remains internal.
 
-Phase 8B is complete for the current public surface. Public result contracts,
-stable error categories, comment-based help, contract tests, and the
-Core-owned orchestration composition requirements are documented. The public
-end-to-end update command remains withheld until the authoritative installed-
-state boundary is established. Callers must not manufacture that state or
-construct internal orchestration objects to bypass the boundary.
+Phase 8B is complete for the Phase 8-era public surface. Public result contracts, stable error categories, comment-based help, contract tests, and Core-owned orchestration composition requirements are documented.
+
+Phase 10 subsequently completed the authoritative installed-state composition and exposed the complete end-to-end update operation as the fourth public command. The public update result contract keeps internal lifecycle state and private request objects out of the presentation boundary.
 
 Phase 8C is complete for the current implementation boundary. The user-facing
 documentation layer covers Getting Started, CLI usage, manifest authoring,
@@ -86,7 +82,7 @@ protects the output boundary, refuses overwrites, validates before archiving,
 and cleans partial output after post-creation failure. The final Phase 8D
 regression checkpoint is 356/356 green.
 
-Phase 8E is active. It owns the upgrade and persistence contract: classifying
+Phase 8E is complete and locked. It established the upgrade and persistence contract: classifying
 program files, user configuration, application state, logs, caches, manifests,
 and temporary artifacts; defining safe replacement and preservation behavior;
 establishing the authoritative installed-application state boundary needed by
@@ -101,6 +97,6 @@ an existing application record atomically through a temporary file; and the
 store preserves separate records by stable `ApplicationId`. This persistence
 layer is storage only and does not make update decisions or execute applications.
 
-The repository is authoritative over this context. When this file conflicts
-with implementation, contracts, or tests, inspect the repository and update
-this orientation document rather than relying on stale assumptions.
+The repository is authoritative over this context. When this file conflicts with implementation, contracts, or tests, inspect the repository and update this orientation document rather than relying on stale assumptions.
+
+Phase 11A is complete. It established the Windows/.NET toolchain baseline, validated the official WinUI 3 template can restore and build, validated in-process PowerShell SDK hosting from .NET 10, and reconciled the GUI-readiness documentation with the completed Phase 10 public update boundary. Phase 11B may now establish the production C#/.NET GUI project foundation.
