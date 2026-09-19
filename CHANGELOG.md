@@ -25,6 +25,8 @@ versioning once releases begin.
 - Phase 8 release packaging boundary, independent release validation, and versioned package assembly tooling.
 - Phase 8E managed installed-state persistence, update-decision composition, and controlled engine N→N+1 upgrade tooling.
 - Phase 8F GUI readiness contract and presentation-boundary audit coverage.
+- Phase 9 complete Core-owned application update lifecycle, including artifact verification, post-install reconciliation, authoritative managed-state handling, and lifecycle failure/cancellation behavior.
+- Phase 10 public `Invoke-WintainiumApplicationUpdate` command and stable public result projection.
 
 ### Changed
 
@@ -37,6 +39,8 @@ versioning once releases begin.
 - Phase 8D release packaging now defines deterministic file selection and relative layout, authoritative versioning, an explicit distributable boundary, independent package validation, preflight and overwrite protection, and cleanup after post-creation failure.
 - Phase 8E established a narrow Wintainium-managed installed-state boundary, an internal update-decision composition seam, and a validated transactional program-file upgrade path while preserving durable user state outside the program root.
 - Phase 8F audited public structured-result arrays, including empty collection behavior, and synchronized the public PowerShell/result contracts with the completed persistence boundary. The future GUI remains a presentation client of Core rather than a second orchestration engine.
+- Phase 10 established a dedicated public update parameter boundary, explicit default forwarding, a projection-only public result contract, and structured early StateRoot failure handling without exposing internal orchestration dependencies.
+- Phase 10 documentation now identifies the four-command public surface and describes the completed update lifecycle consistently across the CLI reference, Getting Started guide, README, roadmap, and public PowerShell contract.
 
 ### Phase 8D lock
 
@@ -49,3 +53,7 @@ versioning once releases begin.
 ### Phase 8F lock
 
 - Phase 8F is complete and locked after the GUI readiness audit and **382/382 green** full-suite regression checkpoint. The public presentation boundary is documented, tested, and intentionally stops short of an incomplete end-to-end update command.
+
+### Phase 10 checkpoint
+
+- Phase 10C implementation and audit work is complete pending the final focused Pester checkpoint. The pre-documentation-sync public boundary regression was **58/58 green**. The synchronized public update documentation now reflects the four-command surface and complete lifecycle.
