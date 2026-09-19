@@ -27,6 +27,7 @@ versioning once releases begin.
 - Phase 8F GUI readiness contract and presentation-boundary audit coverage.
 - Phase 9 complete Core-owned application update lifecycle, including artifact verification, post-install reconciliation, authoritative managed-state handling, and lifecycle failure/cancellation behavior.
 - Phase 10 public `Invoke-WintainiumApplicationUpdate` command and stable public result projection.
+- Phase 11A Windows/.NET GUI foundation audit and in-process PowerShell SDK hosting probe.
 
 ### Changed
 
@@ -58,3 +59,9 @@ versioning once releases begin.
 
 - Phase 10C implementation and audit work is complete. The focused public-contract regression is **58/58 green**.
 - Phase 10G public-command end-to-end regression coverage now exercises the complete successful lifecycle and no-update path; the existing lifecycle failure matrix, authoritative-state, and cancellation regressions cover verification hard-gate, installer failure, reconciliation failure, persistence failure, cancellation, Unknown evidence, and OperationId preservation. Phase 10 is complete and locked. The final full Phase 1–10 regression is **454/454 green**.
+
+### Phase 11A checkpoint
+
+- Phase 11A validated the Windows/.NET toolchain baseline, restored and built the official WinUI 3 C# template, and proved in-process Microsoft.PowerShell.SDK 7.6.6 hosting from .NET 10 without changing machine execution policy.
+- The probe imported Wintainium.Core, resolved Get-WintainiumManifest, executed it successfully, and demonstrated structured result transfer across the C# / PowerShell boundary.
+- GUI-readiness, project, and AI orientation documentation were reconciled with the completed Phase 10 four-command public surface. Phase 11A is complete; the production GUI project begins in Phase 11B.
