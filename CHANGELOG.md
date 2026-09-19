@@ -56,4 +56,5 @@ versioning once releases begin.
 
 ### Phase 10 checkpoint
 
-- Phase 10C implementation and audit work is complete pending the final focused Pester checkpoint. The pre-documentation-sync public boundary regression was **58/58 green**. The synchronized public update documentation now reflects the four-command surface and complete lifecycle.
+- Phase 10C implementation and audit work is complete. The focused public-contract regression is **58/58 green**.
+- Phase 10G public-command end-to-end regression coverage now exercises the complete successful lifecycle and no-update path; the existing lifecycle failure matrix, authoritative-state, and cancellation regressions cover verification hard-gate, installer failure, reconciliation failure, persistence failure, cancellation, Unknown evidence, and OperationId preservation. Phase 10 remains pending the final full Phase 1–10 Pester checkpoint.
