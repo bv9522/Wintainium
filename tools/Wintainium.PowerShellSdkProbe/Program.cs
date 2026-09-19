@@ -8,7 +8,27 @@ if (args.Length != 1)
 
 var modulePath = Path.GetFullPath(args[0]);
 
-using var powershell = PowerShell.Create();
+var initialState = InitialSessionState.CreateDefault();
+initialState.ExecutionPolicy = ExecutionPolicy.Unrestricted;
+
+using var powershell = PowerShell.Create(initialState);
+
+powershell.AddCommand("Get-ExecutionPolicy");
+var executionPolicyResults = powershell.Invoke();
+if (powershell.HadErrors || executionPolicyResults.Count != 1)
+{
+    Console.Error.WriteLine("PowerShell SDK execution-policy probe failed.");
+    foreach (var error in powershell.Streams.Error)
+    {
+        Console.Error.WriteLine(error.ToString());
+    }
+
+    return 1;
+}
+
+Console.WriteLine($"Hosted execution policy: {executionPolicyResults[0].BaseObject}");
+powershell.Commands.Clear();
+powershell.Streams.Error.Clear();
 
 powershell.AddCommand("Import-Module")
     .AddParameter("Name", modulePath)
@@ -75,7 +95,7 @@ try
 
     Console.WriteLine("PowerShell SDK hosting: PASS");
     Console.WriteLine($"Imported module: {modulePath}");
-    Console.WriteLine($"Public command resolved: Get-WintainiumManifest");
+    Console.WriteLine("Public command resolved: Get-WintainiumManifest");
     Console.WriteLine($"OperationId type: {operationId?.GetType().FullName ?? "<null>"}");
     Console.WriteLine($"IsSuccessful: {isSuccessful}");
     Console.WriteLine($"ManifestPaths type: {manifestPaths?.GetType().FullName ?? "<null>"}");
