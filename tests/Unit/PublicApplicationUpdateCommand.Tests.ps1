@@ -128,18 +128,13 @@ Describe 'Wintainium public application update command boundary' {
     }
 
 
-    It 'rejects a missing required manifest path before invoking the lifecycle' {
-        InModuleScope Wintainium.Core {
-            Mock Invoke-WintainiumApplicationUpdateLifecycle {
-                throw 'Lifecycle should not be invoked for invalid public input.'
-            }
+    It 'marks the required public inputs as mandatory' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -CommandType Function
 
-            {
-                Invoke-WintainiumApplicationUpdate -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads'
-            } | Should -Throw
-
-            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 0 -Exactly
-        }
+        $command.Parameters['ManifestPath'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory | Should -Contain $true
+        $command.Parameters['StateRoot'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory | Should -Contain $true
+        $command.Parameters['MachineArchitecture'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory | Should -Contain $true
+        $command.Parameters['DownloadRoot'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory | Should -Contain $true
     }
 
     It 'rejects an empty required manifest path before invoking the lifecycle' {
