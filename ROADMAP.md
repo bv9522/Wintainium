@@ -128,3 +128,13 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Reconcile stale Phase 8 documentation with the completed Phase 10 four-command public surface.
 
 **Status: Complete.** The .NET 10 / PowerShell SDK 7.6.6 probe successfully imported Wintainium.Core, resolved and executed Get-WintainiumManifest, and received a structured result. The WinUI 3 C# template restored and built successfully. Documentation now reflects the four-command public surface and the completed update lifecycle. The production GUI project remains intentionally uncreated until 11B.
+
+### 11B — C#/.NET GUI Project Foundation
+
+- Create the production WinUI 3 desktop project using the established .NET 10 baseline.
+- Establish the desktop application's WinUI lifecycle and minimal window boundary.
+- Establish the initial C# project dependency model without connecting UI code to Core internals.
+- Keep the visual shell intentionally minimal so later phases can make deliberate product and UX decisions.
+- Do not finalize launch dimensions, navigation model, title-bar treatment, iconography, tabs, application-list layout, settings layout, or other detailed visual decisions in 11B.
+
+**Status: In progress.** The production desktop project foundation is present under `src/Wintainium.Desktop`. A local build checkpoint is required before 11B is considered complete.
