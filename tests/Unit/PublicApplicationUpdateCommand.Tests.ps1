@@ -11,9 +11,9 @@ Describe 'Wintainium public application update command boundary' {
 
     It 'forwards the documented public inputs to the Core lifecycle without exposing internal dependencies' {
         InModuleScope Wintainium.Core {
-            $captured = $null
+            $script:captured = $null
             Mock Invoke-WintainiumApplicationUpdateLifecycle {
-                $captured = [pscustomobject][ordered]@{
+                $script:captured = [pscustomobject][ordered]@{
                     ManifestPath=$ManifestPath
                     StateRoot=$StateRoot
                     MachineArchitecture=$MachineArchitecture
@@ -37,23 +37,23 @@ Describe 'Wintainium public application update command boundary' {
             $result = Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' -PluginRoot 'C:\Wintainium\Plugins' -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json' -InstallerTimeoutMilliseconds 120000 -CancellationToken $tokenSource.Token
 
             $result.Status | Should -Be 'Completed'
-            $captured.ManifestPath | Should -Be 'C:\Wintainium\manifests\Example.wintainium.json'
-            $captured.StateRoot | Should -Be 'C:\Wintainium\State'
-            $captured.MachineArchitecture | Should -Be 'x64'
-            $captured.DownloadRoot | Should -Be 'C:\Wintainium\Downloads'
-            $captured.PluginRoot | Should -Be 'C:\Wintainium\Plugins'
-            $captured.SchemaPath | Should -Be 'C:\Wintainium\schemas\application-manifest.schema.json'
-            $captured.InstallerTimeoutMilliseconds | Should -Be 120000
-            $captured.CancellationToken.Equals($tokenSource.Token) | Should -BeTrue
+            $script:captured.ManifestPath | Should -Be 'C:\Wintainium\manifests\Example.wintainium.json'
+            $script:captured.StateRoot | Should -Be 'C:\Wintainium\State'
+            $script:captured.MachineArchitecture | Should -Be 'x64'
+            $script:captured.DownloadRoot | Should -Be 'C:\Wintainium\Downloads'
+            $script:captured.PluginRoot | Should -Be 'C:\Wintainium\Plugins'
+            $script:captured.SchemaPath | Should -Be 'C:\Wintainium\schemas\application-manifest.schema.json'
+            $script:captured.InstallerTimeoutMilliseconds | Should -Be 120000
+            $script:captured.CancellationToken.Equals($tokenSource.Token) | Should -BeTrue
             Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly
         }
     }
 
     It 'uses the documented default timeout when the caller omits it' {
         InModuleScope Wintainium.Core {
-            $capturedTimeout = $null
+            $script:capturedTimeout = $null
             Mock Invoke-WintainiumApplicationUpdateLifecycle {
-                $capturedTimeout = $InstallerTimeoutMilliseconds
+                $script:capturedTimeout = $InstallerTimeoutMilliseconds
                 [pscustomobject][ordered]@{
                     OperationId='operation-10c-default-timeout'
                     IsSuccessful=$true
@@ -65,7 +65,7 @@ Describe 'Wintainium public application update command boundary' {
 
             Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' | Out-Null
 
-            $capturedTimeout | Should -Be 600000
+            $script:capturedTimeout | Should -Be 600000
         }
     }
 
