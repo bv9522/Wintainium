@@ -43,8 +43,8 @@ Describe 'Wintainium public result contract' {
                 'OperationId'
                 'Stages'
                 'Status'
-                'WasCancelled'
                 'Warnings'
+                'WasCancelled'
             )
             $result.Status | Should -Be 'Failed'
             $result.ApplicationId | Should -Be 'example.app'
