@@ -69,6 +69,33 @@ Describe 'Wintainium public application update command boundary' {
         }
     }
 
+    It 'uses the documented plugin, schema, and cancellation defaults when omitted' {
+        InModuleScope Wintainium.Core {
+            $script:capturedDefaults = $null
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                $script:capturedDefaults = [pscustomobject][ordered]@{
+                    PluginRoot = $PluginRoot
+                    SchemaPath = $SchemaPath
+                    CancellationToken = $CancellationToken
+                }
+
+                [pscustomobject][ordered]@{
+                    OperationId='operation-10c-defaults'
+                    IsSuccessful=$true
+                    WasCancelled=$false
+                    StageResults=@()
+                    Error=$null
+                }
+            }
+
+            Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' | Out-Null
+
+            $script:capturedDefaults.PluginRoot | Should -Be $script:WintainiumDefaultPluginRoot
+            $script:capturedDefaults.SchemaPath | Should -Be (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
+            $script:capturedDefaults.CancellationToken.Equals([System.Threading.CancellationToken]::None) | Should -BeTrue
+        }
+    }
+
     It 'does not accept internal orchestration inputs at the public command boundary' {
         $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -CommandType Function
 
