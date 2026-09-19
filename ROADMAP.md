@@ -23,7 +23,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Add appropriate human-readable and machine-readable presentation without putting presentation logic into Core business rules.
 - Add contract tests for the supported public command surface.
 
-**Status: Complete for the current public surface.** `docs/PublicResultContract.md` and `docs/PublicPowerShellContract.md` define the current result and presentation-neutral API boundary, and contract coverage exists for the three currently supported public commands. Their comment-based help documents structured outputs and command responsibilities. The Phase 7 lifecycle remains internal until Core has concrete composition seams for all seven real application-management stages.
+**Status: Complete for the Phase 8-era public surface.** Phase 10 later extended the public surface with the completed update command after the required Core-owned composition and result-projection boundaries were established.
 
 ### 8C — User documentation and operational guidance
 
@@ -31,7 +31,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Document configuration, manifests, plugins, update operations, failures, cancellation, logs, and troubleshooting.
 - Keep architecture/developer documentation aligned with public contracts.
 
-**Status: Complete for the current implementation boundary.** `docs/GettingStarted.md`, `docs/CLI.md`, `docs/ManifestAuthoring.md`, and `docs/Diagnostics.md` form the user-facing documentation layer. The guides describe only currently implemented public behavior and explicitly identify the installed-state/update boundary that remains future work. Diagnostics documents structured errors, operation correlation, warnings, log events, and operation-specific troubleshooting. The project charter, architecture overview, module metadata, README, and roadmap have been synchronized with the current engine boundary. Wintainium does not yet expose a persistent end-user configuration command or a public update/install operation, so documentation does not invent those interfaces.
+**Status: Complete for the Phase 8-era implementation boundary.** Phase 10 superseded the earlier documentation's deliberate deferral of public update execution.
 
 ### 8D — Release boundary and packaging
 
@@ -48,13 +48,7 @@ Phase 8 bridges the completed engine and the eventual graphical client without m
 - Establish the authoritative installed-application state boundary needed by update orchestration.
 - Validate a supported N→N+1 upgrade path without introducing speculative persistence infrastructure.
 
-**Status: Complete.** `docs/UpgradePersistence.md` establishes the ownership model, durable-state boundary, installed-state semantics, missing/stale-state rules, upgrade transaction boundary, recovery expectations, and security boundary. Core has an internal JSON persistence boundary for normalized `InstalledApplicationState`: reads return `Unknown` when no record exists, writes validate state before persisting, records are keyed by stable application identity, and writes use a temporary file followed by overwrite-safe replacement.
-
-The Core-owned update-decision composition seam is implemented at the correct internal boundary. `Get-WintainiumApplicationUpdateDecision` accepts the external manifest path, state root, machine architecture, and optional plugin/schema roots; it obtains release discovery, retrieves managed installed state by manifest identity, constructs the internal `UpdateDecisionInput`, and delegates the decision to the locked Phase 4 engine. `Unknown` remains indeterminate and `NotInstalled` remains distinct from an update decision. The full seven-stage lifecycle is not exposed because verification and post-install state reconciliation do not yet have authoritative composition contracts; the final audit confirms that this limitation is intentional and prevents a false or caller-constructed end-to-end API.
-
-The controlled N→N+1 engine replacement path is implemented in `tools/Invoke-WintainiumEngineUpgrade.ps1`. It validates the incoming package before mutation, stages a complete new program tree outside the active root, validates the staged tree independently, switches the program directory only after validation succeeds, preserves durable data located outside the program root, and retains a transaction-specific recovery backup through the activation step. If activation fails, the previous program root is restored. If old-program cleanup fails after a successful switch, the active upgrade remains successful and the recovery location is returned as a warning. The upgrade tool remains outside the distributable runtime package boundary because it is release/installation tooling. Focused coverage verifies successful replacement, obsolete-program removal, durable-state preservation, invalid-package rejection before mutation, missing-root rejection, and package/program boundary protection.
-
-The complete Phase 8 regression checkpoint after the upgrade transaction and its hardening is **377/377 green**.
+**Status: Complete.** `docs/UpgradePersistence.md` establishes the ownership model, durable-state boundary, installed-state semantics, missing/stale-state rules, upgrade transaction boundary, recovery expectations, and security boundary.
 
 ### 8F — GUI readiness audit and Phase 8 lock
 
@@ -63,7 +57,45 @@ The complete Phase 8 regression checkpoint after the upgrade transaction and its
 - Complete regression, documentation, package, and upgrade validation.
 - Lock Phase 8 only when the public contract, release boundary, and upgrade behavior are coherent and tested.
 
-**Status: Complete and locked.** `docs/GUIReadiness.md` defines the presentation seam, allowed public result consumption, prohibited private dependencies, Core-owned stage policy, OperationId and cancellation semantics, managed installed-state `Unknown` behavior, and the intentional deferral of a public end-to-end update operation until verification and post-install state reconciliation have authoritative composition contracts. The module exports exactly the three supported public commands. Contract tests verify the public export surface, private orchestration isolation, structured array-valued results including empty collections, and the documented GUI boundary. The Phase 8F audit also synchronized the public PowerShell and result contracts with the completed 8E state boundary. The final full-suite regression checkpoint is **382/382 green**.
+**Status: Complete and locked.** `docs/GUIReadiness.md` defines the presentation seam, allowed public result consumption, prohibited private dependencies, Core-owned stage policy, OperationId and cancellation semantics, managed installed-state `Unknown` behavior, and the presentation/client boundary. Phase 9 subsequently completed the internal update lifecycle, and Phase 10 exposed that lifecycle through a dedicated public contract.
+
+## Phase 9 — Complete Update Lifecycle
+
+**Status: Complete and locked.**
+
+Phase 9 completed the Core-owned end-to-end lifecycle: manifest validation, release discovery, update decision, download, verification, installer selection, installation, reconciliation, and authoritative managed-state handling. Verification remains Core-owned and mandatory before installation; reconciliation remains an application-scoped evidence boundary; unknown managed state remains unknown rather than being manufactured as installed or not installed.
+
+## Phase 10 — Public Application Update Contract
+
+Phase 10 exposes the completed lifecycle through a stable public PowerShell command without leaking internal orchestration contracts.
+
+### 10A — Public Command Contract
+
+- Establish the public `Invoke-WintainiumApplicationUpdate` parameter boundary.
+- Keep OperationId Core-generated.
+- Exclude StagePlan, StageFactory, HttpClient, provider requests, download requests, installer requests, reconciliation requests, and other private dependencies from the public surface.
+- Preserve documented defaults and parameter validation.
+- Verify module exports, help, and package coverage.
+
+**Status: Complete.**
+
+### 10B — Public Result Contract
+
+- Project the internal lifecycle result into a stable presentation-neutral public result.
+- Define top-level success, cancellation, status, application identity, stage summaries, diagnostics, and terminal error semantics.
+- Keep internal lifecycle state and private result objects out of the public result.
+- Document stable collection and status semantics.
+
+**Status: Complete.** `docs/PublicApplicationUpdateResult.md` defines the public result shape and explicitly distinguishes the enumerable `Errors` collection from the terminal `Error` convenience field.
+
+### 10C — Public Update Execution Boundary
+
+- Verify that the public command invokes the complete Core-owned lifecycle rather than requiring caller-created orchestration objects.
+- Structure genuine early lifecycle failures at the Core boundary.
+- Preserve the documented distinction between parameter-binding failures and operation-result failures.
+- Audit public help, CLI documentation, getting-started guidance, README status, result contracts, module exports, and release assets for consistency.
+
+**Status: Implementation complete; awaiting final Pester checkpoint.** The focused Phase 10C boundary/result/CLI/package/GUI coverage is currently **58/58 green**. The final documentation synchronization is complete, and the next checkpoint is a focused Pester run covering the affected public-contract tests.
 
 ## Version 1.0 — Desktop experience
 
