@@ -26,6 +26,7 @@ Describe 'Wintainium public result contract' {
                                     Errors=@([pscustomobject]@{ Code='ManifestValidationFailed'; Message='Invalid manifest.' })
                                     Warnings=@()
                                     LogEvents=@()
+                                    Error=[pscustomobject]@{ Code='ManifestValidationFailed'; Message='Invalid manifest.' }
                                 }
                             }
                         }
