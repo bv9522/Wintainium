@@ -65,3 +65,11 @@ versioning once releases begin.
 - Phase 11A validated the Windows/.NET toolchain baseline, restored and built the official WinUI 3 C# template, and proved in-process Microsoft.PowerShell.SDK 7.6.6 hosting from .NET 10 without changing machine execution policy.
 - The probe imported Wintainium.Core, resolved Get-WintainiumManifest, executed it successfully, and demonstrated structured result transfer across the C# / PowerShell boundary.
 - GUI-readiness, project, and AI orientation documentation were reconciled with the completed Phase 10 four-command public surface. Phase 11A is complete; the production GUI project begins in Phase 11B.
+
+
+## Phase 11B — GUI Project Foundation
+
+- Added the production `src/Wintainium.Desktop` WinUI 3 / .NET 10 project foundation.
+- Established the WinUI application lifecycle and minimal window boundary.
+- Kept product appearance and desktop shell decisions intentionally deferred to later Phase 11 work.
+- Preserved the presentation-only boundary; no Core engine integration is introduced by 11B.
