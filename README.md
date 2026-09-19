@@ -9,17 +9,19 @@ engine rather than contain its own package-management logic.
 
 ## Status
 
-Phases 1–6 are implemented, tested, and locked. Phase 7 orchestration 7A–7I
-is implemented, validated, and locked through the Core-owned lifecycle
-coordination boundary. Phase 8A is complete; Phase 8B is refining the public
-CLI/result boundary and Phase 8C is completing the user-facing documentation
-set.
+Phases 1–9 are implemented, tested, and locked. Phase 10 is defining and
+hardening the public application-update command and its stable result boundary.
 
-The current public PowerShell surface intentionally consists of three commands:
-`Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`, and
-`Get-WintainiumApplicationRelease`. The complete update lifecycle remains an
-internal engine capability until the authoritative installed-state and Core
-composition boundaries are established.
+The current public PowerShell surface consists of four commands:
+`Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`,
+`Get-WintainiumApplicationRelease`, and
+`Invoke-WintainiumApplicationUpdate`.
+
+The public update command is a presentation-neutral boundary over the complete
+Core-owned lifecycle. Callers supply documented application inputs; Core owns
+orchestration, provider interaction, download and verification, installer
+execution, reconciliation, cancellation, and managed installed-state
+persistence.
 
 ## Repository map
 
@@ -38,6 +40,8 @@ composition boundaries are established.
   policies, examples, and validation guidance.
 - [`docs/Diagnostics.md`](docs/Diagnostics.md) — structured errors, operation
   correlation, and troubleshooting guidance.
+- [`docs/PublicApplicationUpdateResult.md`](docs/PublicApplicationUpdateResult.md) —
+  public update result contract.
 
 ## Developer and architecture documentation
 
