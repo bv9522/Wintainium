@@ -3,6 +3,9 @@ BeforeAll {
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 
     Import-Module $script:modulePath -Force 
+}
+
+Describe 'Wintainium public result contract' {
     It 'keeps the public update result property set stable at the command boundary' {
         InModuleScope Wintainium.Core {
             Mock Invoke-WintainiumApplicationUpdateLifecycle {
@@ -52,9 +55,6 @@ BeforeAll {
             Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly
         }
     }
-}
-
-Describe 'Wintainium public result contract'{
     It 'returns a structured manifest-discovery result with correlation and diagnostics fields' {
         $path = Join-Path -Path $TestDrive -ChildPath 'manifests'
         New-Item -Path $path -ItemType Directory -Force | Out-Null
