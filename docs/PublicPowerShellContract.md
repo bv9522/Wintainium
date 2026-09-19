@@ -2,13 +2,11 @@
 
 ## Status
 
-Phase 8F — GUI readiness audit: **complete**.
+Phase 10 — public application-update boundary: **in progress**.
 
-Phase 9 — Complete Update Lifecycle: **internal lifecycle complete; public update API intentionally deferred**.
+Phase 8F established the presentation/client boundary and Phase 9 completed the internal verification, post-install reconciliation, authoritative state reconciliation, and lifecycle failure/cancellation boundaries beneath the public update operation.
 
-Phase 8B established the public CLI and result contract. Phase 9 completed the missing Core-owned artifact verification, post-install reconciliation, authoritative state reconciliation, and lifecycle failure/cancellation boundaries beneath that future public operation.
-
-This document defines the stable public PowerShell boundary for Wintainium's engine. It is an API contract decision, not a promise that every conceptual operation is already exposed as a user-facing command.
+This document defines the stable public PowerShell boundary for Wintainium's engine. It is an API contract decision, not a promise that every conceptual operation is implemented by the public layer independently.
 
 ## Design principle
 
@@ -18,45 +16,43 @@ The future C#/.NET GUI is another client of this same boundary. It must not need
 
 ## Current exported surface
 
-| Command | Current role | Public status | Phase 8 disposition |
-| --- | --- | --- | --- |
-| `Get-WintainiumManifest` | Discover and import a local manifest collection | Public | **Retain** |
-| `Test-WintainiumApplicationDefinition` | Validate one manifest and resolve required plugins | Public | **Retain** |
-| `Get-WintainiumApplicationRelease` | Validate a manifest, resolve its provider, and discover releases | Public | **Retain** |
-| `New-WintainiumInstallerRequest` | Transform a completed download result into installer input | Internal helper | **Keep private** |
+| Command | Current role | Public status |
+| --- | --- | --- |
+| `Get-WintainiumManifest` | Discover and import a local manifest collection | Public |
+| `Test-WintainiumApplicationDefinition` | Validate one manifest and resolve required plugins | Public |
+| `Get-WintainiumApplicationRelease` | Validate a manifest, resolve its provider, and discover releases | Public |
+| `Invoke-WintainiumApplicationUpdate` | Execute the complete Core-owned application update lifecycle | Public |
 
-The module manifest and module loader export exactly the three intended user-facing commands. The installer request helper remains available only inside the loaded Core module scope for internal composition and tests.
+The module manifest and module loader export exactly these four user-facing commands. Low-level installer request construction and other orchestration helpers remain private.
 
-## Required public operation boundary
+## Public update operation
 
-The stable user-facing surface is intended to cover these conceptual operations:
+The public update command is a purpose-built boundary over the internal lifecycle. It accepts:
 
-1. **Manifest discovery** — locate/import available application definitions.
-2. **Application validation** — determine whether a manifest and its required plugins are usable.
-3. **Release discovery** — obtain normalized upstream release observations through the provider boundary.
-4. **Application update lifecycle** — execute the Core-owned orchestration lifecycle for an application update.
+- `ManifestPath`;
+- `StateRoot`;
+- `MachineArchitecture`;
+- `DownloadRoot`;
+- `PluginRoot`;
+- `SchemaPath`;
+- `InstallerTimeoutMilliseconds`;
+- `CancellationToken`.
 
-The fourth operation remains intentionally absent from the public surface even though its internal implementation is now complete. Phase 9 established a Core-owned composition boundary that assembles validation, discovery, decision, download, verification, installation, reconciliation, and authoritative managed state without requiring callers to construct internal stage objects.
+Core generates and owns `OperationId`. The caller does not supply it.
 
-A future public end-to-end update operation must not expose `StagePlan`, `StageFactory`, `CancellationContext`, stage-operation contracts, provider requests, download requests, installer requests, or reconciliation requests. The caller should express application-management intent; Core should continue to own lifecycle traversal.
+The command intentionally does not accept:
 
-The managed installed-state source remains intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`, and the engine must never manufacture installed state merely to make an update appear available.
+- `StagePlan`;
+- `StageFactory`;
+- `CancellationContext`;
+- `HttpClient`;
+- provider requests;
+- download requests;
+- installer requests;
+- reconciliation requests;
+- individual stage executors.
 
-## Deliberately non-public
-
-The following remain private implementation details:
-
-- provider registry and provider invocation helpers;
-- installer registry, selection, and process helpers;
-- reconciliation registry, resolution, and adapter invocation helpers;
-- manifest import/validation helpers beneath the public validation boundary;
-- download and verification stage operations;
-- orchestration stage operations, state transitions, workflow coordination, lifecycle helpers, and factories;
-- authoritative installed-state reconciliation and persistence helpers;
-- log-event construction and other internal plumbing;
-- filesystem, process, and plugin-loading helpers.
-
-A function is not public merely because another function calls it or because it would be technically possible to export it.
+Core owns the lifecycle traversal and all internal dependency wiring.
 
 ## Input rules
 
@@ -70,24 +66,28 @@ Public commands must:
 - preserve caller-owned input objects rather than mutating them;
 - use stable, documented defaults only where the default is part of the public contract.
 
-Internal implementation objects may remain richer than the public command input. The public boundary should not expose internal dependency wiring merely for convenience.
+The update command's documented defaults are the module plugin root, bundled schema path, a 600000-millisecond installer timeout, and the non-cancelled cancellation token.
 
 ## Result rules
 
 Public engine commands return structured PowerShell objects rather than formatted text. Results make success or validity explicit and, where the operation is correlated, expose the Core-generated operation identifier.
 
-The public result vocabulary is intentionally centered on:
+The update command returns the stable projection documented in `docs/PublicApplicationUpdateResult.md`. Its top-level properties are:
 
-- `OperationId` where an operation has an operation context;
-- `IsSuccessful` or another explicitly documented validity/success property;
-- `Status` where a meaningful stable operation status exists;
-- operation-specific result data;
-- structured `Errors` and `Warnings` where applicable;
-- structured diagnostic/log information where that information is part of the existing operation contract.
+- `OperationId`;
+- `IsSuccessful`;
+- `WasCancelled`;
+- `Status`;
+- `ApplicationId`;
+- `Stages`;
+- `Errors`;
+- `Warnings`;
+- `LogEvents`;
+- `Error`.
 
-Collection-valued result properties are arrays even when empty. Consumers must not depend on property ordering, terminal formatting, or diagnostic message wording for business decisions.
+The stage summary contains only `Sequence`, `Name`, `Status`, `IsSuccessful`, `WasCancelled`, and `Error`.
 
-Formatting, tables, colors, progress displays, and other presentation choices must not become part of Core business logic.
+The public result is a projection, not a pass-through of internal lifecycle state. Additional internal properties are discarded.
 
 ## Error behavior
 
@@ -108,41 +108,36 @@ The public boundary recognizes these semantic error categories:
 
 Individual owning operations remain responsible for their exact documented machine-readable error codes. Clients should branch on documented codes/categories rather than parse human-readable messages.
 
-## Pipeline compatibility
+## Operation correlation
 
-Pipeline support is added only where it improves an actual user workflow without weakening explicit operation boundaries. Pipeline input is not a goal by itself, and public commands must not accept ambiguous object shapes merely to appear pipeline-friendly.
+`OperationId` is generated by Core. Clients consume it for correlation and diagnostics; they do not generate or replace it.
 
-Structured results remain usable with normal PowerShell tooling such as `Select-Object`, `Where-Object`, `ForEach-Object`, and `ConvertTo-Json` without requiring formatted-output parsing.
-
-## Machine versus human output
-
-The engine returns data. A future CLI presentation layer may render that data for people or serialize it for automation. No business decision may depend on a human/machine output switch.
-
-The current public commands therefore expose one semantic result contract rather than separate human and machine execution paths. Any future presentation mode must consume that same result data and must not alter provider selection, update decisions, download behavior, verification requirements, installer selection, cancellation semantics, reconciliation semantics, or other business rules.
+For `Invoke-WintainiumApplicationUpdate`, the identifier is null only when execution fails before Core creates the orchestration request. Otherwise it remains the correlation key for the complete lifecycle.
 
 ## GUI seam
 
-A future GUI should be able to use stable public requests and structured results. It should not need to know the implementation sequence `ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation -> Reconciliation`.
+A future GUI should consume the public update result without knowing the implementation sequence `ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation -> Reconciliation`.
 
-That sequence remains an engine concern. The GUI may display stage progress because the engine reports it, but the GUI does not own the stage policy or decide authoritative installed state.
+That sequence remains an engine concern. The GUI may display stage progress because the engine reports it, but the GUI does not own stage policy or decide authoritative installed state.
 
 ## Documentation and help
 
-The three currently supported public commands use comment-based help as the authoritative local CLI guidance for their implemented behavior. Each command documents its purpose, public parameters, structured output, and a copy/paste-oriented example.
+All four supported public commands use comment-based help as the authoritative local CLI guidance for their implemented behavior. Each command documents its purpose, public parameters, structured output, and a copy/paste-oriented example.
 
-Examples demonstrate public inputs only. They do not expose private orchestration dependencies or imply that the current public surface can perform an end-to-end update. A future public update command will receive its own explicit request/result documentation when its API is designed.
+The update result shape is documented separately in `docs/PublicApplicationUpdateResult.md`. Examples demonstrate public inputs only and do not expose private orchestration dependencies.
 
-## Explicit non-goals for Phase 8
+## Explicit non-goals
 
-This contract does not introduce:
+This public contract does not introduce:
 
 - a C#/.NET GUI;
 - scheduling;
 - update-all orchestration;
-- persistence redesign;
 - a plugin marketplace;
 - cloud services;
 - telemetry;
 - a second business-rule implementation;
 - arbitrary shell execution;
 - a general-purpose command interpreter.
+
+The managed installed-state source remains intentionally narrow: it represents Wintainium-managed state, not Windows-wide inventory. A missing record is `Unknown`, not `NotInstalled`.
