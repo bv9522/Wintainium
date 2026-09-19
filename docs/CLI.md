@@ -4,13 +4,14 @@
 
 This document is the practical reference for Wintainium's currently supported public PowerShell commands. The commands return structured engine results; they do not own presentation formatting or expose internal orchestration wiring.
 
-The current public surface is intentionally limited to three operations:
+The current public surface consists of four operations:
 
 - `Get-WintainiumManifest`
 - `Test-WintainiumApplicationDefinition`
 - `Get-WintainiumApplicationRelease`
+- `Invoke-WintainiumApplicationUpdate`
 
-The end-to-end update lifecycle is implemented internally but is **not yet a public command**. Do not construct internal orchestration objects or private stage requests from a client script to work around that boundary.
+The end-to-end update lifecycle is now exposed through the purpose-built public update command. Callers supply application-management inputs only; Core owns orchestration, verification, installation, reconciliation, and managed installed-state handling.
 
 ## Import
 
@@ -26,7 +27,7 @@ Verify the exported surface:
 Get-Command -Module Wintainium.Core
 ```
 
-Only the three commands listed above are intended as the user-facing Core API at this stage.
+Only the four commands listed above are intended as the user-facing Core API.
 
 ---
 
@@ -77,24 +78,9 @@ The structured result contains:
 
 Collection-valued properties are arrays, including when no values are present.
 
-### Automation example
-
-```powershell
-$result = Get-WintainiumManifest -Path 'C:\Wintainium\manifests'
-
-if (-not $result.IsSuccessful) {
-    $result.Errors | ForEach-Object {
-        Write-Error "[$($_.Code)] $($_.Message)"
-    }
-    return
-}
-
-$result.Manifests | Select-Object Id, Name
-```
-
 ### Responsibility boundary
 
-This command does not validate an application's provider behavior, discover upstream releases, decide whether an installed application needs an update, download an artifact, verify an artifact, or install an application.
+This command does not validate an application's provider behavior, discover upstream releases, decide whether an installed application needs an update, download an artifact, verify an artifact, reconcile installation state, or install an application.
 
 ---
 
@@ -102,12 +88,12 @@ This command does not validate an application's provider behavior, discover upst
 
 ### Purpose
 
-Validates one application definition and resolves the provider and installer capabilities declared by the manifest.
+Validates one application definition and resolves the provider, installer, and reconciliation capabilities declared by the manifest.
 
 ### Parameters
 
 - `-ManifestPath` **(required)** — path to the application manifest to validate.
-- `-PluginRoot` — root directory containing the provider and installer plugins required by the manifest. The module's default plugin root is used when omitted.
+- `-PluginRoot` — root directory containing the provider, installer, and reconciliation plugins required by the manifest. The module's default plugin root is used when omitted.
 - `-SchemaPath` — override the application-manifest JSON Schema used during validation. The module's bundled schema is used by default.
 
 Example with an explicit plugin root and schema:
@@ -141,13 +127,14 @@ The structured result contains:
 - `Manifest` — the validated manifest when available.
 - `ProviderPlugin` — resolved provider capability when available.
 - `InstallerPlugin` — resolved installer capability when available.
+- `ReconciliationPlugin` — resolved reconciliation capability when available.
 - `Errors` — structured errors.
 - `Warnings` — structured warnings.
 - `LogEvents` — structured diagnostic events.
 
 ### Responsibility boundary
 
-Validation performs no network release discovery, artifact download, installation, or installed-state management. A valid definition means the definition and required plugin capabilities are usable; it does not mean an update is available.
+Validation performs no network release discovery, artifact download, installation, reconciliation, or installed-state management.
 
 ---
 
@@ -160,7 +147,7 @@ Validates an application definition, resolves its provider, and discovers normal
 ### Parameters
 
 - `-ManifestPath` **(required)** — path to the application manifest whose releases should be discovered.
-- `-PluginRoot` — root directory containing the provider and installer plugins required by the manifest. The module's default plugin root is used when omitted.
+- `-PluginRoot` — root directory containing the provider, installer, and reconciliation plugins required by the manifest. The module's default plugin root is used when omitted.
 - `-SchemaPath` — override the application-manifest JSON Schema used during validation. The module's bundled schema is used by default.
 
 ### Typical use
@@ -202,7 +189,67 @@ The structured result contains:
 
 ### Responsibility boundary
 
-Release discovery does not decide whether an installed application needs an update. It also does not download the selected artifact or install anything.
+Release discovery does not decide whether an installed application needs an update. It also does not download the selected artifact, verify an artifact, reconcile installation state, or install anything.
+
+---
+
+## Invoke-WintainiumApplicationUpdate
+
+### Purpose
+
+Executes the complete Core-owned application update lifecycle for one application manifest.
+
+The command validates the application definition, discovers releases, evaluates update eligibility against Wintainium-managed installed state, obtains and verifies the selected artifact, selects and runs the installer, reconciles the resulting application state, and persists authoritative managed state where appropriate.
+
+### Parameters
+
+- `-ManifestPath` **(required)** — absolute path to the application manifest.
+- `-StateRoot` **(required)** — root directory used for authoritative managed installed-application state.
+- `-MachineArchitecture` **(required)** — architecture of the machine on which the update executes.
+- `-DownloadRoot` **(required)** — absolute root directory used for downloaded update artifacts.
+- `-PluginRoot` — root directory containing Wintainium plugins. The module default is used when omitted.
+- `-SchemaPath` — path to the application manifest JSON schema. The module default is used when omitted.
+- `-InstallerTimeoutMilliseconds` — maximum installer execution time in milliseconds; default `600000`.
+- `-CancellationToken` — optional cancellation token propagated through the lifecycle.
+
+The caller does not supply `OperationId`, `StagePlan`, `StageFactory`, `CancellationContext`, `HttpClient`, provider requests, download requests, installer requests, reconciliation requests, or individual stage executors.
+
+### Example
+
+```powershell
+$result = Invoke-WintainiumApplicationUpdate `
+    -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' `
+    -StateRoot 'C:\Wintainium\State' `
+    -MachineArchitecture 'x64' `
+    -DownloadRoot 'C:\Wintainium\Downloads'
+```
+
+The default plugin and schema locations and the default 600000-millisecond installer timeout are used.
+
+### Result
+
+The command returns the stable public update result documented in `docs/PublicApplicationUpdateResult.md`:
+
+- `OperationId`
+- `IsSuccessful`
+- `WasCancelled`
+- `Status` — `Completed`, `Failed`, or `Cancelled`
+- `ApplicationId`
+- `Stages`
+- `Errors`
+- `Warnings`
+- `LogEvents`
+- `Error`
+
+`Stages` contains public summaries only: `Sequence`, `Name`, `Status`, `IsSuccessful`, `WasCancelled`, and `Error`. Internal orchestration state is not exposed.
+
+`OperationId` is generated by Core. It is null only when execution fails before Core creates the orchestration request; otherwise the identifier is preserved for the operation.
+
+### Responsibility boundary
+
+The public command owns the user-facing invocation boundary. Core owns lifecycle policy and traversal, provider and installer interaction, artifact acquisition and verification, reconciliation, cancellation semantics, and managed installed-state persistence.
+
+A missing Wintainium-managed installed-state record remains indeterminate; the engine does not manufacture installed state merely to make an update appear available.
 
 ---
 
@@ -221,6 +268,7 @@ The public contract recognizes these semantic categories:
 - acquisition;
 - verification;
 - installer;
+- reconciliation;
 - cancellation;
 - internal/unexpected engine failure.
 
@@ -239,31 +287,11 @@ Results are ordinary structured PowerShell objects and can be composed with stan
 ```powershell
 $result | Select-Object IsSuccessful, Status, OperationId
 $result.Errors | Where-Object Code -ne 'None'
-$result.Manifests | ForEach-Object Name
+$result.Stages | Select-Object Sequence, Name, Status
 $result | ConvertTo-Json -Depth 10
 ```
 
 Do not depend on property ordering, console formatting, colors, progress text, or diagnostic wording. Presentation belongs outside Core.
-
-## End-to-end update lifecycle
-
-There is intentionally no public `Update` command in the current contract.
-
-A complete update requires authoritative installed-application state in addition to the manifest and provider release result. The current repository does not yet provide the required authoritative retrieval/persistence boundary. The public surface therefore does not invent installed state or require callers to manufacture it.
-
-The eventual public update command will also be backed by a Core-owned composition seam. Callers will not be expected to construct:
-
-- orchestration `StagePlan`;
-- `CancellationContext`;
-- `StageFactory`;
-- provider requests;
-- download requests;
-- installer requests;
-- individual stage executors.
-
-Those are engine concerns. The public boundary will accept a purpose-built request and return the same kind of structured result used by the other public operations.
-
-The installed-state and upgrade boundary is planned for Phase 8E.
 
 ## Contract rules for clients
 
@@ -285,5 +313,6 @@ A future CLI presentation layer and the future C#/.NET GUI are both expected to 
 - `docs/GettingStarted.md` — first-use walkthrough.
 - `docs/ManifestAuthoring.md` — manifest authoring and validation guidance.
 - `docs/PublicResultContract.md` — structured result contract.
+- `docs/PublicApplicationUpdateResult.md` — update result contract.
 - `docs/PublicPowerShellContract.md` — public API and architectural boundary.
-- `docs/OrchestrationComposition.md` — internal composition requirements for the eventual end-to-end lifecycle.
+- `docs/OrchestrationComposition.md` — internal composition requirements and lifecycle ownership.
