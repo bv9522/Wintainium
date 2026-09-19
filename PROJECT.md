@@ -31,10 +31,11 @@ constraints applied to the early architecture work and are no longer a
 statement of the project's current capability boundary.
 
 The implemented engine now includes provider-backed release discovery,
-download, installation, and lifecycle orchestration. The current public
-PowerShell surface remains intentionally smaller than the internal engine
-because the authoritative installed-state and public end-to-end composition
-boundaries are still being established.
+download, installation, reconciliation, authoritative installed-state
+handling, and complete lifecycle orchestration. The public PowerShell surface
+now exposes four stable commands, including the end-to-end
+Invoke-WintainiumApplicationUpdate operation and its presentation-neutral
+structured result contract.
 
 ## Current product boundary
 
