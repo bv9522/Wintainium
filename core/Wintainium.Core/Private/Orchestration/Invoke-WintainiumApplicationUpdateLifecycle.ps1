@@ -12,7 +12,20 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
-    if ([string]::IsNullOrWhiteSpace($StateRoot)) {`n        return [pscustomobject][ordered]@{ IsSuccessful=$false; WasCancelled=$false; OperationId=$null; Request=$null; State=$null; StageResults=@(); Error=[pscustomobject][ordered]@{ Code='ApplicationUpdateStateRootInvalid'; Message='StateRoot must not be empty or whitespace.' } }`n    }
+    if ([string]::IsNullOrWhiteSpace($StateRoot)) {
+        return [pscustomobject][ordered]@{
+            IsSuccessful = $false
+            WasCancelled = $false
+            OperationId = $null
+            Request = $null
+            State = $null
+            StageResults = @()
+            Error = [pscustomobject][ordered]@{
+                Code = 'ApplicationUpdateStateRootInvalid'
+                Message = 'StateRoot must not be empty or whitespace.'
+            }
+        }
+    }
 
     $requestResult = New-WintainiumOrchestrationRequest -ManifestPath $ManifestPath -MachineArchitecture $MachineArchitecture -DownloadRoot $DownloadRoot
     if ($null -eq $requestResult -or -not $requestResult.IsValid -or $null -eq $requestResult.Request) {
