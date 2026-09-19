@@ -126,4 +126,47 @@ Describe 'Wintainium public application update command boundary' {
             $result.Stages[0].PSObject.Properties.Name | Should -Not -Contain 'InternalRequest'
         }
     }
+
+
+    It 'rejects a missing required manifest path before invoking the lifecycle' {
+        InModuleScope Wintainium.Core {
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                throw 'Lifecycle should not be invoked for invalid public input.'
+            }
+
+            {
+                Invoke-WintainiumApplicationUpdate -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads'
+            } | Should -Throw
+
+            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 0 -Exactly
+        }
+    }
+
+    It 'rejects an empty required manifest path before invoking the lifecycle' {
+        InModuleScope Wintainium.Core {
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                throw 'Lifecycle should not be invoked for invalid public input.'
+            }
+
+            {
+                Invoke-WintainiumApplicationUpdate -ManifestPath '' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads'
+            } | Should -Throw
+
+            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 0 -Exactly
+        }
+    }
+
+    It 'rejects an installer timeout outside the documented range before invoking the lifecycle' {
+        InModuleScope Wintainium.Core {
+            Mock Invoke-WintainiumApplicationUpdateLifecycle {
+                throw 'Lifecycle should not be invoked for invalid public input.'
+            }
+
+            {
+                Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' -InstallerTimeoutMilliseconds 0
+            } | Should -Throw
+
+            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 0 -Exactly
+        }
+    }
 }
