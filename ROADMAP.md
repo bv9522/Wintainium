@@ -95,7 +95,7 @@ Phase 10 exposes the completed lifecycle through a stable public PowerShell comm
 - Preserve the documented distinction between parameter-binding failures and operation-result failures.
 - Audit public help, CLI documentation, getting-started guidance, README status, result contracts, module exports, and release assets for consistency.
 
-**Status: Implementation complete; awaiting final Pester checkpoint.** The focused Phase 10C boundary/result/CLI/package/GUI coverage is currently **58/58 green**. The final documentation synchronization is complete, and the next checkpoint is a focused Pester run covering the affected public-contract tests.
+**Status: Complete.** The public update execution boundary is implemented and audited. The focused public-contract regression is **58/58 green**.
 
 ## Version 1.0 — Desktop experience
 
@@ -103,3 +103,12 @@ Phase 10 exposes the completed lifecycle through a stable public PowerShell comm
 - Plugin manager
 - Automatic scheduling and settings
 - Release packaging and upgrade path
+
+### 10G — End-to-End Public Regression
+
+- Exercise the actual public update command through the complete Core-owned lifecycle.
+- Cover no-update behavior, verification hard-gate behavior, installer failure, reconciliation failure, authoritative persistence failure, cancellation, Unknown reconciliation evidence, and OperationId preservation.
+- Keep lifecycle-layer failure tests as the detailed engine regression while adding public-command entrypoint coverage.
+- Run the full Phase 1–10 regression before locking Phase 10.
+
+**Status: Implementation and regression coverage complete; awaiting final full-suite Pester checkpoint.** Public-command end-to-end coverage now exercises the successful complete lifecycle and no-update path. Existing lifecycle end-to-end/failure-matrix/authoritative-state coverage supplies the specified failure, cancellation, Unknown-evidence, OperationId, and verification hard-gate scenarios.
