@@ -112,3 +112,19 @@ Phase 10 exposes the completed lifecycle through a stable public PowerShell comm
 - Run the full Phase 1–10 regression before locking Phase 10.
 
 **Status: Complete and locked.** Public-command end-to-end coverage exercises the successful complete lifecycle and no-update path. Existing lifecycle end-to-end/failure-matrix/authoritative-state coverage supplies the specified failure, cancellation, Unknown-evidence, OperationId, persistence, and verification hard-gate scenarios. The full Phase 1–10 regression is **454/454 green**.
+
+## Phase 11 — C#/.NET GUI Foundation and Desktop Client
+
+**Status: In progress.**
+
+Phase 11 begins the Windows graphical presentation layer over the existing PowerShell engine. The GUI remains a client of the stable Core boundary and does not become a second orchestration engine.
+
+### 11A — Repository, Contract, and Toolchain Audit
+
+- Audit the Phase 10 public/Core boundary and GUI-readiness contract.
+- Establish the Windows/.NET development baseline and official WinUI 3 template/toolchain availability.
+- Validate the approved in-process Microsoft.PowerShell.SDK hosting approach without changing machine execution policy.
+- Confirm structured public PowerShell results cross the C# boundary without terminal parsing.
+- Reconcile stale Phase 8 documentation with the completed Phase 10 four-command public surface.
+
+**Status: Complete.** The .NET 10 / PowerShell SDK 7.6.6 probe successfully imported Wintainium.Core, resolved and executed Get-WintainiumManifest, and received a structured result. The WinUI 3 C# template restored and built successfully. Documentation now reflects the four-command public surface and the completed update lifecycle. The production GUI project remains intentionally uncreated until 11B.
