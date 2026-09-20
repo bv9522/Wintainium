@@ -6,7 +6,7 @@ namespace Wintainium.Desktop.Engine;
 /// Captures one public Core command invocation without exposing PowerShell hosting
 /// details to the rest of the desktop application.
 /// </summary>
-public sealed record WintainiumPowerShellInvocationResult(
+internal sealed record WintainiumPowerShellInvocationResult(
     string CommandName,
     IReadOnlyList<PSObject> Output,
     IReadOnlyList<ErrorRecord> Errors,
