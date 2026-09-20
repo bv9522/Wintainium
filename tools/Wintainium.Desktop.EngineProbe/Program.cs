@@ -111,6 +111,83 @@ if (syntheticCollection.Applications.Count != 1 ||
     return 1;
 }
 
+var queryApplications = new[]
+{
+    new WintainiumApplicationModel(
+        "org.example.zeta",
+        "Zeta",
+        null,
+        null,
+        null,
+        null,
+        WintainiumInstallationState.Unknown,
+        null,
+        null,
+        WintainiumUpdateStatus.Unknown,
+        "provider.z"),
+    new WintainiumApplicationModel(
+        "org.example.alpha",
+        "Alpha",
+        null,
+        null,
+        null,
+        null,
+        WintainiumInstallationState.Installed,
+        "1.0.0",
+        null,
+        WintainiumUpdateStatus.UpToDate,
+        "provider.a"),
+    new WintainiumApplicationModel(
+        "org.example.beta",
+        "Beta",
+        null,
+        null,
+        null,
+        null,
+        WintainiumInstallationState.NotInstalled,
+        null,
+        null,
+        WintainiumUpdateStatus.UpdateAvailable,
+        "provider.b")
+};
+
+var sortedApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(WintainiumApplicationSort.NameAscending));
+if (sortedApplications.Count != 3 ||
+    sortedApplications[0].Name != "Alpha" ||
+    sortedApplications[1].Name != "Beta" ||
+    sortedApplications[2].Name != "Zeta")
+{
+    Console.Error.WriteLine("Application collection name sorting failed.");
+    return 1;
+}
+
+var installedApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.NameAscending,
+        WintainiumApplicationFilter.Installed));
+if (installedApplications.Count != 1 ||
+    installedApplications[0].ApplicationId != "org.example.alpha")
+{
+    Console.Error.WriteLine("Application collection Installed filter failed.");
+    return 1;
+}
+
+var unknownApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.InstallationStatus));
+if (unknownApplications.Count != 3 ||
+    unknownApplications[0].InstallationState != WintainiumInstallationState.Unknown)
+{
+    Console.Error.WriteLine("Application collection Unknown-state ordering failed.");
+    return 1;
+}
+
+Console.WriteLine("Application collection query: PASS");
+
 try
 {
     await host.InvokeAsync("Get-Command");
