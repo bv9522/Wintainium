@@ -156,7 +156,4 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep shell actions presentation-only until the appropriate Core adapter and
   application-model batches.
 
-**Status: In progress.** The initial shell is implemented on branch
-phase-11c-application-shell and has passed its first local WinUI build checkpoint. The shell
-now includes the functional secondary Settings window and the agreed collection controls;
-remaining 11C work is limited to coherent shell hardening and checkpoint validation.
+**Status: Complete and locked.** The 11C shell is implemented and has passed the local WinUI build checkpoint with `dotnet build .\\src\\Wintainium.Desktop\\Wintainium.Desktop.csproj -c Debug -p:Platform=x64`. The primary window, standard Windows behavior, collection landing surface, Sort & Filter controls, Add Software source-URL dialog, and separate Settings window with all five agreed categories are established. Settings has safe close/reopen lifecycle handling. The shell remains presentation-only; Core integration, application models, update policy execution, persistence, and detailed application views remain downstream work. The executable identity is `Wintainium.exe`.
