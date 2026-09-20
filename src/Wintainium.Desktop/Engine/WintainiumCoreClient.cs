@@ -5,7 +5,7 @@ namespace Wintainium.Desktop.Engine;
 /// <summary>
 /// Presentation-neutral adapter for the four documented Wintainium.Core public commands.
 /// </summary>
-public sealed class WintainiumCoreClient
+internal sealed class WintainiumCoreClient
 {
     private readonly WintainiumPowerShellHost _host;
 
