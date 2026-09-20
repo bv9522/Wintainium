@@ -92,7 +92,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 }
             }
 
-            var wasPipelineStopped = false;
+            var wasPipelineStopped = 0;
 
             using var cancellationRegistration = cancellationToken.Register(
                 static state =>
@@ -109,7 +109,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                         // The pipeline may already have completed.
                     }
                 },
-                (powershell, (Action)(() => wasPipelineStopped = true)));
+                (powershell, (Action)(() => Interlocked.Exchange(ref wasPipelineStopped, 1))));
 
             IReadOnlyList<PSObject> output;
 
@@ -118,7 +118,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 var invocation = await powershell.InvokeAsync().ConfigureAwait(false);
                 output = invocation.ToArray();
             }
-            catch (PipelineStoppedException) when (wasPipelineStopped)
+            catch (PipelineStoppedException) when (Volatile.Read(ref wasPipelineStopped) == 1)
             {
                 return new WintainiumPowerShellInvocationResult(
                     commandName,
@@ -131,7 +131,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 commandName,
                 output,
                 powershell.Streams.Error.ToArray(),
-                WasCancelled: wasPipelineStopped);
+                WasCancelled: Volatile.Read(ref wasPipelineStopped) == 1);
         }
         finally
         {
