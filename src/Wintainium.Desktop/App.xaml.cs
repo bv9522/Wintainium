@@ -1,3 +1,4 @@
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 
 namespace Wintainium.Desktop;
@@ -6,6 +7,8 @@ public partial class App : Application
 {
     private Window? _window;
 
+    internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
+
     public App()
     {
         InitializeComponent();
@@ -13,7 +16,24 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window ??= new MainWindow();
-        _window.Activate();
+        if (_window is null)
+        {
+            _window = new MainWindow();
+            _window.Activate();
+            TrackWindow(_window);
+        }
+        else
+        {
+            _window.Activate();
+        }
+    }
+
+    internal static void TrackWindow(Window window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        var windowId = window.AppWindow.Id;
+        ActiveWindows[windowId] = window;
+        window.Closed += (_, _) => ActiveWindows.Remove(windowId);
     }
 }
