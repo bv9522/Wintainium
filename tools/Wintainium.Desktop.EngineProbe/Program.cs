@@ -55,10 +55,14 @@ foreach (var propertyName in requiredProperties)
     }
 }
 
-var models = WintainiumApplicationModelMapper.MapManifestResult(output);
-if (models.Count != 0)
+var collection = WintainiumApplicationModelMapper.MapManifestResult(output);
+if (collection.Applications.Count != 0 ||
+    !collection.IsSuccessful ||
+    collection.OperationId.Length == 0 ||
+    collection.Errors.Count != 0 ||
+    collection.Warnings.Count != 0)
 {
-    Console.Error.WriteLine("Expected the repository Core directory to contain no recognized manifests.");
+    Console.Error.WriteLine("Unexpected application collection mapping for the repository Core directory.");
     return 1;
 }
 
@@ -76,16 +80,20 @@ var syntheticManifest = System.Management.Automation.PSObject.AsPSObject(
 var syntheticResult = System.Management.Automation.PSObject.AsPSObject(
     new
     {
-        Manifests = new[] { syntheticManifest }
+        OperationId = Guid.NewGuid().ToString(),
+        IsSuccessful = true,
+        Manifests = new[] { syntheticManifest },
+        Errors = Array.Empty<object>(),
+        Warnings = Array.Empty<object>()
     });
 
-var syntheticModels = WintainiumApplicationModelMapper.MapManifestResult(syntheticResult);
-if (syntheticModels.Count != 1 ||
-    syntheticModels[0].ApplicationId != "org.example.app" ||
-    syntheticModels[0].Name != "Example App" ||
-    syntheticModels[0].InstallationState != WintainiumInstallationState.Unknown ||
-    syntheticModels[0].UpdateStatus != WintainiumUpdateStatus.Unknown ||
-    syntheticModels[0].InstalledVersion is not null)
+var syntheticCollection = WintainiumApplicationModelMapper.MapManifestResult(syntheticResult);
+if (syntheticCollection.Applications.Count != 1 ||
+    syntheticCollection.Applications[0].ApplicationId != "org.example.app" ||
+    syntheticCollection.Applications[0].Name != "Example App" ||
+    syntheticCollection.Applications[0].InstallationState != WintainiumInstallationState.Unknown ||
+    syntheticCollection.Applications[0].UpdateStatus != WintainiumUpdateStatus.Unknown ||
+    syntheticCollection.Applications[0].InstalledVersion is not null)
 {
     Console.Error.WriteLine("Application model mapping did not preserve the required initial Unknown state.");
     return 1;
