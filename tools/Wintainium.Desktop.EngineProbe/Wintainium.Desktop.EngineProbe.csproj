@@ -8,6 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\\..\\src\\Wintainium.Desktop\\Wintainium.Desktop.csproj" />
+    <ProjectReference Include="..\..\src\Wintainium.Desktop\Wintainium.Desktop.csproj" />
   </ItemGroup>
 </Project>
