@@ -186,6 +186,64 @@ if (unknownApplications.Count != 3 ||
     return 1;
 }
 
+var updateAvailableApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.NameAscending,
+        WintainiumApplicationFilter.UpdateAvailable));
+var upToDateApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.NameAscending,
+        WintainiumApplicationFilter.UpToDate));
+var notInstalledApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.NameAscending,
+        WintainiumApplicationFilter.NotInstalled));
+if (updateAvailableApplications.Count != 1 ||
+    updateAvailableApplications[0].ApplicationId != "org.example.beta" ||
+    upToDateApplications.Count != 1 ||
+    upToDateApplications[0].ApplicationId != "org.example.alpha" ||
+    notInstalledApplications.Count != 1 ||
+    notInstalledApplications[0].ApplicationId != "org.example.beta")
+{
+    Console.Error.WriteLine("Application collection status filters failed.");
+    return 1;
+}
+
+var reverseApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(WintainiumApplicationSort.NameDescending));
+if (reverseApplications[0].Name != "Zeta" ||
+    reverseApplications[2].Name != "Alpha")
+{
+    Console.Error.WriteLine("Application collection reverse name sorting failed.");
+    return 1;
+}
+
+var sourceApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(WintainiumApplicationSort.Source));
+if (sourceApplications[0].SourceProviderId != "provider.a" ||
+    sourceApplications[1].SourceProviderId != "provider.b" ||
+    sourceApplications[2].SourceProviderId != "provider.z")
+{
+    Console.Error.WriteLine("Application collection source sorting failed.");
+    return 1;
+}
+
+var updateStatusApplications = WintainiumApplicationCollectionQuery.Apply(
+    queryApplications,
+    new WintainiumApplicationQuery(WintainiumApplicationSort.UpdateStatus));
+if (updateStatusApplications[0].UpdateStatus != WintainiumUpdateStatus.Unknown ||
+    updateStatusApplications[1].UpdateStatus != WintainiumUpdateStatus.UpdateAvailable ||
+    updateStatusApplications[2].UpdateStatus != WintainiumUpdateStatus.UpToDate)
+{
+    Console.Error.WriteLine("Application collection update-status sorting failed.");
+    return 1;
+}
+
 Console.WriteLine("Application collection query: PASS");
 
 try
