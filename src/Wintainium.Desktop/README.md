@@ -1,12 +1,12 @@
 # Wintainium Desktop
 
-This project is the Phase 11 C#/.NET WinUI 3 presentation client foundation.
+This project is the Phase 11 C#/.NET WinUI 3 presentation client over the
+existing Wintainium.Core PowerShell engine.
 
 ## Boundary
 
-The desktop client is a presentation layer over the existing Wintainium.Core
-PowerShell engine. It must consume documented public Core contracts and
-structured results rather than reimplementing engine policy.
+The desktop client must consume documented public Core contracts and structured
+results rather than reimplementing engine policy.
 
 The intended dependency direction is:
 
@@ -15,20 +15,30 @@ Wintainium Desktop -> C# engine adapter -> Wintainium.Core public PowerShell API
 The desktop project must not call private Core functions, providers, installers,
 stage executors, or other internal orchestration components.
 
-## Phase 11B scope
+## Phase 11C application shell
 
-This foundation establishes:
+The 11C shell establishes the agreed desktop interaction model without yet
+connecting UI actions to the Core engine:
 
-- .NET 10 / WinUI 3 project structure.
-- Windows App SDK dependency.
-- x64 desktop target.
-- WinUI application lifecycle entry point.
-- Minimal window and application resource surface.
-- An intentionally empty visual shell.
+- One primary Wintainium window with standard Windows window behavior.
+- The software collection is the landing view.
+- Main-window Sort & Filter action.
+- Main-window Add Software action in the lower-right corner.
+- Source URL is the primary Add Software input.
+- Separate Settings window with General, Appearance, Updates, Sources, and
+  Advanced categories.
+- Application details remain reserved for the downstream 11F batch.
+- Windows 11, Y2K, and Frutiger Aero are planned visual styles under Appearance.
+- System, Light, and Dark are planned theme choices.
+- Wintainium's own release history belongs in the Settings Updates category.
+- No engine integration, update logic, provider discovery, or application state
+  inference is introduced by this shell.
 
-Window sizing, navigation, icons, title-bar treatment, tabs versus navigation,
-application list/detail layout, settings layout, and other product-appearance
-decisions remain deliberately outside 11B.
+The shell intentionally uses placeholder collection/settings content. Later
+Phase 11 batches will replace those placeholders with real presentation models
+and Core-backed behavior.
 
-Packaging and release configuration will be established at the appropriate
-later phase rather than being coupled to this foundation.
+## Scope discipline
+
+11C establishes the product shell and interaction locations. It does not
+finalize every visual detail or implement speculative downstream functionality.
