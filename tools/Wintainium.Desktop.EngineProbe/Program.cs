@@ -62,6 +62,35 @@ if (models.Count != 0)
     return 1;
 }
 
+var syntheticManifest = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        Id = "org.example.app",
+        Name = "Example App",
+        Description = "Example description",
+        Homepage = "https://example.com/",
+        Publisher = "Example Publisher",
+        Source = new { PluginId = "Wintainium.provider.example" }
+    });
+
+var syntheticResult = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        Manifests = new[] { syntheticManifest }
+    });
+
+var syntheticModels = WintainiumApplicationModelMapper.MapManifestResult(syntheticResult);
+if (syntheticModels.Count != 1 ||
+    syntheticModels[0].ApplicationId != "org.example.app" ||
+    syntheticModels[0].Name != "Example App" ||
+    syntheticModels[0].InstallationState != WintainiumInstallationState.Unknown ||
+    syntheticModels[0].UpdateStatus != WintainiumUpdateStatus.Unknown ||
+    syntheticModels[0].InstalledVersion is not null)
+{
+    Console.Error.WriteLine("Application model mapping did not preserve the required initial Unknown state.");
+    return 1;
+}
+
 try
 {
     await host.InvokeAsync("Get-Command");
