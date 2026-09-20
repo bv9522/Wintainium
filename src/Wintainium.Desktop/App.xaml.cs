@@ -11,6 +11,7 @@ public partial class App : Application
 
     public App()
     {
+        DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
         InitializeComponent();
     }
 
@@ -20,6 +21,7 @@ public partial class App : Application
         {
             _window = new MainWindow();
             TrackWindow(_window);
+            _window.Closed += MainWindow_Closed;
             _window.Activate();
         }
         else
@@ -35,5 +37,14 @@ public partial class App : Application
         var windowId = window.AppWindow.Id;
         ActiveWindows[windowId] = window;
         window.Closed += (_, _) => ActiveWindows.Remove(windowId);
+    }
+
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (ReferenceEquals(sender, _window))
+        {
+            _window = null;
+            Exit();
+        }
     }
 }
