@@ -71,7 +71,7 @@ into the WinUI controls.
   retroactively turn that successful invocation into a cancelled result.
 - The WinUI shell does not yet invoke the adapter. Application models and UI
   behavior will be connected in later Phase 11 batches.
-- The PowerShell SDK is hosted in-process; terminal output is never used as an API.
+- The PowerShell SDK is hosted in-process; terminal output is never used as an API.\n- `tools/Wintainium.Desktop.EngineProbe` provides a small executable integration probe for the adapter boundary; it verifies in-process hosting, a real public Core invocation, the documented structured result shape, and rejection of arbitrary PowerShell commands.
 
 ## Scope discipline
 
