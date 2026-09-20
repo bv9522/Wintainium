@@ -19,8 +19,8 @@ public partial class App : Application
         if (_window is null)
         {
             _window = new MainWindow();
-            _window.Activate();
             TrackWindow(_window);
+            _window.Activate();
         }
         else
         {
