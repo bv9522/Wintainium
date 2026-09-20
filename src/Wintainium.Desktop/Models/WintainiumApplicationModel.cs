@@ -12,7 +12,7 @@ internal sealed record WintainiumApplicationModel(
     string? IconUri,
     WintainiumInstallationState InstallationState,
     string? InstalledVersion,
-    string? LastUpdatedDisplay,
+    DateTimeOffset? LastUpdated,
     WintainiumUpdateStatus UpdateStatus,
     string? SourceDisplayName);
 
