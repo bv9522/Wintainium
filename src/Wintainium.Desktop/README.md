@@ -81,3 +81,32 @@ finalize every visual detail or implement speculative downstream functionality.
 11D establishes the engine integration seam. It does not migrate engine policy
 to C#, expose private Core functions, or prematurely build application models,
 progress UI, settings persistence, or update workflows into the shell.
+
+
+## Phase 11E application model foundation
+
+11E introduces the first presentation/application model without moving engine
+decisions into C#.
+
+- `WintainiumApplicationModel` represents one tracked application for the desktop
+  presentation layer.
+- Manifest identity and descriptive metadata are mapped from the documented
+  `Get-WintainiumManifest` result.
+- Installation state is represented explicitly as `Installed`, `NotInstalled`,
+  or `Unknown`; the initial manifest-only model remains `Unknown` until a
+  Core-backed installed-state observation is available.
+- Update status is explicitly `Unknown` until Core supplies an authoritative
+  update decision.
+- Installed version and last-updated information remain absent until their
+  authoritative sources are connected.
+- The mapper does not compare versions, infer installation state, or decide
+  whether an update is available.
+- The model contains no PowerShell SDK types; PowerShell objects remain confined
+  to the adapter-to-mapper boundary.
+- The existing EngineProbe now exercises the model mapper and verifies that the
+  initial installation and update states remain `Unknown`.
+
+This is the model foundation for the application collection. Collection loading,
+installed-state acquisition, update-status population, sorting/filtering, and
+interactive list/grid presentation are introduced only as their required
+contracts become available in the remaining 11E work.
