@@ -6,7 +6,7 @@ namespace Wintainium.Desktop.Engine;
 /// <summary>
 /// Owns the in-process PowerShell SDK hosting boundary used by the desktop client.
 /// </summary>
-public sealed class WintainiumPowerShellHost : IAsyncDisposable
+internal sealed class WintainiumPowerShellHost : IAsyncDisposable
 {
     private readonly Runspace _runspace;
     private readonly SemaphoreSlim _invocationGate = new(1, 1);
