@@ -110,3 +110,16 @@ This is the model foundation for the application collection. Collection loading,
 installed-state acquisition, update-status population, sorting/filtering, and
 interactive list/grid presentation are introduced only as their required
 contracts become available in the remaining 11E work.
+
+
+### Phase 11E application collection boundary
+
+`WintainiumApplicationCollectionService` is the application-layer entry point for loading the tracked software collection. It calls only the documented `Get-WintainiumManifest` Core command and maps its single structured result into `WintainiumApplicationCollectionResult`.
+
+The collection result carries the Core operation identifier, success state, application models, and structured errors/warnings without exposing PowerShell SDK types to the UI. Cancellation is propagated as normal .NET cancellation rather than being converted into a synthetic application state.
+
+The application model intentionally remains partial at this stage. Manifest discovery supplies identity and descriptive metadata plus the declared provider identifier. Installed state, installed version, last-updated timestamp, icon, and update status remain unset/Unknown until authoritative Core-backed sources are available. In particular, the desktop layer does not call the private installed-state helper and does not infer `NotInstalled` from missing state.
+
+The manifest schema currently provides a provider `pluginId`, not a human-friendly source name, so the presentation model records it as `SourceProviderId` rather than presenting the technical identifier as a display name.
+
+Sorting, filtering, List/Grid projection, and WinUI binding remain later 11E work. No application update decision is made by the collection layer.
