@@ -9,19 +9,21 @@ namespace Wintainium.Desktop.Models;
 /// </summary>
 internal static class WintainiumApplicationModelMapper
 {
-    public static IReadOnlyList<WintainiumApplicationModel> MapManifestResult(PSObject result)
+    public static WintainiumApplicationCollectionResult MapManifestResult(PSObject result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var manifests = GetCollection(result, "Manifests");
-        var models = new List<WintainiumApplicationModel>(manifests.Count);
+        var operationId = GetRequiredString(result, "OperationId");
+        var applications = GetCollection(result, "Manifests")
+            .Select(MapManifest)
+            .ToArray();
 
-        foreach (var manifest in manifests)
-        {
-            models.Add(MapManifest(manifest));
-        }
-
-        return models;
+        return new WintainiumApplicationCollectionResult(
+            OperationId: operationId,
+            IsSuccessful: GetBoolean(result, "IsSuccessful"),
+            Applications: applications,
+            Errors: GetDiagnostics(result, "Errors"),
+            Warnings: GetDiagnostics(result, "Warnings"));
     }
 
     private static WintainiumApplicationModel MapManifest(PSObject manifest)
@@ -46,12 +48,19 @@ internal static class WintainiumApplicationModelMapper
     private static string? GetSourceDisplayName(PSObject manifest)
     {
         var source = GetProperty(manifest, "Source");
-        if (source is null)
-        {
-            return null;
-        }
+        return source is null ? null : GetNullableString(source, "PluginId");
+    }
 
-        return GetNullableString(source, "PluginId");
+    private static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(
+        PSObject source,
+        string propertyName)
+    {
+        return GetCollection(source, propertyName)
+            .Select(item => new WintainiumOperationDiagnostic(
+                Code: GetNullableString(item, "Code"),
+                Path: GetNullableString(item, "Path"),
+                Message: GetNullableString(item, "Message")))
+            .ToArray();
     }
 
     private static List<PSObject> GetCollection(PSObject source, string propertyName)
@@ -84,7 +93,7 @@ internal static class WintainiumApplicationModelMapper
         if (string.IsNullOrWhiteSpace(value))
         {
             throw new InvalidOperationException(
-                $"Core manifest result is missing required property '{propertyName}'.");
+                $"Core result is missing required property '{propertyName}'.");
         }
 
         return value;
@@ -94,5 +103,11 @@ internal static class WintainiumApplicationModelMapper
     {
         var property = source.Properties[propertyName];
         return property?.Value is null ? null : Convert.ToString(property.Value);
+    }
+
+    private static bool GetBoolean(PSObject source, string propertyName)
+    {
+        var property = source.Properties[propertyName];
+        return property?.Value is not null && Convert.ToBoolean(property.Value);
     }
 }
