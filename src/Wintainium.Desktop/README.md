@@ -39,7 +39,7 @@ connecting UI actions to the Core engine:
 - Settings is a functional secondary shell with the five agreed categories; category
   content remains intentionally placeholder-only until its supporting contracts exist.
 - The GUI must preserve Core's distinct Unknown installed-state semantics and must not
-  infer Unknown as Not installed.
+  infer Unknown as Not Installed.
 
 The shell intentionally uses placeholder collection/settings content. Later
 Phase 11 batches will replace those placeholders with real presentation models
@@ -53,14 +53,22 @@ into the WinUI controls.
 - WintainiumPowerShellHost owns in-process Microsoft.PowerShell.SDK hosting,
   runspace creation, scoped hosted execution policy, Core module import, serialized
   invocation, and cancellation-triggered pipeline stopping.
-- WintainiumCoreClient exposes only the four documented public Core commands:
-  Get-WintainiumManifest, Test-WintainiumApplicationDefinition,
-  Get-WintainiumApplicationRelease, and Invoke-WintainiumApplicationUpdate.
+- WintainiumPowerShellHost permits only the four documented public Core command names;
+  the generic hosting primitive cannot be used by the desktop layer to invoke arbitrary
+  private Core functions.
 - The adapter passes documented command parameters through to Core and does not
   construct private lifecycle, stage, provider, installer, download, or
   reconciliation objects.
+- WintainiumCoreClient exposes only the four documented public Core commands:
+  Get-WintainiumManifest, Test-WintainiumApplicationDefinition,
+  Get-WintainiumApplicationRelease, and Invoke-WintainiumApplicationUpdate.
 - WintainiumPowerShellInvocationResult is the adapter-local transport boundary;
   PowerShell SDK types remain below the application-facing adapter seam.
+- Core import failures are surfaced as adapter construction failures rather than
+  being silently converted to successful invocation results.
+- Cancellation is represented by an explicit pipeline-stopped outcome; a race
+  where a token is cancelled after a normally completed invocation must not
+  retroactively turn that successful invocation into a cancelled result.
 - The WinUI shell does not yet invoke the adapter. Application models and UI
   behavior will be connected in later Phase 11 batches.
 - The PowerShell SDK is hosted in-process; terminal output is never used as an API.
