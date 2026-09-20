@@ -136,3 +136,7 @@ The collection query boundary keeps list presentation concerns separate from Cor
 - Sorting uses deterministic application-name and application-ID tie-breakers so presentation order is stable.
 - The initial Unknown states remain visible to the presentation layer rather than being converted into a user-facing inference.
 - The desktop EngineProbe covers all five sort choices and all five filters, including explicit checks that Unknown is not reclassified by filtering and remains first in the current status-sort presentation ordering.
+
+### Phase 11E window lifetime hardening
+
+The desktop shell now tracks every active WinUI window by `WindowId`, including the main window and the secondary Settings window. A tracked window is removed from the registry when its `Closed` event fires. This keeps the main and secondary window lifetimes explicit rather than relying on an incidental managed reference. The Settings window remains a secondary window and closing it must not terminate the Wintainium process while the main window remains open.
