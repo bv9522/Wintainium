@@ -83,3 +83,13 @@ versioning once releases begin.
 - Hardened the Settings window with functional category presentation and safe close/reopen lifecycle handling.
 - Recorded the agreed Sort & Filter choices, distinct Unknown installed-state semantics, and downstream Details requirements for Do Not Update and editable Notes.
 - Phase 11C passed the local WinUI build checkpoint and is now complete and locked. The shell's executable identity is `Wintainium.exe`; Core integration and application-model work continue in downstream Phase 11 batches.
+
+
+### Phase 11D — Engine Integration Boundary
+
+- Added the in-process C#/.NET PowerShell SDK hosting boundary for the desktop client.
+- Restricted desktop-hosted command invocation to the four documented Wintainium.Core public commands.
+- Preserved structured PowerShell results and errors below the adapter-facing application boundary; terminal output is not used as an API.
+- Added cancellation-aware hosted pipeline stopping with race-safe cancellation classification.
+- Added an executable adapter contract probe covering real Core invocation, structured manifest results, and public-command allow-list enforcement.
+- Phase 11D is complete and locked after the adapter build and contract-probe checkpoint passed.
