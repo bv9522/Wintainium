@@ -66,7 +66,6 @@ versioning once releases begin.
 - The probe imported Wintainium.Core, resolved Get-WintainiumManifest, executed it successfully, and demonstrated structured result transfer across the C# / PowerShell boundary.
 - GUI-readiness, project, and AI orientation documentation were reconciled with the completed Phase 10 four-command public surface. Phase 11A is complete; the production GUI project begins in Phase 11B.
 
-
 ## Phase 11B — GUI Project Foundation
 
 - Added the production `src/Wintainium.Desktop` WinUI 3 / .NET 10 project foundation.
@@ -83,3 +82,4 @@ versioning once releases begin.
 - Preserved the presentation-only boundary; no Core engine integration or application-state inference is introduced by 11C.
 - Hardened the Settings window with functional category presentation and safe close/reopen lifecycle handling.
 - Recorded the agreed Sort & Filter choices, distinct Unknown installed-state semantics, and downstream Details requirements for Do Not Update and editable Notes.
+- Phase 11C passed the local WinUI build checkpoint and is now complete and locked. The shell's executable identity is `Wintainium.exe`; Core integration and application-model work continue in downstream Phase 11 batches.
