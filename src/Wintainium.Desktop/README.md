@@ -27,12 +27,19 @@ connecting UI actions to the Core engine:
 - Source URL is the primary Add Software input.
 - Separate Settings window with General, Appearance, Updates, Sources, and
   Advanced categories.
-- Application details remain reserved for the downstream 11F batch.
+- Application details remain reserved for the downstream 11F batch, with Do Not Update policy and editable user Notes reserved as application-level presentation/data requirements.
 - Windows 11, Y2K, and Frutiger Aero are planned visual styles under Appearance.
 - System, Light, and Dark are planned theme choices.
 - Wintainium's own release history belongs in the Settings Updates category.
 - No engine integration, update logic, provider discovery, or application state
   inference is introduced by this shell.
+- Sort & Filter retains the five agreed sort choices (Name A–Z, Name Z–A, Update status,
+  Installed status, and Source) and five agreed filters (All software, Update available,
+  Up to date, Installed, and Not installed).
+- Settings is a functional secondary shell with the five agreed categories; category
+  content remains intentionally placeholder-only until its supporting contracts exist.
+- The GUI must preserve Core's distinct Unknown installed-state semantics and must not
+  infer Unknown as Not installed.
 
 The shell intentionally uses placeholder collection/settings content. Later
 Phase 11 batches will replace those placeholders with real presentation models
