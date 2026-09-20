@@ -38,7 +38,7 @@ internal static class WintainiumApplicationModelMapper
             IconUri: null,
             InstallationState: WintainiumInstallationState.Unknown,
             InstalledVersion: null,
-            LastUpdatedDisplay: null,
+            LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
             SourceDisplayName: GetSourceDisplayName(manifest));
     }
