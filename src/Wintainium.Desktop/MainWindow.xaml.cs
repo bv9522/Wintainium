@@ -90,6 +90,8 @@ public sealed partial class MainWindow : Window
     {
         var window = new SettingsWindow();
         window.Closed += SettingsWindow_Closed;
+        window.Activate();
+        App.TrackWindow(window);
         return window;
     }
 
