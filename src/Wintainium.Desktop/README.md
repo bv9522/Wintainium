@@ -45,7 +45,31 @@ The shell intentionally uses placeholder collection/settings content. Later
 Phase 11 batches will replace those placeholders with real presentation models
 and Core-backed behavior.
 
+## Phase 11D engine integration boundary
+
+11D establishes the C#-to-PowerShell boundary without wiring business operations
+into the WinUI controls.
+
+- WintainiumPowerShellHost owns in-process Microsoft.PowerShell.SDK hosting,
+  runspace creation, scoped hosted execution policy, Core module import, serialized
+  invocation, and cancellation-triggered pipeline stopping.
+- WintainiumCoreClient exposes only the four documented public Core commands:
+  Get-WintainiumManifest, Test-WintainiumApplicationDefinition,
+  Get-WintainiumApplicationRelease, and Invoke-WintainiumApplicationUpdate.
+- The adapter passes documented command parameters through to Core and does not
+  construct private lifecycle, stage, provider, installer, download, or
+  reconciliation objects.
+- WintainiumPowerShellInvocationResult is the adapter-local transport boundary;
+  PowerShell SDK types remain below the application-facing adapter seam.
+- The WinUI shell does not yet invoke the adapter. Application models and UI
+  behavior will be connected in later Phase 11 batches.
+- The PowerShell SDK is hosted in-process; terminal output is never used as an API.
+
 ## Scope discipline
 
 11C establishes the product shell and interaction locations. It does not
 finalize every visual detail or implement speculative downstream functionality.
+
+11D establishes the engine integration seam. It does not migrate engine policy
+to C#, expose private Core functions, or prematurely build application models,
+progress UI, settings persistence, or update workflows into the shell.
