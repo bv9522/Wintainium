@@ -73,3 +73,11 @@ versioning once releases begin.
 - Established the WinUI application lifecycle and minimal window boundary.
 - Kept product appearance and desktop shell decisions intentionally deferred to later Phase 11 work.
 - Preserved the presentation-only boundary; no Core engine integration is introduced by 11B.
+
+### Phase 11C — Windows Application Shell
+
+- Added the initial single-window Wintainium desktop shell and software-collection landing surface.
+- Added main-window Sort & Filter and Add Software interaction points.
+- Added the separate Settings window with General, Appearance, Updates, Sources, and Advanced categories.
+- Established Source URL as the Add Software shell input and reserved Wintainium's own release history for Settings > Updates.
+- Preserved the presentation-only boundary; no Core engine integration or application-state inference is introduced by 11C.
