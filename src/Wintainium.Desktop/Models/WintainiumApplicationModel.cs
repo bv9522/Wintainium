@@ -14,7 +14,7 @@ internal sealed record WintainiumApplicationModel(
     string? InstalledVersion,
     DateTimeOffset? LastUpdated,
     WintainiumUpdateStatus UpdateStatus,
-    string? SourceDisplayName);
+    string? SourceProviderId);
 
 internal enum WintainiumInstallationState
 {
