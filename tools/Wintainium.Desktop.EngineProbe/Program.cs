@@ -12,6 +12,18 @@ var modulePath = Path.GetFullPath(args[0]);
 await using var host = new WintainiumPowerShellHost(modulePath);
 var client = new WintainiumCoreClient(host);
 
+var collectionService = new WintainiumApplicationCollectionService(client);
+var collectionResult = await collectionService.LoadAsync(Path.GetDirectoryName(modulePath)!);
+
+if (collectionResult.Applications.Count != 0 ||
+    !collectionResult.IsSuccessful ||
+    collectionResult.Errors.Count != 0 ||
+    collectionResult.Warnings.Count != 0)
+{
+    Console.Error.WriteLine("Unexpected application collection service result for the repository Core directory.");
+    return 1;
+}
+
 var result = await client.GetManifestsAsync(Path.GetDirectoryName(modulePath)!);
 
 if (result.CommandName != "Get-WintainiumManifest")
