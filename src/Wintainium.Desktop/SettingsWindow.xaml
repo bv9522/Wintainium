@@ -37,18 +37,26 @@
                 Padding="24"
                 CornerRadius="12"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                <StackPanel Spacing="12">
-                    <TextBlock
-                        x:Name="CategoryTitle"
-                        Text="General"
-                        Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock
-                        x:Name="CategoryDescription"
-                        Text="General Wintainium behavior and preferences."
-                        Style="{StaticResource BodyTextBlockStyle}"
-                        TextWrapping="Wrap"
-                        Opacity="0.72" />
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                x:Name="CategoryTitle"
+                                Text="General"
+                                Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock
+                                x:Name="CategoryDescription"
+                                Text="General Wintainium behavior and preferences."
+                                Style="{StaticResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap"
+                                Opacity="0.72" />
+                        </StackPanel>
+
+                        <StackPanel
+                            x:Name="CategoryContent"
+                            Spacing="12" />
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
