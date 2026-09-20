@@ -137,7 +137,7 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep the visual shell intentionally minimal so later phases can make deliberate product and UX decisions.
 - Do not finalize launch dimensions, navigation model, title-bar treatment, iconography, tabs, application-list layout, settings layout, or other detailed visual decisions in 11B.
 
-**Status: In progress.** The production desktop project foundation is present under `src/Wintainium.Desktop`. A local build checkpoint is required before 11B is considered complete.
+**Status: Complete.** The production desktop project foundation is present under `src/Wintainium.Desktop`, and the project builds successfully with the established .NET 10 / WinUI 3 baseline.
 
 ### 11C — Windows Application Shell
 
@@ -151,9 +151,12 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Establish the planned Windows 11, Y2K, and Frutiger Aero visual-style boundary
   and System/Light/Dark theme boundary without prematurely implementing the
   complete styling system.
-- Reserve application details for the later 11F application-details batch.
+- Reserve application details for the later 11F application-details batch, including the
+  per-application Do Not Update policy and editable user Notes surface.
 - Keep shell actions presentation-only until the appropriate Core adapter and
   application-model batches.
 
 **Status: In progress.** The initial shell is implemented on branch
-phase-11c-application-shell; a local WinUI build checkpoint is required.
+phase-11c-application-shell and has passed its first local WinUI build checkpoint. The shell
+now includes the functional secondary Settings window and the agreed collection controls;
+remaining 11C work is limited to coherent shell hardening and checkpoint validation.
