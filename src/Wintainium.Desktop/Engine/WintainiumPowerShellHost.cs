@@ -8,6 +8,15 @@ namespace Wintainium.Desktop.Engine;
 /// </summary>
 internal sealed class WintainiumPowerShellHost : IAsyncDisposable
 {
+    private static readonly IReadOnlySet<string> AllowedCommands =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Get-WintainiumManifest",
+            "Test-WintainiumApplicationDefinition",
+            "Get-WintainiumApplicationRelease",
+            "Invoke-WintainiumApplicationUpdate"
+        };
+
     private readonly Runspace _runspace;
     private readonly SemaphoreSlim _invocationGate = new(1, 1);
     private readonly string _modulePath;
@@ -30,9 +39,19 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         var initialState = InitialSessionState.CreateDefault();
         initialState.ExecutionPolicy = Microsoft.PowerShell.ExecutionPolicy.Unrestricted;
 
-        _runspace = RunspaceFactory.CreateRunspace(initialState);
-        _runspace.Open();
-        ImportCoreModule();
+        var runspace = RunspaceFactory.CreateRunspace(initialState);
+
+        try
+        {
+            runspace.Open();
+            _runspace = runspace;
+            ImportCoreModule();
+        }
+        catch
+        {
+            runspace.Dispose();
+            throw;
+        }
     }
 
     public async Task<WintainiumPowerShellInvocationResult> InvokeAsync(
@@ -45,6 +64,13 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(commandName))
         {
             throw new ArgumentException("A PowerShell command name is required.", nameof(commandName));
+        }
+
+        if (!AllowedCommands.Contains(commandName))
+        {
+            throw new ArgumentException(
+                $"The command '{commandName}' is not part of the documented Wintainium.Core desktop contract.",
+                nameof(commandName));
         }
 
         await _invocationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -66,20 +92,24 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 }
             }
 
+            var wasPipelineStopped = false;
+
             using var cancellationRegistration = cancellationToken.Register(
                 static state =>
                 {
-                    var pipeline = (PowerShell)state!;
+                    var context = ((PowerShell Pipeline, Action MarkStopped))state!;
+                    context.MarkStopped();
+
                     try
                     {
-                        pipeline.Stop();
+                        context.Pipeline.Stop();
                     }
                     catch (InvalidOperationException)
                     {
                         // The pipeline may already have completed.
                     }
                 },
-                powershell);
+                (powershell, (Action)(() => wasPipelineStopped = true)));
 
             IReadOnlyList<PSObject> output;
 
@@ -88,7 +118,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 var invocation = await powershell.InvokeAsync().ConfigureAwait(false);
                 output = invocation.ToArray();
             }
-            catch (PipelineStoppedException) when (cancellationToken.IsCancellationRequested)
+            catch (PipelineStoppedException) when (wasPipelineStopped)
             {
                 return new WintainiumPowerShellInvocationResult(
                     commandName,
@@ -101,7 +131,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
                 commandName,
                 output,
                 powershell.Streams.Error.ToArray(),
-                WasCancelled: cancellationToken.IsCancellationRequested);
+                WasCancelled: wasPipelineStopped);
         }
         finally
         {
@@ -130,7 +160,16 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
             .AddParameter("Name", _modulePath)
             .AddParameter("Force");
 
-        _ = powershell.Invoke();
+        try
+        {
+            _ = powershell.Invoke();
+        }
+        catch (RuntimeException exception)
+        {
+            throw new InvalidOperationException(
+                "Wintainium.Core could not be imported.",
+                exception);
+        }
 
         if (powershell.HadErrors)
         {
