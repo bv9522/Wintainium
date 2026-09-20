@@ -123,3 +123,15 @@ The application model intentionally remains partial at this stage. Manifest disc
 The manifest schema currently provides a provider `pluginId`, not a human-friendly source name, so the presentation model records it as `SourceProviderId` rather than presenting the technical identifier as a display name.
 
 Sorting, filtering, List/Grid projection, and WinUI binding remain later 11E work. No application update decision is made by the collection layer.
+
+### Phase 11E application collection query
+
+The collection query boundary keeps list presentation concerns separate from Core and from the loaded application models.
+
+- `WintainiumApplicationQuery` carries the agreed Sort & Filter selections.
+- `WintainiumApplicationCollectionQuery` applies those selections without changing application facts or making update decisions.
+- The five sort choices are Name A–Z, Name Z–A, Update status, Installed status, and Source.
+- The five filters are All software, Update available, Up to date, Installed, and Not installed.
+- Filters for Installed/Not Installed and Update Available/Up to Date match only their explicit known states; `Unknown` is never treated as either known alternative.
+- Sorting uses deterministic application-name and application-ID tie-breakers so presentation order is stable.
+- The initial Unknown states remain visible to the presentation layer rather than being converted into a user-facing inference.
