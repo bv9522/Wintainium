@@ -169,4 +169,16 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep PowerShell SDK types below the adapter-local transport boundary so future application models do not depend directly on PowerShell hosting types.
 - Do not wire the WinUI controls to Core yet; downstream 11E–11H batches will consume the adapter through presentation models.
 
-**Status: In progress.** The adapter seam and package dependency are implemented on branch `phase-11d-engine-integration-boundary`. The next checkpoint is a local .NET/WinUI build and adapter compile validation before any UI operation is connected to Core.
+**Status: Complete and locked.** The adapter seam, in-process hosting, public-command allow-list, structured result transport, and cancellation boundary are implemented and validated by the desktop EngineProbe. The adapter remains below the application-facing model layer, and no WinUI control invokes Core directly.
+
+### 11E — Application List Model
+
+- Establish the desktop application model from documented Core manifest results.
+- Preserve explicit Core-owned `Unknown` installation and update states rather than inferring missing information.
+- Keep installed version, last-updated information, icon data, and update decisions absent until authoritative Core-backed sources exist.
+- Establish the application collection loading boundary through the public `Get-WintainiumManifest` command.
+- Establish presentation-only Sort & Filter query semantics for the five agreed sort choices and five agreed filters.
+- Keep PowerShell SDK types below the application model boundary and preserve structured Core diagnostics.
+- Validate collection mapping and query behavior through the desktop EngineProbe without changing the PowerShell engine.
+
+**Status: In progress.** The application model, collection service, presentation-only query boundary, and broadened EngineProbe coverage are implemented. Interactive WinUI list/grid binding and any additional authoritative application facts remain downstream 11E work.
