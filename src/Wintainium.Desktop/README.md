@@ -122,7 +122,7 @@ The application model intentionally remains partial at this stage. Manifest disc
 
 The manifest schema currently provides a provider `pluginId`, not a human-friendly source name, so the presentation model records it as `SourceProviderId` rather than presenting the technical identifier as a display name.
 
-Sorting, filtering, List/Grid projection, and WinUI binding remain later 11E work. No application update decision is made by the collection layer.
+Sorting and filtering are now represented by the presentation-only collection query boundary. List/Grid projection and WinUI binding remain downstream 11E work. No application update decision is made by the collection layer.
 
 ### Phase 11E application collection query
 
@@ -135,3 +135,4 @@ The collection query boundary keeps list presentation concerns separate from Cor
 - Filters for Installed/Not Installed and Update Available/Up to Date match only their explicit known states; `Unknown` is never treated as either known alternative.
 - Sorting uses deterministic application-name and application-ID tie-breakers so presentation order is stable.
 - The initial Unknown states remain visible to the presentation layer rather than being converted into a user-facing inference.
+- The desktop EngineProbe covers all five sort choices and all five filters, including explicit checks that Unknown is not reclassified by filtering and remains first in the current status-sort presentation ordering.
