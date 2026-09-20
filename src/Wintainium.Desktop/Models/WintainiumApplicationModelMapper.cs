@@ -42,10 +42,10 @@ internal static class WintainiumApplicationModelMapper
             InstalledVersion: null,
             LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
-            SourceDisplayName: GetSourceDisplayName(manifest));
+            SourceProviderId: GetSourceProviderId(manifest));
     }
 
-    private static string? GetSourceDisplayName(PSObject manifest)
+    private static string? GetSourceProviderId(PSObject manifest)
     {
         var source = GetProperty(manifest, "Source");
         return source is null ? null : GetNullableString(source, "PluginId");
