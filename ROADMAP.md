@@ -157,3 +157,16 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
   application-model batches.
 
 **Status: Complete and locked.** The 11C shell is implemented and has passed the local WinUI build checkpoint with `dotnet build .\\src\\Wintainium.Desktop\\Wintainium.Desktop.csproj -c Debug -p:Platform=x64`. The primary window, standard Windows behavior, collection landing surface, Sort & Filter controls, Add Software source-URL dialog, and separate Settings window with all five agreed categories are established. Settings has safe close/reopen lifecycle handling. The shell remains presentation-only; Core integration, application models, update policy execution, persistence, and detailed application views remain downstream work. The executable identity is `Wintainium.exe`.
+
+### 11D — Engine Integration Boundary
+
+- Establish the in-process C#/.NET hosting seam for Wintainium.Core using Microsoft.PowerShell.SDK.
+- Keep hosted PowerShell execution policy scoped to the runspace; do not modify machine policy.
+- Import Wintainium.Core once into the host runspace and serialize command invocations through a single execution boundary.
+- Expose only the four documented public Core commands through `WintainiumCoreClient`.
+- Preserve structured PowerShell results and error records at the adapter boundary; do not parse terminal output.
+- Propagate cancellation through the documented `CancellationToken` parameter for update execution and stop the hosted pipeline when the caller cancels.
+- Keep PowerShell SDK types below the adapter-local transport boundary so future application models do not depend directly on PowerShell hosting types.
+- Do not wire the WinUI controls to Core yet; downstream 11E–11H batches will consume the adapter through presentation models.
+
+**Status: In progress.** The adapter seam and package dependency are implemented on branch `phase-11d-engine-integration-boundary`. The next checkpoint is a local .NET/WinUI build and adapter compile validation before any UI operation is connected to Core.
