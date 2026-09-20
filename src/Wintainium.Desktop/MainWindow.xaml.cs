@@ -5,6 +5,8 @@ namespace Wintainium.Desktop;
 
 public sealed partial class MainWindow : Window
 {
+    private SettingsWindow? _settingsWindow;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -80,7 +82,7 @@ public sealed partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        var settingsWindow = new SettingsWindow();
-        settingsWindow.Activate();
+        _settingsWindow ??= new SettingsWindow();
+        _settingsWindow.Activate();
     }
 }
