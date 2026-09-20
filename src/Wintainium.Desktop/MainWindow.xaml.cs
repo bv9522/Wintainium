@@ -82,7 +82,22 @@ public sealed partial class MainWindow : Window
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        _settingsWindow ??= new SettingsWindow();
+        _settingsWindow ??= CreateSettingsWindow();
         _settingsWindow.Activate();
+    }
+
+    private SettingsWindow CreateSettingsWindow()
+    {
+        var window = new SettingsWindow();
+        window.Closed += SettingsWindow_Closed;
+        return window;
+    }
+
+    private void SettingsWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (ReferenceEquals(sender, _settingsWindow))
+        {
+            _settingsWindow = null;
+        }
     }
 }
