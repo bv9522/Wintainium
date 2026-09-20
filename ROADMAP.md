@@ -138,3 +138,22 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Do not finalize launch dimensions, navigation model, title-bar treatment, iconography, tabs, application-list layout, settings layout, or other detailed visual decisions in 11B.
 
 **Status: In progress.** The production desktop project foundation is present under `src/Wintainium.Desktop`. A local build checkpoint is required before 11B is considered complete.
+
+### 11C — Windows Application Shell
+
+- Establish the single-window Wintainium desktop interaction model.
+- Use standard Windows title-bar and resizable-window behavior.
+- Establish the software collection as the landing view.
+- Establish main-window Sort & Filter and Add Software actions.
+- Establish Source URL as the primary Add Software input.
+- Establish the separate Settings window and the five agreed categories:
+  General, Appearance, Updates, Sources, and Advanced.
+- Establish the planned Windows 11, Y2K, and Frutiger Aero visual-style boundary
+  and System/Light/Dark theme boundary without prematurely implementing the
+  complete styling system.
+- Reserve application details for the later 11F application-details batch.
+- Keep shell actions presentation-only until the appropriate Core adapter and
+  application-model batches.
+
+**Status: In progress.** The initial shell is implemented on branch
+phase-11c-application-shell; a local WinUI build checkpoint is required.
