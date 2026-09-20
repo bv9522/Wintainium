@@ -81,3 +81,5 @@ versioning once releases begin.
 - Added the separate Settings window with General, Appearance, Updates, Sources, and Advanced categories.
 - Established Source URL as the Add Software shell input and reserved Wintainium's own release history for Settings > Updates.
 - Preserved the presentation-only boundary; no Core engine integration or application-state inference is introduced by 11C.
+- Hardened the Settings window with functional category presentation and safe close/reopen lifecycle handling.
+- Recorded the agreed Sort & Filter choices, distinct Unknown installed-state semantics, and downstream Details requirements for Do Not Update and editable Notes.
