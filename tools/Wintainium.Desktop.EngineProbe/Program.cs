@@ -1,4 +1,5 @@
 using Wintainium.Desktop.Engine;
+using Wintainium.Desktop.Models;
 
 if (args.Length != 1)
 {
@@ -54,6 +55,13 @@ foreach (var propertyName in requiredProperties)
     }
 }
 
+var models = WintainiumApplicationModelMapper.MapManifestResult(output);
+if (models.Count != 0)
+{
+    Console.Error.WriteLine("Expected the repository Core directory to contain no recognized manifests.");
+    return 1;
+}
+
 try
 {
     await host.InvokeAsync("Get-Command");
@@ -69,5 +77,6 @@ Console.WriteLine("Desktop engine contract probe: PASS");
 Console.WriteLine("In-process PowerShell hosting: PASS");
 Console.WriteLine("Public Core command invocation: PASS");
 Console.WriteLine("Structured manifest result shape: PASS");
+Console.WriteLine("Application model mapping: PASS");
 Console.WriteLine("Public command allow-list: PASS");
 return 0;
