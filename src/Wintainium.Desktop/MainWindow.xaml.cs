@@ -1,16 +1,58 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Wintainium.Desktop.Models;
 
 namespace Wintainium.Desktop;
 
 public sealed partial class MainWindow : Window
 {
+    private readonly WintainiumApplicationCollectionViewModel _applicationCollection;
     private SettingsWindow? _settingsWindow;
 
     public MainWindow()
     {
         InitializeComponent();
         Title = "Wintainium";
+
+        _applicationCollection = new WintainiumApplicationCollectionViewModel();
+        ApplicationListView.ItemsSource = _applicationCollection.Applications;
+        _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
+        UpdateCollectionVisibility();
+    }
+
+    internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
+    {
+        _applicationCollection.SetApplications(applications);
+        UpdateCollectionVisibility();
+    }
+
+    internal void SetApplicationQuery(WintainiumApplicationQuery query)
+    {
+        _applicationCollection.SetQuery(query);
+        UpdateCollectionVisibility();
+    }
+
+    private void Applications_CollectionChanged(
+        object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        UpdateCollectionVisibility();
+    }
+
+    private void UpdateCollectionVisibility()
+    {
+        var hasApplications = _applicationCollection.Applications.Count > 0;
+        ApplicationListView.Visibility = hasApplications
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        EmptyStatePanel.Visibility = hasApplications
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
+
+    private void ApplicationListView_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        // Application details are intentionally deferred to Phase 11F.
     }
 
     private async void AddSoftwareButton_Click(object sender, RoutedEventArgs e)
