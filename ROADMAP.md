@@ -193,4 +193,4 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Provide editable Notes with explicit Save and Don't Save behavior while keeping durable persistence downstream.
 - Keep update execution, policy enforcement, installed-state acquisition, and durable metadata outside the presentation layer.
 
-**Status: In progress.** The application-details window, release result mapping/service boundary, manifest-path preservation, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint remain before locking 11F.
+**Status: Complete.** The application-details window, release result mapping/service boundary, manifest-path preservation, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint are green. The details surface preserves Unknown installation/update state, exposes the reserved Do Not Update policy surface without enforcement, and provides session-scoped Notes Save/Don't Save behavior pending the authoritative persistence boundary. Update execution, policy enforcement, installed-state acquisition, and durable metadata remain outside the presentation layer.
