@@ -293,6 +293,51 @@ if (viewModel.ViewMode != WintainiumApplicationViewMode.List)
     return 1;
 }
 
+var syntheticRelease = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        OperationId = Guid.NewGuid().ToString(),
+        IsSuccessful = true,
+        Status = "Success",
+        Releases = new[]
+        {
+            new
+            {
+                ReleaseId = "fixture-release-1",
+                Version = "1.2.3",
+                Channel = "stable",
+                PublishedAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
+                Artifacts = new[]
+                {
+                    new
+                    {
+                        Uri = "https://example.invalid/example-1.2.3-x64.zip",
+                        FileName = "example-1.2.3-x64.zip",
+                        Format = "zip",
+                        Architecture = "x64",
+                        Size = 12345L,
+                        Hashes = new[] { new { Algorithm = "SHA256", Value = new string('a', 64) } }
+                    }
+                }
+            }
+        },
+        Errors = Array.Empty<object>(),
+        Warnings = Array.Empty<object>()
+    });
+
+var releaseResult = WintainiumApplicationReleaseMapper.Map(syntheticRelease);
+if (releaseResult.Releases.Count != 1 ||
+    releaseResult.Releases[0].Version != "1.2.3" ||
+    releaseResult.Releases[0].Channel != "stable" ||
+    releaseResult.Releases[0].Artifacts.Count != 1 ||
+    releaseResult.Releases[0].Artifacts[0].Hashes.Count != 1)
+{
+    Console.Error.WriteLine("Application release mapping failed.");
+    return 1;
+}
+
+Console.WriteLine("Application release mapping: PASS");
+
 Console.WriteLine("Application collection view mode: PASS");
 
 Console.WriteLine("Application collection view model: PASS");
