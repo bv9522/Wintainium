@@ -15,7 +15,8 @@ internal static class WintainiumApplicationReleaseMapper
             Status: Nullable(result, "Status"),
             Releases: Collection(result, "Releases").Select(MapRelease).ToArray(),
             Errors: Diagnostics(result, "Errors"),
-            Warnings: Diagnostics(result, "Warnings"));
+            Warnings: Diagnostics(result, "Warnings"),
+            OperationState: WintainiumOperationStateMapper.Map(result).State);
     }
 
     private static WintainiumApplicationReleaseModel MapRelease(PSObject release) =>
