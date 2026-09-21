@@ -102,7 +102,6 @@
                 </Border>
 
                 <TextBlock x:Name="DetailsErrorText"
-                           Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                            TextWrapping="Wrap"
                            Visibility="Collapsed" />
             </StackPanel>
