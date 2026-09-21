@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Phase 11F
+
+- Added the WinUI application-details surface over the 11E application model.
+- Added manifest-path preservation and a C# release-information mapping/service boundary over the public `Get-WintainiumApplicationRelease` command.
+- Added release discovery presentation without moving update decisions into the desktop client.
+- Added the reserved Do Not Update policy surface and session-scoped Notes Save/Don't Save behavior.
+- Added EngineProbe coverage for structured application release mapping.
+
+
 All notable changes will be documented in this file.
 
 This project intends to follow the principles of
