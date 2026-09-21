@@ -52,6 +52,24 @@
 
                 <Border Padding="18">
                     <StackPanel Spacing="10">
+                        <TextBlock Text="Operation Status"
+                                   Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock x:Name="OperationStateText"
+                                   Text="Not started." />
+                        <TextBlock x:Name="OperationIdText"
+                                   Opacity="0.65"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="Errors"
+                                   FontWeight="SemiBold" />
+                        <ItemsControl x:Name="ErrorItemsControl" />
+                        <TextBlock Text="Warnings"
+                                   FontWeight="SemiBold" />
+                        <ItemsControl x:Name="WarningItemsControl" />
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="18">
+                    <StackPanel Spacing="10">
                         <TextBlock Text="Release Information"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock x:Name="ReleaseStatusText"
