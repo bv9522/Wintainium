@@ -13,7 +13,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly WintainiumApplicationReleaseService _releaseService;
     private string _savedNotes = string.Empty;
 
-    public ApplicationDetailsWindow(
+    internal ApplicationDetailsWindow(
         WintainiumApplicationModel application,
         WintainiumApplicationReleaseService releaseService)
     {
