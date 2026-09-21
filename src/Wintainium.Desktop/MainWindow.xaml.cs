@@ -43,12 +43,12 @@ public sealed partial class MainWindow : Window
     private void UpdateCollectionVisibility()
     {
         var hasApplications = _applicationCollection.Applications.Count > 0;
-        ApplicationListView.Visibility = hasApplications
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        EmptyStatePanel.Visibility = hasApplications
-            ? Visibility.Collapsed
-            : Visibility.Visible;
+        var showList = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.List;
+        var showGrid = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.Grid;
+
+        ApplicationListView.Visibility = showList ? Visibility.Visible : Visibility.Collapsed;
+        ApplicationGridView.Visibility = showGrid ? Visibility.Visible : Visibility.Collapsed;
+        EmptyStatePanel.Visibility = hasApplications ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -60,17 +60,6 @@ public sealed partial class MainWindow : Window
 
         _applicationCollection.SetViewMode(
             (WintainiumApplicationViewMode)ViewModeComboBox.SelectedIndex);
-
-        // The grid/list visual templates are introduced in the presentation shell;
-        // the view-model owns only the user's presentation preference.
-        ApplicationListView.Visibility =
-            _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-        ApplicationGridView.Visibility =
-            _applicationCollection.ViewMode == WintainiumApplicationViewMode.Grid
-                ? Visibility.Visible
-                : Visibility.Collapsed;
 
         UpdateCollectionVisibility();
     }
