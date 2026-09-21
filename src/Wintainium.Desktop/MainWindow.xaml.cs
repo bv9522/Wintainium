@@ -76,50 +76,70 @@ public sealed partial class MainWindow : Window
 
     private async void SortAndFilterButton_Click(object sender, RoutedEventArgs e)
     {
+        var sortComboBox = new ComboBox
+        {
+            Header = "Sort by",
+            Width = 320,
+            SelectedIndex = (int)_applicationCollection.Query.Sort,
+            ItemsSource = new[]
+            {
+                "Name A–Z",
+                "Name Z–A",
+                "Update status",
+                "Installed status",
+                "Source"
+            }
+        };
+
+        var filterComboBox = new ComboBox
+        {
+            Header = "Filter",
+            Width = 320,
+            SelectedIndex = (int)_applicationCollection.Query.Filter,
+            ItemsSource = new[]
+            {
+                "All software",
+                "Update available",
+                "Up to date",
+                "Installed",
+                "Not installed"
+            }
+        };
+
+        var content = new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
+                sortComboBox,
+                filterComboBox
+            }
+        };
+
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "Sort & Filter",
-            Content = new StackPanel
-            {
-                Spacing = 16,
-                Children =
-                {
-                    new ComboBox
-                    {
-                        Header = "Sort by",
-                        Width = 320,
-                        SelectedIndex = 0,
-                        ItemsSource = new[]
-                        {
-                            "Name A–Z",
-                            "Name Z–A",
-                            "Update status",
-                            "Installed status",
-                            "Source"
-                        }
-                    },
-                    new ComboBox
-                    {
-                        Header = "Filter",
-                        Width = 320,
-                        SelectedIndex = 0,
-                        ItemsSource = new[]
-                        {
-                            "All software",
-                            "Update available",
-                            "Up to date",
-                            "Installed",
-                            "Not installed"
-                        }
-                    }
-                }
-            },
-            CloseButtonText = "Done",
-            DefaultButton = ContentDialogButton.Close
+            Content = content,
+            PrimaryButtonText = "Apply",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
         };
 
-        await dialog.ShowAsync();
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        if (sortComboBox.SelectedIndex < 0 || filterComboBox.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        SetApplicationQuery(
+            new WintainiumApplicationQuery(
+                (WintainiumApplicationSort)sortComboBox.SelectedIndex,
+                (WintainiumApplicationFilter)filterComboBox.SelectedIndex));
     }
 
     private async void SettingsButton_Click(object sender, RoutedEventArgs e)
