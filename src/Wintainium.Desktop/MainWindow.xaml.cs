@@ -80,10 +80,30 @@ public sealed partial class MainWindow : Window
         await dialog.ShowAsync();
     }
 
-    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    private async void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        _settingsWindow ??= CreateSettingsWindow();
-        _settingsWindow.Activate();
+        try
+        {
+            _settingsWindow ??= CreateSettingsWindow();
+            _settingsWindow.Activate();
+        }
+        catch (Exception exception)
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Settings could not be opened",
+                Content = new TextBlock
+                {
+                    Text = exception.ToString(),
+                    TextWrapping = TextWrapping.Wrap
+                },
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            await dialog.ShowAsync();
+        }
     }
 
     private SettingsWindow CreateSettingsWindow()
