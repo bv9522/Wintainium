@@ -279,6 +279,22 @@ if (viewModel.Applications.Count != 3 ||
     return 1;
 }
 
+viewModel.SetViewMode(WintainiumApplicationViewMode.Grid);
+if (viewModel.ViewMode != WintainiumApplicationViewMode.Grid)
+{
+    Console.Error.WriteLine("Application collection view mode update failed.");
+    return 1;
+}
+
+viewModel.SetViewMode(WintainiumApplicationViewMode.List);
+if (viewModel.ViewMode != WintainiumApplicationViewMode.List)
+{
+    Console.Error.WriteLine("Application collection view mode reset failed.");
+    return 1;
+}
+
+Console.WriteLine("Application collection view mode: PASS");
+
 Console.WriteLine("Application collection view model: PASS");
 
 Console.WriteLine("Application collection query: PASS");
