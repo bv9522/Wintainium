@@ -2,7 +2,6 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 
 namespace Wintainium.Desktop;
@@ -38,9 +37,17 @@ public sealed partial class SettingsWindow : Window
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
 
-        (_categoryList, _categoryTitle, _categoryDescription, _categoryContent) = FindControls();
-        _categoryList.SelectionChanged += CategoryList_SelectionChanged;
+        (_categoryList, _categoryTitle, _categoryDescription) = FindControls();
 
+        _categoryContent = new StackPanel
+        {
+            Spacing = 12
+        };
+
+        var panel = (StackPanel)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
+        panel.Children.Add(_categoryContent);
+
+        _categoryList.SelectionChanged += CategoryList_SelectionChanged;
         _categoryList.SelectedIndex = 0;
         UpdateCategoryContent(0);
     }
@@ -97,7 +104,7 @@ public sealed partial class SettingsWindow : Window
             });
     }
 
-    private (ListView, TextBlock, TextBlock, StackPanel) FindControls()
+    private (ListView, TextBlock, TextBlock) FindControls()
     {
         var root = (Grid)Content;
         var body = (Grid)root.Children[1];
@@ -107,7 +114,6 @@ public sealed partial class SettingsWindow : Window
         return (
             categoryList,
             (TextBlock)panel.Children[0],
-            (TextBlock)panel.Children[1],
-            (StackPanel)panel.Children[2]);
+            (TextBlock)panel.Children[1]);
     }
 }
