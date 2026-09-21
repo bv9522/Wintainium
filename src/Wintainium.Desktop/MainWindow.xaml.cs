@@ -16,6 +16,7 @@ public sealed partial class MainWindow : Window
 
         _applicationCollection = new WintainiumApplicationCollectionViewModel();
         ApplicationListView.ItemsSource = _applicationCollection.Applications;
+        ApplicationGridView.ItemsSource = _applicationCollection.Applications;
         ViewModeComboBox.SelectedIndex = (int)_applicationCollection.ViewMode;
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
