@@ -41,21 +41,50 @@
         </Grid>
 
         <Grid Grid.Row="1" Margin="28,0,28,16">
+            <ListView
+                x:Name="ApplicationListView"
+                SelectionMode="Single"
+                IsItemClickEnabled="True"
+                ItemClick="ApplicationListView_ItemClick">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="8,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="8" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="3">
+                                <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ApplicationId}" Opacity="0.65" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="3">
+                                <TextBlock Text="{Binding InstalledVersion, TargetNullValue=Not installed}"
+                                           HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding UpdateStatus}" Opacity="0.72" HorizontalAlignment="Right" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
             <StackPanel
+                x:Name="EmptyStatePanel"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="10"
                 MaxWidth="520">
-                <TextBlock
-                    Text="Your software collection"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    HorizontalAlignment="Center" />
-                <TextBlock
-                    Text="Applications you add to Wintainium will appear here."
-                    Style="{StaticResource BodyTextBlockStyle}"
-                    TextAlignment="Center"
-                    Opacity="0.72"
-                    TextWrapping="Wrap" />
+                <TextBlock Text="Your software collection"
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Applications you add to Wintainium will appear here."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           TextAlignment="Center"
+                           Opacity="0.72"
+                           TextWrapping="Wrap" />
             </StackPanel>
         </Grid>
 
