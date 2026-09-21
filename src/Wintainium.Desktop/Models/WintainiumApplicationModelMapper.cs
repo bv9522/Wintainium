@@ -3,10 +3,6 @@ using System.Management.Automation;
 
 namespace Wintainium.Desktop.Models;
 
-/// <summary>
-/// Maps documented Core manifest results into desktop presentation models.
-/// No update or installation decisions are made here.
-/// </summary>
 internal static class WintainiumApplicationModelMapper
 {
     public static WintainiumApplicationCollectionResult MapManifestResult(PSObject result)
@@ -14,8 +10,13 @@ internal static class WintainiumApplicationModelMapper
         ArgumentNullException.ThrowIfNull(result);
 
         var operationId = GetRequiredString(result, "OperationId");
-        var applications = GetCollection(result, "Manifests")
-            .Select(MapManifest)
+        var manifests = GetCollection(result, "Manifests");
+        var manifestPaths = GetCollection(result, "ManifestPaths");
+
+        var applications = manifests
+            .Select((manifest, index) => MapManifest(
+                manifest,
+                index < manifestPaths.Count ? GetNullableString(manifestPaths[index], null) : null))
             .ToArray();
 
         return new WintainiumApplicationCollectionResult(
@@ -26,7 +27,7 @@ internal static class WintainiumApplicationModelMapper
             Warnings: GetDiagnostics(result, "Warnings"));
     }
 
-    private static WintainiumApplicationModel MapManifest(PSObject manifest)
+    private static WintainiumApplicationModel MapManifest(PSObject manifest, string? manifestPath)
     {
         var applicationId = GetRequiredString(manifest, "Id");
         var name = GetRequiredString(manifest, "Name");
@@ -42,7 +43,8 @@ internal static class WintainiumApplicationModelMapper
             InstalledVersion: null,
             LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
-            SourceProviderId: GetSourceProviderId(manifest));
+            SourceProviderId: GetSourceProviderId(manifest),
+            ManifestPath: manifestPath);
     }
 
     private static string? GetSourceProviderId(PSObject manifest)
@@ -51,30 +53,22 @@ internal static class WintainiumApplicationModelMapper
         return source is null ? null : GetNullableString(source, "PluginId");
     }
 
-    private static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(
-        PSObject source,
-        string propertyName)
-    {
-        return GetCollection(source, propertyName)
+    private static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(PSObject source, string propertyName) =>
+        GetCollection(source, propertyName)
             .Select(item => new WintainiumOperationDiagnostic(
                 Code: GetNullableString(item, "Code"),
                 Path: GetNullableString(item, "Path"),
                 Message: GetNullableString(item, "Message")))
             .ToArray();
-    }
 
     private static List<PSObject> GetCollection(PSObject source, string propertyName)
     {
         var value = GetProperty(source, propertyName);
-        if (value is null)
-        {
-            return [];
-        }
+        if (value is null) return [];
 
         if (value.BaseObject is IEnumerable enumerable and not string)
         {
-            return enumerable
-                .Cast<object>()
+            return enumerable.Cast<object>()
                 .Select(item => item as PSObject ?? PSObject.AsPSObject(item))
                 .ToList();
         }
@@ -91,16 +85,13 @@ internal static class WintainiumApplicationModelMapper
     {
         var value = GetNullableString(source, propertyName);
         if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new InvalidOperationException(
-                $"Core result is missing required property '{propertyName}'.");
-        }
-
+            throw new InvalidOperationException($"Core result is missing required property '{propertyName}'.");
         return value;
     }
 
-    private static string? GetNullableString(PSObject source, string propertyName)
+    private static string? GetNullableString(PSObject source, string? propertyName)
     {
+        if (propertyName is null) return Convert.ToString(source.BaseObject);
         var property = source.Properties[propertyName];
         return property?.Value is null ? null : Convert.ToString(property.Value);
     }
