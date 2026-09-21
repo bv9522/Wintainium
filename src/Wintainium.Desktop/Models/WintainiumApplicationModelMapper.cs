@@ -24,7 +24,8 @@ internal static class WintainiumApplicationModelMapper
             IsSuccessful: GetBoolean(result, "IsSuccessful"),
             Applications: applications,
             Errors: GetDiagnostics(result, "Errors"),
-            Warnings: GetDiagnostics(result, "Warnings"));
+            Warnings: GetDiagnostics(result, "Warnings"),
+            OperationState: WintainiumOperationStateMapper.Map(result).State);
     }
 
     private static WintainiumApplicationModel MapManifest(PSObject manifest, string? manifestPath)
