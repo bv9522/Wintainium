@@ -140,3 +140,18 @@ The collection query boundary keeps list presentation concerns separate from Cor
 ### Phase 11E window lifetime hardening
 
 The desktop shell now tracks every active WinUI window by `WindowId`, including the main window and the secondary Settings window. A tracked window is removed from the registry when its `Closed` event fires. This keeps the main and secondary window lifetimes explicit rather than relying on an incidental managed reference. The Settings window remains a secondary window and closing it must not terminate the Wintainium process while the main window remains open.
+
+
+## Phase 11F application details and release information
+
+11F establishes the application-details presentation boundary over the 11E application model.
+
+- Application details can be opened from both collection presentation modes.
+- Details present manifest-backed identity, publisher, homepage, source provider, and the current installation facts without manufacturing missing state.
+- The application model preserves the originating manifest path so the details surface can request release discovery through the documented `Get-WintainiumApplicationRelease` command.
+- Release discovery is exposed as source release information only; the desktop client does not calculate update availability from the returned releases.
+- Release models preserve release identity, version, channel, publication time, artifact metadata, and hashes at the application-facing boundary.
+- The Do Not Update control is intentionally reserved and disabled until an authoritative application-policy/configuration contract exists.
+- Notes provide explicit Save and Don't Save behavior for the current application session; durable note persistence remains downstream.
+- Installed-state acquisition, version comparison, update decisions, update execution, policy enforcement, and durable metadata remain Core/configuration responsibilities rather than presentation logic.
+- The desktop EngineProbe verifies the release-result mapping in addition to the existing application-model and engine-boundary checks.
