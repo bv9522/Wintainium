@@ -16,6 +16,7 @@ public sealed partial class MainWindow : Window
 
         _applicationCollection = new WintainiumApplicationCollectionViewModel();
         ApplicationListView.ItemsSource = _applicationCollection.Applications;
+        ViewModeComboBox.SelectedIndex = (int)_applicationCollection.ViewMode;
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
     }
@@ -48,6 +49,35 @@ public sealed partial class MainWindow : Window
         EmptyStatePanel.Visibility = hasApplications
             ? Visibility.Collapsed
             : Visibility.Visible;
+    }
+
+    private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModeComboBox.SelectedIndex < 0)
+        {
+            return;
+        }
+
+        _applicationCollection.SetViewMode(
+            (WintainiumApplicationViewMode)ViewModeComboBox.SelectedIndex);
+
+        // The grid/list visual templates are introduced in the presentation shell;
+        // the view-model owns only the user's presentation preference.
+        ApplicationListView.Visibility =
+            _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        ApplicationGridView.Visibility =
+            _applicationCollection.ViewMode == WintainiumApplicationViewMode.Grid
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        UpdateCollectionVisibility();
+    }
+
+    private void ApplicationGridView_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        // Application details are intentionally deferred to Phase 11F.
     }
 
     private void ApplicationListView_ItemClick(object sender, ItemClickEventArgs e)
