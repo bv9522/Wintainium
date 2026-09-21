@@ -21,9 +21,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListView
-                SelectionChanged="CategoryList_SelectionChanged"
-                SelectedIndex="0">
+            <ListView SelectedIndex="0">
                 <ListViewItem Content="General" />
                 <ListViewItem Content="Appearance" />
                 <ListViewItem Content="Updates" />
