@@ -8,7 +8,8 @@ internal sealed record WintainiumApplicationCollectionResult(
     bool IsSuccessful,
     IReadOnlyList<WintainiumApplicationModel> Applications,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
-    IReadOnlyList<WintainiumOperationDiagnostic> Warnings);
+    IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
+    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
 
 /// <summary>
 /// Stable diagnostic data projected from a documented Core result.
