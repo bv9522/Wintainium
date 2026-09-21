@@ -12,7 +12,7 @@ internal sealed record WintainiumApplicationModel(
     DateTimeOffset? LastUpdated,
     WintainiumUpdateStatus UpdateStatus,
     string? SourceProviderId,
-    string? ManifestPath);
+    string? ManifestPath = null);
 
 internal enum WintainiumInstallationState
 {
