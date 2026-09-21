@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Wintainium.Desktop.Engine;
 using Wintainium.Desktop.Models;
 
 namespace Wintainium.Desktop;
@@ -7,6 +8,9 @@ namespace Wintainium.Desktop;
 public sealed partial class MainWindow : Window
 {
     private readonly WintainiumApplicationCollectionViewModel _applicationCollection;
+    private readonly Dictionary<string, ApplicationDetailsWindow> _applicationDetailsWindows = new(StringComparer.OrdinalIgnoreCase);
+    private WintainiumPowerShellHost? _powerShellHost;
+    private WintainiumApplicationReleaseService? _releaseService;
     private SettingsWindow? _settingsWindow;
 
     public MainWindow()
@@ -20,6 +24,7 @@ public sealed partial class MainWindow : Window
         UpdateViewModeButton();
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
+        Closed += MainWindow_Closed;
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
@@ -70,14 +75,77 @@ public sealed partial class MainWindow : Window
             : "Grid";
     }
 
-    private void ApplicationGridView_ItemClick(object sender, ItemClickEventArgs e)
+    private async void ApplicationGridView_ItemClick(object sender, ItemClickEventArgs e)
     {
-        // Application details are intentionally deferred to Phase 11F.
+        await OpenApplicationDetailsAsync(e.ClickedItem as WintainiumApplicationModel);
     }
 
-    private void ApplicationListView_ItemClick(object sender, ItemClickEventArgs e)
+    private async void ApplicationListView_ItemClick(object sender, ItemClickEventArgs e)
     {
-        // Application details are intentionally deferred to Phase 11F.
+        await OpenApplicationDetailsAsync(e.ClickedItem as WintainiumApplicationModel);
+    }
+
+    private async Task OpenApplicationDetailsAsync(WintainiumApplicationModel? application)
+    {
+        if (application is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_applicationDetailsWindows.TryGetValue(application.ApplicationId, out var existing))
+            {
+                existing.Activate();
+                return;
+            }
+
+            _releaseService ??= CreateReleaseService();
+            var window = new ApplicationDetailsWindow(application, _releaseService);
+            _applicationDetailsWindows[application.ApplicationId] = window;
+            window.Closed += (_, _) => _applicationDetailsWindows.Remove(application.ApplicationId);
+            App.TrackWindow(window);
+            window.Activate();
+        }
+        catch (Exception exception)
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "Application details could not be opened",
+                Content = new TextBlock
+                {
+                    Text = exception.ToString(),
+                    TextWrapping = TextWrapping.Wrap
+                },
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            await dialog.ShowAsync();
+        }
+    }
+
+    private WintainiumApplicationReleaseService CreateReleaseService()
+    {
+        _powerShellHost ??= new WintainiumPowerShellHost(WintainiumCoreModuleLocator.Locate());
+        return new WintainiumApplicationReleaseService(new WintainiumCoreClient(_powerShellHost));
+    }
+
+    private async void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        foreach (var window in _applicationDetailsWindows.Values.ToArray())
+        {
+            window.Close();
+        }
+
+        _applicationDetailsWindows.Clear();
+
+        if (_powerShellHost is not null)
+        {
+            await _powerShellHost.DisposeAsync();
+            _powerShellHost = null;
+        }
     }
 
     private async void AddSoftwareButton_Click(object sender, RoutedEventArgs e)
