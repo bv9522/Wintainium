@@ -122,7 +122,7 @@ The application model intentionally remains partial at this stage. Manifest disc
 
 The manifest schema currently provides a provider `pluginId`, not a human-friendly source name, so the presentation model records it as `SourceProviderId` rather than presenting the technical identifier as a display name.
 
-Sorting and filtering are now represented by the presentation-only collection query boundary. List/Grid projection and WinUI binding remain downstream 11E work. No application update decision is made by the collection layer.
+Sorting and filtering are now represented by the presentation-only collection query boundary. The collection view model owns the current query and List/Grid presentation mode. The main window binds both ListView and GridView to the same presentation collection and uses a dedicated header button to toggle between the two modes. No application update decision is made by the collection layer.
 
 ### Phase 11E application collection query
 
