@@ -35,15 +35,12 @@
                 Content="Sort &amp; Filter"
                 Click="SortAndFilterButton_Click" />
 
-            <ComboBox
-                x:Name="ViewModeComboBox"
+            <Button
+                x:Name="ViewModeButton"
                 Grid.Column="2"
-                Width="120"
-                Margin="12,0,8,0"
-                SelectionChanged="ViewModeComboBox_SelectionChanged">
-                <ComboBoxItem Content="List" />
-                <ComboBoxItem Content="Grid" />
-            </ComboBox>
+                Margin="0,0,8,0"
+                Content="List"
+                Click="ViewModeButton_Click" />
 
             <Button
                 Grid.Column="3"
