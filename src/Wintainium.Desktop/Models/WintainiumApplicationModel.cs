@@ -1,8 +1,5 @@
 namespace Wintainium.Desktop.Models;
 
-/// <summary>
-/// Presentation model for one tracked Wintainium application.
-/// </summary>
 internal sealed record WintainiumApplicationModel(
     string ApplicationId,
     string Name,
@@ -14,7 +11,8 @@ internal sealed record WintainiumApplicationModel(
     string? InstalledVersion,
     DateTimeOffset? LastUpdated,
     WintainiumUpdateStatus UpdateStatus,
-    string? SourceProviderId);
+    string? SourceProviderId,
+    string? ManifestPath);
 
 internal enum WintainiumInstallationState
 {
