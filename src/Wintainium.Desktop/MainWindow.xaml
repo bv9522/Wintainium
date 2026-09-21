@@ -16,6 +16,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <StackPanel Spacing="4">
@@ -34,8 +35,18 @@
                 Content="Sort &amp; Filter"
                 Click="SortAndFilterButton_Click" />
 
-            <Button
+            <ComboBox
+                x:Name="ViewModeComboBox"
                 Grid.Column="2"
+                Width="120"
+                Margin="12,0,8,0"
+                SelectionChanged="ViewModeComboBox_SelectionChanged">
+                <ComboBoxItem Content="List" />
+                <ComboBoxItem Content="Grid" />
+            </ComboBox>
+
+            <Button
+                Grid.Column="3"
                 Content="Settings"
                 Click="SettingsButton_Click" />
         </Grid>
@@ -47,6 +58,7 @@
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
                 ItemClick="ApplicationGridView_ItemClick">
+                <GridView.ItemsSource>{Binding ElementName=ApplicationListView, Path=ItemsSource}</GridView.ItemsSource>
                 <GridView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Width="220" Spacing="8" Padding="12">
