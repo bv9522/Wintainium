@@ -39,14 +39,15 @@ public sealed partial class SettingsWindow : Window
         AppWindow.Resize(new SizeInt32(760, 560));
 
         (_categoryList, _categoryTitle, _categoryDescription, _categoryContent) = FindControls();
+        _categoryList.SelectionChanged += CategoryList_SelectionChanged;
 
         _categoryList.SelectedIndex = 0;
         UpdateCategoryContent(0);
     }
 
-    private void CategoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void CategoryList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        UpdateCategoryContent(((ListView)sender).SelectedIndex);
+        UpdateCategoryContent(((ListView)sender!).SelectedIndex);
     }
 
     private void UpdateCategoryContent(int index)
