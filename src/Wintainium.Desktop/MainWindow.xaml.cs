@@ -17,7 +17,7 @@ public sealed partial class MainWindow : Window
         _applicationCollection = new WintainiumApplicationCollectionViewModel();
         ApplicationListView.ItemsSource = _applicationCollection.Applications;
         ApplicationGridView.ItemsSource = _applicationCollection.Applications;
-        ViewModeComboBox.SelectedIndex = (int)_applicationCollection.ViewMode;
+        UpdateViewModeButton();
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
     }
@@ -52,17 +52,22 @@ public sealed partial class MainWindow : Window
         EmptyStatePanel.Visibility = hasApplications ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ViewModeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (ViewModeComboBox.SelectedIndex < 0)
-        {
-            return;
-        }
+        var nextMode = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
+            ? WintainiumApplicationViewMode.Grid
+            : WintainiumApplicationViewMode.List;
 
-        _applicationCollection.SetViewMode(
-            (WintainiumApplicationViewMode)ViewModeComboBox.SelectedIndex);
-
+        _applicationCollection.SetViewMode(nextMode);
+        UpdateViewModeButton();
         UpdateCollectionVisibility();
+    }
+
+    private void UpdateViewModeButton()
+    {
+        ViewModeButton.Content = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
+            ? "List"
+            : "Grid";
     }
 
     private void ApplicationGridView_ItemClick(object sender, ItemClickEventArgs e)
