@@ -58,7 +58,6 @@
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
                 ItemClick="ApplicationGridView_ItemClick">
-                <GridView.ItemsSource>{Binding ElementName=ApplicationListView, Path=ItemsSource}</GridView.ItemsSource>
                 <GridView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Width="220" Spacing="8" Padding="12">
