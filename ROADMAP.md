@@ -182,3 +182,15 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Validate collection mapping and query behavior through the desktop EngineProbe without changing the PowerShell engine.
 
 **Status: Complete.** The application model, collection service, presentation-only query boundary, and EngineProbe coverage are implemented. The main window binds ListView and GridView to the same application collection, preserves Core-owned Unknown states, and provides a dedicated List/Grid toggle alongside Sort & Filter and Settings. No GUI manifest root is invented; collection loading remains an explicit application-service boundary until a later authoritative configuration contract supplies its source. Installed-state acquisition, authoritative update status, last-updated data, icon data, application details, persistence, and update execution remain downstream work.
+### 11F — Application Details & Release Information
+
+- Open application details from both collection views.
+- Present manifest-backed application identity, publisher, homepage, source provider, and installation facts without inventing missing state.
+- Preserve the manifest path as application-service metadata so release discovery can address the selected application through the public Core command.
+- Establish a C# release-information model and mapper for the documented Get-WintainiumApplicationRelease result.
+- Provide a details-window release discovery action through the existing Core adapter.
+- Reserve the application-level Do Not Update policy surface without enabling policy behavior before its authoritative persistence/execution contract exists.
+- Provide editable Notes with explicit Save and Don't Save behavior while keeping durable persistence downstream.
+- Keep update execution, policy enforcement, installed-state acquisition, and durable metadata outside the presentation layer.
+
+**Status: In progress.** The application-details window, release result mapping/service boundary, manifest-path preservation, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint remain before locking 11F.
