@@ -41,7 +41,29 @@
         </Grid>
 
         <Grid Grid.Row="1" Margin="28,0,28,16">
-            <ListView
+                        <GridView
+                x:Name="ApplicationGridView"
+                Visibility="Collapsed"
+                SelectionMode="Single"
+                IsItemClickEnabled="True"
+                ItemClick="ApplicationGridView_ItemClick">
+                <GridView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Width="220" Spacing="8" Padding="12">
+                            <Border Width="64" Height="64" CornerRadius="12" HorizontalAlignment="Left">
+                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="28"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding InstalledVersion, TargetNullValue=Not installed}"
+                                       Opacity="0.72" />
+                            <TextBlock Text="{Binding UpdateStatus}" Opacity="0.72" />
+                        </StackPanel>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+<ListView
                 x:Name="ApplicationListView"
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
