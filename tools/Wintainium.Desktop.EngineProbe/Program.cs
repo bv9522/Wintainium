@@ -244,6 +244,43 @@ if (updateStatusApplications[0].UpdateStatus != WintainiumUpdateStatus.Unknown |
     return 1;
 }
 
+var viewModel = new WintainiumApplicationCollectionViewModel();
+viewModel.SetApplications(queryApplications);
+
+if (viewModel.Applications.Count != 3 ||
+    viewModel.Applications[0].Name != "Alpha" ||
+    viewModel.Applications[1].Name != "Beta" ||
+    viewModel.Applications[2].Name != "Zeta")
+{
+    Console.Error.WriteLine("Application collection view model binding state failed.");
+    return 1;
+}
+
+viewModel.SetQuery(
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.NameAscending,
+        WintainiumApplicationFilter.Installed));
+
+if (viewModel.Applications.Count != 1 ||
+    viewModel.Applications[0].ApplicationId != "org.example.alpha")
+{
+    Console.Error.WriteLine("Application collection view model query update failed.");
+    return 1;
+}
+
+viewModel.SetQuery(
+    new WintainiumApplicationQuery(
+        WintainiumApplicationSort.InstallationStatus));
+
+if (viewModel.Applications.Count != 3 ||
+    viewModel.Applications[0].InstallationState != WintainiumInstallationState.Unknown)
+{
+    Console.Error.WriteLine("Application collection view model Unknown-state preservation failed.");
+    return 1;
+}
+
+Console.WriteLine("Application collection view model: PASS");
+
 Console.WriteLine("Application collection query: PASS");
 
 try
