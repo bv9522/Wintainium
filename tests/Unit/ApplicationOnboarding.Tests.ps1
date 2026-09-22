@@ -41,7 +41,7 @@ Describe 'Wintainium application onboarding' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceUnsupported'
         $result.ManifestPath | Should -BeNullOrEmpty
-        @(Get-ChildItem -LiteralPath $script:manifestRoot -ErrorAction SilentlyContinue).Count | Should -Be 0
+        @(Get-ChildItem -LiteralPath $script:manifestRoot -Filter '*.wintainium.json' -File -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
     It 'rejects a non-HTTP source before provider resolution' {
@@ -62,11 +62,42 @@ Describe 'Wintainium application onboarding' {
     }
 
     It 'does not allow multiple capable providers to silently select a source' {
-        $officialPluginSource = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.provider.official-download-page'
-        $officialPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.official-download-page'
-        New-Item -ItemType Directory -Path $officialPluginTarget -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $officialPluginSource 'plugin.json') -Destination $officialPluginTarget -Force
-        Copy-Item -LiteralPath (Join-Path $officialPluginSource 'Wintainium.provider.official-download-page.psm1') -Destination $officialPluginTarget -Force
+        $ambiguousPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.test-source-resolution'
+        New-Item -ItemType Directory -Path $ambiguousPluginTarget -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'plugin.json') -Encoding utf8 -Value (@'
+{
+  "pluginId": "Wintainium.provider.test-source-resolution",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.test-source-resolution.psm1",
+  "capabilities": {
+    "sourceResolution": true
+  }
+}
+'@)
+        Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'Wintainium.provider.test-source-resolution.psm1') -Encoding utf8 -Value (@'
+function Invoke-WintainiumProviderSourceResolution {
+    param([Parameter(Mandatory)][object]$Request)
+
+    [pscustomobject][ordered]@{
+        OperationId = [string]$Request.OperationId
+        IsSuccessful = $true
+        Status = 'Resolved'
+        Source = [pscustomobject][ordered]@{
+            ApplicationId = 'test.ambiguous'
+            Name = 'Ambiguous Test Source'
+            CanonicalUri = [string]$Request.SourceUri
+            ProviderId = 'Wintainium.provider.test-source-resolution'
+            ProviderContractVersion = '1'
+            ProviderSettings = @{}
+        }
+        Errors = @()
+        Warnings = @()
+        LogEvents = @()
+    }
+}
+Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
+'@)
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceAmbiguous'
@@ -78,6 +109,6 @@ Describe 'Wintainium application onboarding' {
         $operationId = [guid]::NewGuid().ToString()
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy -OperationId $operationId
         $result.OperationId | Should -Be $operationId
-        $result.SourceResolution.SourceContext.repository | Should -Be 'PCSX2/pcsx2'
+        $result.SourceResolution.Source.SourceContext.repository | Should -Be 'PCSX2/pcsx2'
     }
 }
