@@ -300,7 +300,12 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** `Get-WintainiumEnvironment` and `docs/EnvironmentModel.md` establish the environment boundary. Focused coverage is **4/4 green**.
 
 ### 12.7 — Artifact Selection Integration
-**Status: Planned.**
+- Route artifact eligibility and deterministic artifact selection through the Core-owned environment snapshot.
+- Preserve existing manifest format/architecture policy and deterministic ranking behavior.
+- Retain the legacy machine-architecture parameter as a compatibility seam while making the environment snapshot authoritative downstream.
+- Cover environment precedence at update decision, target resolution, artifact selection, and artifact eligibility boundaries.
+
+**Status: Complete.** Environment-aware artifact selection is integrated through update decisions, target resolution, artifact selection, and eligibility. Focused checkpoints are **6/6, 9/9, and 11/11 green**.
 
 ### 12.8 — Persistence
 **Status: Planned.**
