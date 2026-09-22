@@ -7,10 +7,14 @@ namespace Wintainium.Desktop;
 public partial class App : Application
 {
     private Window? _window;
+    private WintainiumDesktopServices? _services;
 
     internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
 
     internal static WintainiumDesktopSettingsService Settings { get; } = new();
+
+    internal WintainiumDesktopServices Services =>
+        _services ??= new WintainiumDesktopServices();
 
     public App()
     {
@@ -42,12 +46,21 @@ public partial class App : Application
         window.Closed += (_, _) => ActiveWindows.Remove(windowId);
     }
 
-    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        if (ReferenceEquals(sender, _window))
+        if (!ReferenceEquals(sender, _window))
         {
-            _window = null;
-            Exit();
+            return;
         }
+
+        _window = null;
+
+        if (_services is not null)
+        {
+            await _services.DisposeAsync();
+            _services = null;
+        }
+
+        Exit();
     }
 }
