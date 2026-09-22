@@ -43,7 +43,7 @@ Describe 'Wintainium official download page source resolution' {
     }
     It 'fails deterministically when identity metadata is absent' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><body><p>Downloads</p></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
-        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-5';SourceUri='https://example.com/download'})}
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-5';SourceUri='https://example.com/download'})}
         $result.IsSuccessful|Should -Be $false
         $result.Status|Should -Be 'SourceResponseInvalid'
         $result.Errors.Code|Should -Contain 'OfficialDownloadPageIdentityMissing'
@@ -53,6 +53,5 @@ Describe 'Wintainium official download page source resolution' {
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-6';SourceUri='ftp://example.com/download'})}
         $result.IsSuccessful|Should -Be $false
         $result.Status|Should -Be 'SourceUnsupported'
-        $result.Status | Should -Be 'SourceUnsupported'
     }
 }
