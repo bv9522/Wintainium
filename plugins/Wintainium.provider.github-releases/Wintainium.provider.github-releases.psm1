@@ -301,4 +301,76 @@ function Invoke-WintainiumProvider {
     New-GitHubProviderResult -OperationId $operationId -IsSuccessful $true -Status 'Success' -Releases $releases.ToArray()
 }
 
-Export-ModuleMember -Function Invoke-WintainiumProvider
+
+function New-GitHubSourceResolutionResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [object]$Source = $null,
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @(),
+        [object[]]$LogEvents = @()
+    )
+    [pscustomobject][ordered]@{
+        OperationId = $OperationId; IsSuccessful = $IsSuccessful; Status = $Status
+        Source = $Source; Errors = @($Errors); Warnings = @($Warnings); LogEvents = @($LogEvents)
+    }
+}
+
+function Invoke-WintainiumProviderSourceResolution {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId = [string]$Request.OperationId
+    try { $sourceUri = [Uri]([string]$Request.SourceUri) }
+    catch {
+        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceInvalid' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubSourceUriInvalid' -Message 'GitHub source URL is not a valid URI.')
+        )
+    }
+
+    if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https') -or $sourceUri.Host -notin @('github.com','www.github.com')) {
+        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubSourceHostUnsupported' -Message 'The supplied source URL is not a supported GitHub.com URL.')
+        )
+    }
+
+    $segments = @($sourceUri.AbsolutePath.Trim('/').Split('/') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($segments.Count -lt 2 -or $segments[0] -in @('orgs','users','settings','marketplace')) {
+        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubRepositoryPathInvalid' -Message 'The GitHub source URL does not identify a repository.')
+        )
+    }
+
+    $owner = [Uri]::UnescapeDataString($segments[0])
+    $repository = [Uri]::UnescapeDataString($segments[1])
+    if ($repository.EndsWith('.git')) { $repository = $repository.Substring(0,$repository.Length-4) }
+    if ($owner -notmatch '^[A-Za-z0-9_.-]+$' -or $repository -notmatch '^[A-Za-z0-9_.-]+$') {
+        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubRepositoryPathInvalid' -Message 'The GitHub source URL contains an invalid repository identity.')
+        )
+    }
+
+    $canonicalUri = "https://github.com/$owner/$repository"
+    $sourceContext = [ordered]@{ repository = "$owner/$repository" }
+    if ($segments.Count -ge 5 -and $segments[2] -eq 'releases' -and $segments[3] -eq 'tag') {
+        $sourceContext.releaseTag = [Uri]::UnescapeDataString(($segments[4..($segments.Count-1)] -join '/'))
+    }
+
+    $source = [pscustomobject][ordered]@{
+        ApplicationId = "github.$($owner.ToLowerInvariant()).$($repository.ToLowerInvariant())"
+        Name = $repository
+        Publisher = $owner
+        Homepage = $canonicalUri
+        CanonicalUri = $canonicalUri
+        ProviderId = 'Wintainium.provider.github-releases'
+        ProviderContractVersion = '1'
+        ProviderSettings = [ordered]@{ repository = "$owner/$repository" }
+        SourceContext = [pscustomobject]$sourceContext
+    }
+
+    New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $true -Status 'Resolved' -Source $source
+}
+
+Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution
