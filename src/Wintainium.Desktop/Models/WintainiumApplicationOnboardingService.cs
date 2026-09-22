@@ -45,23 +45,23 @@ internal sealed class WintainiumApplicationOnboardingService
             OperationId: Required(result, "OperationId"),
             IsSuccessful: Boolean(result, "IsSuccessful"),
             Status: Nullable(result, "Status"),
-            Application: MapApplication(result),
+            Application: MapApplication(result, Nullable(result, "ManifestPath")),
             ManifestPath: Nullable(result, "ManifestPath"),
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
             OperationState: WintainiumOperationStateMapper.Map(result).State);
     }
 
-    private static WintainiumApplicationModel? MapApplication(PSObject result)
+    private static WintainiumApplicationModel? MapApplication(PSObject result, string? manifestPath)
     {
         var value = result.Properties["ApplicationDefinition"]?.Value;
         if (value is null)
             return null;
 
-        return MapManifest(PSObject.AsPSObject(value));
+        return MapManifest(PSObject.AsPSObject(value), manifestPath);
     }
 
-    private static WintainiumApplicationModel MapManifest(PSObject manifest) =>
+    private static WintainiumApplicationModel MapManifest(PSObject manifest, string? manifestPath) =>
         new(
             ApplicationId: Required(manifest, "Id"),
             Name: Required(manifest, "Name"),
@@ -74,7 +74,7 @@ internal sealed class WintainiumApplicationOnboardingService
             LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
             SourceProviderId: SourceProviderId(manifest),
-            ManifestPath: null);
+            ManifestPath: manifestPath);
 
     private static string? SourceProviderId(PSObject manifest)
     {
