@@ -216,6 +216,18 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 
 **Status: Complete.** Application release discovery now has a Core-backed cancellation token, a user-visible activity indicator, a Cancel action, and safe window-close cancellation cleanup. Operation controls return to idle after completion, failure, or cancellation, and the desktop layer does not invent quantitative progress that the public Core contract does not provide. The local WinUI build and EngineProbe checkpoint are green.
 
+### 11J — GUI Testing & Integration Hardening
+
+- Establish focused desktop-side coverage for application collection, details/release discovery, settings, operation state, and cancellation boundaries.
+- Keep EngineProbe coverage for the public Core adapter contract and structured result mapping.
+- Verify window lifecycle behavior for the main window, Settings, and application Details windows.
+- Verify presentation behavior does not infer engine-owned state or parse formatted output.
+- Exercise failure, cancellation, and structured diagnostic presentation without changing Core lifecycle semantics.
+- Keep PowerShell/Pester regression authoritative; run Pester only if this batch requires Core/PowerShell changes.
+- Finish with a clean local WinUI build and desktop checkpoint before locking 11J.
+
+**Status: In progress.**
+
 ### 11I — Settings & Configuration Foundation
 
 - Establish the desktop configuration ownership boundary without inventing a GUI manifest root or duplicating Core persistence.
