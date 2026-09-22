@@ -24,7 +24,7 @@ Use this file as a compact orientation guide when assisting with Wintainium.
 - A successful download does not establish artifact trust or installation readiness.
 - Phase 6 is locked and owns installer selection, controlled installer invocation, process lifecycle semantics, and structured installation results.
 - Phase 7 is implemented through 7I and locked; orchestration coordinates lifecycle flow without moving stage business rules into orchestration or the GUI.
-- Cancellation is control flow, not an operation-state status; operation state remains Pending/Running/Failed/Completed.
+- Cancellation remains Core-owned control flow. The desktop presentation layer may expose a Cancel action and represent a cancelled presentation outcome, but it does not determine lifecycle cancellation semantics.
 - The mandatory verification stage remains explicit and must not be bypassed by orchestration.
 - The Android/Termux environment is a secondary test environment; Wintainium remains Windows-first.
 
