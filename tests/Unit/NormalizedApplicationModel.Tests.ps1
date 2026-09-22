@@ -59,6 +59,16 @@ Describe 'Wintainium normalized application model' {
         @($result.Errors.Code) | Should -Contain 'ApplicationSourceIncomplete'
     }
 
+    It 'produces an application definition that satisfies the manifest schema' {
+        $result = & (Get-Module Wintainium.Core) {
+            New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $using:policy -OperationId 'model-test-5'
+        }
+
+        $json = $result.ApplicationDefinition | ConvertTo-Json -Depth 20
+        $schemaPath = Join-Path -Path $using:testRoot -ChildPath 'schemas/application-manifest.schema.json'
+        Test-Json -Json $json -SchemaFile $schemaPath -ErrorAction Stop | Should -Be $true
+    }
+
     It 'preserves source provider settings without adding provider-specific Core branches' {
         $result = & (Get-Module Wintainium.Core) {
             New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $using:policy -OperationId 'model-test-4'
