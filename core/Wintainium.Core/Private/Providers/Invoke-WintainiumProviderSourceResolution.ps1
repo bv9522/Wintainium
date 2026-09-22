@@ -1,4 +1,4 @@
-function Invoke-WintainiumProviderSourceResolution {
+function Invoke-WintainiumCoreProviderSourceResolution {
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$Provider,[Parameter(Mandatory)][object]$Request)
 
