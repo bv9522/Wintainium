@@ -277,13 +277,13 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Establish GitHub as the first source-resolution vertical slice.
 - Preserve existing GitHub release/artifact discovery behavior.
 
-**Status: Planned.**
+**Status: Complete.** Focused GitHub source-resolution coverage is 8/8 green.
 
 ### 12.4 — Normalized Application Model
 - Construct a valid application definition from resolved source facts.
 - Keep application identity, provider settings, installer capability, release policy, and artifact policy authoritative and Core-owned.
 
-**Status: Planned.**
+**Status: Implementation checkpoint.** `New-WintainiumApplicationDefinitionFromSource` establishes the normalization boundary; focused Pester validation is pending.
 
 ### 12.5 — Official Download Page Resolution
 - Establish generalized structured official download-page resolution.
