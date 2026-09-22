@@ -289,7 +289,7 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Establish generalized structured official download-page resolution.
 - Validate against sources such as 7-Zip and VLC without adding vendor-specific branches to Core.
 
-**Status: Implementation checkpoint.** 12.5B establishes the constrained HTML identity-resolution provider and focused Pester coverage; real-world page validation and artifact/release discovery remain downstream.
+**Status: Complete.** The constrained official-download-page provider resolves supported HTML identity metadata into normalized source facts without returning artifacts or executing page content. Focused coverage is **7/7 green**.
 
 ### 12.6 — Environment Model
 **Status: Planned.**
