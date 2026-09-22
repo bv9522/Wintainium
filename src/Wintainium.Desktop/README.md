@@ -180,3 +180,14 @@ Phase 12A centralizes the desktop/Core service graph without changing the Phase
 This is wiring only. Collection onboarding, authoritative state composition,
 release-refresh behavior, update execution, and durable persistence remain
 downstream Phase 12 work.
+
+
+### Phase 12A service-boundary hardening
+
+The Phase 12A integration boundary now also enforces shared invocation semantics:
+
+- Core-facing application services use one `WintainiumCoreInvocationGuard` for cancellation and the documented single-structured-result contract.
+- `WintainiumPowerShellHost` serializes invocation and disposal through the same gate, preventing the runspace from being disposed while an invocation is still active.
+- Host disposal is idempotent and terminal; new invocations are rejected after disposal.
+- The EngineProbe covers cancellation preservation, invalid result cardinality, and idempotent host disposal.
+- No new Core command, discovery mechanism, persistence mechanism, provider coupling, installer coupling, or GUI business logic was introduced.
