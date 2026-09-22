@@ -336,6 +336,51 @@ if (releaseResult.Releases.Count != 1 ||
     return 1;
 }
 
+var completedOperation = WintainiumOperationStateMapper.Map(
+    System.Management.Automation.PSObject.AsPSObject(
+        new
+        {
+            OperationId = "operation-complete",
+            IsSuccessful = true,
+            WasCancelled = false,
+            Errors = Array.Empty<object>(),
+            Warnings = Array.Empty<object>()
+        }));
+
+var failedOperation = WintainiumOperationStateMapper.Map(
+    System.Management.Automation.PSObject.AsPSObject(
+        new
+        {
+            OperationId = "operation-failed",
+            IsSuccessful = false,
+            WasCancelled = false,
+            Errors = new[] { new { Code = "Example.Error", Path = "Example", Message = "Example failure." } },
+            Warnings = Array.Empty<object>()
+        }));
+
+var cancelledOperation = WintainiumOperationStateMapper.Map(
+    System.Management.Automation.PSObject.AsPSObject(
+        new
+        {
+            OperationId = "operation-cancelled",
+            IsSuccessful = false,
+            WasCancelled = true,
+            Errors = Array.Empty<object>(),
+            Warnings = Array.Empty<object>()
+        }));
+
+if (completedOperation.State != WintainiumOperationState.Completed ||
+    failedOperation.State != WintainiumOperationState.Failed ||
+    cancelledOperation.State != WintainiumOperationState.Cancelled ||
+    failedOperation.Errors.Count != 1 ||
+    failedOperation.Errors[0].Code != "Example.Error")
+{
+    Console.Error.WriteLine("Structured operation state mapping failed.");
+    return 1;
+}
+
+Console.WriteLine("Structured operation state mapping: PASS");
+
 Console.WriteLine("Application release mapping: PASS");
 
 Console.WriteLine("Application collection view mode: PASS");
