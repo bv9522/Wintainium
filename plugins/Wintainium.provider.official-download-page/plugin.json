@@ -1,0 +1,7 @@
+{
+  "pluginId": "Wintainium.provider.official-download-page",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.official-download-page.psm1",
+  "capabilities": {"sourceResolution": true}
+}
