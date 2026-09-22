@@ -52,7 +52,7 @@ Describe 'Wintainium application onboarding' {
         $invalidPolicy = [pscustomobject][ordered]@{Release=[pscustomobject]@{Channel='invalid'}}
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $invalidPolicy
         $result.IsSuccessful | Should -Be $false
-        $result.Status | Should -Be 'ApplicationPolicyInvalid'
+        $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.ManifestPath | Should -BeNullOrEmpty
         @(Get-ChildItem -LiteralPath $script:manifestRoot -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
