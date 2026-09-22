@@ -1,6 +1,6 @@
 $testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
 $modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-$schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest.schema.json'
+$script:schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest.schema.json'
 
 Import-Module $modulePath -Force
 
@@ -44,7 +44,7 @@ Describe 'Wintainium application definition persistence' {
         $path = InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
             ManifestRoot = $script:manifestRoot
-            SchemaPath = $schemaPath
+            SchemaPath = $script:schemaPath
         } {
             param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
             Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
