@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Wintainium.Desktop.Settings;
 
 namespace Wintainium.Desktop;
 
@@ -8,6 +9,8 @@ public partial class App : Application
     private Window? _window;
 
     internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
+
+    internal static WintainiumDesktopSettingsService Settings { get; } = new();
 
     public App()
     {
