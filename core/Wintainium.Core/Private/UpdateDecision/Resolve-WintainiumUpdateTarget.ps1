@@ -3,18 +3,22 @@ function Resolve-WintainiumUpdateTarget {
     param(
         [Parameter(Mandatory)] [AllowEmptyCollection()] [psobject[]]$EligibleReleases,
         [Parameter(Mandatory)] [psobject]$Manifest,
-        [Parameter(Mandatory)] [string]$MachineArchitecture
+        [Parameter(Mandatory)] [string]$MachineArchitecture,
+        [Parameter()] [psobject]$Environment
     )
 
     if ($null -eq $Manifest) { throw [System.ArgumentNullException]::new('Manifest') }
     if ([string]::IsNullOrWhiteSpace($MachineArchitecture)) { throw [System.ArgumentException]::new('MachineArchitecture must not be empty.') }
+    if ($null -eq $Environment) { $Environment = Get-WintainiumEnvironment -Overrides ([pscustomobject]@{ MachineArchitecture=$MachineArchitecture }) }
+    if ($Environment.PSObject.Properties.Name -notcontains 'MachineArchitecture' -or [string]::IsNullOrWhiteSpace([string]$Environment.MachineArchitecture)) { throw [System.ArgumentException]::new('Environment must contain a non-empty MachineArchitecture.') }
+    $targetArchitecture = [string]$Environment.MachineArchitecture
 
     $observations = [System.Collections.Generic.List[object]]::new()
     $selectable = [System.Collections.Generic.List[object]]::new()
     $inputOrder = 0
 
     foreach ($release in @($EligibleReleases)) {
-        $artifactSelection = Select-WintainiumArtifact -Release $release -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        $artifactSelection = Select-WintainiumArtifact -Release $release -Manifest $Manifest -MachineArchitecture $targetArchitecture
         $artifact = $artifactSelection.SelectedArtifact
         $isSelectable = $null -ne $artifact
         $reasonCode = if ($isSelectable) { 'Selectable' } else { 'NoSelectableArtifact' }
