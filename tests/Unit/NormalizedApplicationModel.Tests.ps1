@@ -22,8 +22,10 @@ Describe 'Wintainium normalized application model' {
 
     It 'constructs the existing application-definition shape from normalized source facts' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-1'
-        }
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'model-test-1'
+        } $script:source $script:policy
+
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'Resolved'
         $result.OperationId | Should -Be 'model-test-1'
@@ -38,8 +40,10 @@ Describe 'Wintainium normalized application model' {
 
     It 'does not invent installer or lifecycle policy when Core-owned policy is absent' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $null -OperationId 'model-test-2'
-        }
+            param($source)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $null -OperationId 'model-test-2'
+        } $script:source
+
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         @($result.Errors.Code) | Should -Contain 'ApplicationPolicyMissing'
@@ -52,8 +56,10 @@ Describe 'Wintainium normalized application model' {
             ProviderContractVersion='1'; ProviderSettings=@{ repository='example/project' }
         }
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $incomplete -Policy $script:policy -OperationId 'model-test-3'
-        }
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'model-test-3'
+        } $incomplete $script:policy
+
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         @($result.Errors.Code) | Should -Contain 'ApplicationSourceIncomplete'
@@ -61,8 +67,9 @@ Describe 'Wintainium normalized application model' {
 
     It 'produces an application definition that satisfies the manifest schema' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-5'
-        }
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'model-test-5'
+        } $script:source $script:policy
 
         $json = $result.ApplicationDefinition | ConvertTo-Json -Depth 20
         $schemaPath = Join-Path -Path $script:testRoot -ChildPath 'schemas/application-manifest.schema.json'
@@ -71,8 +78,10 @@ Describe 'Wintainium normalized application model' {
 
     It 'preserves source provider settings without adding provider-specific Core branches' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-4'
-        }
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'model-test-4'
+        } $script:source $script:policy
+
         $result.ApplicationDefinition.Source.settings.repository | Should -Be 'microsoft/PowerToys'
         $result.ApplicationDefinition.Id | Should -Be 'github.microsoft.powertoys'
     }
