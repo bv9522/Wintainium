@@ -1,11 +1,18 @@
 {
   "pluginId": "Wintainium.provider.github-releases",
   "pluginType": "Provider",
-  "contractVersions": ["1"],
+  "contractVersions": [
+    "1"
+  ],
   "entryPoint": "Wintainium.provider.github-releases.psm1",
   "capabilities": {
     "releaseDiscovery": true,
     "artifactDiscovery": true,
-    "supportedReleaseChannels": ["stable", "prerelease", "any"]
+    "supportedReleaseChannels": [
+      "stable",
+      "prerelease",
+      "any"
+    ],
+    "sourceResolution": true
   }
 }
