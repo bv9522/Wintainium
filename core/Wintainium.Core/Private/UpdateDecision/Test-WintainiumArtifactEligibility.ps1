@@ -3,12 +3,16 @@ function Test-WintainiumArtifactEligibility {
     param(
         [Parameter(Mandatory)] [psobject]$Artifact,
         [Parameter(Mandatory)] [psobject]$Manifest,
-        [Parameter(Mandatory)] [string]$MachineArchitecture
+        [Parameter(Mandatory)] [string]$MachineArchitecture,
+        [Parameter()] [psobject]$Environment
     )
 
     if ($null -eq $Artifact) { throw [System.ArgumentNullException]::new('Artifact') }
     if ($null -eq $Manifest) { throw [System.ArgumentNullException]::new('Manifest') }
     if ([string]::IsNullOrWhiteSpace($MachineArchitecture)) { throw [System.ArgumentException]::new('MachineArchitecture is required.') }
+    if ($null -eq $Environment) { $Environment = Get-WintainiumEnvironment -Overrides ([pscustomobject]@{ MachineArchitecture=$MachineArchitecture }) }
+    if ($Environment.PSObject.Properties.Name -notcontains 'MachineArchitecture' -or [string]::IsNullOrWhiteSpace([string]$Environment.MachineArchitecture)) { throw [System.ArgumentException]::new('Environment must contain a non-empty MachineArchitecture.') }
+    $targetArchitecture = [string]$Environment.MachineArchitecture
 
     $artifactPolicy = $Manifest.PSObject.Properties['artifact']?.Value
     if ($null -eq $artifactPolicy) {
@@ -19,7 +23,7 @@ function Test-WintainiumArtifactEligibility {
     $rawArchitecture = if ($Artifact.PSObject.Properties['Architecture']) { [string]$Artifact.Architecture } else { '' }
     $format = $rawFormat.Trim().ToLowerInvariant()
     $architecture = $rawArchitecture.Trim().ToLowerInvariant()
-    $machine = $MachineArchitecture.Trim().ToLowerInvariant()
+    $machine = $targetArchitecture.Trim().ToLowerInvariant()
 
     if ([string]::IsNullOrWhiteSpace($format)) {
         return [pscustomobject][ordered]@{ Artifact=$Artifact; Eligible=$false; ReasonCode='FormatMissing'; Reason='Artifact format is missing.'; Format=$null; Architecture=if ($architecture) { $architecture } else { $null } }
