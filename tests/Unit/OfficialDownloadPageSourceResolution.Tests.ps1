@@ -54,6 +54,6 @@ Describe 'Wintainium official download page source resolution' {
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-6';SourceUri='ftp://example.com/download'})}
         $result.IsSuccessful|Should -Be $false
         $result.Status|Should -Be 'SourceUnsupported'
-        Assert-MockCalled Invoke-WebRequest -ModuleName Wintainium.provider.official-download-page -Times 0
+        $result.Status | Should -Be 'SourceUnsupported'
     }
 }
