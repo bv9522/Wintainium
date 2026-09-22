@@ -11,6 +11,17 @@ Describe 'Wintainium artifact eligibility' {
         $result.ReasonCode | Should -Be 'Eligible'
     }
 
+    It 'uses the environment machine architecture rather than a conflicting legacy argument' {
+        $artifact=[pscustomobject]@{ Uri='https://example.test/app.arm64.msi'; Format='msi'; Architecture='arm64' }
+        $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('msi'); architectures=@('x64','arm64'); allowUnknownArchitecture=$false } }
+        $environment=[pscustomobject]@{ MachineArchitecture='arm64' }
+        $result=InModuleScope Wintainium.Core -Parameters @{Artifact=$artifact;Manifest=$manifest;MachineArchitecture='x64';Environment=$environment} {
+            param($Artifact,$Manifest,$MachineArchitecture,$Environment)
+            Test-WintainiumArtifactEligibility -Artifact $Artifact -Manifest $Manifest -MachineArchitecture $MachineArchitecture -Environment $Environment
+        }
+        $result.Eligible | Should -BeTrue
+    }
+
     It 'rejects a format not permitted by the manifest' {
         $artifact=[pscustomobject]@{ Uri='https://example.test/app.zip'; Format='zip'; Architecture='x64' }
         $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('msi','exe'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false } }
