@@ -30,6 +30,8 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         PopulateApplicationFacts();
         ReleaseListView.ItemsSource = new ObservableCollection<WintainiumApplicationReleaseModel>();
+        ErrorItemsControl.ItemsSource = Array.Empty<string>();
+        WarningItemsControl.ItemsSource = Array.Empty<string>();
     }
 
     private void PopulateApplicationFacts()
@@ -70,6 +72,11 @@ public sealed partial class ApplicationDetailsWindow : Window
         try
         {
             var result = await _releaseService.DiscoverAsync(_application.ManifestPath);
+
+            OperationStateText.Text = result.OperationState.ToString();
+            OperationIdText.Text = $"Operation ID: {result.OperationId}";
+            ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
+            WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
 
             if (!result.IsSuccessful)
             {
@@ -127,6 +134,13 @@ public sealed partial class ApplicationDetailsWindow : Window
         NotesTextBox.Text = _savedNotes;
         NotesStatusText.Text = "Unsaved note changes discarded.";
     }
+
+    private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
+        string.IsNullOrWhiteSpace(diagnostic.Message)
+            ? diagnostic.Code ?? "Unspecified diagnostic."
+            : string.IsNullOrWhiteSpace(diagnostic.Code)
+                ? diagnostic.Message
+                : $"{diagnostic.Code}: {diagnostic.Message}";
 
     private void ShowDetailsError(string message)
     {
