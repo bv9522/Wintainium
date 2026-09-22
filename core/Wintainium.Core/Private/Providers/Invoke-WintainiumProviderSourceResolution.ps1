@@ -1,13 +1,10 @@
 function Invoke-WintainiumProviderSourceResolution {
     [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][object]$Provider,
-        [Parameter(Mandatory)][object]$Request
-    )
+    param([Parameter(Mandatory)][object]$Provider,[Parameter(Mandatory)][object]$Request)
 
-    $operationId = [string]$Request.OperationId
-    $logEvents = [System.Collections.Generic.List[object]]::new()
-    $baseResult = {
+    $operationId=[string]$Request.OperationId
+    $logEvents=[System.Collections.Generic.List[object]]::new()
+    $baseResult={
         param([bool]$IsSuccessful,[string]$Status,[object]$Source=$null,[object[]]$Errors=@(),[object[]]$Warnings=@())
         [pscustomobject][ordered]@{
             OperationId=$operationId; IsSuccessful=$IsSuccessful; Status=$Status
@@ -31,7 +28,6 @@ function Invoke-WintainiumProviderSourceResolution {
         return & $baseResult $false 'SourceInvalid' $null @($error) @()
     }
 
-    $sourceUri=$null
     try { $sourceUri=[Uri]([string]$Request.SourceUri) }
     catch {
         $error=[pscustomobject]@{Code='SourceResolutionUriInvalid';Message="SourceUri '$($Request.SourceUri)' is not a valid absolute URI."}
@@ -56,11 +52,9 @@ function Invoke-WintainiumProviderSourceResolution {
     }
 
     try {
-        $module=Get-Module | Where-Object {
-            $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath)
-        } | Select-Object -First 1
-        if ($null -eq $module) { $module=Import-Module -Name $resolvedModulePath -PassThru -ErrorAction Stop }
-        $command=Get-Command -Module $module.Name -Name 'Invoke-WintainiumProviderSourceResolution' -CommandType Function -ErrorAction SilentlyContinue
+        $module=Import-Module -Name $resolvedModulePath -Force -PassThru -ErrorAction Stop
+        $commandName="$($module.Name)\Invoke-WintainiumProviderSourceResolution"
+        $command=Get-Command -Name $commandName -CommandType Function -ErrorAction SilentlyContinue
         if ($null -eq $command) {
             $error=[pscustomobject]@{Code='SourceResolverOperationNotFound';Message="Provider '$($Provider.PluginId)' does not export Invoke-WintainiumProviderSourceResolution."}
             return & $baseResult $false 'SourceResolverInternalError' $null @($error) @()
