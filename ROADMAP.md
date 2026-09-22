@@ -203,4 +203,4 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Surface operation state and structured diagnostics in application details without exposing PowerShell transport types or private lifecycle objects.
 - Keep lifecycle execution, retry policy, cancellation ownership, and terminal error semantics in Core.
 
-**Status: In progress.** The shared operation-state model/mapper, application result state mapping, and application-details diagnostic surface are implemented. The local WinUI build and EngineProbe checkpoint remain before locking 11G.
+**Status: Complete.** The presentation-layer operation-state model/mapper, application collection and release-result state mapping, structured diagnostic preservation, application-details status surface, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint are green. Terminal operation outcomes remain Core-owned; the desktop layer presents explicit success/failure/cancellation state, OperationId, and structured diagnostics without parsing formatted output or exposing private lifecycle objects.
