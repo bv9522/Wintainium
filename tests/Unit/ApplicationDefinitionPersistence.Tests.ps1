@@ -4,41 +4,41 @@ $schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest
 
 Import-Module $modulePath -Force
 
+function New-TestApplicationDefinition {
+    [pscustomobject][ordered]@{
+        manifestVersion = '1.1'
+        id = 'org.example.app'
+        name = 'Example Application'
+        homepage = 'https://example.org/'
+        publisher = 'Example'
+        source = [pscustomobject][ordered]@{
+            pluginId = 'Wintainium.provider.example'
+            requiredContractVersion = '1'
+            settings = [pscustomobject][ordered]@{}
+        }
+        installer = [pscustomobject][ordered]@{
+            pluginId = 'Wintainium.installer.example'
+            requiredContractVersion = '1'
+            settings = [pscustomobject][ordered]@{}
+        }
+        reconciliation = [pscustomobject][ordered]@{
+            pluginId = 'Wintainium.reconciliation.example'
+            requiredContractVersion = '1'
+            settings = [pscustomobject][ordered]@{}
+        }
+        release = [pscustomobject][ordered]@{
+            channel = 'stable'
+        }
+        artifact = [pscustomobject][ordered]@{
+            formats = @('msi')
+            architectures = @('x64')
+        }
+    }
+}
+
 Describe 'Wintainium application definition persistence' {
     BeforeEach {
         $script:manifestRoot = Join-Path $TestDrive ("manifests-{0}" -f ([guid]::NewGuid().Guid))
-    }
-
-    function New-TestApplicationDefinition {
-        [pscustomobject][ordered]@{
-            manifestVersion = '1.1'
-            id = 'org.example.app'
-            name = 'Example Application'
-            homepage = 'https://example.org/'
-            publisher = 'Example'
-            source = [pscustomobject][ordered]@{
-                pluginId = 'Wintainium.provider.example'
-                requiredContractVersion = '1'
-                settings = [pscustomobject][ordered]@{}
-            }
-            installer = [pscustomobject][ordered]@{
-                pluginId = 'Wintainium.installer.example'
-                requiredContractVersion = '1'
-                settings = [pscustomobject][ordered]@{}
-            }
-            reconciliation = [pscustomobject][ordered]@{
-                pluginId = 'Wintainium.reconciliation.example'
-                requiredContractVersion = '1'
-                settings = [pscustomobject][ordered]@{}
-            }
-            release = [pscustomobject][ordered]@{
-                channel = 'stable'
-            }
-            artifact = [pscustomobject][ordered]@{
-                formats = @('msi')
-                architectures = @('x64')
-            }
-        }
     }
 
     It 'persists a normalized application definition using the manifest convention' {
@@ -160,5 +160,4 @@ Describe 'Wintainium application definition persistence' {
 
         @(Get-ChildItem -LiteralPath $script:manifestRoot -Force -File) | Should -HaveCount 0
     }
-
 }
