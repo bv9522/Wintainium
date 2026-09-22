@@ -2,7 +2,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][object]$Source,
-        [Parameter(Mandatory)][object]$Policy,
+        [Parameter(Mandatory)][AllowNull()][object]$Policy,
         [string]$OperationId
     )
 
@@ -75,36 +75,36 @@ function New-WintainiumApplicationDefinitionFromSource {
     $sourceSettings = if ($Source.ProviderSettings -is [System.Collections.IDictionary]) { @{} + $Source.ProviderSettings } else { $Source.ProviderSettings }
 
     $application = [ordered]@{
-        ManifestVersion='1.1'
-        Id=[string]$Source.ApplicationId
-        Name=[string]$Source.Name
-        Homepage=if ($Source.PSObject.Properties['Homepage']) {[string]$Source.Homepage} else {$null}
-        Publisher=if ($Source.PSObject.Properties['Publisher']) {[string]$Source.Publisher} else {$null}
-        Source=[ordered]@{
+        manifestVersion='1.1'
+        id=[string]$Source.ApplicationId
+        name=[string]$Source.Name
+        homepage=if ($Source.PSObject.Properties['Homepage']) {[string]$Source.Homepage} else {$null}
+        publisher=if ($Source.PSObject.Properties['Publisher']) {[string]$Source.Publisher} else {$null}
+        source=[ordered]@{
             pluginId=[string]$Source.ProviderId
             requiredContractVersion=[string]$Source.ProviderContractVersion
             settings=$sourceSettings
         }
-        Installer=[ordered]@{
+        installer=[ordered]@{
             pluginId=[string]$Policy.Installer.PluginId
             requiredContractVersion=[string]$Policy.Installer.RequiredContractVersion
             settings=if ($Policy.Installer.PSObject.Properties['Settings'] -and $null -ne $Policy.Installer.Settings) {$Policy.Installer.Settings} else {@{}}
         }
-        Reconciliation=[ordered]@{
+        reconciliation=[ordered]@{
             pluginId=[string]$Policy.Reconciliation.PluginId
             requiredContractVersion=[string]$Policy.Reconciliation.RequiredContractVersion
             settings=if ($Policy.Reconciliation.PSObject.Properties['Settings'] -and $null -ne $Policy.Reconciliation.Settings) {$Policy.Reconciliation.Settings} else {@{}}
         }
-        Release=[ordered]@{ channel=[string]$Policy.Release.Channel }
-        Artifact=[ordered]@{
+        release=[ordered]@{ channel=[string]$Policy.Release.Channel }
+        artifact=[ordered]@{
             formats=@($Policy.Artifact.Formats)
             architectures=@($Policy.Artifact.Architectures)
             allowUnknownArchitecture=if ($Policy.Artifact.PSObject.Properties['AllowUnknownArchitecture']) {[bool]$Policy.Artifact.AllowUnknownArchitecture} else {$false}
         }
     }
 
-    if ($application.Homepage -eq $null) { $application.Remove('Homepage') }
-    if ($application.Publisher -eq $null) { $application.Remove('Publisher') }
+    if ($application.homepage -eq $null) { $application.Remove('Homepage') }
+    if ($application.publisher -eq $null) { $application.Remove('Publisher') }
 
     [pscustomobject][ordered]@{
         OperationId=$operationId; IsSuccessful=$true; Status='Resolved'
