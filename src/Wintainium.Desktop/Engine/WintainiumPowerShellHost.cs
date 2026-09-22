@@ -59,8 +59,6 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeRequested) != 0, this);
-
         if (string.IsNullOrWhiteSpace(commandName))
         {
             throw new ArgumentException("A PowerShell command name is required.", nameof(commandName));
@@ -77,6 +75,8 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
 
         try
         {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeRequested) != 0, this);
+
             using var powershell = PowerShell.Create();
             powershell.Runspace = _runspace;
             powershell.AddCommand(commandName);
