@@ -103,7 +103,7 @@ Describe 'Wintainium GitHub source resolution' {
         })
 
         $result.IsSuccessful | Should -Be $false
-        $result.Status | Should -Be 'SourceInvalid'
-        @($result.Errors.Code) | Should -Contain 'GitHubSourceUriInvalid'
+        $result.Status | Should -Be 'SourceUnsupported'
+        @($result.Errors.Code) | Should -Contain 'GitHubSourceHostUnsupported'
     }
 }
