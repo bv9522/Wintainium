@@ -72,9 +72,9 @@ The engine owns stage policy and execution order. The GUI may present stage prog
 
 The conceptual lifecycle remains an engine concern:
 
-`ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation`
+`ManifestValidation -> ReleaseDiscovery -> UpdateDecision -> Download -> Verification -> InstallerSelection -> Installation -> Reconciliation`
 
-A future GUI may show these concepts as progress, but it must not invoke the stages individually to implement an update workflow.
+A GUI may show these concepts as progress, but it must not invoke the stages individually to implement an update workflow. The desktop client currently presents activity/cancellation rather than inventing quantitative stage percentages because the public contract does not expose quantitative progress.
 
 ## Operation identity and cancellation
 
