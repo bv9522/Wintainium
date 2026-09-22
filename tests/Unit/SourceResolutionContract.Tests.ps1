@@ -1,15 +1,3 @@
-param(
-    [Parameter(Mandatory)]
-    [string] $OperationId,
-
-    [Parameter(Mandatory)]
-    [string] $SourceUri,
-
-    [switch] $DisableSourceResolution,
-
-    [switch] $UseInvalidFixture
-)
-
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
