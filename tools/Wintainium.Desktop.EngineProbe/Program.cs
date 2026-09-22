@@ -389,6 +389,88 @@ Console.WriteLine("Application collection view model: PASS");
 
 Console.WriteLine("Application collection query: PASS");
 
+var settings = new WintainiumDesktopSettingsService();
+
+if (settings.Current.Theme != WintainiumThemePreference.System ||
+    settings.Current.VisualStyle != WintainiumVisualStyle.Windows11)
+{
+    Console.Error.WriteLine("Desktop settings defaults are not stable.");
+    return 1;
+}
+
+settings.SetTheme(WintainiumThemePreference.Dark);
+settings.SetVisualStyle(WintainiumVisualStyle.FrutigerAero);
+
+if (settings.Current.Theme != WintainiumThemePreference.Dark ||
+    settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero)
+{
+    Console.Error.WriteLine("Desktop settings session state did not persist.");
+    return 1;
+}
+
+var settingsReopenState = settings.Current;
+if (settingsReopenState.Theme != WintainiumThemePreference.Dark ||
+    settingsReopenState.VisualStyle != WintainiumVisualStyle.FrutigerAero)
+{
+    Console.Error.WriteLine("Desktop settings reopen state did not preserve session values.");
+    return 1;
+}
+
+Console.WriteLine("Desktop settings model/service: PASS");
+
+var diagnostics = new[]
+{
+    new WintainiumOperationDiagnostic("Example.Error", "Example.Path", "Example failure.")
+};
+
+var diagnosticState = new WintainiumOperationStateModel(
+    "operation-diagnostic",
+    WintainiumOperationState.Failed,
+    false,
+    false,
+    diagnostics,
+    new[]
+    {
+        new WintainiumOperationDiagnostic("Example.Warning", null, "Example warning.")
+    });
+
+if (diagnosticState.Errors.Count != 1 ||
+    diagnosticState.Errors[0].Code != "Example.Error" ||
+    diagnosticState.Errors[0].Path != "Example.Path" ||
+    diagnosticState.Warnings.Count != 1 ||
+    diagnosticState.Warnings[0].Code != "Example.Warning")
+{
+    Console.Error.WriteLine("Structured diagnostic presentation state did not preserve code/path/message.");
+    return 1;
+}
+
+Console.WriteLine("Structured diagnostic presentation: PASS");
+
+using (var alreadyCancelled = new CancellationTokenSource())
+{
+    alreadyCancelled.Cancel();
+
+    try
+    {
+        await host.InvokeAsync(
+            "Get-WintainiumManifest",
+            new Dictionary<string, object?>
+            {
+                ["Path"] = Path.GetDirectoryName(modulePath)!
+            },
+            alreadyCancelled.Token);
+
+        Console.Error.WriteLine("Pre-cancelled desktop operation did not honor the cancellation token.");
+        return 1;
+    }
+    catch (OperationCanceledException)
+    {
+        // Expected: cancellation is honored before a new pipeline invocation starts.
+    }
+}
+
+Console.WriteLine("Desktop cancellation boundary: PASS");
+
 try
 {
     await host.InvokeAsync("Get-Command");
