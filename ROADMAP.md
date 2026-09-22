@@ -226,7 +226,7 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep PowerShell/Pester regression authoritative; run Pester only if this batch requires Core/PowerShell changes.
 - Finish with a clean local WinUI build and desktop checkpoint before locking 11J.
 
-**Status: In progress.**
+**Status: In progress.** The desktop EngineProbe now covers the application collection/model/query boundary, release mapping, explicit operation-state mapping, structured diagnostics, session-scoped settings, and the cancellation token boundary. `docs/DesktopTesting.md` defines the remaining WinUI interaction and window-lifecycle checkpoint. The local WinUI build and desktop checkpoint remain before 11J can be locked.
 
 ### 11I — Settings & Configuration Foundation
 
