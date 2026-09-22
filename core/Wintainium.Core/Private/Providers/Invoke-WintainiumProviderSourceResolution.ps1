@@ -42,6 +42,11 @@ function Invoke-WintainiumProviderSourceResolution {
         return & $baseResult $false 'SourceInvalid' $null @($error) @()
     }
 
+    if ([string]::IsNullOrWhiteSpace([string]$Provider.EntryPoint) -or [string]::IsNullOrWhiteSpace([string]$Provider.DescriptorPath)) {
+        $error=[pscustomobject]@{Code='SourceResolverConfigurationInvalid';Message='Provider source-resolution configuration must include an entry point and descriptor path.'}
+        return & $baseResult $false 'SourceResolverInternalError' $null @($error) @()
+    }
+
     $providerDirectory=Split-Path -Path $Provider.DescriptorPath -Parent
     $modulePath=Join-Path -Path $providerDirectory -ChildPath ([IO.Path]::GetFileName([string]$Provider.EntryPoint))
     try { $resolvedModulePath=(Resolve-Path -LiteralPath $modulePath -ErrorAction Stop).Path }
