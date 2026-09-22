@@ -8,7 +8,7 @@ BeforeAll {
 
 Describe 'Wintainium source resolution contract' {
     It 'resolves a GitHub repository URL without contacting GitHub' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $provider = [pscustomobject][ordered]@{
                 PluginId = 'Wintainium.provider.github-releases'
@@ -33,7 +33,7 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'resolves a GitHub release tag URL and preserves release context' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $provider = [pscustomobject][ordered]@{
                 PluginId = 'Wintainium.provider.github-releases'
@@ -54,7 +54,7 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'accepts a GitHub releases collection URL as repository identity' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $provider = [pscustomobject][ordered]@{
                 PluginId = 'Wintainium.provider.github-releases'
@@ -75,7 +75,7 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects non-HTTP source URIs before provider execution' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $provider = [pscustomobject][ordered]@{
                 PluginId = 'Wintainium.provider.github-releases'
@@ -96,7 +96,7 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects a provider that does not advertise source resolution' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $provider = [pscustomobject][ordered]@{
                 PluginId = 'Wintainium.provider.github-releases'
@@ -117,7 +117,7 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects a source resolver result that omits normalized source facts' {
-        $result = InModuleScope Wintainium.Core {
+        $result = & (Get-Module Wintainium.Core) {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $repoRoot = Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent
             $provider = [pscustomobject][ordered]@{
