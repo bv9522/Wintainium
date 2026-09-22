@@ -24,6 +24,13 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.ProviderSettings.pageUri | Should -Be 'https://www.7-zip.org/download.html'
     }
 
+    It 'accepts canonical link attributes in different attribute order' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>7-Zip</title><link href="/download.html" rel="canonical"></head></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-canonical-order';SourceUri='https://www.7-zip.org/download.html'})}
+        $result.IsSuccessful | Should -Be $true
+        $result.Source.CanonicalUri | Should -Be 'https://www.7-zip.org/download.html'
+    }
+
     It 'accepts supported metadata in different attribute order' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><meta content="VideoLAN" property="og:site_name"><meta content="VLC media player" name="application-name"><title>VLC download</title></head></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-2';SourceUri='https://www.videolan.org/vlc/'})}
