@@ -41,9 +41,9 @@ Describe 'Wintainium application definition persistence' {
         $definition = $script:testApplicationDefinition
 
         $path = & (Get-Module Wintainium.Core) {
-            param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
-        } $definition $script:manifestRoot $script:schemaPath
+            param($ApplicationDefinition, $ManifestRoot)
+            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot
+        } $definition $script:manifestRoot
 
         $path | Should -Be (Join-Path $script:manifestRoot 'org.example.app.wintainium.json')
         Test-Path -LiteralPath $path | Should -BeTrue
@@ -60,10 +60,9 @@ Describe 'Wintainium application definition persistence' {
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
             ManifestRoot = $script:manifestRoot
-            SchemaPath = $schemaPath
         } {
-            param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath | Out-Null
+            param($ApplicationDefinition, $ManifestRoot)
+            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot | Out-Null
         }
 
         Test-Path -LiteralPath $script:manifestRoot -PathType Container | Should -BeTrue
@@ -78,10 +77,9 @@ Describe 'Wintainium application definition persistence' {
             InModuleScope Wintainium.Core -Parameters @{
                 ApplicationDefinition = $definition
                 ManifestRoot = $script:manifestRoot
-                SchemaPath = $schemaPath
             } {
-                param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath | Out-Null
+                param($ApplicationDefinition, $ManifestRoot)
+                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot | Out-Null
             }
         }
 
@@ -96,10 +94,9 @@ Describe 'Wintainium application definition persistence' {
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $valid
             ManifestRoot = $script:manifestRoot
-            SchemaPath = $schemaPath
         } {
-            param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath | Out-Null
+            param($ApplicationDefinition, $ManifestRoot)
+            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot | Out-Null
         }
 
         $invalid = $script:testApplicationDefinition
@@ -109,10 +106,9 @@ Describe 'Wintainium application definition persistence' {
             InModuleScope Wintainium.Core -Parameters @{
                 ApplicationDefinition = $invalid
                 ManifestRoot = $script:manifestRoot
-                SchemaPath = $schemaPath
             } {
-                param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
+                param($ApplicationDefinition, $ManifestRoot)
+                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot
             }
         } | Should -Throw
 
@@ -126,10 +122,9 @@ Describe 'Wintainium application definition persistence' {
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
             ManifestRoot = $script:manifestRoot
-            SchemaPath = $schemaPath
         } {
-            param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath | Out-Null
+            param($ApplicationDefinition, $ManifestRoot)
+            Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot | Out-Null
         }
 
         Test-Path -LiteralPath (Join-Path $script:manifestRoot 'installed-state.json') | Should -BeFalse
@@ -143,10 +138,9 @@ Describe 'Wintainium application definition persistence' {
             InModuleScope Wintainium.Core -Parameters @{
                 ApplicationDefinition = $definition
                 ManifestRoot = $script:manifestRoot
-                SchemaPath = $schemaPath
             } {
-                param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
-                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
+                param($ApplicationDefinition, $ManifestRoot)
+                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot
             }
         } | Should -Throw
 
