@@ -3,6 +3,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Graphics;
+using Wintainium.Desktop.Settings;
 
 namespace Wintainium.Desktop;
 
@@ -20,19 +21,23 @@ public sealed partial class SettingsWindow : Window
     private static readonly string[] CategoryDescriptions =
     {
         "General Wintainium behavior and preferences.",
-        "Theme, visual style, and collection presentation preferences.",
+        "Theme and visual style preferences.",
         "Wintainium application version history and update information.",
         "Configuration related to tracked software sources.",
         "Less-common and advanced application configuration."
     };
 
+    private readonly WintainiumDesktopSettingsService _settings;
     private readonly ListView _categoryList;
     private readonly TextBlock _categoryTitle;
     private readonly TextBlock _categoryDescription;
     private readonly StackPanel _categoryContent;
 
-    public SettingsWindow()
+    public SettingsWindow(WintainiumDesktopSettingsService settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        _settings = settings;
         InitializeComponent();
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
@@ -71,22 +76,64 @@ public sealed partial class SettingsWindow : Window
         switch (index)
         {
             case 0:
-                AddPlaceholder("General preferences will be added in a later Phase 11 batch.");
+                AddPlaceholder("General preferences will be added when their application contract is defined.");
                 break;
+
             case 1:
-                AddPlaceholder("Theme and visual-style controls are reserved here for the Appearance implementation.");
-                AddPlaceholder("Collection presentation controls will support List and Grid views.");
+                AddAppearanceControls();
                 break;
+
             case 2:
                 AddPlaceholder("This section is for Wintainium itself: current version, release history, and future self-update controls.");
                 break;
+
             case 3:
-                AddPlaceholder("Source and provider configuration will be connected after the Core integration boundary is established.");
+                AddPlaceholder("Source and provider configuration will be connected after the corresponding Core configuration contract exists.");
                 break;
+
             case 4:
                 AddPlaceholder("Advanced technical settings will be added only when their underlying application contracts exist.");
                 break;
         }
+    }
+
+    private void AddAppearanceControls()
+    {
+        var theme = new ComboBox
+        {
+            Header = "Theme",
+            Width = 360,
+            ItemsSource = new[] { "System", "Light", "Dark" },
+            SelectedIndex = (int)_settings.Current.Theme
+        };
+
+        var visualStyle = new ComboBox
+        {
+            Header = "Visual style",
+            Width = 360,
+            ItemsSource = new[] { "Windows 11", "Y2K", "Frutiger Aero" },
+            SelectedIndex = (int)_settings.Current.VisualStyle
+        };
+
+        theme.SelectionChanged += (_, _) =>
+        {
+            if (theme.SelectedIndex >= 0)
+            {
+                _settings.SetTheme((WintainiumThemePreference)theme.SelectedIndex);
+            }
+        };
+
+        visualStyle.SelectionChanged += (_, _) =>
+        {
+            if (visualStyle.SelectedIndex >= 0)
+            {
+                _settings.SetVisualStyle((WintainiumVisualStyle)visualStyle.SelectedIndex);
+            }
+        };
+
+        _categoryContent.Children.Add(theme);
+        _categoryContent.Children.Add(visualStyle);
+        AddPlaceholder("These preferences are currently session-scoped. Durable desktop configuration will be added only after its persistence boundary is defined.");
     }
 
     private void AddPlaceholder(string text)
