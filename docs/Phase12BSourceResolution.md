@@ -155,3 +155,15 @@ The `Wintainium.provider.official-download-page` provider implements the constra
 Supported identity sources are evaluated in deterministic order: `application-name`, `og:site_name`, `og:title`, the first `h1`, then `title`. Metadata and canonical-link attributes may appear in arbitrary attribute order. Non-HTML responses, empty documents, unsupported schemes, and pages without usable identity produce structured failures.
 
 The provider uses a bounded redirect count and request timeout. Dynamic, authenticated, subscription-gated, anti-bot, or otherwise non-deterministic pages remain outside this resolver's promise and are handled by later unsupported/interactive-source work.
+
+
+## Phase 12.7 — Artifact Selection Integration
+
+The Core-owned environment snapshot is now integrated into the artifact-selection path. Update decisions create and pass the environment snapshot through target resolution, artifact selection, and artifact eligibility. The existing manifest artifact policy and deterministic ranking rules remain authoritative.
+
+The legacy machine-architecture parameter remains as a compatibility seam for existing callers, but downstream selection uses the environment snapshot's MachineArchitecture when an environment snapshot is supplied. This prevents artifact selection from depending on scattered process/global architecture reads while preserving the established lower-level contracts.
+
+Focused validation:
+- Update decision environment precedence: **6/6 green**
+- Artifact selection environment precedence: **9/9 green**
+- Artifact eligibility environment precedence: **11/11 green**
