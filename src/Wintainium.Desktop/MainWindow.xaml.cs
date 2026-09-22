@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Wintainium.Desktop.Engine;
 using Wintainium.Desktop.Models;
 
 namespace Wintainium.Desktop;
@@ -8,15 +7,16 @@ namespace Wintainium.Desktop;
 public sealed partial class MainWindow : Window
 {
     private readonly WintainiumApplicationCollectionViewModel _applicationCollection;
+    private readonly WintainiumDesktopServices _services;
     private readonly Dictionary<string, ApplicationDetailsWindow> _applicationDetailsWindows = new(StringComparer.OrdinalIgnoreCase);
-    private WintainiumPowerShellHost? _powerShellHost;
-    private WintainiumApplicationReleaseService? _releaseService;
     private SettingsWindow? _settingsWindow;
 
     public MainWindow()
     {
         InitializeComponent();
         Title = "Wintainium";
+
+        _services = ((App)Application.Current).Services;
 
         _applicationCollection = new WintainiumApplicationCollectionViewModel();
         ApplicationListView.ItemsSource = _applicationCollection.Applications;
@@ -100,8 +100,7 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
-            _releaseService ??= CreateReleaseService();
-            var window = new ApplicationDetailsWindow(application, _releaseService);
+            var window = new ApplicationDetailsWindow(application, _services.ApplicationRelease);
             _applicationDetailsWindows[application.ApplicationId] = window;
             window.Closed += (_, _) => _applicationDetailsWindows.Remove(application.ApplicationId);
             App.TrackWindow(window);
@@ -126,13 +125,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private WintainiumApplicationReleaseService CreateReleaseService()
-    {
-        _powerShellHost ??= new WintainiumPowerShellHost(WintainiumCoreModuleLocator.Locate());
-        return new WintainiumApplicationReleaseService(new WintainiumCoreClient(_powerShellHost));
-    }
-
-    private async void MainWindow_Closed(object sender, WindowEventArgs args)
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         foreach (var window in _applicationDetailsWindows.Values.ToArray())
         {
@@ -140,12 +133,6 @@ public sealed partial class MainWindow : Window
         }
 
         _applicationDetailsWindows.Clear();
-
-        if (_powerShellHost is not null)
-        {
-            await _powerShellHost.DisposeAsync();
-            _powerShellHost = null;
-        }
     }
 
     private async void AddSoftwareButton_Click(object sender, RoutedEventArgs e)
