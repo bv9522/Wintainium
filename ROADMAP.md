@@ -214,4 +214,4 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Avoid inventing progress percentages when the public Core contract does not provide quantitative progress.
 - Exercise cancellation and operation-control behavior through the desktop checkpoint without changing the PowerShell engine.
 
-**Status: In progress.** Application release discovery now has a Core-backed cancellation token, a progress/activity indicator, a Cancel action, and safe window-close cancellation cleanup. The local WinUI build and EngineProbe checkpoint remain before locking 11H.
+**Status: Complete.** Application release discovery now has a Core-backed cancellation token, a user-visible activity indicator, a Cancel action, and safe window-close cancellation cleanup. Operation controls return to idle after completion, failure, or cancellation, and the desktop layer does not invent quantitative progress that the public Core contract does not provide. The local WinUI build and EngineProbe checkpoint are green.
