@@ -17,4 +17,5 @@ Export-ModuleMember -Function @(
     'Test-WintainiumApplicationDefinition'
     'Get-WintainiumApplicationRelease'
     'Invoke-WintainiumApplicationUpdate'
+    'Invoke-WintainiumApplicationOnboarding'
 )
