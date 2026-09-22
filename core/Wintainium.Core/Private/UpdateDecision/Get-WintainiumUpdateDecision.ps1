@@ -43,7 +43,7 @@ function Get-WintainiumUpdateDecision {
     }
 
     $eligibility = Get-WintainiumEligibleRelease -Releases @($providerResult.Releases) -Manifest $manifest -InstalledState $installedState
-    $target = Resolve-WintainiumUpdateTarget -EligibleReleases @($eligibility.EligibleReleases) -Manifest $manifest -MachineArchitecture ([string]$Environment.MachineArchitecture)
+    $target = Resolve-WintainiumUpdateTarget -EligibleReleases @($eligibility.EligibleReleases) -Manifest $manifest -MachineArchitecture ([string]$Environment.MachineArchitecture) -Environment $Environment
     $base.ReleaseEligibility = $eligibility
     $base.TargetResolution = $target
 
