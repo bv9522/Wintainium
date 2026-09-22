@@ -226,4 +226,4 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep Wintainium self-update information separate from managed-application update state.
 - Do not introduce scheduling, provider configuration, application policy persistence, notes persistence, or other engine-owned state without an authoritative contract.
 
-**Status: In progress.** The desktop settings model/service, application-scoped ownership, Appearance controls, and configuration-boundary documentation are implemented. Durable persistence remains intentionally deferred pending an authoritative storage contract. The local WinUI build and desktop checkpoint remain to be run before locking 11I.
+**Status: Complete.** The desktop settings model/service, application-scoped ownership, Appearance controls, and configuration-boundary documentation are implemented. The local WinUI build and desktop checkpoint are green. Durable persistence remains intentionally deferred pending an authoritative storage contract.
