@@ -478,4 +478,67 @@ Console.WriteLine("Public Core command invocation: PASS");
 Console.WriteLine("Structured manifest result shape: PASS");
 Console.WriteLine("Application model mapping: PASS");
 Console.WriteLine("Public command allow-list: PASS");
+
+var cancelledInvocation = new WintainiumPowerShellInvocationResult(
+    "Get-WintainiumManifest",
+    Array.Empty<System.Management.Automation.PSObject>(),
+    Array.Empty<System.Management.Automation.ErrorRecord>(),
+    WasCancelled: true);
+
+using (var cancelledToken = new CancellationTokenSource())
+{
+    cancelledToken.Cancel();
+
+    try
+    {
+        WintainiumCoreInvocationGuard.RequireSingleResult(
+            cancelledInvocation,
+            "Get-WintainiumManifest",
+            cancelledToken.Token);
+
+        Console.Error.WriteLine("Core invocation guard did not preserve cancellation.");
+        return 1;
+    }
+    catch (OperationCanceledException)
+    {
+        // Expected: the application service boundary preserves Core cancellation.
+    }
+}
+
+try
+{
+    WintainiumCoreInvocationGuard.RequireSingleResult(
+        new WintainiumPowerShellInvocationResult(
+            "Get-WintainiumManifest",
+            Array.Empty<System.Management.Automation.PSObject>(),
+            Array.Empty<System.Management.Automation.ErrorRecord>(),
+            WasCancelled: false),
+        "Get-WintainiumManifest",
+        CancellationToken.None);
+
+    Console.Error.WriteLine("Core invocation guard accepted a non-single result.");
+    return 1;
+}
+catch (InvalidOperationException)
+{
+    // Expected: structured Core commands must return exactly one result.
+}
+
+Console.WriteLine("Core invocation result guard: PASS");
+
+await host.DisposeAsync();
+await host.DisposeAsync();
+
+try
+{
+    await host.InvokeAsync("Get-WintainiumManifest");
+    Console.Error.WriteLine("Disposed PowerShell host accepted a new invocation.");
+    return 1;
+}
+catch (ObjectDisposedException)
+{
+    // Expected: disposal is terminal and idempotent.
+}
+
+Console.WriteLine("PowerShell host disposal boundary: PASS");
 return 0;
