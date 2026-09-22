@@ -215,3 +215,15 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Exercise cancellation and operation-control behavior through the desktop checkpoint without changing the PowerShell engine.
 
 **Status: Complete.** Application release discovery now has a Core-backed cancellation token, a user-visible activity indicator, a Cancel action, and safe window-close cancellation cleanup. Operation controls return to idle after completion, failure, or cancellation, and the desktop layer does not invent quantitative progress that the public Core contract does not provide. The local WinUI build and EngineProbe checkpoint are green.
+
+### 11I — Settings & Configuration Foundation
+
+- Establish the desktop configuration ownership boundary without inventing a GUI manifest root or duplicating Core persistence.
+- Establish a desktop-owned settings model/service for presentation-specific preferences.
+- Preserve the agreed Settings categories: General, Appearance, Updates, Sources, and Advanced.
+- Establish Theme (System/Light/Dark) and Visual Style (Windows 11/Y2K/Frutiger Aero) as the first desktop-owned settings.
+- Keep the initial settings service session-scoped until durable configuration ownership, storage location, upgrade behavior, and failure semantics are explicitly defined.
+- Keep Wintainium self-update information separate from managed-application update state.
+- Do not introduce scheduling, provider configuration, application policy persistence, notes persistence, or other engine-owned state without an authoritative contract.
+
+**Status: In progress.** The desktop settings model/service, application-scoped ownership, Appearance controls, and configuration-boundary documentation are implemented. Durable persistence remains intentionally deferred pending an authoritative storage contract. The local WinUI build and desktop checkpoint remain to be run before locking 11I.
