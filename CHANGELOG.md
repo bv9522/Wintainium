@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Phase 11J
+## Unreleased — Phase 11K
 
 - Added the WinUI application-details surface over the 11E application model.
 - Added manifest-path preservation and a C# release-information mapping/service boundary over the public `Get-WintainiumApplicationRelease` command.
@@ -93,6 +93,12 @@ versioning once releases begin.
 - Recorded the agreed Sort & Filter choices, distinct Unknown installed-state semantics, and downstream Details requirements for Do Not Update and editable Notes.
 - Phase 11C passed the local WinUI build checkpoint and is now complete and locked. The shell's executable identity is `Wintainium.exe`; Core integration and application-model work continue in downstream Phase 11 batches.
 
+
+### Phase 11K — GUI Foundation Audit & Phase 11 Lock
+
+- Added `docs/Phase11GuiAudit.md` documenting the final architectural audit of the C#/.NET/WinUI desktop boundary.
+- Reconciled GUI readiness and AI development documentation with the implemented lifecycle and cancellation presentation semantics.
+- Phase 11K remains pending only the complete Phase 1–10 PowerShell/Pester regression and final desktop checkpoint.
 
 ### Phase 11J — GUI Testing & Integration Hardening
 
