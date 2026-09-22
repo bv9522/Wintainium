@@ -43,3 +43,5 @@ The PowerShell engine remains the primary product and is intended to be usable
 without a GUI. Public commands return structured results suitable for an
 interactive CLI presentation layer or a future C#/.NET client. Presentation
 formatting and UI concerns remain outside Core.
+
+The Phase 11 desktop client is the implemented C#/.NET WinUI 3 presentation client over that boundary. It hosts the documented PowerShell Core commands in-process through Microsoft.PowerShell.SDK, maps structured results into desktop presentation models, and keeps engine decisions, provider/installer behavior, lifecycle execution, verification, reconciliation, and cancellation semantics in Core.
