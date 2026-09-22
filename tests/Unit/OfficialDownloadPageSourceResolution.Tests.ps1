@@ -1,12 +1,11 @@
-BeforeAll {
-    $script:testRoot=Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-    $script:providerPath=Join-Path $script:testRoot 'plugins/Wintainium.provider.official-download-page/Wintainium.provider.official-download-page.psm1'
-    Import-Module $script:providerPath -Force
-    $script:response=[pscustomobject]@{
-        Content='<html><head><title>7-Zip</title><meta name="application-name" content="7-Zip"><meta property="og:site_name" content="7-Zip"><link rel="canonical" href="https://www.7-zip.org/download.html"></head><body><h1>Download</h1><a href="/a/7z2501-x64.exe">Download</a></body></html>'
-        Headers=@{'Content-Type'='text/html; charset=UTF-8'}
-    }
+$script:testRoot=Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+$script:providerPath=Join-Path $script:testRoot 'plugins/Wintainium.provider.official-download-page/Wintainium.provider.official-download-page.psm1'
+Import-Module $script:providerPath -Force
+$script:response=[pscustomobject]@{
+    Content='<html><head><title>7-Zip</title><meta name="application-name" content="7-Zip"><meta property="og:site_name" content="7-Zip"><link rel="canonical" href="https://www.7-zip.org/download.html"></head><body><h1>Download</h1><a href="/a/7z2501-x64.exe">Download</a></body></html>'
+    Headers=@{'Content-Type'='text/html; charset=UTF-8'}
 }
+
 Describe 'Wintainium official download page source resolution' {
     It 'resolves structured official HTML into normalized source facts' {
         Mock Invoke-WebRequest {$script:response} -ModuleName Wintainium.provider.official-download-page
@@ -44,7 +43,7 @@ Describe 'Wintainium official download page source resolution' {
     }
     It 'fails deterministically when identity metadata is absent' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><body><p>Downloads</p></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
-        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-5';SourceUri='https://example.com/download'})}
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-5';SourceUri='https://example.com/download'})}
         $result.IsSuccessful|Should -Be $false
         $result.Status|Should -Be 'SourceResponseInvalid'
         $result.Errors.Code|Should -Contain 'OfficialDownloadPageIdentityMissing'
