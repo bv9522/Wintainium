@@ -20,7 +20,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
     private readonly Runspace _runspace;
     private readonly SemaphoreSlim _invocationGate = new(1, 1);
     private readonly string _modulePath;
-    private bool _disposed;
+    private int _disposeRequested;
 
     public WintainiumPowerShellHost(string modulePath)
     {
@@ -59,7 +59,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         IReadOnlyDictionary<string, object?>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeRequested) != 0, this);
 
         if (string.IsNullOrWhiteSpace(commandName))
         {
@@ -139,17 +139,24 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         }
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposeRequested, 1) != 0)
         {
-            return ValueTask.CompletedTask;
+            return;
         }
 
-        _disposed = true;
-        _runspace.Dispose();
-        _invocationGate.Dispose();
-        return ValueTask.CompletedTask;
+        await _invocationGate.WaitAsync().ConfigureAwait(false);
+
+        try
+        {
+            _runspace.Dispose();
+        }
+        finally
+        {
+            _invocationGate.Release();
+            _invocationGate.Dispose();
+        }
     }
 
     private void ImportCoreModule()
