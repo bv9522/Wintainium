@@ -41,7 +41,7 @@ Describe 'Wintainium application onboarding' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceUnsupported'
         $result.ManifestPath | Should -BeNullOrEmpty
-        @(Get-ChildItem -LiteralPath $script:manifestRoot -Filter '*.wintainium.json' -File -ErrorAction SilentlyContinue).Count | Should -Be 0
+        @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
     It 'rejects a non-HTTP source before provider resolution' {
@@ -58,46 +58,17 @@ Describe 'Wintainium application onboarding' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.ManifestPath | Should -BeNullOrEmpty
-        @(Get-ChildItem -LiteralPath $script:manifestRoot -ErrorAction SilentlyContinue).Count | Should -Be 0
+        @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
     It 'does not allow multiple capable providers to silently select a source' {
-        $ambiguousPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.test-source-resolution'
+        $githubPluginSource = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.provider.github-releases'
+        $ambiguousPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.test-github-source-resolution'
         New-Item -ItemType Directory -Path $ambiguousPluginTarget -Force | Out-Null
-        Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'plugin.json') -Encoding utf8 -Value (@'
-{
-  "pluginId": "Wintainium.provider.test-source-resolution",
-  "pluginType": "Provider",
-  "contractVersions": ["1"],
-  "entryPoint": "Wintainium.provider.test-source-resolution.psm1",
-  "capabilities": {
-    "sourceResolution": true
-  }
-}
-'@)
-        Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'Wintainium.provider.test-source-resolution.psm1') -Encoding utf8 -Value (@'
-function Invoke-WintainiumProviderSourceResolution {
-    param([Parameter(Mandatory)][object]$Request)
-
-    [pscustomobject][ordered]@{
-        OperationId = [string]$Request.OperationId
-        IsSuccessful = $true
-        Status = 'Resolved'
-        Source = [pscustomobject][ordered]@{
-            ApplicationId = 'test.ambiguous'
-            Name = 'Ambiguous Test Source'
-            CanonicalUri = [string]$Request.SourceUri
-            ProviderId = 'Wintainium.provider.test-source-resolution'
-            ProviderContractVersion = '1'
-            ProviderSettings = @{}
-        }
-        Errors = @()
-        Warnings = @()
-        LogEvents = @()
-    }
-}
-Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
-'@)
+        $githubDescriptor = Get-Content -LiteralPath (Join-Path $githubPluginSource 'plugin.json') -Raw | ConvertFrom-Json
+        $githubDescriptor.pluginId = 'Wintainium.provider.test-github-source-resolution'
+        $githubDescriptor | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'plugin.json') -Encoding utf8
+        Copy-Item -LiteralPath (Join-Path $githubPluginSource 'Wintainium.provider.github-releases.psm1') -Destination (Join-Path $ambiguousPluginTarget 'Wintainium.provider.github-releases.psm1') -Force
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceAmbiguous'
