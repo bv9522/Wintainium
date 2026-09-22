@@ -6,8 +6,8 @@ BeforeAll {
 
 Describe 'Wintainium application onboarding' {
     BeforeEach {
-        $script:manifestRoot = Join-Path -Path $TestDrive -ChildPath 'manifests'
-        $script:pluginRoot = Join-Path -Path $TestDrive -ChildPath 'plugins'
+        $script:manifestRoot = Join-Path -Path $TestDrive -ChildPath ("manifests-" + [guid]::NewGuid().Guid)
+        $script:pluginRoot = Join-Path -Path $TestDrive -ChildPath ("plugins-" + [guid]::NewGuid().Guid)
         $githubPluginSource = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.provider.github-releases'
         $githubPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.github-releases'
         New-Item -ItemType Directory -Path $githubPluginTarget -Force | Out-Null
@@ -80,6 +80,6 @@ Describe 'Wintainium application onboarding' {
         $operationId = [guid]::NewGuid().ToString()
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy -OperationId $operationId
         $result.OperationId | Should -Be $operationId
-        $result.SourceResolution.Source.SourceContext.repository | Should -Be 'PCSX2/pcsx2'
+        $result.SourceResolution.Source.ProviderSettings.repository | Should -Be 'PCSX2/pcsx2'
     }
 }
