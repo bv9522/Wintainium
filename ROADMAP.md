@@ -249,3 +249,65 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Do not introduce scheduling, provider configuration, application policy persistence, notes persistence, or other engine-owned state without an authoritative contract.
 
 **Status: Complete.** The desktop settings model/service, application-scoped ownership, Appearance controls, and configuration-boundary documentation are implemented. The local WinUI build and desktop checkpoint are green. Durable persistence remains intentionally deferred pending an authoritative storage contract.
+
+
+## Phase 12 — GUI Integration and Source Onboarding
+
+**Status: In progress.**
+
+Phase 12 connects the desktop shell to real Wintainium operations and extends Add Software from a presentation-only source URL field into a Core-owned source-onboarding workflow. The user supplies an official source/release/download URL; Wintainium resolves supported sources into normalized application/source facts without requiring user-authored JSON.
+
+### 12.1 — Source Onboarding Contract
+- Define the normalized source URL input and structured source-resolution result.
+- Preserve OperationId, structured diagnostics, cancellation, and exactly-one-result semantics.
+- Keep source resolution separate from release discovery and update execution.
+
+**Status: Complete.** docs/SourceResolutionContract.md defines the additive source-resolution boundary.
+
+### 12.2 — Source Resolution Architecture
+- Add source resolution as an optional provider capability without breaking Provider Contract v1.
+- Keep source-specific interpretation behind the provider boundary.
+- Explicitly support deterministic unsupported/ambiguous/authentication/interactive outcomes.
+- Do not authorize arbitrary web scraping.
+
+**Status: Architecture established.** docs/Phase12BSourceResolution.md and docs/ArchitectureDecision-SourceResolution.md define the boundary and constraints.
+
+### 12.3 — GitHub Source Resolution
+- Resolve GitHub repository, releases, and release-tag URLs into normalized source facts.
+- Establish GitHub as the first source-resolution vertical slice.
+- Preserve existing GitHub release/artifact discovery behavior.
+
+**Status: Planned.**
+
+### 12.4 — Normalized Application Model
+- Construct a valid application definition from resolved source facts.
+- Keep application identity, provider settings, installer capability, release policy, and artifact policy authoritative and Core-owned.
+
+**Status: Planned.**
+
+### 12.5 — Official Download Page Resolution
+- Establish generalized structured official download-page resolution.
+- Validate against sources such as 7-Zip and VLC without adding vendor-specific branches to Core.
+
+**Status: Planned.**
+
+### 12.6 — Environment Model
+**Status: Planned.**
+
+### 12.7 — Artifact Selection Integration
+**Status: Planned.**
+
+### 12.8 — Persistence
+**Status: Planned.**
+
+### 12.9 — Desktop Integration
+**Status: Planned.**
+
+### 12.10 — Real-World Source Validation
+**Status: Planned.**
+
+### 12.11 — Unsupported/Interactive Source Handling
+**Status: Planned.**
+
+### 12.12 — Integration, Regression, Audit & Lock
+**Status: Planned.**
