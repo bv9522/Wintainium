@@ -1,3 +1,15 @@
+param(
+    [Parameter(Mandatory)]
+    [string] $OperationId,
+
+    [Parameter(Mandatory)]
+    [string] $SourceUri,
+
+    [switch] $DisableSourceResolution,
+
+    [switch] $UseInvalidFixture
+)
+
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
@@ -7,21 +19,18 @@ BeforeAll {
 }
 
 Describe 'Wintainium source resolution contract' {
-    BeforeEach {
-        $script:provider = [pscustomobject][ordered]@{
-            PluginId = 'Wintainium.provider.github-releases'
-            PluginType = 'Provider'
-            ContractVersions = @('1')
-            EntryPoint = 'Wintainium.provider.github-releases.psm1'
-            Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
-            DescriptorPath = $script:descriptorPath
-        }
-    }
-
     It 'resolves a GitHub repository URL without contacting GitHub' {
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
-            param($Provider)
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.github-releases.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
+                DescriptorPath = Join-Path -Path (Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent) -ChildPath 'plugins/Wintainium.provider.github-releases/plugin.json'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-1'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
         }
@@ -36,9 +45,17 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'resolves a GitHub release tag URL and preserves release context' {
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
-            param($Provider)
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.github-releases.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
+                DescriptorPath = Join-Path -Path (Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent) -ChildPath 'plugins/Wintainium.provider.github-releases/plugin.json'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-2'; SourceUri='https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78'
             })
         }
@@ -49,9 +66,17 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'accepts a GitHub releases collection URL as repository identity' {
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
-            param($Provider)
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.github-releases.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
+                DescriptorPath = Join-Path -Path (Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent) -ChildPath 'plugins/Wintainium.provider.github-releases/plugin.json'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-3'; SourceUri='https://github.com/PCSX2/pcsx2/releases'
             })
         }
@@ -62,9 +87,17 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects non-HTTP source URIs before provider execution' {
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
-            param($Provider)
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.github-releases.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
+                DescriptorPath = Join-Path -Path (Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent) -ChildPath 'plugins/Wintainium.provider.github-releases/plugin.json'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-4'; SourceUri='file:///C:/software.exe'
             })
         }
@@ -75,10 +108,17 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects a provider that does not advertise source resolution' {
-        $script:provider.Capabilities.sourceResolution = $false
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
-            param($Provider)
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.github-releases.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $false }
+                DescriptorPath = Join-Path -Path (Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent) -ChildPath 'plugins/Wintainium.provider.github-releases/plugin.json'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-5'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
         }
@@ -89,12 +129,18 @@ Describe 'Wintainium source resolution contract' {
     }
 
     It 'rejects a source resolver result that omits normalized source facts' {
-        $fixturePath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/ProviderContracts/ValidProvider/Wintainium.provider.valid-fixture.psm1'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider; FixturePath=$fixturePath } {
-            param($Provider, $FixturePath)
-            $Provider.EntryPoint = 'Wintainium.provider.valid-fixture.psm1'
-            $Provider.DescriptorPath = $FixturePath
-            Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
+        $result = InModuleScope Wintainium.Core {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $repoRoot = Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.github-releases'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.valid-fixture.psm1'
+                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
+                DescriptorPath = Join-Path -Path $repoRoot -ChildPath 'tests/Fixtures/ProviderContracts/ValidProvider/Wintainium.provider.valid-fixture.psm1'
+            }
+            Invoke-WintainiumProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
                 OperationId='source-test-6'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
         }
