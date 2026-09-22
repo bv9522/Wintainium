@@ -294,3 +294,14 @@ artifacts, verify downloaded bytes, select an installer, or install software.
 Phase 5 owns secure acquisition; Phase 6 owns installation.
 
 **Status:** Accepted
+
+
+## Decision #023: Source Resolution Is an Additive Provider Capability
+
+**Decision:** Wintainium introduces an optional `sourceResolution` provider capability with a fixed source-resolution operation. Existing Provider Contract v1 release/artifact discovery remains unchanged.
+
+**Reason:** Add Software must accept an official source URL without requiring users to author provider-specific manifest settings. Source families differ in transport and interpretation, so source resolution belongs behind a stable Core/plugin boundary rather than in the GUI or as vendor-specific Core logic.
+
+**Constraints:** Source resolution returns normalized source facts only. It does not select the final release or artifact, execute updates, or authorize arbitrary web scraping. Providers that do not advertise `sourceResolution` remain valid Provider Contract v1 providers. Interactive or otherwise non-deterministic sources may return structured unsupported or interactive-resolution outcomes.
+
+**Status:** Accepted
