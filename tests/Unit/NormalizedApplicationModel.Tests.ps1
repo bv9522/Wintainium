@@ -22,7 +22,7 @@ Describe 'Wintainium normalized application model' {
 
     It 'constructs the existing application-definition shape from normalized source facts' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $using:policy -OperationId 'model-test-1'
+            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-1'
         }
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'Resolved'
@@ -38,7 +38,7 @@ Describe 'Wintainium normalized application model' {
 
     It 'does not invent installer or lifecycle policy when Core-owned policy is absent' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $null -OperationId 'model-test-2'
+            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $null -OperationId 'model-test-2'
         }
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
@@ -52,7 +52,7 @@ Describe 'Wintainium normalized application model' {
             ProviderContractVersion='1'; ProviderSettings=@{ repository='example/project' }
         }
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $using:incomplete -Policy $using:policy -OperationId 'model-test-3'
+            New-WintainiumApplicationDefinitionFromSource -Source $incomplete -Policy $script:policy -OperationId 'model-test-3'
         }
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
@@ -61,17 +61,17 @@ Describe 'Wintainium normalized application model' {
 
     It 'produces an application definition that satisfies the manifest schema' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $using:policy -OperationId 'model-test-5'
+            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-5'
         }
 
         $json = $result.ApplicationDefinition | ConvertTo-Json -Depth 20
-        $schemaPath = Join-Path -Path $using:testRoot -ChildPath 'schemas/application-manifest.schema.json'
+        $schemaPath = Join-Path -Path $script:testRoot -ChildPath 'schemas/application-manifest.schema.json'
         Test-Json -Json $json -SchemaFile $schemaPath -ErrorAction Stop | Should -Be $true
     }
 
     It 'preserves source provider settings without adding provider-specific Core branches' {
         $result = & (Get-Module Wintainium.Core) {
-            New-WintainiumApplicationDefinitionFromSource -Source $using:source -Policy $using:policy -OperationId 'model-test-4'
+            New-WintainiumApplicationDefinitionFromSource -Source $script:source -Policy $script:policy -OperationId 'model-test-4'
         }
         $result.ApplicationDefinition.Source.settings.repository | Should -Be 'microsoft/PowerToys'
         $result.ApplicationDefinition.Id | Should -Be 'github.microsoft.powertoys'
