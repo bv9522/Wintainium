@@ -3,16 +3,20 @@ function Select-WintainiumArtifact {
     param(
         [Parameter(Mandatory)] [psobject]$Release,
         [Parameter(Mandatory)] [psobject]$Manifest,
-        [Parameter(Mandatory)] [string]$MachineArchitecture
+        [Parameter(Mandatory)] [string]$MachineArchitecture,
+        [Parameter()] [psobject]$Environment
     )
 
     if ($null -eq $Release) { throw [System.ArgumentNullException]::new('Release') }
     if ($null -eq $Manifest) { throw [System.ArgumentNullException]::new('Manifest') }
+    if ($null -eq $Environment) { $Environment = Get-WintainiumEnvironment -Overrides ([pscustomobject]@{ MachineArchitecture=$MachineArchitecture }) }
+    if ($Environment.PSObject.Properties.Name -notcontains 'MachineArchitecture' -or [string]::IsNullOrWhiteSpace([string]$Environment.MachineArchitecture)) { throw [System.ArgumentException]::new('Environment must contain a non-empty MachineArchitecture.') }
+    $targetArchitecture = [string]$Environment.MachineArchitecture
 
     $observations = [System.Collections.Generic.List[object]]::new()
     $index = 0
     foreach ($artifact in @($Release.Artifacts)) {
-        $observation = Test-WintainiumArtifactEligibility -Artifact $artifact -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        $observation = Test-WintainiumArtifactEligibility -Artifact $artifact -Manifest $Manifest -MachineArchitecture $targetArchitecture
         $reasonCode = $observation.ReasonCode
         $reason = $observation.Reason
         if ($reasonCode -eq 'ArchitectureNotPermitted' -and $observation.Architecture -ne 'unknown') {
@@ -37,7 +41,7 @@ function Select-WintainiumArtifact {
 
     if ($eligible.Count -gt 0) {
         $formats = @($Manifest.artifact.formats | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
-        $machine = $MachineArchitecture.Trim().ToLowerInvariant()
+        $machine = $targetArchitecture.Trim().ToLowerInvariant()
 
         $ranked = foreach ($item in $eligible) {
             $architectureRank = switch ($item.Architecture) {
