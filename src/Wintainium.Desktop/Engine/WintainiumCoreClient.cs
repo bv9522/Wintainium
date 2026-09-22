@@ -14,6 +14,36 @@ internal sealed class WintainiumCoreClient
         _host = host ?? throw new ArgumentNullException(nameof(host));
     }
 
+    public Task<WintainiumPowerShellInvocationResult> OnboardApplicationAsync(
+        string sourceUri,
+        string manifestRoot,
+        object policy,
+        string? pluginRoot = null,
+        string? schemaPath = null,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceUri);
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestRoot);
+        ArgumentNullException.ThrowIfNull(policy);
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["SourceUri"] = sourceUri,
+            ["ManifestRoot"] = manifestRoot,
+            ["Policy"] = policy
+        };
+
+        AddOptional(parameters, "PluginRoot", pluginRoot);
+        AddOptional(parameters, "SchemaPath", schemaPath);
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Invoke-WintainiumApplicationOnboarding",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> GetManifestsAsync(
         string path,
         bool recurse = false,
