@@ -1,5 +1,6 @@
 using Wintainium.Desktop.Engine;
 using Wintainium.Desktop.Models;
+using Wintainium.Desktop.Settings;
 
 if (args.Length != 1)
 {
