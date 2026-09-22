@@ -1,6 +1,5 @@
 $testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
 $modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-$script:schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest.schema.json'
 
 Import-Module $modulePath -Force
 
