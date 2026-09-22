@@ -85,9 +85,9 @@ Describe 'Wintainium source resolution contract' {
 
     It 'rejects a source resolver result that omits normalized source facts' {
         $fixturePath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/ProviderContracts/ValidProvider/Wintainium.provider.valid-fixture.psm1'
-        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider; FixturePath=$fixturePath } {
             $Provider.EntryPoint = 'Wintainium.provider.valid-fixture.psm1'
-            $Provider.DescriptorPath = $fixturePath
+            $Provider.DescriptorPath = $FixturePath
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-6'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
