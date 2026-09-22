@@ -72,6 +72,15 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Release Information"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Button x:Name="CancelOperationButton"
+                                Content="Cancel"
+                                IsEnabled="False"
+                                Click="CancelOperationButton_Click"
+                                HorizontalAlignment="Left" />
+                        <ProgressRing x:Name="OperationProgressRing"
+                                      IsActive="False"
+                                      Width="20"
+                                      Height="20" />
                         <TextBlock x:Name="ReleaseStatusText"
                                    Text="No release check has been performed." />
                         <ListView x:Name="ReleaseListView"
