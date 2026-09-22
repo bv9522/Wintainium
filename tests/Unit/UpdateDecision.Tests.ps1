@@ -17,6 +17,20 @@ Describe 'Wintainium final update decision' {
         $result.TargetResolution.ReasonCode | Should -Be 'TargetSelected'
     }
 
+    It 'uses the supplied Core environment machine architecture for artifact selection' {
+        $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('msi');architectures=@('x64','arm64');allowUnknownArchitecture=$false} }
+        $state=[pscustomobject]@{ ApplicationId='example.app'; Version='1.0.0'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Releases=@([pscustomobject]@{ReleaseId='release-2';Version='2.0.0';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://example.test/app-arm64.msi';Format='msi';Architecture='arm64'})}) }
+        $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
+        $environment=[pscustomobject]@{ OperatingSystem='Windows'; OperatingSystemVersion='10.0.26100.1'; OperatingSystemBuild=26100; MachineArchitecture='arm64'; ProcessArchitecture='x64' }
+        $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput;Environment=$environment} {
+            param($DecisionInput,$Environment)
+            Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' -Environment $Environment
+        }
+        $result.Status | Should -Be 'UpdateAvailable'
+        $result.SelectedArtifact.Architecture | Should -Be 'arm64'
+    }
+
     It 'returns no update when discovery succeeds but no release is eligible' {
         $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('msi');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
         $state=[pscustomobject]@{ ApplicationId='example.app'; Version='2.0.0'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
