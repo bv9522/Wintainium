@@ -13,17 +13,15 @@ function ConvertFrom-OfficialDownloadPageHtmlText {
 }
 function Get-OfficialDownloadPageMetaValue {
     param([Parameter(Mandatory)][string]$Html,[Parameter(Mandatory)][string[]]$Names)
+    $tags=[regex]::Matches($Html,'<meta\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
     foreach ($name in $Names) {
-        $escaped=[regex]::Escape($name)
-        foreach ($pattern in @(
-            '<meta\s+[^>]*name\s*=\s*["'']' + $escaped + '["''][^>]*content\s*=\s*["'']([^"'']+)["''][^>]*>',
-            '<meta\s+[^>]*property\s*=\s*["'']' + $escaped + '["''][^>]*content\s*=\s*["'']([^"'']+)["''][^>]*>',
-            '<meta\s+[^>]*content\s*=\s*["'']([^"'']+)["''][^>]*name\s*=\s*["'']' + $escaped + '["''][^>]*>',
-            '<meta\s+[^>]*content\s*=\s*["'']([^"'']+)["''][^>]*property\s*=\s*["'']' + $escaped + '["''][^>]*>'
-        )) {
-            $match=[regex]::Match($Html,$pattern,[Text.RegularExpressions.RegexOptions]::IgnoreCase)
-            if ($match.Success) {
-                $value=ConvertFrom-OfficialDownloadPageHtmlText $match.Groups[1].Value
+        foreach ($tag in $tags) {
+            $tagText=$tag.Value
+            $nameMatch=[regex]::Match($tagText,'\b(?:name|property)\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            if (-not $nameMatch.Success -or $nameMatch.Groups[1].Value -ine $name) { continue }
+            $contentMatch=[regex]::Match($tagText,'\bcontent\s*=\s*["'']([^"'']*)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            if ($contentMatch.Success) {
+                $value=ConvertFrom-OfficialDownloadPageHtmlText $contentMatch.Groups[1].Value
                 if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
             }
         }
