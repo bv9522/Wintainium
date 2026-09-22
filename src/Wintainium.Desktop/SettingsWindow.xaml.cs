@@ -33,7 +33,7 @@ public sealed partial class SettingsWindow : Window
     private readonly TextBlock _categoryDescription;
     private readonly StackPanel _categoryContent;
 
-    public SettingsWindow(WintainiumDesktopSettingsService settings)
+    internal SettingsWindow(WintainiumDesktopSettingsService settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
