@@ -21,6 +21,10 @@ Describe 'Wintainium application onboarding' {
         }
     }
 
+    It 'is exposed as a documented public Core command' {
+        (Get-Command Invoke-WintainiumApplicationOnboarding -Module Wintainium.Core).CommandType | Should -Be 'Function'
+    }
+
     It 'resolves, normalizes, and persists a GitHub source' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $true
