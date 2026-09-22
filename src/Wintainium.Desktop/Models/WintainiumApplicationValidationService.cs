@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Management.Automation;
 using Wintainium.Desktop.Engine;
 
@@ -34,16 +33,11 @@ internal sealed class WintainiumApplicationValidationService
             operationId,
             cancellationToken).ConfigureAwait(false);
 
-        if (invocation.WasCancelled)
-            throw new OperationCanceledException(cancellationToken);
+        var result = WintainiumCoreInvocationGuard.RequireSingleResult(
+            invocation,
+            "Test-WintainiumApplicationDefinition",
+            cancellationToken);
 
-        if (invocation.Output.Count != 1)
-        {
-            throw new InvalidOperationException(
-                $"Test-WintainiumApplicationDefinition returned {invocation.Output.Count} structured results; exactly one was expected.");
-        }
-
-        var result = PSObject.AsPSObject(invocation.Output[0]);
         var resolvedOperationId = Required(result, "OperationId");
         var isValid = Boolean(result, "IsValid");
 
