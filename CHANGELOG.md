@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Phase 11F
+## Unreleased — Phase 11J
 
 - Added the WinUI application-details surface over the 11E application model.
 - Added manifest-path preservation and a C# release-information mapping/service boundary over the public `Get-WintainiumApplicationRelease` command.
@@ -93,6 +93,12 @@ versioning once releases begin.
 - Recorded the agreed Sort & Filter choices, distinct Unknown installed-state semantics, and downstream Details requirements for Do Not Update and editable Notes.
 - Phase 11C passed the local WinUI build checkpoint and is now complete and locked. The shell's executable identity is `Wintainium.exe`; Core integration and application-model work continue in downstream Phase 11 batches.
 
+
+### Phase 11J — GUI Testing & Integration Hardening
+
+- Expanded the desktop EngineProbe to cover structured operation state, diagnostic preservation, session-scoped settings, and the desktop cancellation boundary.
+- Added `docs/DesktopTesting.md` with the focused automated and WinUI interaction/window-lifecycle checkpoint.
+- Phase 11J passed the local WinUI build and desktop interaction checkpoint and is now complete and locked. No Core/PowerShell changes were required.
 
 ### Phase 11D — Engine Integration Boundary
 
