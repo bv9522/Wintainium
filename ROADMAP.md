@@ -283,13 +283,13 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Construct a valid application definition from resolved source facts.
 - Keep application identity, provider settings, installer capability, release policy, and artifact policy authoritative and Core-owned.
 
-**Status: Implementation checkpoint.** `New-WintainiumApplicationDefinitionFromSource` establishes the normalization boundary; focused Pester validation is pending.
+**Status: Complete.** `New-WintainiumApplicationDefinitionFromSource` establishes the normalization boundary and focused Pester validation is **5/5 green**.
 
 ### 12.5 — Official Download Page Resolution
 - Establish generalized structured official download-page resolution.
 - Validate against sources such as 7-Zip and VLC without adding vendor-specific branches to Core.
 
-**Status: Planned.**
+**Status: Implementation checkpoint.** 12.5B establishes the constrained HTML identity-resolution provider and focused Pester coverage; real-world page validation and artifact/release discovery remain downstream.
 
 ### 12.6 — Environment Model
 **Status: Planned.**
