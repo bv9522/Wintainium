@@ -53,7 +53,8 @@ function Get-OfficialDownloadPageApplicationName {
     param([Parameter(Mandatory)][string]$Html)
     foreach ($candidate in @(
         (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('application-name')),
-        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:site_name','og:title')),
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:site_name')),
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:title')),
         (Get-OfficialDownloadPageHeading -Html $Html),
         (Get-OfficialDownloadPageTitle -Html $Html)
     )) {
