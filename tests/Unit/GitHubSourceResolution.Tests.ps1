@@ -62,8 +62,7 @@ Describe 'Wintainium GitHub source resolution' {
     }
 
     It 'does not contact GitHub while resolving source identity' {
-        $command = Get-Command Invoke-RestMethod -CommandType Cmdlet
-        $command | Should -Not -BeNullOrEmpty
+        Mock Invoke-RestMethod { throw 'GitHub network access is forbidden during source resolution.' } -ModuleName Wintainium.provider.github-releases
 
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-5'
