@@ -263,7 +263,7 @@ public sealed partial class MainWindow : Window
 
     private SettingsWindow CreateSettingsWindow()
     {
-        var window = new SettingsWindow();
+        var window = new SettingsWindow(App.Settings);
         window.Closed += SettingsWindow_Closed;
         App.TrackWindow(window);
         window.Activate();
