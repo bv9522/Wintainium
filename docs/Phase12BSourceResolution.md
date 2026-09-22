@@ -1,8 +1,8 @@
-# Phase 12B — Source Resolution Architecture
+# Phase 12 — Source Resolution Architecture
 
 ## Status
 
-Phase 12B planning and contract foundation.
+The Phase 12 source-resolution architecture and official-download-page reference implementation are established. The official-download-page focused checkpoint is **7/7 green**.
 
 Phase 12B extends Wintainium from applications that already have an authored manifest to applications that can be onboarded from an official software source URL.
 
@@ -146,3 +146,12 @@ Phase 12B does not:
 - replace Provider Contract v1 release/artifact discovery;
 - select artifacts using GUI logic;
 - make an interactive vendor website magically automatable.
+
+
+## Official download-page reference implementation
+
+The `Wintainium.provider.official-download-page` provider implements the constrained structured-page source family. It accepts absolute HTTP/HTTPS pages, retrieves HTML as untrusted data, extracts supported identity metadata and canonical URI information, and returns normalized source facts. It does not execute page scripts, select final artifacts, or perform an update.
+
+Supported identity sources are evaluated in deterministic order: `application-name`, `og:site_name`, `og:title`, the first `h1`, then `title`. Metadata and canonical-link attributes may appear in arbitrary attribute order. Non-HTML responses, empty documents, unsupported schemes, and pages without usable identity produce structured failures.
+
+The provider uses a bounded redirect count and request timeout. Dynamic, authenticated, subscription-gated, anti-bot, or otherwise non-deterministic pages remain outside this resolver's promise and are handled by later unsupported/interactive-source work.
