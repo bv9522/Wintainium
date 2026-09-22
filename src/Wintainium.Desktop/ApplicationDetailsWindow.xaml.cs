@@ -22,6 +22,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ArgumentNullException.ThrowIfNull(releaseService);
 
         InitializeComponent();
+        Closed += ApplicationDetailsWindow_Closed;
 
         _application = application;
         _releaseService = releaseService;
@@ -70,6 +71,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         _operationCancellation = new CancellationTokenSource();
         CheckForUpdatesButton.IsEnabled = false;
         CancelOperationButton.IsEnabled = true;
+        OperationStateText.Text = WintainiumOperationState.Running.ToString();
+        OperationIdText.Text = "Operation ID: pending Core result.";
         OperationProgressRing.IsActive = true;
         DetailsErrorText.Visibility = Visibility.Collapsed;
         ReleaseStatusText.Text = "Checking the application's declared source…";
@@ -136,6 +139,13 @@ public sealed partial class ApplicationDetailsWindow : Window
     private void CancelOperationButton_Click(object sender, RoutedEventArgs e)
     {
         _operationCancellation?.Cancel();
+    }
+
+    private void ApplicationDetailsWindow_Closed(object sender, WindowEventArgs args)
+    {
+        _operationCancellation?.Cancel();
+        _operationCancellation?.Dispose();
+        _operationCancellation = null;
     }
 
     private void SaveNotesButton_Click(object sender, RoutedEventArgs e)
