@@ -12,6 +12,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly WintainiumApplicationModel _application;
     private readonly WintainiumApplicationReleaseService _releaseService;
     private string _savedNotes = string.Empty;
+    private CancellationTokenSource? _operationCancellation;
 
     internal ApplicationDetailsWindow(
         WintainiumApplicationModel application,
@@ -65,13 +66,17 @@ public sealed partial class ApplicationDetailsWindow : Window
             return;
         }
 
+        _operationCancellation?.Dispose();
+        _operationCancellation = new CancellationTokenSource();
         CheckForUpdatesButton.IsEnabled = false;
+        CancelOperationButton.IsEnabled = true;
+        OperationProgressRing.IsActive = true;
         DetailsErrorText.Visibility = Visibility.Collapsed;
         ReleaseStatusText.Text = "Checking the application's declared source…";
 
         try
         {
-            var result = await _releaseService.DiscoverAsync(_application.ManifestPath);
+            var result = await _releaseService.DiscoverAsync(_application.ManifestPath, _operationCancellation.Token);
 
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId}";
@@ -111,6 +116,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         catch (OperationCanceledException)
         {
             ReleaseStatusText.Text = "Release discovery was cancelled.";
+            OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
         }
         catch (Exception exception)
         {
@@ -119,8 +125,17 @@ public sealed partial class ApplicationDetailsWindow : Window
         }
         finally
         {
+            OperationProgressRing.IsActive = false;
+            CancelOperationButton.IsEnabled = false;
             CheckForUpdatesButton.IsEnabled = true;
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
         }
+    }
+
+    private void CancelOperationButton_Click(object sender, RoutedEventArgs e)
+    {
+        _operationCancellation?.Cancel();
     }
 
     private void SaveNotesButton_Click(object sender, RoutedEventArgs e)
