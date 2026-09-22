@@ -155,3 +155,28 @@ The desktop shell now tracks every active WinUI window by `WindowId`, including 
 - Notes provide explicit Save and Don't Save behavior for the current application session; durable note persistence remains downstream.
 - Installed-state acquisition, version comparison, update decisions, update execution, policy enforcement, and durable metadata remain Core/configuration responsibilities rather than presentation logic.
 - The desktop EngineProbe verifies the release-result mapping in addition to the existing application-model and engine-boundary checks.
+## Phase 12A integration wiring foundation
+
+Phase 12A centralizes the desktop/Core service graph without changing the Phase
+11 contracts or introducing a second state authority.
+
+- `WintainiumDesktopServices` is the desktop composition root. It owns one
+  in-process `WintainiumPowerShellHost`, one `WintainiumCoreClient`, and the
+  application-layer collection, validation, and release services.
+- `App` owns the service graph for the lifetime of the main desktop session and
+  disposes it when the main window closes.
+- `MainWindow` no longer constructs a PowerShell host or release service.
+  Details windows receive the already-composed release service.
+- `WintainiumApplicationValidationService` is the application-layer entry point
+  for the documented `Test-WintainiumApplicationDefinition` command and projects
+  its structured validation result into desktop models.
+- The four documented Core commands remain the only engine entry points. Phase
+  12A does not add a URL-discovery API, durable collection storage, update
+  execution, or any GUI-side business policy.
+- The desktop EngineProbe now exercises the validation service against a known
+  missing manifest and verifies that Core's structured invalid result is
+  preserved as a failed validation operation.
+
+This is wiring only. Collection onboarding, authoritative state composition,
+release-refresh behavior, update execution, and durable persistence remain
+downstream Phase 12 work.
