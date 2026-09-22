@@ -36,9 +36,18 @@ function Get-OfficialDownloadPageTitle {
 }
 function Get-OfficialDownloadPageCanonicalUri {
     param([Parameter(Mandatory)][string]$Html,[Parameter(Mandatory)][Uri]$BaseUri)
-    $match=[regex]::Match($Html,'<link\s+[^>]*rel\s*=\s*["'']canonical["''][^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if (-not $match.Success) { return $BaseUri.AbsoluteUri }
-    try {$uri=[Uri]::new($BaseUri,$match.Groups[1].Value);if ($uri.Scheme -in @('http','https')) {return $uri.AbsoluteUri}} catch {}
+    $tags=[regex]::Matches($Html,'<link\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($tag in $tags) {
+        $tagText=$tag.Value
+        $relMatch=[regex]::Match($tagText,'\brel\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $relMatch.Success -or $relMatch.Groups[1].Value -notmatch '(?i)(^|\s)canonical(\s|$)') { continue }
+        $hrefMatch=[regex]::Match($tagText,'\bhref\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $hrefMatch.Success) { continue }
+        try {
+            $uri=[Uri]::new($BaseUri,$hrefMatch.Groups[1].Value)
+            if ($uri.Scheme -in @('http','https')) { return $uri.AbsoluteUri }
+        } catch {}
+    }
     return $BaseUri.AbsoluteUri
 }
 function Get-OfficialDownloadPageHeading {
@@ -73,7 +82,7 @@ function Invoke-WintainiumProviderSourceResolution {
     if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
         return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.')
     }
-    try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -ErrorAction Stop} catch {
+    try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
         return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' $_.Exception.Message)
     }
     $contentType=''
