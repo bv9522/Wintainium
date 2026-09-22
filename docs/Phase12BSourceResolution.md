@@ -167,3 +167,12 @@ Focused validation:
 - Update decision environment precedence: **6/6 green**
 - Artifact selection environment precedence: **9/9 green**
 - Artifact eligibility environment precedence: **11/11 green**
+
+
+## Phase 12.8 — Persistence
+
+Application-definition persistence is now established under the existing manifest collection boundary. `Set-WintainiumApplicationDefinition` accepts a normalized application definition, serializes it to a temporary file, validates the serialized document against the authoritative application-manifest schema, and only then derives the destination from the validated application identity. The final file convention is `<ManifestRoot>/<ApplicationId>.wintainium.json`, with replacement semantics by application identity and atomic file replacement.
+
+This does not create a second state authority. Installed application observations remain owned by the existing `installed-state.json` boundary, while desktop settings and notes remain session-scoped until a separate durable desktop-configuration contract is defined. Source onboarding therefore produces a durable application definition without mutating installed state.
+
+Focused validation: **6/6 green**.
