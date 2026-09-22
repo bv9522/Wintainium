@@ -228,6 +228,16 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 
 **Status: Complete and locked.** The desktop EngineProbe covers the application collection/model/query boundary, release mapping, explicit operation-state mapping, structured diagnostics, session-scoped settings, and the cancellation token boundary. `docs/DesktopTesting.md` defines the WinUI interaction and window-lifecycle checkpoint. The local WinUI build and full desktop interaction checkpoint are green. No Core/PowerShell changes were required, so the authoritative Pester regression remains unchanged.
 
+### 11K — GUI Foundation Audit & Phase 11 Lock
+
+- Perform the final architectural audit of the completed C#/.NET/WinUI desktop foundation.
+- Verify that Wintainium.Core remains authoritative for discovery, update decisions, lifecycle execution, provider/installer behavior, verification, reconciliation, cancellation semantics, and terminal operation outcomes.
+- Verify that the desktop client depends only on documented public Core commands and structured results, without provider/installer coupling, console parsing, undocumented properties, or duplicated engine state authority.
+- Verify structured diagnostics and OperationId preservation, explicit cancellation handling, and Unknown installed-state semantics.
+- Reconcile GUI, configuration, testing, project, roadmap, changelog, and AI-context documentation with the implementation.
+- Run the complete Phase 1–10 PowerShell/Pester regression and the final desktop build/EngineProbe checkpoint before declaring Phase 11 locked.
+
+**Status: In progress.** Final audit documentation is added. The desktop architectural findings are green through code inspection and the 11J checkpoint; the complete Phase 1–10 regression and final checkpoint remain before Phase 11 can be locked.
 ### 11I — Settings & Configuration Foundation
 
 - Establish the desktop configuration ownership boundary without inventing a GUI manifest root or duplicating Core persistence.
