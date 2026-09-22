@@ -1,4 +1,3 @@
-using System.Management.Automation;
 using Wintainium.Desktop.Engine;
 
 namespace Wintainium.Desktop.Models;
@@ -32,18 +31,11 @@ internal sealed class WintainiumApplicationCollectionService
             schemaPath,
             cancellationToken).ConfigureAwait(false);
 
-        if (invocation.WasCancelled)
-        {
-            throw new OperationCanceledException(cancellationToken);
-        }
+        var result = WintainiumCoreInvocationGuard.RequireSingleResult(
+            invocation,
+            "Get-WintainiumManifest",
+            cancellationToken);
 
-        if (invocation.Output.Count != 1)
-        {
-            throw new InvalidOperationException(
-                $"Get-WintainiumManifest returned {invocation.Output.Count} structured results; exactly one was expected.");
-        }
-
-        return WintainiumApplicationModelMapper.MapManifestResult(
-            PSObject.AsPSObject(invocation.Output[0]));
+        return WintainiumApplicationModelMapper.MapManifestResult(result);
     }
 }
