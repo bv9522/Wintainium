@@ -2,11 +2,20 @@ function Get-WintainiumUpdateDecision {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [psobject]$UpdateDecisionInput,
-        [Parameter(Mandatory)] [string]$MachineArchitecture
+        [Parameter(Mandatory)] [string]$MachineArchitecture,
+        [Parameter()] [psobject]$Environment
     )
 
     if ($null -eq $UpdateDecisionInput) { throw [System.ArgumentNullException]::new('UpdateDecisionInput') }
     if ([string]::IsNullOrWhiteSpace($MachineArchitecture)) { throw [System.ArgumentException]::new('MachineArchitecture must not be empty.') }
+
+    if ($null -eq $Environment) {
+        $Environment = Get-WintainiumEnvironment -Overrides ([pscustomobject]@{ MachineArchitecture=$MachineArchitecture })
+    }
+
+    if ($Environment.PSObject.Properties.Name -notcontains 'MachineArchitecture' -or [string]::IsNullOrWhiteSpace([string]$Environment.MachineArchitecture)) {
+        throw [System.ArgumentException]::new('Environment must contain a non-empty MachineArchitecture.')
+    }
 
     $manifest = $UpdateDecisionInput.Manifest
     $installedState = $UpdateDecisionInput.InstalledState
@@ -34,7 +43,7 @@ function Get-WintainiumUpdateDecision {
     }
 
     $eligibility = Get-WintainiumEligibleRelease -Releases @($providerResult.Releases) -Manifest $manifest -InstalledState $installedState
-    $target = Resolve-WintainiumUpdateTarget -EligibleReleases @($eligibility.EligibleReleases) -Manifest $manifest -MachineArchitecture $MachineArchitecture
+    $target = Resolve-WintainiumUpdateTarget -EligibleReleases @($eligibility.EligibleReleases) -Manifest $manifest -MachineArchitecture ([string]$Environment.MachineArchitecture)
     $base.ReleaseEligibility = $eligibility
     $base.TargetResolution = $target
 
