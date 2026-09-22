@@ -33,6 +33,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
     }
 
     $request = $requestResult.Request
+    $environment = Get-WintainiumEnvironment -Overrides ([pscustomobject]@{ MachineArchitecture=$MachineArchitecture })
     $planResult = New-WintainiumOrchestrationStagePlan -OrchestrationRequest $request
     if ($null -eq $planResult -or -not $planResult.IsValid -or $null -eq $planResult.Plan) {
         return [pscustomobject][ordered]@{ IsSuccessful=$false; WasCancelled=$false; OperationId=$request.OperationId; Request=$request; State=$null; StageResults=@(); Error=[pscustomobject][ordered]@{ Code='ApplicationUpdateStagePlanInvalid'; Message=if ($null -ne $planResult.Errors -and @($planResult.Errors).Count -gt 0) { [string]@($planResult.Errors)[0].Message } else { 'The application update stage plan could not be created.' } } }
@@ -114,6 +115,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                     Release=$release
                     StateRoot=$StateRoot
                     MachineArchitecture=$MachineArchitecture
+                    Environment=$environment
                     OperationId=[string]$request.OperationId
                 }
                 $executor = {
@@ -133,7 +135,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
                     $installedState = Get-WintainiumInstalledApplicationState -StateRoot $StageInput.StateRoot -ApplicationId ([string]$manifest.Id)
                     $providerResult = [pscustomobject][ordered]@{ IsSuccessful=$true; Status=$release.Status; Releases=@($release.Releases); Errors=@($release.Errors); Warnings=@($release.Warnings); LogEvents=@($release.LogEvents) }
                     $decisionInput = New-WintainiumUpdateDecisionInput -Manifest $manifest -InstalledState $installedState -ProviderResult $providerResult
-                    $decision = Get-WintainiumUpdateDecision -UpdateDecisionInput $decisionInput -MachineArchitecture $StageInput.MachineArchitecture
+                    $decision = Get-WintainiumUpdateDecision -UpdateDecisionInput $decisionInput -MachineArchitecture $StageInput.MachineArchitecture -Environment $StageInput.Environment
                     & $normalize $decision $true
                 }
             }
