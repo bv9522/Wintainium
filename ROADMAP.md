@@ -194,3 +194,13 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep update execution, policy enforcement, installed-state acquisition, and durable metadata outside the presentation layer.
 
 **Status: Complete.** The application-details window, release result mapping/service boundary, manifest-path preservation, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint are green. The details surface preserves Unknown installation/update state, exposes the reserved Do Not Update policy surface without enforcement, and provides session-scoped Notes Save/Don't Save behavior pending the authoritative persistence boundary. Update execution, policy enforcement, installed-state acquisition, and durable metadata remain outside the presentation layer.
+### 11G — Status, Errors, Warnings & Operation State
+
+- Establish a presentation-layer operation-state model for Core-owned structured results.
+- Map explicit IsSuccessful and WasCancelled values to presentation state without inferring lifecycle outcomes from formatted text.
+- Preserve Core-generated OperationId as the correlation identifier shown to the user-facing layer.
+- Preserve structured Errors and Warnings diagnostics with machine-readable codes and optional paths/messages.
+- Surface operation state and structured diagnostics in application details without exposing PowerShell transport types or private lifecycle objects.
+- Keep lifecycle execution, retry policy, cancellation ownership, and terminal error semantics in Core.
+
+**Status: In progress.** The shared operation-state model/mapper, application result state mapping, and application-details diagnostic surface are implemented. The local WinUI build and EngineProbe checkpoint remain before locking 11G.
