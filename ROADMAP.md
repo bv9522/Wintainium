@@ -204,3 +204,14 @@ Phase 11 begins the Windows graphical presentation layer over the existing Power
 - Keep lifecycle execution, retry policy, cancellation ownership, and terminal error semantics in Core.
 
 **Status: Complete.** The presentation-layer operation-state model/mapper, application collection and release-result state mapping, structured diagnostic preservation, application-details status surface, and EngineProbe coverage are implemented. The local WinUI build and EngineProbe checkpoint are green. Terminal operation outcomes remain Core-owned; the desktop layer presents explicit success/failure/cancellation state, OperationId, and structured diagnostics without parsing formatted output or exposing private lifecycle objects.
+### 11H — Progress & Cancellation
+
+- Present Core-owned operation progress/activity without moving lifecycle decisions into the desktop client.
+- Provide a user-visible cancellation action for cancellable operations.
+- Propagate cancellation through the existing C# adapter CancellationToken boundary.
+- Keep cancellation ownership and terminal outcome determination in Core.
+- Ensure operation controls return to an idle state after completion, failure, or cancellation.
+- Avoid inventing progress percentages when the public Core contract does not provide quantitative progress.
+- Exercise cancellation and operation-control behavior through the desktop checkpoint without changing the PowerShell engine.
+
+**Status: In progress.** Application release discovery now has a Core-backed cancellation token, a progress/activity indicator, a Cancel action, and safe window-close cancellation cleanup. The local WinUI build and EngineProbe checkpoint remain before locking 11H.
