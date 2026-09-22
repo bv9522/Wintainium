@@ -4,45 +4,42 @@ $schemaPath = Join-Path -Path $testRoot -ChildPath 'schemas/application-manifest
 
 Import-Module $modulePath -Force
 
-$script:NewTestApplicationDefinition = {
-    [pscustomobject][ordered]@{
-        manifestVersion = '1.1'
-        id = 'org.example.app'
-        name = 'Example Application'
-        homepage = 'https://example.org/'
-        publisher = 'Example'
-        source = [pscustomobject][ordered]@{
-            pluginId = 'Wintainium.provider.example'
-            requiredContractVersion = '1'
-            settings = [pscustomobject][ordered]@{}
-        }
-        installer = [pscustomobject][ordered]@{
-            pluginId = 'Wintainium.installer.example'
-            requiredContractVersion = '1'
-            settings = [pscustomobject][ordered]@{}
-        }
-        reconciliation = [pscustomobject][ordered]@{
-            pluginId = 'Wintainium.reconciliation.example'
-            requiredContractVersion = '1'
-            settings = [pscustomobject][ordered]@{}
-        }
-        release = [pscustomobject][ordered]@{
-            channel = 'stable'
-        }
-        artifact = [pscustomobject][ordered]@{
-            formats = @('msi')
-            architectures = @('x64')
-        }
-    }
-}
-
 Describe 'Wintainium application definition persistence' {
     BeforeEach {
         $script:manifestRoot = Join-Path $TestDrive ("manifests-{0}" -f ([guid]::NewGuid().Guid))
+        $script:testApplicationDefinition = [pscustomobject][ordered]@{
+            manifestVersion = '1.1'
+            id = 'org.example.app'
+            name = 'Example Application'
+            homepage = 'https://example.org/'
+            publisher = 'Example'
+            source = [pscustomobject][ordered]@{
+                pluginId = 'Wintainium.provider.example'
+                requiredContractVersion = '1'
+                settings = [pscustomobject][ordered]@{}
+            }
+            installer = [pscustomobject][ordered]@{
+                pluginId = 'Wintainium.installer.example'
+                requiredContractVersion = '1'
+                settings = [pscustomobject][ordered]@{}
+            }
+            reconciliation = [pscustomobject][ordered]@{
+                pluginId = 'Wintainium.reconciliation.example'
+                requiredContractVersion = '1'
+                settings = [pscustomobject][ordered]@{}
+            }
+            release = [pscustomobject][ordered]@{
+                channel = 'stable'
+            }
+            artifact = [pscustomobject][ordered]@{
+                formats = @('msi')
+                architectures = @('x64')
+            }
+        }
     }
 
     It 'persists a normalized application definition using the manifest convention' {
-        $definition = & $script:NewTestApplicationDefinition
+        $definition = $script:testApplicationDefinition
 
         $path = InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
@@ -63,7 +60,7 @@ Describe 'Wintainium application definition persistence' {
     }
 
     It 'creates the manifest root when it does not exist' {
-        $definition = & $script:NewTestApplicationDefinition
+        $definition = $script:testApplicationDefinition
 
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
@@ -78,8 +75,8 @@ Describe 'Wintainium application definition persistence' {
     }
 
     It 'replaces an existing definition by application identity' {
-        $first = & $script:NewTestApplicationDefinition
-        $second = & $script:NewTestApplicationDefinition
+        $first = $script:testApplicationDefinition
+        $second = $script:testApplicationDefinition | ConvertTo-Json -Depth 20 | ConvertFrom-Json
         $second.name = 'Updated Example'
 
         foreach ($definition in @($first, $second)) {
@@ -99,7 +96,7 @@ Describe 'Wintainium application definition persistence' {
     }
 
     It 'rejects a schema-invalid definition before replacing an existing file' {
-        $valid = & $script:NewTestApplicationDefinition
+        $valid = $script:testApplicationDefinition
 
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $valid
@@ -110,7 +107,7 @@ Describe 'Wintainium application definition persistence' {
             Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath | Out-Null
         }
 
-        $invalid = & $script:NewTestApplicationDefinition
+        $invalid = $script:testApplicationDefinition
         $invalid.name = $null
 
         {
@@ -129,7 +126,7 @@ Describe 'Wintainium application definition persistence' {
     }
 
     It 'does not persist installed state alongside the application definition' {
-        $definition = & $script:NewTestApplicationDefinition
+        $definition = $script:testApplicationDefinition
 
         InModuleScope Wintainium.Core -Parameters @{
             ApplicationDefinition = $definition
@@ -144,7 +141,7 @@ Describe 'Wintainium application definition persistence' {
     }
 
     It 'rejects an invalid application identifier before deriving a destination path' {
-        $definition = & $script:NewTestApplicationDefinition
+        $definition = $script:testApplicationDefinition
         $definition.id = '../outside'
 
         {
