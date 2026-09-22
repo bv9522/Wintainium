@@ -12,6 +12,7 @@
         'Test-WintainiumApplicationDefinition'
         'Get-WintainiumApplicationRelease'
         'Invoke-WintainiumApplicationUpdate'
+        'Invoke-WintainiumApplicationOnboarding'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
