@@ -25,6 +25,21 @@ if (collectionResult.Applications.Count != 0 ||
     return 1;
 }
 
+var validationService = new WintainiumApplicationValidationService(client);
+var validationResult = await validationService.ValidateAsync(
+    Path.Combine(Path.GetDirectoryName(modulePath)!, "missing-phase-12a-manifest.wintainium.json"));
+
+if (validationResult.IsValid ||
+    validationResult.OperationId.Length == 0 ||
+    validationResult.Errors.Count == 0 ||
+    validationResult.OperationState != WintainiumOperationState.Failed)
+{
+    Console.Error.WriteLine("Application validation service did not preserve the structured invalid-manifest result.");
+    return 1;
+}
+
+Console.WriteLine("Application validation service: PASS");
+
 var result = await client.GetManifestsAsync(Path.GetDirectoryName(modulePath)!);
 
 if (result.CommandName != "Get-WintainiumManifest")
