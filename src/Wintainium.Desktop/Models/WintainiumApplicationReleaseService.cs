@@ -1,4 +1,3 @@
-using System.Management.Automation;
 using Wintainium.Desktop.Engine;
 
 namespace Wintainium.Desktop.Models;
@@ -23,13 +22,11 @@ internal sealed class WintainiumApplicationReleaseService
             manifestPath,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        if (invocation.WasCancelled)
-            throw new OperationCanceledException(cancellationToken);
+        var result = WintainiumCoreInvocationGuard.RequireSingleResult(
+            invocation,
+            "Get-WintainiumApplicationRelease",
+            cancellationToken);
 
-        if (invocation.Output.Count != 1)
-            throw new InvalidOperationException(
-                $"Get-WintainiumApplicationRelease returned {invocation.Output.Count} structured results; exactly one was expected.");
-
-        return WintainiumApplicationReleaseMapper.Map(PSObject.AsPSObject(invocation.Output[0]));
+        return WintainiumApplicationReleaseMapper.Map(result);
     }
 }
