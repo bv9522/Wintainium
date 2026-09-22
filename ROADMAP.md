@@ -308,7 +308,13 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** Environment-aware artifact selection is integrated through update decisions, target resolution, artifact selection, and eligibility. Focused checkpoints are **6/6, 9/9, and 11/11 green**.
 
 ### 12.8 — Persistence
-**Status: Planned.**
+- Persist onboarded application definitions under the authoritative manifest collection boundary.
+- Validate application definitions against the existing manifest schema before deriving destination paths.
+- Use atomic replacement semantics by application identity.
+- Keep installed application observations authoritative in `installed-state.json`; do not create a competing state store.
+- Keep desktop settings/notes session-scoped until a separate durable desktop-configuration contract exists.
+
+**Status: Complete.** `Set-WintainiumApplicationDefinition` persists schema-validated application definitions using the existing `.wintainium.json` manifest convention with atomic replacement semantics. Focused persistence coverage is **6/6 green**.
 
 ### 12.9 — Desktop Integration
 **Status: Planned.**
