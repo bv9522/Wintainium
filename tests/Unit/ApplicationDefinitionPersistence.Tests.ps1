@@ -41,14 +41,10 @@ Describe 'Wintainium application definition persistence' {
     It 'persists a normalized application definition using the manifest convention' {
         $definition = $script:testApplicationDefinition
 
-        $path = InModuleScope Wintainium.Core -Parameters @{
-            ApplicationDefinition = $definition
-            ManifestRoot = $script:manifestRoot
-            SchemaPath = $script:schemaPath
-        } {
+        $path = & (Get-Module Wintainium.Core) {
             param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
             Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
-        }
+        } $definition $script:manifestRoot $script:schemaPath
 
         $path | Should -Be (Join-Path $script:manifestRoot 'org.example.app.wintainium.json')
         Test-Path -LiteralPath $path | Should -BeTrue
