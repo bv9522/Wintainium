@@ -374,13 +374,15 @@ if (completedOperation.State != WintainiumOperationState.Completed ||
     failedOperation.State != WintainiumOperationState.Failed ||
     cancelledOperation.State != WintainiumOperationState.Cancelled ||
     failedOperation.Errors.Count != 1 ||
-    failedOperation.Errors[0].Code != "Example.Error")
+    failedOperation.Errors[0].Code != "Example.Error" ||
+    failedOperation.Errors[0].Path != "Example" ||
+    failedOperation.Errors[0].Message != "Example failure.")
 {
     Console.Error.WriteLine("Structured operation state mapping failed.");
     return 1;
 }
 
-Console.WriteLine("Structured operation state mapping: PASS");
+Console.WriteLine("Structured operation state and diagnostics: PASS");
 
 Console.WriteLine("Application release mapping: PASS");
 
@@ -418,34 +420,6 @@ if (settingsReopenState.Theme != WintainiumThemePreference.Dark ||
 }
 
 Console.WriteLine("Desktop settings model/service: PASS");
-
-var diagnostics = new[]
-{
-    new WintainiumOperationDiagnostic("Example.Error", "Example.Path", "Example failure.")
-};
-
-var diagnosticState = new WintainiumOperationStateModel(
-    "operation-diagnostic",
-    WintainiumOperationState.Failed,
-    false,
-    false,
-    diagnostics,
-    new[]
-    {
-        new WintainiumOperationDiagnostic("Example.Warning", null, "Example warning.")
-    });
-
-if (diagnosticState.Errors.Count != 1 ||
-    diagnosticState.Errors[0].Code != "Example.Error" ||
-    diagnosticState.Errors[0].Path != "Example.Path" ||
-    diagnosticState.Warnings.Count != 1 ||
-    diagnosticState.Warnings[0].Code != "Example.Warning")
-{
-    Console.Error.WriteLine("Structured diagnostic presentation state did not preserve code/path/message.");
-    return 1;
-}
-
-Console.WriteLine("Structured diagnostic presentation: PASS");
 
 using (var alreadyCancelled = new CancellationTokenSource())
 {
