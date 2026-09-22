@@ -20,6 +20,7 @@ Describe 'Wintainium source resolution contract' {
 
     It 'resolves a GitHub repository URL without contacting GitHub' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+            param($Provider)
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-1'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
@@ -36,6 +37,7 @@ Describe 'Wintainium source resolution contract' {
 
     It 'resolves a GitHub release tag URL and preserves release context' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+            param($Provider)
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-2'; SourceUri='https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78'
             })
@@ -48,6 +50,7 @@ Describe 'Wintainium source resolution contract' {
 
     It 'accepts a GitHub releases collection URL as repository identity' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+            param($Provider)
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-3'; SourceUri='https://github.com/PCSX2/pcsx2/releases'
             })
@@ -60,6 +63,7 @@ Describe 'Wintainium source resolution contract' {
 
     It 'rejects non-HTTP source URIs before provider execution' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+            param($Provider)
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-4'; SourceUri='file:///C:/software.exe'
             })
@@ -73,6 +77,7 @@ Describe 'Wintainium source resolution contract' {
     It 'rejects a provider that does not advertise source resolution' {
         $script:provider.Capabilities.sourceResolution = $false
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider } {
+            param($Provider)
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
                 OperationId='source-test-5'; SourceUri='https://github.com/PCSX2/pcsx2'
             })
@@ -86,6 +91,7 @@ Describe 'Wintainium source resolution contract' {
     It 'rejects a source resolver result that omits normalized source facts' {
         $fixturePath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/ProviderContracts/ValidProvider/Wintainium.provider.valid-fixture.psm1'
         $result = InModuleScope Wintainium.Core -Parameters @{ Provider=$script:provider; FixturePath=$fixturePath } {
+            param($Provider, $FixturePath)
             $Provider.EntryPoint = 'Wintainium.provider.valid-fixture.psm1'
             $Provider.DescriptorPath = $FixturePath
             Invoke-WintainiumProviderSourceResolution -Provider $Provider -Request ([pscustomobject]@{
