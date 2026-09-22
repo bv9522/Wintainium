@@ -142,4 +142,23 @@ Describe 'Wintainium application definition persistence' {
 
         Test-Path -LiteralPath (Join-Path $script:manifestRoot 'installed-state.json') | Should -BeFalse
     }
+
+    It 'rejects an invalid application identifier before deriving a destination path' {
+        $definition = New-TestApplicationDefinition
+        $definition.id = '../outside'
+
+        {
+            InModuleScope Wintainium.Core -Parameters @{
+                ApplicationDefinition = $definition
+                ManifestRoot = $script:manifestRoot
+                SchemaPath = $schemaPath
+            } {
+                param($ApplicationDefinition, $ManifestRoot, $SchemaPath)
+                Set-WintainiumApplicationDefinition -ApplicationDefinition $ApplicationDefinition -ManifestRoot $ManifestRoot -SchemaPath $SchemaPath
+            }
+        } | Should -Throw
+
+        @(Get-ChildItem -LiteralPath $script:manifestRoot -Force -File) | Should -HaveCount 0
+    }
+
 }
