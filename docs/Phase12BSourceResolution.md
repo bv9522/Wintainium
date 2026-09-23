@@ -2,7 +2,7 @@
 
 ## Status
 
-The Phase 12 source-resolution architecture and official-download-page reference implementation are established. The official-download-page focused checkpoint is **7/7 green**.
+The Phase 12 source-resolution architecture and official-download-page reference implementation are established. The official-download-page focused checkpoint is **9/9 green**.
 
 Phase 12B extends Wintainium from applications that already have an authored manifest to applications that can be onboarded from an official software source URL.
 
@@ -130,9 +130,9 @@ Source-resolution implementations must not execute downloaded content, execute p
 - **12.7 — Artifact Selection Integration:** connect environment facts to existing Core eligibility/selection.
 - **12.8 — Persistence:** persist onboarded application definitions under one authoritative ownership model.
 - **12.9 — Desktop Integration:** make Add Software pass only the source URL to Core and present structured results.
-- **12.10 — Real-World Source Validation:** validate GitHub, 7-Zip, VLC, WinRAR, and similar sources.
-- **12.11 — Unsupported/Interactive Source Handling:** validate deterministic failure semantics.
-- **12.12 — Integration, Regression, Audit & Lock.**
+- **12.10 — Real-World Source Validation:** validate the implemented GitHub and structured official-download-page source families against live public sources.
+- **12.11 — Unsupported/Interactive Source Handling:** validate deterministic failure semantics and desktop presentation of structured outcomes.
+- **12.12 — Integration, Regression, Audit & Lock:** reconcile the completed source-onboarding vertical slice and lock Phase 12B after observed regression/build/manual checkpoints.
 
 ## Non-goals
 
