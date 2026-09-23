@@ -14,12 +14,12 @@ function Invoke-WintainiumProviderSourceResolution {
     }
 
     $map = @{
-        '/unsupported' = 'SourceUnsupported'
-        '/ambiguous' = 'SourceAmbiguous'
-        '/unavailable' = 'SourceUnavailable'
-        '/authentication' = 'AuthenticationRequired'
-        '/interactive' = 'InteractiveResolutionRequired'
-        '/response-invalid' = 'SourceResponseInvalid'
+        'unsupported' = 'SourceUnsupported'
+        'ambiguous' = 'SourceAmbiguous'
+        'unavailable' = 'SourceUnavailable'
+        'authentication' = 'AuthenticationRequired'
+        'interactive' = 'InteractiveResolutionRequired'
+        'response-invalid' = 'SourceResponseInvalid'
     }
 
     if ($map.ContainsKey($status)) {
