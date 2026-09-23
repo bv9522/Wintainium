@@ -3,7 +3,7 @@ using System.Management.Automation;
 namespace Wintainium.Desktop.Engine;
 
 /// <summary>
-/// Presentation-neutral adapter for the four documented Wintainium.Core public commands.
+/// Presentation-neutral adapter for the documented Wintainium.Core public commands.
 /// </summary>
 internal sealed class WintainiumCoreClient
 {
@@ -17,7 +17,7 @@ internal sealed class WintainiumCoreClient
     public Task<WintainiumPowerShellInvocationResult> OnboardApplicationAsync(
         string sourceUri,
         string manifestRoot,
-        object policy,
+        object? policy = null,
         string? pluginRoot = null,
         string? schemaPath = null,
         string? operationId = null,
@@ -25,14 +25,17 @@ internal sealed class WintainiumCoreClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceUri);
         ArgumentException.ThrowIfNullOrWhiteSpace(manifestRoot);
-        ArgumentNullException.ThrowIfNull(policy);
 
         var parameters = new Dictionary<string, object?>
         {
             ["SourceUri"] = sourceUri,
-            ["ManifestRoot"] = manifestRoot,
-            ["Policy"] = policy
+            ["ManifestRoot"] = manifestRoot
         };
+
+        if (policy is not null)
+        {
+            parameters["Policy"] = policy;
+        }
 
         AddOptional(parameters, "PluginRoot", pluginRoot);
         AddOptional(parameters, "SchemaPath", schemaPath);
