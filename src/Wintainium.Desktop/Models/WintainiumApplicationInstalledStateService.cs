@@ -38,7 +38,6 @@ internal sealed class WintainiumApplicationInstalledStateService
 
     private static WintainiumApplicationInstalledStateResult Map(PSObject result)
     {
-        var stateValue = result.Properties["State"]?.Value;
         return new WintainiumApplicationInstalledStateResult(
             Required(result, "OperationId"),
             Required(result, "ApplicationId"),
