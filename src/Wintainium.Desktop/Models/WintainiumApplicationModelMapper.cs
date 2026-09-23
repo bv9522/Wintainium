@@ -54,7 +54,47 @@ internal static class WintainiumApplicationModelMapper
         return source is null ? null : GetNullableString(source, "PluginId");
     }
 
-    private static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(PSObject source, string propertyName) =>
+    public static WintainiumInstalledStateObservation? MapInstalledStateResult(PSObject result)
+    {
+        var stateValue = result.Properties["State"]?.Value;
+        if (stateValue is null)
+            return null;
+
+        var state = PSObject.AsPSObject(stateValue);
+        var installationStateText = GetRequiredString(state, "InstallationState");
+        if (!Enum.TryParse<WintainiumInstallationState>(installationStateText, ignoreCase: false, out var installationState))
+            throw new InvalidOperationException($"Core result returned unknown InstallationState '{installationStateText}'.");
+
+        return new WintainiumInstalledStateObservation(
+            GetRequiredString(state, "ApplicationId"),
+            installationState,
+            GetNullableString(state, "Version"),
+            GetNullableString(state, "VersionSource"),
+            GetNullableString(state, "Architecture"),
+            GetNullableString(state, "Channel"),
+            GetNullableString(state, "InstallationLocation"));
+    }
+
+    public static WintainiumApplicationModel ApplyInstalledState(
+        WintainiumApplicationModel application,
+        WintainiumInstalledStateObservation? state)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        if (state is null)
+            return application;
+
+        if (!string.Equals(application.ApplicationId, state.ApplicationId, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Installed-state ApplicationId '{state.ApplicationId}' does not match manifest ApplicationId '{application.ApplicationId}'.");
+
+        return application with
+        {
+            InstallationState = state.InstallationState,
+            InstalledVersion = state.Version
+        };
+    }
+
+    public static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(PSObject source, string propertyName) =>
         GetCollection(source, propertyName)
             .Select(item => new WintainiumOperationDiagnostic(
                 Code: GetNullableString(item, "Code"),
