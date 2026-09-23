@@ -3,7 +3,7 @@ function Invoke-WintainiumApplicationOnboarding {
     param(
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$SourceUri,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ManifestRoot,
-        [Parameter(Mandatory)][ValidateNotNull()][psobject]$Policy,
+        [Parameter(DontShow)][AllowNull()][psobject]$Policy,
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [string]$OperationId
@@ -81,6 +81,26 @@ function Invoke-WintainiumApplicationOnboarding {
     }
 
     $sourceResolution=$successful[0].Result
+
+    if ($null -eq $Policy) {
+        $policyResolution = Get-WintainiumDefaultApplicationPolicy -PluginRegistry $registry
+        foreach ($policyError in @($policyResolution.Errors)) { $errors.Add($policyError) }
+        if (-not $policyResolution.IsSuccessful) {
+            return [pscustomobject][ordered]@{
+                OperationId=$resolvedOperationId
+                IsSuccessful=$false
+                Status=[string]$policyResolution.Status
+                SourceResolution=$sourceResolution
+                ApplicationDefinition=$null
+                ManifestPath=$null
+                Errors=$errors.ToArray()
+                Warnings=$warnings.ToArray()
+                LogEvents=$logEvents.ToArray()
+            }
+        }
+        $Policy = $policyResolution.Policy
+    }
+
     $normalization=New-WintainiumApplicationDefinitionFromSource -Source $sourceResolution.Source -Policy $Policy -OperationId $resolvedOperationId
     foreach($warning in @($normalization.Warnings)){$warnings.Add($warning)}
     foreach($errorRecord in @($normalization.Errors)){$errors.Add($errorRecord)}
