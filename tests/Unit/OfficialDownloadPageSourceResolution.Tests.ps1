@@ -31,6 +31,21 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.CanonicalUri | Should -Be 'https://www.7-zip.org/download.html'
     }
 
+    It 'uses image alt text when the page heading is generic' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>Download</title></head><body><img src="/logo.png" alt="7-Zip"><h1>Download</h1></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-alt';SourceUri='https://www.7-zip.org/download.html'})}
+        $result.IsSuccessful | Should -Be $true
+        $result.Source.Name | Should -Be '7-Zip'
+    }
+
+    It 'uses the title publisher suffix when explicit publisher metadata is absent' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>Official download of VLC media player - VideoLAN</title></head><body><h1>VLC media player</h1></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-publisher';SourceUri='https://www.videolan.org/vlc/'})}
+        $result.IsSuccessful | Should -Be $true
+        $result.Source.Name | Should -Be 'VLC media player'
+        $result.Source.Publisher | Should -Be 'VideoLAN'
+    }
+
     It 'accepts supported metadata in different attribute order' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><meta content="VideoLAN" property="og:site_name"><meta content="VLC media player" name="application-name"><title>VLC download</title></head></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-2';SourceUri='https://www.videolan.org/vlc/'})}
