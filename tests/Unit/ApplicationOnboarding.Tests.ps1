@@ -26,6 +26,12 @@ Describe 'Wintainium application onboarding' {
         Copy-Item -LiteralPath (Join-Path $reconciliationFixture 'plugin.json') -Destination $reconciliationTarget -Force
         Copy-Item -LiteralPath (Join-Path $reconciliationFixture 'Wintainium.reconciliation.valid-fixture.psm1') -Destination $reconciliationTarget -Force
 
+        $sourceFailureFixture = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/SourceResolutionFailure'
+        $sourceFailureTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.source-resolution-failure'
+        New-Item -ItemType Directory -Path $sourceFailureTarget -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $sourceFailureFixture 'plugin.json') -Destination $sourceFailureTarget -Force
+        Copy-Item -LiteralPath (Join-Path $sourceFailureFixture 'Wintainium.provider.source-resolution-failure.psm1') -Destination $sourceFailureTarget -Force
+
         $script:policy = [pscustomobject][ordered]@{
             Installer = [pscustomobject][ordered]@{PluginId='Wintainium.installer.test';RequiredContractVersion='1';Settings=@{}}
             Reconciliation = [pscustomobject][ordered]@{PluginId='Wintainium.reconciliation.test';RequiredContractVersion='1';Settings=@{}}
@@ -83,6 +89,54 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.ManifestPath | Should -BeNullOrEmpty
         @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
+    }
+
+    It 'propagates SourceUnsupported without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/unsupported' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceUnsupported'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'propagates SourceAmbiguous without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/ambiguous' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceAmbiguous'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'propagates SourceUnavailable without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/unavailable' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceUnavailable'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'propagates AuthenticationRequired without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/authentication' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'AuthenticationRequired'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'propagates InteractiveResolutionRequired without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/interactive' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'InteractiveResolutionRequired'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'propagates SourceResponseInvalid without creating application state' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/response-invalid' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceResponseInvalid'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
     }
 
     It 'does not allow multiple capable providers to silently select a source' {
