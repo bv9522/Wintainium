@@ -18,7 +18,8 @@ internal sealed class WintainiumDesktopServices : IAsyncDisposable
     {
         _powerShellHost = new WintainiumPowerShellHost(WintainiumCoreModuleLocator.Locate());
         CoreClient = new WintainiumCoreClient(_powerShellHost);
-        ApplicationCollection = new WintainiumApplicationCollectionService(CoreClient);
+        InstalledApplicationState = new WintainiumApplicationInstalledStateService(CoreClient);
+        ApplicationCollection = new WintainiumApplicationCollectionService(CoreClient, InstalledApplicationState);
         ApplicationValidation = new WintainiumApplicationValidationService(CoreClient);
         ApplicationRelease = new WintainiumApplicationReleaseService(CoreClient);
         ApplicationOnboarding = new WintainiumApplicationOnboardingService(CoreClient);
@@ -27,6 +28,8 @@ internal sealed class WintainiumDesktopServices : IAsyncDisposable
     public WintainiumCoreClient CoreClient { get; }
 
     public WintainiumApplicationCollectionService ApplicationCollection { get; }
+
+    public WintainiumApplicationInstalledStateService InstalledApplicationState { get; }
 
     public WintainiumApplicationValidationService ApplicationValidation { get; }
 
