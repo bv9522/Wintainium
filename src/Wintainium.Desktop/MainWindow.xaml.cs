@@ -141,6 +141,8 @@ public sealed partial class MainWindow : Window
         _collectionLoadInProgress = true;
         try
         {
+            Directory.CreateDirectory(WintainiumDesktopPaths.ManifestRoot);
+
             var result = await _services.ApplicationCollection.LoadAsync(
                 WintainiumDesktopPaths.ManifestRoot,
                 cancellationToken: CancellationToken.None);
