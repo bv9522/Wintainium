@@ -335,7 +335,7 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** Define the live-source validation boundary, distinguish deterministic GitHub URL normalization from network-backed official-page resolution, and keep lifecycle execution outside the checkpoint.
 
 #### 12.10B — Live Source Validation
-**Status: In progress.** `docs/Phase12BRealWorldValidation.md` and `tests/Integration/Phase12B-RealWorldSourceValidation.Tests.ps1` establish the live checkpoint for GitHub repository/release URLs and the 7-Zip/VLC official download pages. The focused checkpoint is expected to be **4/4 green** and is intentionally separate from update execution, downloading, installation, reconciliation, and the later Phase 12 integration work.
+**Status: Complete and locked.** `docs/Phase12BRealWorldValidation.md` and `tests/Integration/Phase12B-RealWorldSourceValidation.Tests.ps1` establish the live checkpoint for GitHub repository/release URLs and the 7-Zip/VLC official download pages. The final live checkpoint is **4/4 green**. The lock covers source-resolution validation only and does not extend to release discovery, artifact selection, downloading, verification, installation, reconciliation, or end-to-end onboarding.
 
 ### 12.11 — Unsupported/Interactive Source Handling
 **Status: Planned.**
