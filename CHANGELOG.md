@@ -19,6 +19,7 @@ versioning once releases begin.
 
 ### Added
 
+- Phase 12.10B live source validation covering GitHub repository/release URLs and 7-Zip/VLC official download pages; final checkpoint **4/4 green**.
 - Initial repository structure and project documentation.
 - Phase 1 offline manifest-validation foundation.
 - Phase 3 provider contract, provider discovery boundary, and GitHub Releases reference provider.
