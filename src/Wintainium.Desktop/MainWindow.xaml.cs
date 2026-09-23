@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.System;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
 
@@ -206,9 +207,9 @@ public sealed partial class MainWindow : Window
 
             if (!result.IsSuccessful)
             {
-                await ShowOperationFailureAsync(
-                    "Software could not be added",
-                    result.Errors);
+                await ShowOnboardingFailureAsync(
+                    sourceTextBox.Text.Trim(),
+                    result);
                 return;
             }
 
@@ -217,6 +218,80 @@ public sealed partial class MainWindow : Window
         catch (Exception exception)
         {
             await ShowExceptionAsync("Software could not be added", exception);
+        }
+    }
+
+    private async Task ShowOnboardingFailureAsync(
+        string sourceUri,
+        WintainiumApplicationOnboardingResult result)
+    {
+        var status = result.Status ?? "Unknown";
+        var (title, message, canOpenSource) = status switch
+        {
+            "SourceUnsupported" => (
+                "Source not supported",
+                "Wintainium could not identify a supported source provider for this URL. No application was added.",
+                false),
+            "SourceAmbiguous" => (
+                "Source is ambiguous",
+                "More than one source provider resolved this URL. Wintainium did not choose one automatically, and no application was added.",
+                false),
+            "SourceUnavailable" => (
+                "Source is unavailable",
+                "The source could not be resolved because the upstream source is currently unavailable. No application was added.",
+                false),
+            "AuthenticationRequired" => (
+                "Authentication required",
+                "The source requires authentication before Wintainium can resolve it. You can open the source in your browser and then try again.",
+                true),
+            "InteractiveResolutionRequired" => (
+                "Interactive resolution required",
+                "This source requires interactive browser resolution. You can open the source in your browser and then try again.",
+                true),
+            "SourceResponseInvalid" => (
+                "Source response could not be resolved",
+                "The source returned information that Wintainium could not validate as a deterministic application identity. No application was added.",
+                false),
+            _ => (
+                "Software could not be added",
+                string.Empty,
+                false)
+        };
+
+        var diagnostics = result.Errors.Count == 0
+            ? string.Empty
+            : string.Join(Environment.NewLine, result.Errors.Select(FormatDiagnostic));
+        if (!string.IsNullOrWhiteSpace(diagnostics))
+        {
+            message = string.IsNullOrWhiteSpace(message)
+                ? diagnostics
+                : $"{message}{Environment.NewLine}{Environment.NewLine}{diagnostics}";
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = title,
+            Content = new TextBlock
+            {
+                Text = message,
+                TextWrapping = TextWrapping.Wrap
+            },
+            PrimaryButtonText = canOpenSource ? "Open Source" : null,
+            CloseButtonText = "Close",
+            DefaultButton = canOpenSource ? ContentDialogButton.Primary : ContentDialogButton.Close
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && canOpenSource)
+        {
+            try
+            {
+                await Launcher.LaunchUriAsync(new Uri(sourceUri));
+            }
+            catch (Exception exception)
+            {
+                await ShowExceptionAsync("Source could not be opened", exception);
+            }
         }
     }
 
