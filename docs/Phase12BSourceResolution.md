@@ -2,7 +2,7 @@
 
 ## Status
 
-The Phase 12 source-resolution architecture and official-download-page reference implementation are established. The official-download-page focused checkpoint is **9/9 green**.
+**Phase 12B — Source Onboarding: Complete and locked.** The source-resolution architecture and official-download-page reference implementation are established. The official-download-page focused checkpoint is **9/9 green**.
 
 Phase 12B extends Wintainium from applications that already have an authored manifest to applications that can be onboarded from an official software source URL.
 
@@ -132,7 +132,7 @@ Source-resolution implementations must not execute downloaded content, execute p
 - **12.9 — Desktop Integration:** make Add Software pass only the source URL to Core and present structured results.
 - **12.10 — Real-World Source Validation:** validate the implemented GitHub and structured official-download-page source families against live public sources.
 - **12.11 — Unsupported/Interactive Source Handling:** validate deterministic failure semantics and desktop presentation of structured outcomes.
-- **12.12 — Integration, Regression, Audit & Lock:** reconcile the completed source-onboarding vertical slice and lock Phase 12B after observed regression/build/manual checkpoints.
+- **12.12 — Integration, Regression, Audit & Lock:** complete. The final focused Core regression is **14/14 green**, the live source-resolution integration regression is **4/4 green**, the x64 Debug desktop build succeeded, and the six-scenario desktop source-resolution checkpoint passed **6/6** on 2026-09-22. **Phase 12B is complete and locked.**
 
 ## Non-goals
 
@@ -176,3 +176,8 @@ Application-definition persistence is now established under the existing manifes
 This does not create a second state authority. Installed application observations remain owned by the existing `installed-state.json` boundary, while desktop settings and notes remain session-scoped until a separate durable desktop-configuration contract is defined. Source onboarding therefore produces a durable application definition without mutating installed state.
 
 Focused validation: **6/6 green**.
+
+
+## Phase 12B lock
+
+The final Phase 12B integration checkpoint is complete and locked as of **2026-09-22**. The lock covers source URL onboarding, deterministic source resolution, normalized application-definition construction, Core-owned onboarding policy, schema-validated persistence, structured source-resolution failures, and desktop presentation of those outcomes. It does not claim live validation of release discovery, update decisions, artifact selection, downloading, verification, installation, reconciliation, or end-to-end update execution.
