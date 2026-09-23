@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Wintainium.Desktop.Models;
+using Wintainium.Desktop.Settings;
 
 namespace Wintainium.Desktop;
 
@@ -10,6 +11,7 @@ public sealed partial class MainWindow : Window
     private readonly WintainiumDesktopServices _services;
     private readonly Dictionary<string, ApplicationDetailsWindow> _applicationDetailsWindows = new(StringComparer.OrdinalIgnoreCase);
     private SettingsWindow? _settingsWindow;
+    private bool _collectionLoadInProgress;
 
     public MainWindow()
     {
@@ -25,6 +27,7 @@ public sealed partial class MainWindow : Window
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
         Closed += MainWindow_Closed;
+        Loaded += MainWindow_Loaded;
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
@@ -108,20 +111,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            var dialog = new ContentDialog
-            {
-                XamlRoot = Content.XamlRoot,
-                Title = "Application details could not be opened",
-                Content = new TextBlock
-                {
-                    Text = exception.ToString(),
-                    TextWrapping = TextWrapping.Wrap
-                },
-                CloseButtonText = "Close",
-                DefaultButton = ContentDialogButton.Close
-            };
-
-            await dialog.ShowAsync();
+            await ShowExceptionAsync("Application details could not be opened", exception);
         }
     }
 
@@ -135,23 +125,140 @@ public sealed partial class MainWindow : Window
         _applicationDetailsWindows.Clear();
     }
 
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= MainWindow_Loaded;
+        await RefreshApplicationCollectionAsync();
+    }
+
+    private async Task RefreshApplicationCollectionAsync()
+    {
+        if (_collectionLoadInProgress)
+        {
+            return;
+        }
+
+        _collectionLoadInProgress = true;
+        try
+        {
+            var result = await _services.ApplicationCollection.LoadAsync(
+                WintainiumDesktopPaths.ManifestRoot,
+                cancellationToken: CancellationToken.None);
+
+            SetApplicationCollection(result.Applications);
+
+            if (!result.IsSuccessful && result.Errors.Count > 0)
+            {
+                await ShowOperationFailureAsync(
+                    "Software collection could not be loaded",
+                    result.Errors);
+            }
+        }
+        catch (Exception exception)
+        {
+            await ShowExceptionAsync("Software collection could not be loaded", exception);
+        }
+        finally
+        {
+            _collectionLoadInProgress = false;
+        }
+    }
+
     private async void AddSoftwareButton_Click(object sender, RoutedEventArgs e)
     {
+        var sourceTextBox = new TextBox
+        {
+            Header = "Source URL",
+            PlaceholderText = "https://github.com/example/example",
+            TextWrapping = TextWrapping.NoWrap
+        };
+
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "Add Software",
-            Content = new TextBox
-            {
-                Header = "Source URL",
-                PlaceholderText = "https://github.com/example/example"
-            },
+            Content = sourceTextBox,
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
 
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary ||
+            string.IsNullOrWhiteSpace(sourceTextBox.Text))
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await _services.ApplicationOnboarding.OnboardAsync(
+                sourceTextBox.Text.Trim(),
+                WintainiumDesktopPaths.ManifestRoot,
+                cancellationToken: CancellationToken.None);
+
+            if (!result.IsSuccessful)
+            {
+                await ShowOperationFailureAsync(
+                    "Software could not be added",
+                    result.Errors);
+                return;
+            }
+
+            await RefreshApplicationCollectionAsync();
+        }
+        catch (Exception exception)
+        {
+            await ShowExceptionAsync("Software could not be added", exception);
+        }
+    }
+
+    private async Task ShowOperationFailureAsync(
+        string title,
+        IReadOnlyList<WintainiumOperationDiagnostic> errors)
+    {
+        var message = errors.Count == 0
+            ? "The operation failed without a structured diagnostic."
+            : string.Join(Environment.NewLine, errors.Select(FormatDiagnostic));
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = title,
+            Content = new TextBlock
+            {
+                Text = message,
+                TextWrapping = TextWrapping.Wrap
+            },
+            CloseButtonText = "Close",
+            DefaultButton = ContentDialogButton.Close
+        };
+
         await dialog.ShowAsync();
+    }
+
+    private async Task ShowExceptionAsync(string title, Exception exception)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = title,
+            Content = new TextBlock
+            {
+                Text = exception.Message,
+                TextWrapping = TextWrapping.Wrap
+            },
+            CloseButtonText = "Close",
+            DefaultButton = ContentDialogButton.Close
+        };
+
+        await dialog.ShowAsync();
+    }
+
+    private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic)
+    {
+        var prefix = string.IsNullOrWhiteSpace(diagnostic.Code) ? "Error" : diagnostic.Code;
+        var path = string.IsNullOrWhiteSpace(diagnostic.Path) ? string.Empty : $" ({diagnostic.Path})";
+        return $"{prefix}{path}: {diagnostic.Message}";
     }
 
     private async void SortAndFilterButton_Click(object sender, RoutedEventArgs e)
@@ -231,20 +338,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            var dialog = new ContentDialog
-            {
-                XamlRoot = Content.XamlRoot,
-                Title = "Settings could not be opened",
-                Content = new TextBlock
-                {
-                    Text = exception.ToString(),
-                    TextWrapping = TextWrapping.Wrap
-                },
-                CloseButtonText = "Close",
-                DefaultButton = ContentDialogButton.Close
-            };
-
-            await dialog.ShowAsync();
+            await ShowExceptionAsync("Settings could not be opened", exception);
         }
     }
 
