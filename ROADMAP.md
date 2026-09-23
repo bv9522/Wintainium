@@ -327,9 +327,9 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** The desktop collection and onboarding flow are integrated through the documented Core boundary. The collection root is `%LOCALAPPDATA%/Wintainium/Applications`; Core remains authoritative for manifest persistence and onboarding policy. The local WinUI build checkpoint is green, and the complete manual desktop runtime checkpoint passed: startup collection loading, Add Software dialog, Settings lifecycle, Sort & Filter/List-Grid controls, Core onboarding/error presentation, and post-error application usability. No Core/PowerShell changes were required for this batch, so the existing Pester baseline remains authoritative.
 
 ### 12.10 — Real-World Source Validation
-**Status: In progress.**
+**Status: Complete and locked.** 12.10A established the live-validation boundary and 12.10B completed and locked the live source-validation checkpoint.
 
-12.10 is split into focused validation batches so Phase 12B is not conflated with the later Phase 12 integration work.
+12.10 was split into focused validation batches so Phase 12B is not conflated with the later Phase 12 integration work.
 
 #### 12.10A — Real-World Validation Plan
 **Status: Complete.** Define the live-source validation boundary, distinguish deterministic GitHub URL normalization from network-backed official-page resolution, and keep lifecycle execution outside the checkpoint.
@@ -347,4 +347,10 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** `docs/Phase12UnsupportedInteractiveSourceHandling.md` records the boundary and validation. The focused Core regression is **14/14 green**, and the Debug desktop manual checkpoint passed all **6/6** source-resolution failure scenarios. Final phase locking remains in 12.12.
 
 ### 12.12 — Integration, Regression, Audit & Lock
-**Status: Planned.**
+- Reconcile source-onboarding architecture, contracts, desktop integration, roadmap, changelog, and test documentation.
+- Run the focused Core onboarding regression and live source-resolution integration regression.
+- Re-run the x64 desktop build and the six-scenario unsupported/interactive source UX checkpoint.
+- Verify the test-only source-resolution failure fixture is excluded from the production plugin set.
+- Lock Phase 12B only after observed local checkpoints pass.
+
+**Status: In progress.** `docs/Phase12BIntegrationAudit.md` defines the final checkpoint and lock boundary.
