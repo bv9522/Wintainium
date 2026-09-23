@@ -30,7 +30,7 @@ function Invoke-WintainiumProviderSourceResolution {
             Source = $null
             Errors = @([pscustomobject][ordered]@{
                 Code = 'SourceResolutionFixtureFailure'
-                Message = $messages[$status.TrimStart('/')]
+                Message = $messages[$status]
             })
             Warnings = @()
             LogEvents = @()
@@ -39,20 +39,13 @@ function Invoke-WintainiumProviderSourceResolution {
 
     return [pscustomobject][ordered]@{
         OperationId = $Request.OperationId
-        IsSuccessful = $true
-        Status = 'Resolved'
-        Source = [pscustomobject][ordered]@{
-            ApplicationId = 'fixture.source'
-            Name = 'Source Resolution Fixture'
-            Publisher = 'Wintainium'
-            Homepage = 'https://example.invalid/source'
-            CanonicalUri = [string]$Request.SourceUri
-            ProviderId = 'Wintainium.provider.source-resolution-failure'
-            ProviderContractVersion = '1'
-            ProviderSettings = [ordered]@{}
-            SourceContext = [pscustomobject][ordered]@{}
-        }
-        Errors = @()
+        IsSuccessful = $false
+        Status = 'SourceUnsupported'
+        Source = $null
+        Errors = @([pscustomobject][ordered]@{
+            Code = 'SourceResolutionFixtureUnsupported'
+            Message = 'The source resolution failure fixture does not resolve arbitrary source URLs.'
+        })
         Warnings = @()
         LogEvents = @()
     }
