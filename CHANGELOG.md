@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Phase 11K
+## Unreleased — Phase 12.12
 
 - Added the WinUI application-details surface over the 11E application model.
 - Added manifest-path preservation and a C# release-information mapping/service boundary over the public `Get-WintainiumApplicationRelease` command.
@@ -64,6 +64,12 @@ versioning once releases begin.
 ### Phase 8F lock
 
 - Phase 8F is complete and locked after the GUI readiness audit and **382/382 green** full-suite regression checkpoint. The public presentation boundary is documented, tested, and intentionally stops short of an incomplete end-to-end update command.
+
+### Phase 12.12 — Integration, Regression, Audit & Lock
+
+- Added `docs/Phase12BIntegrationAudit.md` defining the final Phase 12B vertical-slice audit, regression checkpoints, test-fixture boundary, and lock boundary.
+- Reconciled Phase 12 source-resolution documentation and roadmap status with the implemented GitHub, structured official-download-page, and unsupported/interactive source handling work.
+- Final Phase 12B lock remains pending the observed focused Core regression, live source-resolution regression, x64 desktop build, and six-scenario desktop UX checkpoint.
 
 ### Phase 12.11 — Unsupported/Interactive Source Handling
 
