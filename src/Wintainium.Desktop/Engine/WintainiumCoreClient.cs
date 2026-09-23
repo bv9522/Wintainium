@@ -92,7 +92,7 @@ internal sealed class WintainiumCoreClient
         AddOptional(parameters, "OperationId", operationId);
 
         return _host.InvokeAsync(
-            "Get-WintainiumInstalledApplicationState",
+            "Get-WintainiumApplicationInstalledState",
             parameters,
             cancellationToken);
     }
