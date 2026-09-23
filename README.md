@@ -9,8 +9,7 @@ engine rather than contain its own package-management logic.
 
 ## Status
 
-Phases 1–9 are implemented, tested, and locked. Phase 10 is defining and
-hardening the public application-update command and its stable result boundary.
+Phases 1–11 are implemented, tested, and locked. Phase 12 is in progress, connecting the desktop client to Core-owned source onboarding and validating the source-resolution vertical slice.
 
 The current public PowerShell surface consists of four commands:
 `Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`,
