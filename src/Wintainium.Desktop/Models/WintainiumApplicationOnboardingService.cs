@@ -33,6 +33,7 @@ internal sealed class WintainiumApplicationOnboardingService
             sourceUri,
             manifestRoot,
             policy,
+            pluginRoot: GetDebugPluginRootOverride(),
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
@@ -49,6 +50,16 @@ internal sealed class WintainiumApplicationOnboardingService
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
             OperationState: WintainiumOperationStateMapper.Map(result).State);
+    }
+
+    private static string? GetDebugPluginRootOverride()
+    {
+#if DEBUG
+        var value = Environment.GetEnvironmentVariable("WINTAINIUM_DESKTOP_PLUGIN_ROOT");
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+#else
+        return null;
+#endif
     }
 
     private static WintainiumApplicationModel? MapApplication(PSObject result, string? manifestPath)
