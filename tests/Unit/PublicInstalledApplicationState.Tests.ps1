@@ -20,7 +20,7 @@ Describe 'Wintainium public installed application state command' {
 
     It 'returns the persisted authoritative state without changing its observations' {
         $state = InModuleScope Wintainium.Core {
-            New-WintainiumInstalledApplicationState -ApplicationId 'org.example.app' -InstallationState Installed -Version '1.2.vendor-build' -VersionSource Registry -Architecture x64 -Channel stable -InstallationLocation 'C:Program FilesExample'
+            New-WintainiumInstalledApplicationState -ApplicationId 'org.example.app' -InstallationState Installed -Version '1.2.vendor-build' -VersionSource Registry -Architecture x64 -Channel stable -InstallationLocation 'C:\Program Files\Example'
         }
 
         InModuleScope Wintainium.Core -Parameters @{ StateRoot = $stateRoot; State = $state } {
@@ -37,7 +37,7 @@ Describe 'Wintainium public installed application state command' {
         $result.State.VersionSource | Should -Be 'Registry'
         $result.State.Architecture | Should -Be 'x64'
         $result.State.Channel | Should -Be 'stable'
-        $result.State.InstallationLocation | Should -Be 'C:Program FilesExample'
+        $result.State.InstallationLocation | Should -Be 'C:\Program Files\Example'
     }
 
     It 'preserves Unknown instead of manufacturing installation state' {
