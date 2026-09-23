@@ -13,6 +13,19 @@ Describe 'Wintainium application onboarding' {
         New-Item -ItemType Directory -Path $githubPluginTarget -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $githubPluginSource 'plugin.json') -Destination $githubPluginTarget -Force
         Copy-Item -LiteralPath (Join-Path $githubPluginSource 'Wintainium.provider.github-releases.psm1') -Destination $githubPluginTarget -Force
+
+        $installerFixture = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/ValidInstaller'
+        $installerTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.installer.portable-zip'
+        New-Item -ItemType Directory -Path $installerTarget -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $installerFixture 'plugin.json') -Destination $installerTarget -Force
+        Copy-Item -LiteralPath (Join-Path $installerFixture 'Wintainium.installer.valid-fixture.psm1') -Destination $installerTarget -Force
+
+        $reconciliationFixture = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/ValidReconciliation'
+        $reconciliationTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.reconciliation.valid-fixture'
+        New-Item -ItemType Directory -Path $reconciliationTarget -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $reconciliationFixture 'plugin.json') -Destination $reconciliationTarget -Force
+        Copy-Item -LiteralPath (Join-Path $reconciliationFixture 'Wintainium.reconciliation.valid-fixture.psm1') -Destination $reconciliationTarget -Force
+
         $script:policy = [pscustomobject][ordered]@{
             Installer = [pscustomobject][ordered]@{PluginId='Wintainium.installer.test';RequiredContractVersion='1';Settings=@{}}
             Reconciliation = [pscustomobject][ordered]@{PluginId='Wintainium.reconciliation.test';RequiredContractVersion='1';Settings=@{}}
@@ -34,6 +47,17 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Source.settings.repository | Should -Be 'PCSX2/pcsx2'
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
+    }
+
+    It 'uses the Core-owned default policy when the caller supplies no policy' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot
+        $result.IsSuccessful | Should -Be $true
+        $result.Status | Should -Be 'Resolved'
+        $result.ApplicationDefinition.Installer.pluginId | Should -Be 'Wintainium.installer.portable-zip'
+        $result.ApplicationDefinition.Reconciliation.pluginId | Should -Be 'Wintainium.reconciliation.valid-fixture'
+        @($result.ApplicationDefinition.Artifact.formats) | Should -Be @('zip')
+        @($result.ApplicationDefinition.Artifact.architectures) | Should -Be @('x64','x86','arm64','neutral')
+        $result.ApplicationDefinition.Release.channel | Should -Be 'stable'
     }
 
     It 'does not mutate persistence when source resolution fails' {
