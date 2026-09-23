@@ -69,7 +69,8 @@ versioning once releases begin.
 
 - Added `docs/Phase12BIntegrationAudit.md` defining the final Phase 12B vertical-slice audit, regression checkpoints, test-fixture boundary, and lock boundary.
 - Reconciled Phase 12 source-resolution documentation and roadmap status with the implemented GitHub, structured official-download-page, and unsupported/interactive source handling work.
-- Final Phase 12B lock remains pending the observed focused Core regression, live source-resolution regression, x64 desktop build, and six-scenario desktop UX checkpoint.
+- Final checkpoints passed: **14/14** focused Core onboarding tests, **4/4** live source-resolution integration tests, successful x64 Debug desktop build, and **6/6** desktop source-resolution UX scenarios on 2026-09-22.
+- **Phase 12B is complete and locked.** The lock remains limited to source onboarding/source resolution and does not claim live validation of downstream update-execution stages.
 
 ### Phase 12.11 — Unsupported/Interactive Source Handling
 
