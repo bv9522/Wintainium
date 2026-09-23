@@ -191,3 +191,20 @@ The Phase 12A integration boundary now also enforces shared invocation semantics
 - Host disposal is idempotent and terminal; new invocations are rejected after disposal.
 - The EngineProbe covers cancellation preservation, invalid result cardinality, and idempotent host disposal.
 - No new Core command, discovery mechanism, persistence mechanism, provider coupling, installer coupling, or GUI business logic was introduced.
+
+
+## Phase 12.9 desktop integration
+
+Phase 12.9 connects the shell's collection and Add Software actions to the documented public Core boundaries.
+
+- The desktop uses `%LOCALAPPDATA%\\Wintainium\\Applications` as its fixed application-definition collection root. Core remains authoritative for manifest persistence and collection semantics.
+- The main window loads the collection when first displayed and refreshes it after successful onboarding.
+- Add Software accepts an official source URL and calls `WintainiumApplicationOnboardingService`, which reaches `Invoke-WintainiumApplicationOnboarding` through the C# Core adapter.
+- Core owns source resolution, default lifecycle policy, normalization, and persistence. The desktop does not construct installer, reconciliation, release, or artifact policy.
+- Structured Core diagnostics are presented directly; the desktop never parses console output or substitutes GUI-side business rules.
+
+The repository currently contains source-resolution providers but no production installer/reconciliation plugins. Therefore Core may correctly return `ApplicationPolicyUnavailable` during onboarding until those lifecycle capabilities are available. The desktop surfaces that result rather than inventing a fallback policy.
+
+**Manifest describes. Provider discovers. Core decides. Persistence stores. UX presents.**
+
+The interface presents the engine; it does not become the engine.
