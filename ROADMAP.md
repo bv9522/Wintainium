@@ -338,7 +338,13 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete and locked.** `docs/Phase12BRealWorldValidation.md` and `tests/Integration/Phase12B-RealWorldSourceValidation.Tests.ps1` establish the live checkpoint for GitHub repository/release URLs and the 7-Zip/VLC official download pages. The final live checkpoint is **4/4 green**. The lock covers source-resolution validation only and does not extend to release discovery, artifact selection, downloading, verification, installation, reconciliation, or end-to-end onboarding.
 
 ### 12.11 — Unsupported/Interactive Source Handling
-**Status: Planned.**
+- Validate deterministic propagation of unsupported, ambiguous, unavailable, authentication-required, interactive, and invalid source-resolution outcomes.
+- Preserve the no-state/no-persistence boundary for all source-resolution failures.
+- Map structured Core outcomes to desktop UX without implementing provider logic in the GUI.
+- Provide an OS-level Open Source action only for authentication-required and interactive-resolution outcomes.
+- Keep the deterministic source-resolution failure provider test-only and outside the production plugin set.
+
+**Status: Complete.** `docs/Phase12UnsupportedInteractiveSourceHandling.md` records the boundary and validation. The focused Core regression is **14/14 green**, and the Debug desktop manual checkpoint passed all **6/6** source-resolution failure scenarios. Final phase locking remains in 12.12.
 
 ### 12.12 — Integration, Regression, Audit & Lock
 **Status: Planned.**
