@@ -9,6 +9,7 @@
     PowerShellVersion = '7.4'
     FunctionsToExport = @(
         'Get-WintainiumManifest'
+        'Get-WintainiumInstalledApplicationState'
         'Test-WintainiumApplicationDefinition'
         'Get-WintainiumApplicationRelease'
         'Invoke-WintainiumApplicationUpdate'
