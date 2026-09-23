@@ -327,7 +327,15 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** The desktop collection and onboarding flow are integrated through the documented Core boundary. The collection root is `%LOCALAPPDATA%/Wintainium/Applications`; Core remains authoritative for manifest persistence and onboarding policy. The local WinUI build checkpoint is green, and the complete manual desktop runtime checkpoint passed: startup collection loading, Add Software dialog, Settings lifecycle, Sort & Filter/List-Grid controls, Core onboarding/error presentation, and post-error application usability. No Core/PowerShell changes were required for this batch, so the existing Pester baseline remains authoritative.
 
 ### 12.10 — Real-World Source Validation
-**Status: Planned.**
+**Status: In progress.**
+
+12.10 is split into focused validation batches so Phase 12B is not conflated with the later Phase 12 integration work.
+
+#### 12.10A — Real-World Validation Plan
+**Status: Complete.** Define the live-source validation boundary, distinguish deterministic GitHub URL normalization from network-backed official-page resolution, and keep lifecycle execution outside the checkpoint.
+
+#### 12.10B — Live Source Validation
+**Status: In progress.** `docs/Phase12BRealWorldValidation.md` and `tests/Integration/Phase12B-RealWorldSourceValidation.Tests.ps1` establish the live checkpoint for GitHub repository/release URLs and the 7-Zip/VLC official download pages. The focused checkpoint is expected to be **4/4 green** and is intentionally separate from update execution, downloading, installation, reconciliation, and the later Phase 12 integration work.
 
 ### 12.11 — Unsupported/Interactive Source Handling
 **Status: Planned.**
