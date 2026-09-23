@@ -65,6 +65,13 @@ versioning once releases begin.
 
 - Phase 8F is complete and locked after the GUI readiness audit and **382/382 green** full-suite regression checkpoint. The public presentation boundary is documented, tested, and intentionally stops short of an incomplete end-to-end update command.
 
+### Phase 12.11 — Unsupported/Interactive Source Handling
+
+- Added structured unsupported/ambiguous/unavailable/authentication-required/interactive/source-response-invalid onboarding outcome coverage.
+- Added the Debug-only desktop plugin-root override used to validate presentation of deterministic source-resolution failures without shipping the test provider in the production plugin set.
+- Added desktop UX mapping for source-resolution outcomes, including OS-level Open Source actions for authentication-required and interactive-resolution cases.
+- The focused Core regression is **14/14 green**, and the desktop manual source-resolution checkpoint is **6/6 passed**.
+
 ### Phase 10 checkpoint
 
 - Phase 10C implementation and audit work is complete. The focused public-contract regression is **58/58 green**.
