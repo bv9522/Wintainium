@@ -317,7 +317,14 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 **Status: Complete.** `Set-WintainiumApplicationDefinition` persists schema-validated application definitions using the existing `.wintainium.json` manifest convention with atomic replacement semantics. Focused persistence coverage is **6/6 green**.
 
 ### 12.9 — Desktop Integration
-**Status: Planned.**
+- Connect the desktop collection to the authoritative Core manifest boundary.
+- Establish the fixed desktop application collection root under the user's local application data.
+- Connect Add Software to Core-owned source onboarding and application-definition persistence.
+- Preserve Core-owned policy, source resolution, normalization, validation, and persistence authority.
+- Present structured Core diagnostics without terminal parsing or GUI-side lifecycle fallback.
+- Validate startup collection loading, onboarding flow, Settings lifecycle, Sort & Filter, List/Grid presentation, and expected policy-unavailable behavior against the current plugin set.
+
+**Status: Complete.** The desktop collection and onboarding flow are integrated through the documented Core boundary. The collection root is `%LOCALAPPDATA%/Wintainium/Applications`; Core remains authoritative for manifest persistence and onboarding policy. The local WinUI build checkpoint is green, and the complete manual desktop runtime checkpoint passed: startup collection loading, Add Software dialog, Settings lifecycle, Sort & Filter/List-Grid controls, Core onboarding/error presentation, and post-error application usability. No Core/PowerShell changes were required for this batch, so the existing Pester baseline remains authoritative.
 
 ### 12.10 — Real-World Source Validation
 **Status: Planned.**
