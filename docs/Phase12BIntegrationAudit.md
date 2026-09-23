@@ -2,7 +2,7 @@
 
 ## Status
 
-**Integration audit prepared; final lock pending the focused regression and desktop build/manual checkpoint.**
+**Complete and locked.**
 
 12.12 is the final Phase 12B subphase. Its purpose is to verify that source onboarding remains one coherent vertical slice across the provider, Core, persistence, and desktop presentation boundaries, reconcile documentation, and establish the lock boundary without expanding Phase 12B into update execution.
 
@@ -123,11 +123,11 @@ The desktop checkpoint remains:
 4. Exercise all six 12.11 source-resolution failure URLs.
 5. Confirm the six expected UX outcomes and confirm no application is added.
 
-A successful 12.12 lock must be based on observed local results for these checkpoints rather than an assumed build/test state.
+The final observed 12.12 checkpoint is complete: the focused Core regression is **14/14 green**, the live source-resolution integration regression is **4/4 green**, the x64 Debug desktop build succeeded, and the six-scenario desktop source-resolution checkpoint passed **6/6** on 2026-09-22.
 
 ## Lock boundary
 
-When the focused Core regression, live source-resolution integration regression, desktop build, and manual failure-handling checkpoint are confirmed, Phase 12B may be marked **complete and locked**.
+The focused Core regression, live source-resolution integration regression, desktop build, and manual failure-handling checkpoint are confirmed. Phase 12B is therefore **complete and locked** as of 2026-09-22.
 
 That lock covers:
 
