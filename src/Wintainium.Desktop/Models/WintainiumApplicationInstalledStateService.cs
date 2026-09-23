@@ -44,7 +44,7 @@ internal sealed class WintainiumApplicationInstalledStateService
             Required(result, "ApplicationId"),
             Boolean(result, "IsSuccessful"),
             Nullable(result, "Status"),
-            stateValue is null ? null : MapState(PSObject.AsPSObject(stateValue)),
+            WintainiumApplicationModelMapper.MapInstalledStateResult(result),
             Diagnostics(result, "Errors"),
             Diagnostics(result, "Warnings"),
             WintainiumOperationStateMapper.Map(result).State);
