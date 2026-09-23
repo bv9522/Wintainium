@@ -2,7 +2,7 @@
 
 ## Status
 
-**Complete and validated; lock pending final Phase 12.12 integration, regression, audit, and lock.**
+**Complete and locked.**
 
 Phase 12.11 establishes the failure-side source-onboarding contract across Core and the WinUI desktop client. Deterministic source-resolution failures remain structured Core outcomes, and the desktop client presents those outcomes without implementing provider or source-resolution logic.
 
@@ -100,4 +100,4 @@ The desktop layer does not inspect URLs to determine provider behavior, interpre
 
 ## Lock boundary
 
-12.11 is considered implementation-complete and manually validated. Final phase locking remains part of **12.12 — Integration, Regression, Audit & Lock**, which will reconcile the Phase 12 documentation and perform the final regression/audit checkpoint.
+12.11 is considered implementation-complete and manually validated. Final phase locking was completed by **12.12 — Integration, Regression, Audit & Lock**. The final Core, live integration, desktop build, and six-scenario manual checkpoints are recorded in the Phase 12B integration audit.
