@@ -1,0 +1,12 @@
+{
+  "pluginId": "Wintainium.provider.source-resolution-failure",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.source-resolution-failure.psm1",
+  "capabilities": {
+    "releaseDiscovery": true,
+    "artifactDiscovery": true,
+    "sourceResolution": true,
+    "supportedReleaseChannels": ["stable", "prerelease", "any"]
+  }
+}
