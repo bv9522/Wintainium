@@ -92,6 +92,7 @@ function Get-OfficialDownloadPageApplicationName {
         (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:site_name')),
         (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:title')),
         (Get-OfficialDownloadPageHeading -Html $Html),
+        (Get-OfficialDownloadPageImageAlt -Html $Html),
         (Get-OfficialDownloadPageTitle -Html $Html)
     )) {
         if (-not [string]::IsNullOrWhiteSpace($candidate)) {
@@ -132,7 +133,7 @@ function Invoke-WintainiumProviderSourceResolution {
     $pathId=$sourceUri.AbsolutePath.Trim('/').ToLowerInvariant() -replace '[^a-z0-9]+','.'
     $pathId=$pathId.Trim('.')
     $applicationId=if ($pathId) {"web.$hostId.$pathId"} else {"web.$hostId"}
-    $publisher=Get-OfficialDownloadPageMetaValue -Html $html -Names @('publisher','og:site_name')
+    $publisher=Get-OfficialDownloadPagePublisher -Html $html
     $source=[pscustomobject][ordered]@{
         ApplicationId=$applicationId;Name=$name;Publisher=$publisher;Homepage=$canonical;CanonicalUri=$canonical
         ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
