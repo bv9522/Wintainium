@@ -9,7 +9,10 @@ BeforeAll {
 
 Describe 'Phase 12.10B real-world source validation' {
     It 'resolves a live GitHub repository source through the GitHub resolver' {
-        $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+        $result = & (Get-Module Wintainium.provider.github-releases) {
+            param($request)
+            Invoke-WintainiumProviderSourceResolution -Request $request
+        } ([pscustomobject]@{
             OperationId = 'phase-12-10b-github-1'
             SourceUri = 'https://github.com/PCSX2/pcsx2'
         })
@@ -22,7 +25,10 @@ Describe 'Phase 12.10B real-world source validation' {
     }
 
     It 'resolves a live GitHub release source without changing release context' {
-        $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+        $result = & (Get-Module Wintainium.provider.github-releases) {
+            param($request)
+            Invoke-WintainiumProviderSourceResolution -Request $request
+        } ([pscustomobject]@{
             OperationId = 'phase-12-10b-github-2'
             SourceUri = 'https://github.com/microsoft/PowerToys/releases'
         })
