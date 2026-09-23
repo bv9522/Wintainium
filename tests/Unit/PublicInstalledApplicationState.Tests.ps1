@@ -9,7 +9,7 @@ Describe 'Wintainium public installed application state command' {
     }
 
     It 'returns a successful Unknown observation when no state exists' {
-        $result = Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'org.example.app'
+        $result = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId 'org.example.app'
 
         $result.IsSuccessful | Should -BeTrue
         $result.Status | Should -Be 'Unknown'
@@ -28,7 +28,7 @@ Describe 'Wintainium public installed application state command' {
             Set-WintainiumInstalledApplicationState -StateRoot $StateRoot -State $State | Out-Null
         }
 
-        $result = Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'org.example.app'
+        $result = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId 'org.example.app'
 
         $result.IsSuccessful | Should -BeTrue
         $result.Status | Should -Be 'Installed'
@@ -50,7 +50,7 @@ Describe 'Wintainium public installed application state command' {
             Set-WintainiumInstalledApplicationState -StateRoot $StateRoot -State $State | Out-Null
         }
 
-        $result = Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'org.example.app'
+        $result = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId 'org.example.app'
 
         $result.IsSuccessful | Should -BeTrue
         $result.State.InstallationState | Should -Be 'Unknown'
@@ -61,7 +61,7 @@ Describe 'Wintainium public installed application state command' {
         New-Item -ItemType Directory -Path $stateRoot -Force | Out-Null
         '{ invalid json' | Set-Content -LiteralPath (Join-Path $stateRoot 'installed-state.json')
 
-        $result = Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'org.example.app'
+        $result = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId 'org.example.app'
 
         $result.IsSuccessful | Should -BeFalse
         $result.Status | Should -Be 'InstalledStateUnavailable'
@@ -70,7 +70,7 @@ Describe 'Wintainium public installed application state command' {
     }
 
     It 'rejects an invalid operation identifier with a structured result' {
-        $result = Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'org.example.app' -OperationId 'not-a-guid'
+        $result = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId 'org.example.app' -OperationId 'not-a-guid'
 
         $result.IsSuccessful | Should -BeFalse
         $result.Status | Should -Be 'InvalidInput'
