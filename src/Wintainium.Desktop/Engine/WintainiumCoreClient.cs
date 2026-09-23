@@ -74,6 +74,29 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
+    public Task<WintainiumPowerShellInvocationResult> GetInstalledApplicationStateAsync(
+        string stateRoot,
+        string applicationId,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(stateRoot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(applicationId);
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["StateRoot"] = stateRoot,
+            ["ApplicationId"] = applicationId
+        };
+
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Get-WintainiumInstalledApplicationState",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> ValidateApplicationDefinitionAsync(
         string manifestPath,
         string? pluginRoot = null,
