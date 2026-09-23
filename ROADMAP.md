@@ -344,7 +344,7 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Provide an OS-level Open Source action only for authentication-required and interactive-resolution outcomes.
 - Keep the deterministic source-resolution failure provider test-only and outside the production plugin set.
 
-**Status: Complete.** `docs/Phase12UnsupportedInteractiveSourceHandling.md` records the boundary and validation. The focused Core regression is **14/14 green**, and the Debug desktop manual checkpoint passed all **6/6** source-resolution failure scenarios. Final phase locking remains in 12.12.
+**Status: Complete and locked.** `docs/Phase12UnsupportedInteractiveSourceHandling.md` records the boundary and validation. The focused Core regression is **14/14 green**, and the Debug desktop manual checkpoint passed all **6/6** source-resolution failure scenarios.
 
 ### 12.12 — Integration, Regression, Audit & Lock
 - Reconcile source-onboarding architecture, contracts, desktop integration, roadmap, changelog, and test documentation.
@@ -353,4 +353,4 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Verify the test-only source-resolution failure fixture is excluded from the production plugin set.
 - Lock Phase 12B only after observed local checkpoints pass.
 
-**Status: In progress.** `docs/Phase12BIntegrationAudit.md` defines the final checkpoint and lock boundary.
+**Status: Complete and locked.** The final focused Core regression is **14/14 green**, the live source-resolution integration regression is **4/4 green**, the x64 Debug desktop build succeeded, and the six-scenario desktop source-resolution checkpoint passed **6/6** on 2026-09-22. `docs/Phase12BIntegrationAudit.md` records the final lock boundary.
