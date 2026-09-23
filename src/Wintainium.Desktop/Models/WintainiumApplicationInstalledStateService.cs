@@ -30,7 +30,7 @@ internal sealed class WintainiumApplicationInstalledStateService
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
             invocation,
-            "Get-WintainiumInstalledApplicationState",
+            "Get-WintainiumApplicationInstalledState",
             cancellationToken);
 
         return Map(result);
