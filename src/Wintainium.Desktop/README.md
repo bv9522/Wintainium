@@ -53,15 +53,16 @@ into the WinUI controls.
 - WintainiumPowerShellHost owns in-process Microsoft.PowerShell.SDK hosting,
   runspace creation, scoped hosted execution policy, Core module import, serialized
   invocation, and cancellation-triggered pipeline stopping.
-- WintainiumPowerShellHost permits only the four documented public Core command names;
+- WintainiumPowerShellHost permits only the documented public Core command names;
   the generic hosting primitive cannot be used by the desktop layer to invoke arbitrary
   private Core functions.
 - The adapter passes documented command parameters through to Core and does not
   construct private lifecycle, stage, provider, installer, download, or
   reconciliation objects.
-- WintainiumCoreClient exposes only the four documented public Core commands:
+- WintainiumCoreClient exposes only the documented public Core commands:
   Get-WintainiumManifest, Test-WintainiumApplicationDefinition,
-  Get-WintainiumApplicationRelease, and Invoke-WintainiumApplicationUpdate.
+  Get-WintainiumApplicationRelease, Invoke-WintainiumApplicationUpdate,
+  and Invoke-WintainiumApplicationOnboarding.
 - WintainiumPowerShellInvocationResult is the adapter-local transport boundary;
   PowerShell SDK types remain below the application-facing adapter seam.
 - Core import failures are surfaced as adapter construction failures rather than
@@ -71,8 +72,7 @@ into the WinUI controls.
   retroactively turn that successful invocation into a cancelled result.
 - The WinUI shell does not yet invoke the adapter. Application models and UI
   behavior will be connected in later Phase 11 batches.
-- The PowerShell SDK is hosted in-process; terminal output is never used as an API.\n- `tools/Wintainium.Desktop.EngineProbe` provides a small executable integration probe for the adapter boundary; it verifies in-process hosting, a real public Core invocation, the documented structured result shape, and rejection of arbitrary PowerShell commands.
-
+- The PowerShell SDK is hosted in-process; terminal output is never used as an API.\n
 ## Scope discipline
 
 11C establishes the product shell and interaction locations. It does not
@@ -154,7 +154,6 @@ The desktop shell now tracks every active WinUI window by `WindowId`, including 
 - The Do Not Update control is intentionally reserved and disabled until an authoritative application-policy/configuration contract exists.
 - Notes provide explicit Save and Don't Save behavior for the current application session; durable note persistence remains downstream.
 - Installed-state acquisition, version comparison, update decisions, update execution, policy enforcement, and durable metadata remain Core/configuration responsibilities rather than presentation logic.
-- The desktop EngineProbe verifies the release-result mapping in addition to the existing application-model and engine-boundary checks.
 ## Phase 12A integration wiring foundation
 
 Phase 12A centralizes the desktop/Core service graph without changing the Phase
@@ -170,7 +169,7 @@ Phase 12A centralizes the desktop/Core service graph without changing the Phase
 - `WintainiumApplicationValidationService` is the application-layer entry point
   for the documented `Test-WintainiumApplicationDefinition` command and projects
   its structured validation result into desktop models.
-- The four documented Core commands remain the only engine entry points. Phase
+- The documented Core commands remain the only engine entry points. Phase
   12A does not add a URL-discovery API, durable collection storage, update
   execution, or any GUI-side business policy.
 - The desktop EngineProbe now exercises the validation service against a known
@@ -189,7 +188,6 @@ The Phase 12A integration boundary now also enforces shared invocation semantics
 - Core-facing application services use one `WintainiumCoreInvocationGuard` for cancellation and the documented single-structured-result contract.
 - `WintainiumPowerShellHost` serializes invocation and disposal through the same gate, preventing the runspace from being disposed while an invocation is still active.
 - Host disposal is idempotent and terminal; new invocations are rejected after disposal.
-- The EngineProbe covers cancellation preservation, invalid result cardinality, and idempotent host disposal.
 - No new Core command, discovery mechanism, persistence mechanism, provider coupling, installer coupling, or GUI business logic was introduced.
 
 
