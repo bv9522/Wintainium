@@ -96,8 +96,99 @@ function Get-OfficialDownloadPageApplicationName {
         (Get-OfficialDownloadPageTitle -Html $Html)
     )) {
         if (-not [string]::IsNullOrWhiteSpace($candidate)) {
-            $name=$candidate -replace '\s*[|–—-]\s*(download|downloads|official download page)\s*$',''
-            if ($name.Trim()) {return $name.Trim()}
+            $name=$candidate -replace '\s*[|–—-]\s*(download|downloads|official download page)\s*
+    }
+    return $null
+}
+function Invoke-WintainiumProviderSourceResolution {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+    $operationId=[string]$Request.OperationId
+    try {$sourceUri=[Uri]([string]$Request.SourceUri)} catch {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageUriInvalid' 'The supplied source URL is not a valid URI.')
+    }
+    if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.')
+    }
+    try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' $_.Exception.Message)
+    }
+    $contentType=''
+    if ($response.Headers -and $response.Headers['Content-Type']) {$contentType=[string]$response.Headers['Content-Type']}
+    if ($contentType -and $contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentTypeUnsupported' "Unsupported content type '$contentType'.")
+    }
+    $html=[string]$response.Content
+    if ([string]::IsNullOrWhiteSpace($html)) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentEmpty' 'The source returned an empty HTML document.')
+    }
+    $canonical=Get-OfficialDownloadPageCanonicalUri -Html $html -BaseUri $sourceUri
+    $name=Get-OfficialDownloadPageApplicationName -Html $html
+    if ([string]::IsNullOrWhiteSpace($name)) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.')
+    }
+    $hostId=$sourceUri.Host.ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$sourceUri.AbsolutePath.Trim('/').ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$pathId.Trim('.')
+    $applicationId=if ($pathId) {"web.$hostId.$pathId"} else {"web.$hostId"}
+    $publisher=Get-OfficialDownloadPagePublisher -Html $html
+    $source=[pscustomobject][ordered]@{
+        ApplicationId=$applicationId;Name=$name;Publisher=$publisher;Homepage=$canonical;CanonicalUri=$canonical
+        ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
+        ProviderSettings=[ordered]@{pageUri=$canonical}
+        SourceContext=[pscustomobject][ordered]@{sourceFamily='official-download-page';contentType=if($contentType){$contentType}else{'text/html'}}
+    }
+    New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source
+}
+Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
+,''
+            $name=$name.Trim()
+            if ($name -and $name -notmatch '(?i)^(download|downloads|official download page)
+    }
+    return $null
+}
+function Invoke-WintainiumProviderSourceResolution {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+    $operationId=[string]$Request.OperationId
+    try {$sourceUri=[Uri]([string]$Request.SourceUri)} catch {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageUriInvalid' 'The supplied source URL is not a valid URI.')
+    }
+    if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.')
+    }
+    try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' $_.Exception.Message)
+    }
+    $contentType=''
+    if ($response.Headers -and $response.Headers['Content-Type']) {$contentType=[string]$response.Headers['Content-Type']}
+    if ($contentType -and $contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentTypeUnsupported' "Unsupported content type '$contentType'.")
+    }
+    $html=[string]$response.Content
+    if ([string]::IsNullOrWhiteSpace($html)) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentEmpty' 'The source returned an empty HTML document.')
+    }
+    $canonical=Get-OfficialDownloadPageCanonicalUri -Html $html -BaseUri $sourceUri
+    $name=Get-OfficialDownloadPageApplicationName -Html $html
+    if ([string]::IsNullOrWhiteSpace($name)) {
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.')
+    }
+    $hostId=$sourceUri.Host.ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$sourceUri.AbsolutePath.Trim('/').ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$pathId.Trim('.')
+    $applicationId=if ($pathId) {"web.$hostId.$pathId"} else {"web.$hostId"}
+    $publisher=Get-OfficialDownloadPagePublisher -Html $html
+    $source=[pscustomobject][ordered]@{
+        ApplicationId=$applicationId;Name=$name;Publisher=$publisher;Homepage=$canonical;CanonicalUri=$canonical
+        ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
+        ProviderSettings=[ordered]@{pageUri=$canonical}
+        SourceContext=[pscustomobject][ordered]@{sourceFamily='official-download-page';contentType=if($contentType){$contentType}else{'text/html'}}
+    }
+    New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source
+}
+Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
+) {return $name}
         }
     }
     return $null
