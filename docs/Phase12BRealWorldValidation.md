@@ -2,7 +2,7 @@
 
 ## Status
 
-12.10B is the live-source validation checkpoint for Phase 12B.
+**Complete and locked.** 12.10B is the live-source validation checkpoint for Phase 12B. The final live checkpoint completed with **4/4 green** on 2026-09-22.
 
 This checkpoint validates the two implemented source-resolution vertical slices against real public source URLs:
 
@@ -51,6 +51,10 @@ From the repository root:
 Invoke-Pester .\tests\Integration\Phase12B-RealWorldSourceValidation.Tests.ps1
 ```
 
-Expected result: **4/4 green**.
+Observed result: **4/4 green** on 2026-09-22.
 
 If a live official page changes its metadata or is temporarily unavailable, that is a real-world validation failure to investigate rather than something to hide with a fixture or a fallback parser.
+
+## Lock boundary
+
+This checkpoint is now closed. The validated source-resolution slices are considered stable for the current Phase 12 integration work. This lock does not authorize release discovery, artifact selection, downloading, verification, installation, reconciliation, or end-to-end onboarding to be treated as live-validated; those remain later checkpoints.
