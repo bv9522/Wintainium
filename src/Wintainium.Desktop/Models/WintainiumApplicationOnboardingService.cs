@@ -6,8 +6,8 @@ namespace Wintainium.Desktop.Models;
 
 /// <summary>
 /// Presents the Core application-onboarding boundary to the desktop client.
-/// The policy object is supplied by Core-owned policy infrastructure; this
-/// service does not construct provider or lifecycle policy.
+/// Core owns the default lifecycle policy; the desktop client may optionally
+/// pass an already-authorized policy object but never constructs one here.
 /// </summary>
 internal sealed class WintainiumApplicationOnboardingService
 {
@@ -21,14 +21,13 @@ internal sealed class WintainiumApplicationOnboardingService
     public async Task<WintainiumApplicationOnboardingResult> OnboardAsync(
         string sourceUri,
         string manifestRoot,
-        object policy,
+        object? policy = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(sourceUri))
             throw new ArgumentException("The source URL is required.", nameof(sourceUri));
         if (string.IsNullOrWhiteSpace(manifestRoot))
             throw new ArgumentException("The manifest collection path is required.", nameof(manifestRoot));
-        ArgumentNullException.ThrowIfNull(policy);
 
         var invocation = await _coreClient.OnboardApplicationAsync(
             sourceUri,
