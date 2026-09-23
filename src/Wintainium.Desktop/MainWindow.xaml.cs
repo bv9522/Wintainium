@@ -27,7 +27,7 @@ public sealed partial class MainWindow : Window
         _applicationCollection.Applications.CollectionChanged += Applications_CollectionChanged;
         UpdateCollectionVisibility();
         Closed += MainWindow_Closed;
-        Loaded += MainWindow_Loaded;
+        Content.Loaded += MainWindow_Loaded;
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
@@ -127,7 +127,7 @@ public sealed partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        Loaded -= MainWindow_Loaded;
+        Content.Loaded -= MainWindow_Loaded;
         await RefreshApplicationCollectionAsync();
     }
 
