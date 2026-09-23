@@ -10,7 +10,7 @@ function Invoke-WintainiumProviderSourceResolution {
         unavailable = 'The upstream source is temporarily unavailable.'
         authentication = 'The source requires authentication.'
         interactive = 'The source requires interactive browser resolution.'
-        response-invalid = 'The source response did not contain a valid deterministic identity.'
+        'response-invalid' = 'The source response did not contain a valid deterministic identity.'
     }
 
     $map = @{
