@@ -53,10 +53,9 @@ internal sealed class WintainiumApplicationCollectionService
                 application.ApplicationId,
                 cancellationToken).ConfigureAwait(false);
 
-            var mappedState = WintainiumApplicationModelMapper.MapInstalledStateResult(
-                ToPowerShellObject(stateResult));
-
-            applications.Add(WintainiumApplicationModelMapper.ApplyInstalledState(application, mappedState));
+            applications.Add(WintainiumApplicationModelMapper.ApplyInstalledState(
+                application,
+                stateResult.State));
             errors.AddRange(stateResult.Errors);
             warnings.AddRange(stateResult.Warnings);
         }
@@ -69,24 +68,4 @@ internal sealed class WintainiumApplicationCollectionService
             Warnings = warnings
         };
     }
-    private static System.Management.Automation.PSObject ToPowerShellObject(
-        WintainiumApplicationInstalledStateResult result) =>
-        System.Management.Automation.PSObject.AsPSObject(new
-        {
-            result.OperationId,
-            result.ApplicationId,
-            result.IsSuccessful,
-            result.Status,
-            State = result.State is null ? null : new
-            {
-                result.State.ApplicationId,
-                InstallationState = result.State.InstallationState.ToString(),
-                result.State.Version,
-                result.State.VersionSource,
-                result.State.Architecture,
-                result.State.Channel,
-                result.State.InstallationLocation
-            }
-        });
-
 }
