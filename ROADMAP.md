@@ -354,3 +354,32 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Lock Phase 12B only after observed local checkpoints pass.
 
 **Status: Complete and locked.** The final focused Core regression is **14/14 green**, the live source-resolution integration regression is **4/4 green**, the x64 Debug desktop build succeeded, and the six-scenario desktop source-resolution checkpoint passed **6/6** on 2026-09-22. `docs/Phase12BIntegrationAudit.md` records the final lock boundary.
+
+### Phase 12C — Authoritative Collection/State Integration
+
+- Connect desktop application collection to the Core-owned installed-state boundary.
+- Preserve distinct manifest identity/facts and installed-state observations.
+- Preserve explicit Unknown semantics for missing managed state.
+- Aggregate authoritative state-read failures into the composite collection result.
+- Keep Core authoritative for state persistence and desktop state presentation.
+
+**Status: Complete.** The public installed-state command, desktop installed-state service/mapper, collection integration, and Unknown-state semantics are implemented. Focused checkpoints reported by Brian are **5/5** for public installed-state coverage, **4/4** for the public boundary contract, and **5/5** for GUI readiness. The x64 Debug desktop build succeeded. The composite collection now reports `Failed` when authoritative installed-state reads fail rather than returning a contradictory successful operation state.
+
+### Phase 12D — Release Discovery Completion
+
+- Connect the application-details release action to the public Core release-discovery command.
+- Preserve normalized release/artifact data and structured diagnostics at the desktop boundary.
+- Keep provider selection, release policy, and artifact policy in Core.
+- Verify successful, empty, provider-failure, invalid-input, and malformed-release outcomes.
+
+**Status: Complete.** The release service, mapper, public Core adapter, and application-details release action form the release-discovery vertical slice. Brian's focused public release checkpoint is **6/6 green**. See `docs/Phase12DReleaseDiscovery.md`.
+
+### Phase 12E — Update Execution
+
+- Connect Application Details to the public `Invoke-WintainiumApplicationUpdate` command.
+- Preserve Core-owned lifecycle execution, stage policy, provider/installer behavior, verification, reconciliation, cancellation, and terminal outcome semantics.
+- Present only the documented public update result.
+- Preserve null OperationId for legitimate early failures rather than manufacturing correlation.
+- Do not mutate GUI installed state to imply success; authoritative refresh is downstream.
+
+**Status: In progress.** The desktop update result model, mapper, service, download-root path, Run Update action, and EngineProbe mapping coverage are implemented. The local x64 Debug build and EngineProbe checkpoint remain pending Brian's observation. See `docs/Phase12EUpdateExecution.md`.
