@@ -41,6 +41,93 @@ if (validationResult.IsValid ||
 
 Console.WriteLine("Application validation service: PASS");
 
+var refreshStateRoot = Path.Combine(Path.GetTempPath(), "Wintainium-Phase12F-" + Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(refreshStateRoot);
+
+try
+{
+    var unknownState = await installedStateService.GetAsync(
+        refreshStateRoot,
+        "org.example.refresh",
+        CancellationToken.None);
+
+    if (!unknownState.IsSuccessful ||
+        unknownState.State?.InstallationState != WintainiumInstallationState.Unknown ||
+        unknownState.State.Version is not null)
+    {
+        Console.Error.WriteLine("Authoritative installed-state refresh did not preserve a successful Unknown observation.");
+        return 1;
+    }
+
+    var refreshApplication = new WintainiumApplicationModel(
+        "org.example.refresh",
+        "Refresh App",
+        null,
+        null,
+        null,
+        null,
+        WintainiumInstallationState.Unknown,
+        null,
+        null,
+        WintainiumUpdateStatus.Unknown,
+        "provider.refresh");
+
+    var refreshedApplication = WintainiumApplicationModelMapper.ApplyInstalledState(
+        refreshApplication,
+        unknownState.State);
+
+    if (refreshedApplication.InstallationState != WintainiumInstallationState.Unknown ||
+        refreshedApplication.InstalledVersion is not null ||
+        refreshedApplication.InstalledState?.ApplicationId != "org.example.refresh")
+    {
+        Console.Error.WriteLine("Authoritative refresh mapping manufactured installed state.");
+        return 1;
+    }
+
+    File.WriteAllText(
+        Path.Combine(refreshStateRoot, "installed-state.json"),
+        "{ invalid json");
+
+    var failedRefresh = await installedStateService.GetAsync(
+        refreshStateRoot,
+        "org.example.refresh",
+        CancellationToken.None);
+
+    if (failedRefresh.IsSuccessful ||
+        failedRefresh.OperationState != WintainiumOperationState.Failed ||
+        failedRefresh.State is not null ||
+        failedRefresh.Errors.Count == 0)
+    {
+        Console.Error.WriteLine("Authoritative installed-state refresh did not preserve structured failure semantics.");
+        return 1;
+    }
+
+    var preservedApplication = WintainiumApplicationModelMapper.ApplyInstalledState(
+        refreshApplication,
+        failedRefresh.State);
+
+    if (preservedApplication.InstallationState != WintainiumInstallationState.Unknown ||
+        preservedApplication.InstalledVersion is not null ||
+        preservedApplication.InstalledState is not null)
+    {
+        Console.Error.WriteLine("Failed authoritative refresh altered the presentation model.");
+        return 1;
+    }
+}
+finally
+{
+    try
+    {
+        Directory.Delete(refreshStateRoot, recursive: true);
+    }
+    catch
+    {
+        // Best-effort cleanup for the probe's temporary state root.
+    }
+}
+
+Console.WriteLine("Authoritative installed-state refresh: PASS");
+
 var result = await client.GetManifestsAsync(Path.GetDirectoryName(modulePath)!);
 
 if (result.CommandName != "Get-WintainiumManifest")
