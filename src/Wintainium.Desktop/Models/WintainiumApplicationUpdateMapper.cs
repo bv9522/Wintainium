@@ -20,7 +20,7 @@ internal static class WintainiumApplicationUpdateMapper
             Warnings: Diagnostics(result, "Warnings"),
             LogEvents: Diagnostics(result, "LogEvents"),
             Error: Diagnostic(result, "Error"),
-            OperationState: WintainiumOperationStateMapper.Map(result).State);
+            OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
     }
 
     private static WintainiumApplicationUpdateStageModel MapStage(PSObject stage) =>
@@ -37,6 +37,11 @@ internal static class WintainiumApplicationUpdateMapper
         var value = source.Properties[name]?.Value;
         return value is null ? null : MapDiagnostic(PSObject.AsPSObject(value));
     }
+
+    private static WintainiumOperationState DetermineState(bool isSuccessful, bool wasCancelled) =>
+        wasCancelled ? WintainiumOperationState.Cancelled :
+        isSuccessful ? WintainiumOperationState.Completed :
+        WintainiumOperationState.Failed;
 
     private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
         Collection(source, name).Select(MapDiagnostic).ToArray();
