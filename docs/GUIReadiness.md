@@ -8,7 +8,7 @@ This document defines the boundary a future C#/.NET GUI must consume. Phase 8F d
 
 ## Architectural seam
 
-The future GUI is a presentation client of the Wintainium engine.
+The desktop GUI is a presentation client of the Wintainium engine.
 
 ```text
 Future GUI / CLI presentation
@@ -121,6 +121,6 @@ The GUI seam is considered ready when:
 
 ## 8F audit result
 
-All eight acceptance criteria remain satisfied by the current engine boundary and contract tests. The supported presentation surface is the four exported public commands, while internal update-decision composition and the Phase 7 lifecycle remain private. The public update result is projected into a stable presentation-neutral contract, and public collection properties remain arrays, including empty collections.
+All eight acceptance criteria remain satisfied by the current engine boundary and contract tests. The supported presentation surface is the six exported public commands, while internal update-decision composition and the Phase 7 lifecycle remain private. The public update result is projected into a stable presentation-neutral contract, and public collection properties remain arrays, including empty collections.
 
 Phase 8F therefore established GUI readiness as an architectural contract, not as a GUI implementation. Phase 10 subsequently completed and exposed the public update operation without weakening that seam. Phase 11 can therefore build the Windows presentation client against the documented four-command boundary without reproducing engine policy or reaching into private orchestration.
