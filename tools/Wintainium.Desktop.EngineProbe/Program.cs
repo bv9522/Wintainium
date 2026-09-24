@@ -77,7 +77,7 @@ try
         unknownState.State);
 
     if (refreshedApplication.InstallationState != WintainiumInstallationState.Unknown ||
-        refreshedApplication.InstalledVersion is not null ||
+        !string.IsNullOrWhiteSpace(refreshedApplication.InstalledVersion) ||
         refreshedApplication.InstalledState?.ApplicationId != "org.example.refresh")
     {
         Console.Error.WriteLine("Authoritative refresh mapping manufactured installed state.");
