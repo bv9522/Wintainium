@@ -410,7 +410,7 @@ var syntheticUpdate = System.Management.Automation.PSObject.AsPSObject(
         WasCancelled = false,
         Status = "Failed",
         ApplicationId = "org.example.app",
-        Stages = new[]
+        Stages = new object[]
         {
             new
             {
