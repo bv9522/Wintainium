@@ -11,20 +11,24 @@ namespace Wintainium.Desktop;
 
 public sealed partial class ApplicationDetailsWindow : Window
 {
-    private readonly WintainiumApplicationModel _application;
+    private WintainiumApplicationModel _application;
     private readonly WintainiumApplicationReleaseService _releaseService;
     private readonly WintainiumApplicationUpdateService _updateService;
+    private readonly WintainiumApplicationInstalledStateService _installedStateService;
+    private WintainiumApplicationUpdateResult? _lastUpdateResult;
     private string _savedNotes = string.Empty;
     private CancellationTokenSource? _operationCancellation;
 
     internal ApplicationDetailsWindow(
         WintainiumApplicationModel application,
         WintainiumApplicationReleaseService releaseService,
-        WintainiumApplicationUpdateService updateService)
+        WintainiumApplicationUpdateService updateService,
+        WintainiumApplicationInstalledStateService installedStateService)
     {
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
         ArgumentNullException.ThrowIfNull(updateService);
+        ArgumentNullException.ThrowIfNull(installedStateService);
 
         InitializeComponent();
         Closed += ApplicationDetailsWindow_Closed;
@@ -32,6 +36,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _application = application;
         _releaseService = releaseService;
         _updateService = updateService;
+        _installedStateService = installedStateService;
 
         Title = $"{application.Name} — Wintainium";
         AppWindow.Resize(new SizeInt32(820, 760));
@@ -121,6 +126,8 @@ public sealed partial class ApplicationDetailsWindow : Window
                     Environment.NewLine,
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
+
+            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
         }
         catch (OperationCanceledException)
         {
@@ -181,6 +188,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 WintainiumDesktopPaths.DownloadRoot,
                 cancellationToken: _operationCancellation.Token);
 
+            _lastUpdateResult = result;
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
             ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
@@ -220,6 +228,44 @@ public sealed partial class ApplicationDetailsWindow : Window
             RunUpdateButton.IsEnabled = true;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+        }
+    }
+
+    private async Task RefreshAuthoritativeInstalledStateAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var stateResult = await _installedStateService.GetAsync(
+                WintainiumDesktopPaths.InstalledStateRoot,
+                _application.ApplicationId,
+                cancellationToken);
+
+            if (!stateResult.IsSuccessful)
+            {
+                var message = stateResult.Errors.Count == 0
+                    ? "The update result was received, but authoritative installed state could not be refreshed."
+                    : string.Join(Environment.NewLine, stateResult.Errors.Select(FormatDiagnostic));
+
+                ShowDetailsError(message);
+                return;
+            }
+
+            _application = WintainiumApplicationModelMapper.ApplyInstalledState(
+                _application,
+                stateResult.State);
+
+            PopulateApplicationFacts();
+            ReleaseStatusText.Text = stateResult.State is null
+                ? "Update result received; authoritative installed state was not reported."
+                : $"Authoritative installed state refreshed: {stateResult.State.InstallationState}.";
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            ShowDetailsError($"The update result was received, but authoritative installed state could not be refreshed.{Environment.NewLine}{exception.Message}");
         }
     }
 
