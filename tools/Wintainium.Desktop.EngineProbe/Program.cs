@@ -13,7 +13,8 @@ var modulePath = Path.GetFullPath(args[0]);
 await using var host = new WintainiumPowerShellHost(modulePath);
 var client = new WintainiumCoreClient(host);
 
-var collectionService = new WintainiumApplicationCollectionService(client);
+var installedStateService = new WintainiumApplicationInstalledStateService(client);
+var collectionService = new WintainiumApplicationCollectionService(client, installedStateService);
 var collectionResult = await collectionService.LoadAsync(Path.GetDirectoryName(modulePath)!);
 
 if (collectionResult.Applications.Count != 0 ||
@@ -400,6 +401,80 @@ if (completedOperation.State != WintainiumOperationState.Completed ||
 Console.WriteLine("Structured operation state and diagnostics: PASS");
 
 Console.WriteLine("Application release mapping: PASS");
+
+var syntheticUpdate = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        OperationId = "operation-update",
+        IsSuccessful = false,
+        WasCancelled = false,
+        Status = "Failed",
+        ApplicationId = "org.example.app",
+        Stages = new[]
+        {
+            new
+            {
+                Sequence = 1,
+                Name = "ManifestValidation",
+                Status = "Validated",
+                IsSuccessful = true,
+                WasCancelled = false,
+                Error = (object?)null
+            },
+            new
+            {
+                Sequence = 2,
+                Name = "ReleaseDiscovery",
+                Status = "Failed",
+                IsSuccessful = false,
+                WasCancelled = false,
+                Error = new { Code = "ProviderDiscoveryFailed", Path = "Source", Message = "Provider failed." }
+            }
+        },
+        Errors = new[] { new { Code = "ProviderDiscoveryFailed", Path = "Source", Message = "Provider failed." } },
+        Warnings = Array.Empty<object>(),
+        LogEvents = Array.Empty<object>(),
+        Error = new { Code = "ProviderDiscoveryFailed", Path = "Source", Message = "Provider failed." }
+    });
+
+var updateResult = WintainiumApplicationUpdateMapper.Map(syntheticUpdate);
+if (updateResult.OperationState != WintainiumOperationState.Failed ||
+    updateResult.OperationId != "operation-update" ||
+    updateResult.ApplicationId != "org.example.app" ||
+    updateResult.Stages.Count != 2 ||
+    updateResult.Stages[1].Error?.Code != "ProviderDiscoveryFailed" ||
+    updateResult.Errors.Count != 1 ||
+    updateResult.Error?.Code != "ProviderDiscoveryFailed")
+{
+    Console.Error.WriteLine("Application update result mapping failed.");
+    return 1;
+}
+
+var earlyUpdate = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        OperationId = (string?)null,
+        IsSuccessful = false,
+        WasCancelled = false,
+        Status = "Failed",
+        ApplicationId = (string?)null,
+        Stages = Array.Empty<object>(),
+        Errors = new[] { new { Code = "ApplicationUpdateStateRootInvalid", Path = "StateRoot", Message = "State root is invalid." } },
+        Warnings = Array.Empty<object>(),
+        LogEvents = Array.Empty<object>(),
+        Error = new { Code = "ApplicationUpdateStateRootInvalid", Path = "StateRoot", Message = "State root is invalid." }
+    });
+
+var earlyUpdateResult = WintainiumApplicationUpdateMapper.Map(earlyUpdate);
+if (earlyUpdateResult.OperationState != WintainiumOperationState.Failed ||
+    earlyUpdateResult.OperationId is not null ||
+    earlyUpdateResult.Errors.Count != 1)
+{
+    Console.Error.WriteLine("Early update failure mapping did not preserve null OperationId and structured failure state.");
+    return 1;
+}
+
+Console.WriteLine("Application update result mapping: PASS");
 
 Console.WriteLine("Application collection view mode: PASS");
 
