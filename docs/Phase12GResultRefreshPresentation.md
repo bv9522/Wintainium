@@ -48,9 +48,11 @@ The desktop client still must not:
 
 ## Checkpoint
 
-Focused automated mapping coverage already passed in the Phase 12F EngineProbe checkpoint. This 12G batch changes the WinUI presentation surface and requires Brian's local x64 Debug build to validate the XAML/code-behind integration.
+Phase 12G is green. Brian observed the local x64 Debug desktop build succeed after the final presentation hardening. The checkpoint validates the WinUI XAML/code-behind integration for the distinct update-result, lifecycle-stage, release-discovery, and authoritative-refresh presentation surfaces.
 
-A broader real-application update execution remains a Phase 12H integration-hardening concern.
+The Phase 12F EngineProbe remains the automated contract checkpoint for structured update-result and authoritative-refresh mapping. A broader real-application update execution remains a Phase 12H integration-hardening concern.
+
+**Status: Complete and locked.**
 
 ## Next boundary
 
