@@ -164,7 +164,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         try
         {
             Directory.CreateDirectory(WintainiumDesktopPaths.InstalledStateRoot);
-            Directory.CreateDirectory(WintainiumDesktop.Settings.WintainiumDesktopPaths.DownloadRoot);
+            Directory.CreateDirectory(WintainiumDesktopPaths.DownloadRoot);
 
             var machineArchitecture = RuntimeInformation.OSArchitecture switch
             {
@@ -176,9 +176,9 @@ public sealed partial class ApplicationDetailsWindow : Window
 
             var result = await _updateService.ExecuteAsync(
                 _application.ManifestPath,
-                WintainiumDesktop.Settings.WintainiumDesktopPaths.InstalledStateRoot,
+                WintainiumDesktopPaths.InstalledStateRoot,
                 machineArchitecture,
-                WintainiumDesktop.Settings.WintainiumDesktopPaths.DownloadRoot,
+                WintainiumDesktopPaths.DownloadRoot,
                 cancellationToken: _operationCancellation.Token);
 
             OperationStateText.Text = result.OperationState.ToString();
