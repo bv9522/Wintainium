@@ -12,6 +12,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Get-WintainiumManifest",
+            "Get-WintainiumApplicationInstalledState",
             "Test-WintainiumApplicationDefinition",
             "Get-WintainiumApplicationRelease",
             "Invoke-WintainiumApplicationUpdate",
