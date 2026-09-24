@@ -4,6 +4,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Wintainium.Desktop.Models;
+using Wintainium.Desktop.Settings;
 using Windows.Graphics;
 
 namespace Wintainium.Desktop;
@@ -162,7 +163,7 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         try
         {
-            Directory.CreateDirectory(WintainiumDesktop.Settings.WintainiumDesktopPaths.InstalledStateRoot);
+            Directory.CreateDirectory(WintainiumDesktopPaths.InstalledStateRoot);
             Directory.CreateDirectory(WintainiumDesktop.Settings.WintainiumDesktopPaths.DownloadRoot);
 
             var machineArchitecture = RuntimeInformation.OSArchitecture switch
