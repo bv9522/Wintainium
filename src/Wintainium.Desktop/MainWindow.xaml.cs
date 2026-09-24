@@ -107,7 +107,7 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
-            var window = new ApplicationDetailsWindow(application, _services.ApplicationRelease);
+            var window = new ApplicationDetailsWindow(application, _services.ApplicationRelease, _services.ApplicationUpdate);
             _applicationDetailsWindows[application.ApplicationId] = window;
             window.Closed += (_, _) => _applicationDetailsWindows.Remove(application.ApplicationId);
             App.TrackWindow(window);
