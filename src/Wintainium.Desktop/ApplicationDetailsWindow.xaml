@@ -18,10 +18,16 @@
                         <TextBlock x:Name="ApplicationPublisherText"
                                    Opacity="0.72" />
                     </StackPanel>
-                    <Button x:Name="CheckForUpdatesButton"
-                            Grid.Column="1"
-                            Content="Check for Updates"
-                            Click="CheckForUpdatesButton_Click" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                        <Button x:Name="CheckForUpdatesButton"
+                                Content="Check for Updates"
+                                Click="CheckForUpdatesButton_Click" />
+                        <Button x:Name="RunUpdateButton"
+                                Content="Run Update"
+                                Click="RunUpdateButton_Click" />
+                    </StackPanel>
                 </Grid>
 
                 <Border Padding="18">
