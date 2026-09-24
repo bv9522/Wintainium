@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — Phase 12F Authoritative Refresh
+
+### Added
+
+- Phase 12F authoritative installed-state refresh after desktop update execution.
+- Desktop EngineProbe coverage for Unknown-state refresh, no manufactured installed version, and structured refresh failure.
+
+### Changed
+
+- Application Details now retains the structured update result separately and rereads authoritative installed state through the public Core boundary instead of manufacturing successful installation state.
+
 ## Unreleased — Phase 12E Update Execution
 
 ### Added
