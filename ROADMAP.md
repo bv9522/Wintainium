@@ -382,7 +382,7 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Preserve null OperationId for legitimate early failures rather than manufacturing correlation.
 - Do not mutate GUI installed state to imply success; authoritative refresh is downstream.
 
-**Status: In progress.** The desktop update result model, mapper, service, download-root path, Run Update action, and EngineProbe mapping coverage are implemented. The local x64 Debug build and EngineProbe checkpoint remain pending Brian's observation. See `docs/Phase12EUpdateExecution.md`.
+**Status: Complete and locked.** The desktop update result model, mapper, service, download-root path, Run Update action, and EngineProbe mapping coverage are implemented. The local x64 Debug build and EngineProbe checkpoint passed. See `docs/Phase12EUpdateExecution.md`.
 
 ### Phase 12F — Authoritative Installed-State Refresh
 
@@ -392,4 +392,4 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Preserve existing presentation state when authoritative refresh fails.
 - Verify Unknown-state and structured refresh-failure semantics in the desktop EngineProbe.
 
-**Status: In progress.** The Application Details update path now performs an authoritative installed-state refresh after a structured update result, and the EngineProbe contains focused refresh coverage. The local x64 Debug build and EngineProbe checkpoint are pending Brian's observation. See `docs/Phase12FAuthoritativeRefresh.md`.
+**Status: Complete and locked.** The Application Details update path performs an authoritative installed-state refresh after a structured update result, and the EngineProbe contains focused refresh coverage. Brian observed the x64 Debug desktop build succeed and the complete EngineProbe pass, including authoritative refresh, Unknown-state semantics, structured refresh failure, diagnostics, cancellation, public-command invocation, and hosting boundaries. See `docs/Phase12FAuthoritativeRefresh.md`.
