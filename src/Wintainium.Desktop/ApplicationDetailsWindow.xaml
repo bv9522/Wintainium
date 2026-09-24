@@ -65,6 +65,16 @@
                         <TextBlock x:Name="OperationIdText"
                                    Opacity="0.65"
                                    TextWrapping="Wrap" />
+                        <TextBlock x:Name="UpdateResultStatusText"
+                                   Text="No update has been run."
+                                   TextWrapping="Wrap" />
+                        <TextBlock x:Name="InstalledStateRefreshStatusText"
+                                   Text="Installed state has not been refreshed."
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72" />
+                        <TextBlock Text="Lifecycle stages"
+                                   FontWeight="SemiBold" />
+                        <ItemsControl x:Name="StageItemsControl" />
                         <TextBlock Text="Errors"
                                    FontWeight="SemiBold" />
                         <ItemsControl x:Name="ErrorItemsControl" />
