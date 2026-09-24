@@ -45,6 +45,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ReleaseListView.ItemsSource = new ObservableCollection<WintainiumApplicationReleaseModel>();
         ErrorItemsControl.ItemsSource = Array.Empty<string>();
         WarningItemsControl.ItemsSource = Array.Empty<string>();
+        StageItemsControl.ItemsSource = Array.Empty<string>();
     }
 
     private void PopulateApplicationFacts()
@@ -196,13 +197,16 @@ public sealed partial class ApplicationDetailsWindow : Window
             WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
 
             var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
-            UpdateResultStatusText.Text = result.Status switch
+            UpdateResultStatusText.Text = result.OperationState switch
             {
-                "Completed" => $"Update completed. {completedStages} of {result.Stages.Count} lifecycle stage(s) reported successful.",
-                "Cancelled" => "Update was cancelled.",
-                "Failed" => "Update failed.",
+                WintainiumOperationState.Completed =>
+                    $"Update completed. {completedStages} of {result.Stages.Count} lifecycle stage(s) reported successful.",
+                WintainiumOperationState.Cancelled => "Update was cancelled.",
+                WintainiumOperationState.Failed => "Update failed.",
+                WintainiumOperationState.Running => "Update is still running.",
                 _ => $"Update: {result.Status ?? "Unknown"}."
             };
+            StageItemsControl.ItemsSource = result.Stages.Select(FormatStage).ToArray();
             InstalledStateRefreshStatusText.Text = "Refreshing authoritative installed state…";
 
             if (result.Errors.Count > 0)
