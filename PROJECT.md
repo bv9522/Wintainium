@@ -32,10 +32,9 @@ statement of the project's current capability boundary.
 
 The implemented engine now includes provider-backed release discovery,
 download, installation, reconciliation, authoritative installed-state
-handling, and complete lifecycle orchestration. The public PowerShell surface
-now exposes four stable commands, including the end-to-end
-Invoke-WintainiumApplicationUpdate operation and its presentation-neutral
-structured result contract.
+handling, and complete lifecycle orchestration. The public PowerShell surface now exposes six stable commands, including the
+installed-state, onboarding, and end-to-end update operations and their
+presentation-neutral structured result contracts.
 
 ## Current product boundary
 
