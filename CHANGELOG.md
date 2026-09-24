@@ -2,6 +2,19 @@
 
 ## Unreleased — Phase 12G Result + Refresh Presentation
 
+### Phase 12G — Result + Refresh Presentation
+
+### Added
+
+- Distinct Application Details presentation for structured update outcomes and authoritative installed-state refresh.
+- Per-stage update result presentation with sequence, stage name, outcome, status, and structured stage diagnostics.
+
+### Changed
+
+- Release-discovery status is no longer overwritten by authoritative installed-state refresh status.
+- Completed structured update results now present the update outcome and then refresh authoritative installed state as a separate observation.
+
+
 ### Added
 
 - Phase 12F authoritative installed-state refresh after desktop update execution.
