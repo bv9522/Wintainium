@@ -79,16 +79,11 @@ Post-operation authoritative refresh is deliberately downstream of this batch.
 
 ## Checkpoint
 
-The focused desktop build/EngineProbe checkpoint is pending Brian's local
-execution. No green result is claimed in this document until that checkpoint
-is observed locally.
-
-Recommended checkpoint:
-
-```powershell
-dotnet build .\src\Wintainium.Desktop\Wintainium.Desktop.csproj -c Debug -p:Platform=x64
-dotnet run --project .\tools\Wintainium.Desktop.EngineProbe\Wintainium.Desktop.EngineProbe.csproj -- .\core\Wintainium.Core\Wintainium.Core.psd1
-```
+The Phase 12E implementation checkpoint is green. Brian observed the x64
+Debug desktop build succeed and the desktop EngineProbe pass, including update
+result mapping, lifecycle stage mapping, structured diagnostics, OperationId
+preservation, early failure with a null OperationId, cancellation handling,
+and the existing desktop hosting/contract checks.
 
 ## Next boundary
 
