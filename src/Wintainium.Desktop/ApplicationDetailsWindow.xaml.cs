@@ -127,7 +127,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
 
-            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
+
         }
         catch (OperationCanceledException)
         {
@@ -246,6 +246,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                     ? "The update result was received, but authoritative installed state could not be refreshed."
                     : string.Join(Environment.NewLine, stateResult.Errors.Select(FormatDiagnostic));
 
+                InstalledStateRefreshStatusText.Text = "Authoritative installed-state refresh failed.";
                 ShowDetailsError(message);
                 return;
             }
@@ -255,9 +256,12 @@ public sealed partial class ApplicationDetailsWindow : Window
                 stateResult.State);
 
             PopulateApplicationFacts();
-            ReleaseStatusText.Text = stateResult.State is null
-                ? "Update result received; authoritative installed state was not reported."
-                : $"Authoritative installed state refreshed: {stateResult.State.InstallationState}.";
+            InstalledStateRefreshStatusText.Text = stateResult.State is null
+                ? "Authoritative installed state was not reported."
+                : $"Authoritative installed state refreshed: {stateResult.State.InstallationState}"
+                    + (string.IsNullOrWhiteSpace(stateResult.State.Version)
+                        ? "."
+                        : $" (version {stateResult.State.Version}).");
         }
         catch (OperationCanceledException)
         {
@@ -265,6 +269,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         }
         catch (Exception exception)
         {
+            InstalledStateRefreshStatusText.Text = "Authoritative installed-state refresh failed.";
             ShowDetailsError($"The update result was received, but authoritative installed state could not be refreshed.{Environment.NewLine}{exception.Message}");
         }
     }
@@ -291,6 +296,19 @@ public sealed partial class ApplicationDetailsWindow : Window
     {
         NotesTextBox.Text = _savedNotes;
         NotesStatusText.Text = "Unsaved note changes discarded.";
+    }
+
+    private static string FormatStage(WintainiumApplicationUpdateStageModel stage)
+    {
+        var outcome = stage.WasCancelled
+            ? "Cancelled"
+            : stage.IsSuccessful
+                ? "Succeeded"
+                : "Failed";
+
+        var status = string.IsNullOrWhiteSpace(stage.Status) ? string.Empty : $" — {stage.Status}";
+        var error = stage.Error is null ? string.Empty : $" — {FormatDiagnostic(stage.Error)}";
+        return $"{stage.Sequence}. {stage.Name ?? "Unnamed stage"}: {outcome}{status}{error}";
     }
 
     private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
