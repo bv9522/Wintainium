@@ -3,7 +3,7 @@ using System.Management.Automation;
 namespace Wintainium.Desktop.Engine;
 
 /// <summary>
-/// Presentation-neutral adapter for the documented Wintainium.Core public commands.
+/// Presentation-neutral adapter for the documented Wintainium.Core public commands used by the desktop client.
 /// </summary>
 internal sealed class WintainiumCoreClient
 {
