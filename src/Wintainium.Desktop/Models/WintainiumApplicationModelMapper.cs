@@ -56,6 +56,8 @@ internal static class WintainiumApplicationModelMapper
 
     public static WintainiumInstalledStateObservation? MapInstalledStateResult(PSObject result)
     {
+        ArgumentNullException.ThrowIfNull(result);
+
         var stateValue = result.Properties["State"]?.Value;
         if (stateValue is null)
             return null;
@@ -90,7 +92,8 @@ internal static class WintainiumApplicationModelMapper
         return application with
         {
             InstallationState = state.InstallationState,
-            InstalledVersion = state.Version
+            InstalledVersion = state.Version,
+            InstalledState = state
         };
     }
 
