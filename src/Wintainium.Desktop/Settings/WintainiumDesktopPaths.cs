@@ -15,4 +15,9 @@ internal static class WintainiumDesktopPaths
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Wintainium",
         "State");
+
+    public static string DownloadRoot { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Wintainium",
+        "Downloads");
 }
