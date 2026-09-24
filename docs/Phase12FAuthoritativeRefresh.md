@@ -69,15 +69,21 @@ unchanged and surfaces the structured refresh diagnostics.
 
 ## Checkpoint
 
-Brian should run the focused desktop build and EngineProbe:
+The Phase 12F automated checkpoint is green. Brian observed the x64 Debug desktop build succeed and the complete desktop EngineProbe pass, including:
 
-powershell
-dotnet build .\src\Wintainium.Desktop\Wintainium.Desktop.csproj -c Debug -p:Platform=x64
-dotnet run --project .\tools\Wintainium.Desktop.EngineProbe\Wintainium.Desktop.EngineProbe.csproj -- .\core\Wintainium.Core\Wintainium.Core.psd1
+- Authoritative installed-state refresh
+- Structured operation state and diagnostics
+- No manufactured installed version for an Unknown observation
+- Structured refresh-failure handling
+- Application model mapping
+- Desktop cancellation boundary
+- Public Core command invocation and command allow-list
+- Core invocation result guard
+- In-process PowerShell hosting and disposal boundary
 
-A green EngineProbe result establishes the automated refresh boundary; manual
-update execution against a real supported application remains a later
-integration-hardening checkpoint.
+The automated checkpoint establishes the 12F refresh boundary. Manual update execution against a real supported application remains a later integration-hardening checkpoint.
+
+**Status: Complete and locked.**
 
 ## Next boundary
 
