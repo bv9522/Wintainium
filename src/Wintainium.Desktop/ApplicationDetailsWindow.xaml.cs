@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -11,21 +12,25 @@ public sealed partial class ApplicationDetailsWindow : Window
 {
     private readonly WintainiumApplicationModel _application;
     private readonly WintainiumApplicationReleaseService _releaseService;
+    private readonly WintainiumApplicationUpdateService _updateService;
     private string _savedNotes = string.Empty;
     private CancellationTokenSource? _operationCancellation;
 
     internal ApplicationDetailsWindow(
         WintainiumApplicationModel application,
-        WintainiumApplicationReleaseService releaseService)
+        WintainiumApplicationReleaseService releaseService,
+        WintainiumApplicationUpdateService updateService)
     {
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
+        ArgumentNullException.ThrowIfNull(updateService);
 
         InitializeComponent();
         Closed += ApplicationDetailsWindow_Closed;
 
         _application = application;
         _releaseService = releaseService;
+        _updateService = updateService;
 
         Title = $"{application.Name} — Wintainium";
         AppWindow.Resize(new SizeInt32(820, 760));
@@ -131,6 +136,87 @@ public sealed partial class ApplicationDetailsWindow : Window
             OperationProgressRing.IsActive = false;
             CancelOperationButton.IsEnabled = false;
             CheckForUpdatesButton.IsEnabled = true;
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
+        }
+    }
+
+    private async void RunUpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_application.ManifestPath))
+        {
+            ShowDetailsError("The application's manifest path is not available, so the update cannot be requested.");
+            return;
+        }
+
+        _operationCancellation?.Dispose();
+        _operationCancellation = new CancellationTokenSource();
+        CheckForUpdatesButton.IsEnabled = false;
+        RunUpdateButton.IsEnabled = false;
+        CancelOperationButton.IsEnabled = true;
+        OperationStateText.Text = WintainiumOperationState.Running.ToString();
+        OperationIdText.Text = "Operation ID: pending Core result.";
+        OperationProgressRing.IsActive = true;
+        DetailsErrorText.Visibility = Visibility.Collapsed;
+        ReleaseStatusText.Text = "Running the Core-owned update lifecycle…";
+
+        try
+        {
+            Directory.CreateDirectory(WintainiumDesktop.Settings.WintainiumDesktopPaths.InstalledStateRoot);
+            Directory.CreateDirectory(WintainiumDesktop.Settings.WintainiumDesktopPaths.DownloadRoot);
+
+            var machineArchitecture = RuntimeInformation.OSArchitecture switch
+            {
+                Architecture.X64 => "x64",
+                Architecture.X86 => "x86",
+                Architecture.Arm64 => "arm64",
+                _ => RuntimeInformation.OSArchitecture.ToString()
+            };
+
+            var result = await _updateService.ExecuteAsync(
+                _application.ManifestPath,
+                WintainiumDesktop.Settings.WintainiumDesktopPaths.InstalledStateRoot,
+                machineArchitecture,
+                WintainiumDesktop.Settings.WintainiumDesktopPaths.DownloadRoot,
+                cancellationToken: _operationCancellation.Token);
+
+            OperationStateText.Text = result.OperationState.ToString();
+            OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
+            ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
+            WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
+
+            var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
+            ReleaseStatusText.Text = result.Status switch
+            {
+                "Completed" => $"Update completed. {completedStages} lifecycle stage(s) reported successful.",
+                "Cancelled" => "Update was cancelled.",
+                "Failed" => "Update failed.",
+                _ => $"Update: {result.Status ?? "Unknown"}."
+            };
+
+            if (result.Errors.Count > 0)
+            {
+                ShowDetailsError(string.Join(
+                    Environment.NewLine,
+                    result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            ReleaseStatusText.Text = "Update was cancelled.";
+            OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
+        }
+        catch (Exception exception)
+        {
+            ShowDetailsError($"Update could not be completed.{Environment.NewLine}{exception.Message}");
+            ReleaseStatusText.Text = "Update failed.";
+        }
+        finally
+        {
+            OperationProgressRing.IsActive = false;
+            CancelOperationButton.IsEnabled = false;
+            CheckForUpdatesButton.IsEnabled = true;
+            RunUpdateButton.IsEnabled = true;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
         }
