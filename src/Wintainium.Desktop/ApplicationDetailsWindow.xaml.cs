@@ -166,7 +166,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         OperationIdText.Text = "Operation ID: pending Core result.";
         OperationProgressRing.IsActive = true;
         DetailsErrorText.Visibility = Visibility.Collapsed;
-        ReleaseStatusText.Text = "Running the Core-owned update lifecycle…";
+        UpdateResultStatusText.Text = "Running the Core-owned update lifecycle…";
+        InstalledStateRefreshStatusText.Text = "Waiting for the update result.";
 
         try
         {
@@ -195,13 +196,14 @@ public sealed partial class ApplicationDetailsWindow : Window
             WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
 
             var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
-            ReleaseStatusText.Text = result.Status switch
+            UpdateResultStatusText.Text = result.Status switch
             {
-                "Completed" => $"Update completed. {completedStages} lifecycle stage(s) reported successful.",
+                "Completed" => $"Update completed. {completedStages} of {result.Stages.Count} lifecycle stage(s) reported successful.",
                 "Cancelled" => "Update was cancelled.",
                 "Failed" => "Update failed.",
                 _ => $"Update: {result.Status ?? "Unknown"}."
             };
+            InstalledStateRefreshStatusText.Text = "Refreshing authoritative installed state…";
 
             if (result.Errors.Count > 0)
             {
@@ -209,16 +211,20 @@ public sealed partial class ApplicationDetailsWindow : Window
                     Environment.NewLine,
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
+
+            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
         }
         catch (OperationCanceledException)
         {
-            ReleaseStatusText.Text = "Update was cancelled.";
+            UpdateResultStatusText.Text = "Update was cancelled.";
+            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed because the update was cancelled.";
             OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
         }
         catch (Exception exception)
         {
+            UpdateResultStatusText.Text = "Update failed before a structured result could be presented.";
+            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed.";
             ShowDetailsError($"Update could not be completed.{Environment.NewLine}{exception.Message}");
-            ReleaseStatusText.Text = "Update failed.";
         }
         finally
         {
