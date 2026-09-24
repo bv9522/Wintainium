@@ -1,1 +1,0 @@
-// Desktop-side update mapping checkpoint lives in the C# project; this file is intentionally not a test artifact.
