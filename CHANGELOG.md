@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased — Phase 12.12
+## Unreleased — Phase 12E Update Execution
+
+### Added
+
+- Phase 12D release-discovery completion documentation and public release checkpoint (**6/6 green** as observed locally).
+- Phase 12E desktop application-update result model, mapper, service, download-root boundary, and Application Details Run Update action.
+- Extended the desktop EngineProbe with update-result mapping coverage, including early Core failure with a null OperationId.
+
+
 
 - Added the WinUI application-details surface over the 11E application model.
 - Added manifest-path preservation and a C# release-information mapping/service boundary over the public `Get-WintainiumApplicationRelease` command.
