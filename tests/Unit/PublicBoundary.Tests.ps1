@@ -7,14 +7,16 @@ Describe 'Wintainium public Core boundary' {
 
     It 'exports only the established public Core commands' {
         $exported = @(Get-Command -Module Wintainium.Core | Select-Object -ExpandProperty Name | Sort-Object)
-        $exported | Should -Be @(
-            'Get-WintainiumApplicationRelease'
+        $expected = @(
             'Get-WintainiumApplicationInstalledState'
+            'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationUpdate'
             'Test-WintainiumApplicationDefinition'
-        )
+        ) | Sort-Object
+
+        $exported | Should -Be $expected
     }
 
     It 'does not expose the internal application update lifecycle as a public command' {
