@@ -11,10 +11,11 @@ engine rather than contain its own package-management logic.
 
 Phases 1–11 are implemented, tested, and locked. Phase 12 is in progress, connecting the desktop client to Core-owned source onboarding and validating the source-resolution vertical slice.
 
-The current public PowerShell surface consists of four commands:
-`Get-WintainiumManifest`, `Test-WintainiumApplicationDefinition`,
-`Get-WintainiumApplicationRelease`, and
-`Invoke-WintainiumApplicationUpdate`.
+The current public PowerShell surface consists of six commands:
+`Get-WintainiumManifest`, `Get-WintainiumApplicationInstalledState`,
+`Test-WintainiumApplicationDefinition`, `Get-WintainiumApplicationRelease`,
+`Invoke-WintainiumApplicationUpdate`, and
+`Invoke-WintainiumApplicationOnboarding`.
 
 The public update command is a presentation-neutral boundary over the complete
 Core-owned lifecycle. Callers supply documented application inputs; Core owns
