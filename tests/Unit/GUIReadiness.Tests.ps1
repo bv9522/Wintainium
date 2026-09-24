@@ -8,12 +8,14 @@ Describe 'Wintainium GUI-facing public boundary' {
         Remove-Module -Name Wintainium.Core -Force -ErrorAction SilentlyContinue
     }
 
-    It 'exports exactly the four supported presentation-facing commands' {
+    It 'exports exactly the supported presentation-facing commands' {
         $exported = @(Get-Command -Module Wintainium.Core -CommandType Function | Select-Object -ExpandProperty Name | Sort-Object)
 
         $exported | Should -Be @(
+            'Get-WintainiumApplicationInstalledState'
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumManifest'
+            'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationUpdate'
             'Test-WintainiumApplicationDefinition'
         )
