@@ -53,7 +53,7 @@ try
 
     if (!unknownState.IsSuccessful ||
         unknownState.State?.InstallationState != WintainiumInstallationState.Unknown ||
-        unknownState.State.Version is not null)
+        !string.IsNullOrWhiteSpace(unknownState.State.Version))
     {
         Console.Error.WriteLine("Authoritative installed-state refresh did not preserve a successful Unknown observation.");
         return 1;
