@@ -31,15 +31,10 @@ internal sealed class WintainiumApplicationCollectionService
         }
 
         var invocation = await _coreClient.GetManifestsAsync(
-            manifestRoot,
-            recurse,
-            schemaPath,
-            cancellationToken).ConfigureAwait(false);
+            manifestRoot, recurse, schemaPath, cancellationToken).ConfigureAwait(false);
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
-            invocation,
-            "Get-WintainiumManifest",
-            cancellationToken);
+            invocation, "Get-WintainiumManifest", cancellationToken);
 
         var collection = WintainiumApplicationModelMapper.MapManifestResult(result);
         var applications = new List<WintainiumApplicationModel>();
@@ -50,22 +45,26 @@ internal sealed class WintainiumApplicationCollectionService
         {
             var stateResult = await _installedState.GetAsync(
                 WintainiumDesktopPaths.InstalledStateRoot,
-                application.ApplicationId,
-                cancellationToken).ConfigureAwait(false);
+                application.ApplicationId, cancellationToken).ConfigureAwait(false);
 
             applications.Add(WintainiumApplicationModelMapper.ApplyInstalledState(
-                application,
-                stateResult.State));
+                application, stateResult.State));
             errors.AddRange(stateResult.Errors);
             warnings.AddRange(stateResult.Warnings);
         }
 
+        var isSuccessful = collection.IsSuccessful && errors.Count == 0;
+        var operationState = isSuccessful
+            ? collection.OperationState
+            : WintainiumOperationState.Failed;
+
         return collection with
         {
-            IsSuccessful = collection.IsSuccessful && errors.Count == 0,
+            IsSuccessful = isSuccessful,
             Applications = applications,
             Errors = errors,
-            Warnings = warnings
+            Warnings = warnings,
+            OperationState = operationState
         };
     }
 }
