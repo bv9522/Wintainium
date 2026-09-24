@@ -11,7 +11,7 @@
 
 - Application Details now retains the structured update result separately and rereads authoritative installed state through the public Core boundary instead of manufacturing successful installation state.
 
-## Unreleased — Phase 12E Update Execution
+### Phase 12E — Update Execution
 
 ### Added
 
