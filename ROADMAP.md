@@ -403,4 +403,4 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Preserve the existing application model when authoritative refresh fails.
 - Keep cancellation, diagnostics, OperationId, and Unknown-state semantics explicit at the desktop boundary.
 
-**Status: In progress.** Application Details now has distinct update-result and authoritative-refresh presentation surfaces, including per-stage summaries. The implementation preserves the separation between the structured update result and Core-authoritative installed state. Brian's local x64 Debug build is required to validate the WinUI XAML/code-behind integration. See `docs/Phase12GResultRefreshPresentation.md`.
+**Status: Complete and locked.** Application Details presents distinct update-result, lifecycle-stage, release-discovery, and authoritative-refresh surfaces. The implementation preserves the separation between the structured update result and Core-authoritative installed state. Brian observed the final local x64 Debug build succeed after presentation hardening. See `docs/Phase12GResultRefreshPresentation.md`.
