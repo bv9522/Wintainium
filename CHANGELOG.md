@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Phase 12F Authoritative Refresh
+## Unreleased — Phase 12G Result + Refresh Presentation
 
 ### Added
 
@@ -10,6 +10,10 @@
 ### Changed
 
 - Application Details now retains the structured update result separately and rereads authoritative installed state through the public Core boundary instead of manufacturing successful installation state.
+
+### Phase 12F lock
+
+- Phase 12F is complete and locked after the x64 Debug desktop build and complete EngineProbe checkpoint passed. Coverage includes authoritative installed-state refresh, Unknown-state semantics without a manufactured version, structured refresh failure, operation state and diagnostics, cancellation, public-command invocation, and the in-process PowerShell hosting/disposal boundaries.
 
 ### Phase 12E — Update Execution
 
