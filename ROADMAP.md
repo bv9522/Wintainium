@@ -393,3 +393,14 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Verify Unknown-state and structured refresh-failure semantics in the desktop EngineProbe.
 
 **Status: Complete and locked.** The Application Details update path performs an authoritative installed-state refresh after a structured update result, and the EngineProbe contains focused refresh coverage. Brian observed the x64 Debug desktop build succeed and the complete EngineProbe pass, including authoritative refresh, Unknown-state semantics, structured refresh failure, diagnostics, cancellation, public-command invocation, and hosting boundaries. See `docs/Phase12FAuthoritativeRefresh.md`.
+
+
+### Phase 12G — Result + Refresh Presentation
+
+- Present the structured update outcome separately from release-discovery status.
+- Present Core-owned lifecycle stage summaries without duplicating lifecycle policy.
+- Present authoritative installed-state refresh status separately from the update result.
+- Preserve the existing application model when authoritative refresh fails.
+- Keep cancellation, diagnostics, OperationId, and Unknown-state semantics explicit at the desktop boundary.
+
+**Status: In progress.** Application Details now has distinct update-result and authoritative-refresh presentation surfaces, including per-stage summaries. The implementation preserves the separation between the structured update result and Core-authoritative installed state. Brian's local x64 Debug build is required to validate the WinUI XAML/code-behind integration. See `docs/Phase12GResultRefreshPresentation.md`.
