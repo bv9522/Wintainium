@@ -1,8 +1,12 @@
 # Changelog
 
-## Unreleased — Phase 12G Result + Refresh Presentation
+## Unreleased — Phase 12H Final Integration Hardening & Phase 12 Lock
 
 ### Phase 12G — Result + Refresh Presentation
+
+### Phase 12G lock
+
+- Phase 12G is complete and locked after the final local x64 Debug desktop build succeeded. Application Details now separates update outcomes, lifecycle-stage summaries, release discovery, and authoritative installed-state refresh presentation without introducing a second state authority.
 
 ### Added
 
