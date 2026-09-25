@@ -2,6 +2,14 @@
 
 ## Unreleased — Phase 12H Final Integration Hardening & Phase 12 Lock
 
+### Phase 12H — Final Integration Hardening
+
+- Added the final desktop integration boundary for refreshing the main application collection after a successful authoritative installed-state refresh.
+- Hardened Application Details cancellation ownership so window closure requests cancellation without racing disposal of the active operation's cancellation source.
+- Added `docs/Phase12HFinalIntegrationHardening.md` defining the final vertical-slice audit and Phase 12 lock checkpoints.
+- Phase 12H remains in progress pending the local desktop checkpoint, full PowerShell/Pester regression, and practical real-application integration observation.
+
+
 ### Phase 12G — Result + Refresh Presentation
 
 ### Phase 12G lock
