@@ -306,9 +306,8 @@ public sealed partial class ApplicationDetailsWindow : Window
 
     private void ApplicationDetailsWindow_Closed(object sender, WindowEventArgs args)
     {
+        // The active operation owns disposal; closing the window only requests cancellation.
         _operationCancellation?.Cancel();
-        _operationCancellation?.Dispose();
-        _operationCancellation = null;
     }
 
     private void SaveNotesButton_Click(object sender, RoutedEventArgs e)
