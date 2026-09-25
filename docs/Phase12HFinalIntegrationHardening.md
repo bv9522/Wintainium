@@ -79,8 +79,22 @@ Phase 12H does not:
 - add a persistent desktop-side state authority,
 - or broaden the Phase 12 feature surface beyond final integration hardening.
 
+## Automated checkpoint record
+
+The automated Phase 12H checkpoints have now been observed:
+
+1. Desktop x64 Debug build — **passed**.
+2. Desktop EngineProbe — **all checks passed**.
+3. Full PowerShell/Pester regression — **524/524 green**.
+
+These checkpoints establish the final integration implementation and regression baseline.
+
+## Remaining practical checkpoint
+
+The only remaining Phase 12H lock gate is the practical real-application desktop update exercise described above. It is intentionally a manual integration observation and has not been claimed as successful until Brian observes it against a real configured application.
+
 ## Lock boundary
 
-Phase 12 is locked only after the final local checkpoints above are observed as green/passed.
+Phase 12 is locked after the practical real-application desktop checkpoint is observed as successful.
 
-Until those checkpoints are observed, this document records the intended final integration boundary rather than claiming final Phase 12 completion.
+Until that observation is recorded, this document does not claim final Phase 12 completion.
