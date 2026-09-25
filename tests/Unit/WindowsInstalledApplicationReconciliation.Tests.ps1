@@ -42,7 +42,7 @@ Describe 'Windows installed-application reconciliation plugin' {
             $result = Invoke-WintainiumReconciliation -Request $Request
             $result.Evidence.InstallationState | Should -Be 'Installed'
             $result.Evidence.Version | Should -Be '2.4.1'
-            $result.Evidence.InstallationLocation | Should -Be 'C:\\Program Files\\Example'
+            $result.Evidence.InstallationLocation | Should -Be 'C:\Program Files\Example'
         }
     }
 
