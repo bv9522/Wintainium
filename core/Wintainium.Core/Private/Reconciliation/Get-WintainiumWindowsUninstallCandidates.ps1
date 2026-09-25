@@ -184,10 +184,10 @@ function Get-WintainiumWindowsUninstallCandidates {
                     Scope = [string]$entry.Scope
                     View = [string]$entry.View
                     SubKey = [string]$entry.SubKey
-                    DisplayName = if ($null -ne $entry.DisplayName) { [string]$entry.DisplayName } else { $null }
-                    DisplayVersion = if ($null -ne $entry.DisplayVersion) { [string]$entry.DisplayVersion } else { $null }
-                    Publisher = if ($null -ne $entry.Publisher) { [string]$entry.Publisher } else { $null }
-                    InstallLocation = if ($null -ne $entry.InstallLocation) { [string]$entry.InstallLocation } else { $null }
+                    DisplayName = if ($null -ne $entry.PSObject.Properties['DisplayName'] -and $null -ne $entry.DisplayName) { [string]$entry.DisplayName } else { $null }
+                    DisplayVersion = if ($null -ne $entry.PSObject.Properties['DisplayVersion'] -and $null -ne $entry.DisplayVersion) { [string]$entry.DisplayVersion } else { $null }
+                    Publisher = if ($null -ne $entry.PSObject.Properties['Publisher'] -and $null -ne $entry.Publisher) { [string]$entry.Publisher } else { $null }
+                    InstallLocation = if ($null -ne $entry.PSObject.Properties['InstallLocation'] -and $null -ne $entry.InstallLocation) { [string]$entry.InstallLocation } else { $null }
                     EvidenceSource = 'WindowsUninstallRegistry'
                 })
             }
