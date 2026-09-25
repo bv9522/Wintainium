@@ -28,15 +28,22 @@ Describe 'Windows installed-application reconciliation plugin' {
             param($location)
             [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'; DisplayVersion='2.4.1'; Publisher='Example Publisher'; InstallLocation='C:\Program Files\Example' }
         }
-        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Reader=$reader } {
-            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
-                param($Settings)
-                Get-WintainainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
-            }
-            Invoke-WintainiumReconciliation -Request $Request
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$script:baseManifest.reconciliation.settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
         }
-        # The module test above deliberately exercises the public contract; private-reader behavior is tested separately below.
-        $result.IsSuccessful | Should -BeTrue
+        $observation.IsSuccessful | Should -BeTrue
+        $observation.Candidates.Count | Should -Be 1
+        $observation.Candidates[0].DisplayVersion | Should -Be '2.4.1'
+
+        InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidate=$observation.Candidates[0] } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{ IsSuccessful=$true; Candidates=@($Candidate); Errors=@() }
+            }
+            $result = Invoke-WintainiumReconciliation -Request $Request
+            $result.Evidence.InstallationState | Should -Be 'Installed'
+            $result.Evidence.Version | Should -Be '2.4.1'
+            $result.Evidence.InstallationLocation | Should -Be 'C:\\Program Files\\Example'
+        }
     }
 
     It 'maps zero successful candidates to NotInstalled' {
