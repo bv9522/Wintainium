@@ -12,7 +12,11 @@ Describe 'Core production Windows installed-application reconciliation workflow'
     It 'discovers the production reconciler and invokes it through the Core reconciliation contract' {
         $manifestPath = Join-Path -Path $script:manifestRoot -ChildPath 'windows-installed-application-reconciliation.json'
 
-        $manifest = (Import-WintainiumManifest -Path $manifestPath -SchemaPath $script:schemaPath).Manifest
+        $importResult = InModuleScope Wintainium.Core -Parameters @{ Path = $manifestPath; SchemaPath = $script:schemaPath } {
+            Import-WintainiumManifest -Path $Path -SchemaPath $SchemaPath
+        }
+        $importResult.IsValid | Should -BeTrue
+        $manifest = $importResult.Manifest
 
         $registry = Get-WintainiumPluginRegistry -PluginRoot $script:pluginRoot
         $resolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType Reconciliation -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
@@ -31,7 +35,7 @@ Describe 'Core production Windows installed-application reconciliation workflow'
             PriorState = $null
         }
 
-        $result = InModuleScope Wintainium.Core -Parameters @{ Plugin = $validation.ReconciliationPlugin; Request = $request } {
+        $result = InModuleScope Wintainium.Core -Parameters @{ Plugin = $resolution.Plugin; Request = $request } {
             Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $Plugin -Request $Request
         }
 
