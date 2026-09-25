@@ -18,8 +18,10 @@ Describe 'Core production Windows installed-application reconciliation workflow'
         $importResult.IsValid | Should -BeTrue
         $manifest = $importResult.Manifest
 
-        $registry = Get-WintainiumPluginRegistry -PluginRoot $script:pluginRoot
-        $resolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType Reconciliation -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
+        $resolution = InModuleScope Wintainium.Core -Parameters @{ PluginRoot = $script:pluginRoot; PluginId = $manifest.reconciliation.pluginId; RequiredContractVersion = $manifest.reconciliation.requiredContractVersion } {
+            $registry = Get-WintainiumPluginRegistry -PluginRoot $PluginRoot
+            Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $PluginId -PluginType Reconciliation -RequiredContractVersion $RequiredContractVersion
+        }
 
         $resolution.IsResolved | Should -BeTrue
         $resolution.Plugin | Should -Not -BeNullOrEmpty
