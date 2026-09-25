@@ -46,7 +46,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $reader = {
             param($location)
 
-            $subKeyPath = 'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+            $subKeyPath = 'Software\Microsoft\Windows\CurrentVersion\Uninstall'
             $hive = switch ([string]$location.scope) {
                 'machine' { [Microsoft.Win32.RegistryHive]::LocalMachine; break }
                 'user' { [Microsoft.Win32.RegistryHive]::CurrentUser; break }
