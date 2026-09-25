@@ -226,7 +226,8 @@ function Invoke-WintainiumReconciliation {
                 InstallationState = if ($observation.IsSuccessful) { 'NotInstalled' } else { 'Unknown' }
                 EvidenceSource = 'WindowsUninstallRegistry'
             }
-            return & $base $true (if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }) $evidence @() $warnings
+            $status = if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }
+            return & $base $true $status $evidence @() $warnings
         }
 
         if (@($observation.Candidates).Count -gt 1) {
