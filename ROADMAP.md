@@ -404,3 +404,15 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Keep cancellation, diagnostics, OperationId, and Unknown-state semantics explicit at the desktop boundary.
 
 **Status: Complete and locked.** Application Details presents distinct update-result, lifecycle-stage, release-discovery, and authoritative-refresh surfaces. The implementation preserves the separation between the structured update result and Core-authoritative installed state. Brian observed the final local x64 Debug build succeed after presentation hardening. See `docs/Phase12GResultRefreshPresentation.md`.
+
+### Phase 12H — Final Integration Hardening & Phase 12 Lock
+
+- Audit the complete desktop-to-Core update vertical slice and preserve the public presentation boundary.
+- Keep update outcomes, lifecycle stages, release discovery, and authoritative installed-state refresh as distinct observations.
+- Request a fresh Core-backed application collection after a successful authoritative installed-state refresh so the main window does not retain a stale presentation snapshot.
+- Harden cancellation ownership so closing Application Details requests cancellation while the active operation owns token-source disposal.
+- Preserve structured diagnostics and OperationId correlation without manufacturing state when no structured result exists.
+- Complete the final desktop build, EngineProbe, full PowerShell/Pester regression, and practical real-application integration checkpoint before locking Phase 12.
+
+**Status: In progress.** Final integration hardening is implemented and documented; local build/EngineProbe and full regression checkpoints remain before the Phase 12 lock. See `docs/Phase12HFinalIntegrationHardening.md`.
+
