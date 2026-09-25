@@ -11,10 +11,12 @@ Describe 'Wintainium public CLI contract' {
         $commands = @(Get-Command -Module Wintainium.Core -CommandType Function | Select-Object -ExpandProperty Name | Sort-Object)
 
         $commands | Should -Be @(
+            'Get-WintainiumApplicationInstalledState'
             'Get-WintainiumApplicationRelease'
+            'Get-WintainiumApplicationOnboarding'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationUpdate'
-            'Test-WintainiumApplicationDefinition'
+            'Invoke-WintainiumApplicationOnboarding'
         )
     }
 
