@@ -12,19 +12,22 @@ Describe 'Core production Windows installed-application reconciliation workflow'
     It 'discovers the production reconciler and invokes it through the Core reconciliation contract' {
         $manifestPath = Join-Path -Path $script:manifestRoot -ChildPath 'windows-installed-application-reconciliation.json'
 
-        $validation = Test-WintainiumApplicationDefinition -ManifestPath $manifestPath -PluginRoot $script:pluginRoot -SchemaPath $script:schemaPath -OperationId '00000000-0000-0000-0000-00000000013D'
+        $manifest = (Import-WintainiumManifest -Path $manifestPath -SchemaPath $script:schemaPath).Manifest
 
-        $validation.IsValid | Should -BeTrue
-        $validation.ReconciliationPlugin | Should -Not -BeNullOrEmpty
-        $validation.ReconciliationPlugin.PluginId | Should -Be 'Wintainium.reconciliation.windows-installed-application'
-        $validation.ReconciliationPlugin.PluginType | Should -Be 'Reconciliation'
-        @($validation.ReconciliationPlugin.ContractVersions) | Should -Contain '1'
-        $validation.ReconciliationPlugin.Capabilities.applicationState | Should -BeTrue
+        $registry = Get-WintainiumPluginRegistry -PluginRoot $script:pluginRoot
+        $resolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType Reconciliation -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
+
+        $resolution.IsResolved | Should -BeTrue
+        $resolution.Plugin | Should -Not -BeNullOrEmpty
+        $resolution.Plugin.PluginId | Should -Be 'Wintainium.reconciliation.windows-installed-application'
+        $resolution.Plugin.PluginType | Should -Be 'Reconciliation'
+        @($resolution.Plugin.ContractVersions) | Should -Contain '1'
+        $resolution.Plugin.Capabilities.applicationState | Should -BeTrue
 
         $request = [pscustomobject][ordered]@{
-            OperationId = $validation.OperationId
-            ApplicationId = $validation.Manifest.Id
-            Manifest = $validation.Manifest
+            OperationId = '00000000-0000-0000-0000-00000000013D'
+            ApplicationId = $manifest.Id
+            Manifest = $manifest
             PriorState = $null
         }
 
