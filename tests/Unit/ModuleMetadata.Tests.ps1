@@ -18,9 +18,11 @@ Describe 'Wintainium Core module metadata' {
     It 'exports exactly the current public command surface' {
         @($manifest.FunctionsToExport) | Should -Be @(
             'Get-WintainiumManifest'
+            'Get-WintainiumApplicationInstalledState'
             'Test-WintainiumApplicationDefinition'
             'Get-WintainiumApplicationRelease'
             'Invoke-WintainiumApplicationUpdate'
+            'Invoke-WintainiumApplicationOnboarding'
         )
         @($manifest.CmdletsToExport) | Should -BeNullOrEmpty
         @($manifest.AliasesToExport) | Should -BeNullOrEmpty
