@@ -1,0 +1,41 @@
+{
+  "manifestVersion": "1.1",
+  "id": "org.wintainium.phase13d.reconciliation",
+  "name": "Wintainium Phase 13D Reconciliation Fixture",
+  "source": {
+    "pluginId": "Wintainium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "neovim/neovim"
+    }
+  },
+  "installer": {
+    "pluginId": "Wintainium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {
+      "entryPoint": "nvim-win64/bin/nvim.exe"
+    }
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.windows-installed-application",
+    "requiredContractVersion": "1",
+    "settings": {
+      "registry": {
+        "locations": [
+          {"scope": "machine", "view": "64"},
+          {"scope": "machine", "view": "32"},
+          {"scope": "user", "view": "native"}
+        ],
+        "match": [
+          {"value": "subkey", "equals": "Wintainium.Phase13D.DefinitelyNotInstalled"}
+        ]
+      }
+    }
+  },
+  "release": {"channel": "stable"},
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"],
+    "allowUnknownArchitecture": false
+  }
+}
