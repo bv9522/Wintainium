@@ -203,7 +203,7 @@ function Invoke-WintainiumReconciliation {
         if ($null -eq $Request.Manifest -or
             $null -eq $Request.Manifest.PSObject.Properties['Reconciliation'] -or
             $null -eq $Request.Manifest.Reconciliation -or
-            $null -eq $Request.Manifest.Reconciliation.PSObject.Properties['settings']) {
+            $null -eq $Request.Manifest.Reconciliation.settings) {
             return & $base $false 'InvalidSettings' $null @([pscustomobject]@{
                 Code = 'WindowsReconciliationSettingsMissing'
                 Message = 'The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'
