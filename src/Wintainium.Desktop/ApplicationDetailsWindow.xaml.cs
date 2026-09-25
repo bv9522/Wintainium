@@ -15,6 +15,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly WintainiumApplicationReleaseService _releaseService;
     private readonly WintainiumApplicationUpdateService _updateService;
     private readonly WintainiumApplicationInstalledStateService _installedStateService;
+    private readonly Func<Task>? _onAuthoritativeStateChanged;
     private WintainiumApplicationUpdateResult? _lastUpdateResult;
     private string _savedNotes = string.Empty;
     private CancellationTokenSource? _operationCancellation;
@@ -23,7 +24,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         WintainiumApplicationModel application,
         WintainiumApplicationReleaseService releaseService,
         WintainiumApplicationUpdateService updateService,
-        WintainiumApplicationInstalledStateService installedStateService)
+        WintainiumApplicationInstalledStateService installedStateService,
+        Func<Task>? onAuthoritativeStateChanged = null)
     {
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
@@ -37,6 +39,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _releaseService = releaseService;
         _updateService = updateService;
         _installedStateService = installedStateService;
+        _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
 
         Title = $"{application.Name} — Wintainium";
         AppWindow.Resize(new SizeInt32(820, 760));
@@ -266,6 +269,11 @@ public sealed partial class ApplicationDetailsWindow : Window
                 stateResult.State);
 
             PopulateApplicationFacts();
+            if (_onAuthoritativeStateChanged is not null)
+            {
+                await _onAuthoritativeStateChanged();
+            }
+
             InstalledStateRefreshStatusText.Text = stateResult.State is null
                 ? "Authoritative installed state was not reported."
                 : $"Authoritative installed state refreshed: {stateResult.State.InstallationState}"
