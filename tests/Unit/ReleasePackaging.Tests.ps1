@@ -57,9 +57,11 @@ Describe 'Wintainium release packaging boundary' {
     It 'requires the supported public command surface in release validation' {
         @($manifest.FunctionsToExport) | Should -Be @(
             'Get-WintainiumManifest'
+            'Get-WintainiumApplicationInstalledState'
             'Test-WintainiumApplicationDefinition'
             'Get-WintainiumApplicationRelease'
             'Invoke-WintainiumApplicationUpdate'
+            'Invoke-WintainiumApplicationOnboarding'
         )
     }
 }
