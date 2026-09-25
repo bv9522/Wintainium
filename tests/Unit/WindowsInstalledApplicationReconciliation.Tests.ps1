@@ -56,8 +56,9 @@ Describe 'Windows installed-application reconciliation plugin' {
             Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
                 [pscustomobject]@{ IsSuccessful=$true; Candidates=@(); Errors=@() }
             }
-            Invoke-WintainiumReconciliation -Request $Request
-        } | Should -Match 'NotInstalled'
+            $result = Invoke-WintainiumReconciliation -Request $Request
+            $result.Evidence.InstallationState | Should -Be 'NotInstalled'
+        }
     }
 
     It 'maps multiple candidates to Unknown without selecting one' {
