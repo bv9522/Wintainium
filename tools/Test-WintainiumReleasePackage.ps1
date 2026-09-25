@@ -73,9 +73,11 @@ if (-not (Test-Path -LiteralPath (Join-Path (Split-Path $moduleManifestPath -Par
 
 $expectedExports = @(
     'Get-WintainiumManifest'
+    'Get-WintainiumApplicationInstalledState'
     'Test-WintainiumApplicationDefinition'
     'Get-WintainiumApplicationRelease'
     'Invoke-WintainiumApplicationUpdate'
+    'Invoke-WintainiumApplicationOnboarding'
 )
 $actualExports = @($moduleManifest.FunctionsToExport | ForEach-Object { [string]$_ })
 if (($actualExports -join "`n") -cne ($expectedExports -join "`n")) {
