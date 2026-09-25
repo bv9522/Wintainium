@@ -271,7 +271,14 @@ public sealed partial class ApplicationDetailsWindow : Window
             PopulateApplicationFacts();
             if (_onAuthoritativeStateChanged is not null)
             {
-                await _onAuthoritativeStateChanged();
+                try
+                {
+                    await _onAuthoritativeStateChanged();
+                }
+                catch (Exception exception)
+                {
+                    ShowDetailsError($"The authoritative installed state was refreshed, but the application collection could not be refreshed.{Environment.NewLine}{exception.Message}");
+                }
             }
 
             InstalledStateRefreshStatusText.Text = stateResult.State is null
