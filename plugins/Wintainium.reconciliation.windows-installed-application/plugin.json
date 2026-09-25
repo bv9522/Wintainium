@@ -1,0 +1,9 @@
+{
+  "pluginId": "Wintainium.reconciliation.windows-installed-application",
+  "pluginType": "Reconciliation",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.reconciliation.windows-installed-application.psm1",
+  "capabilities": {
+    "applicationState": true
+  }
+}
