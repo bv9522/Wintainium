@@ -41,7 +41,7 @@ Describe 'Core production Windows installed-application reconciliation workflow'
             Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $Plugin -Request $Request
         }
 
-        $result.IsSuccessful | Should -BeTrue
+        $result.IsSuccessful | Should -BeTrue -Because ("Status=$($result.Status); Errors=$(@($result.Errors | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | '); Warnings=$(@($result.Warnings | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | ')")
         $result.Status | Should -Be 'Reconciled'
         $result.OperationId | Should -Be $request.OperationId
         $result.Evidence.ApplicationId | Should -Be $request.ApplicationId
