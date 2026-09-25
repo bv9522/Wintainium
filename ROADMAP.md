@@ -414,5 +414,5 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 - Preserve structured diagnostics and OperationId correlation without manufacturing state when no structured result exists.
 - Complete the final desktop build, EngineProbe, full PowerShell/Pester regression, and practical real-application integration checkpoint before locking Phase 12.
 
-**Status: In progress.** Final integration hardening is implemented and documented; local build/EngineProbe and full regression checkpoints remain before the Phase 12 lock. See `docs/Phase12HFinalIntegrationHardening.md`.
+**Status: In progress — automated checkpoints complete.** Final integration hardening is implemented and documented. The x64 Debug desktop build passed, the Desktop EngineProbe passed all checks, and the full PowerShell/Pester regression is **524/524 green**. The only remaining lock gate is the practical real-application desktop update observation. See `docs/Phase12HFinalIntegrationHardening.md`.
 
