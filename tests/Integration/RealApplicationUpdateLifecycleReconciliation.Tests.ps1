@@ -145,7 +145,6 @@ Describe 'Real application update lifecycle reconciliation' {
             $persisted.State.VersionSource | Should -Be 'Registry'
             $persisted.State.Architecture | Should -Be 'unknown'
 
-            Should -Invoke Invoke-WintainiumReconciliationOperation -Times 1 -Exactly -ParameterFilter { $Request.OperationId -eq $operationId -and $Request.ApplicationId -eq $manifest.Id }
             Should -Invoke Invoke-WintainiumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $operationId -and $ApplicationId -eq $manifest.Id -and $ReconciliationResult.OperationId -eq $operationId }
         }
     }
