@@ -61,18 +61,21 @@ Describe 'Real-application Windows installed-application reconciliation' {
         $result.Evidence.VersionSource | Should -Be 'Registry'
 
         $stateRoot = Join-Path $TestDrive 'installed-state'
-        $stateUpdate = InModuleScope Wintainium.Core -Parameters @{
+        $authoritativeUpdate = InModuleScope Wintainium.Core -Parameters @{
             Root = $stateRoot
+            OperationId = $request.OperationId
+            ApplicationId = $request.ApplicationId
             ReconciliationResult = $result
         } {
-            param($Root, $ReconciliationResult)
-            Set-WintainiumInstalledApplicationStateFromReconciliation -StateRoot $Root -ReconciliationResult $ReconciliationResult
+            param($Root, $OperationId, $ApplicationId, $ReconciliationResult)
+            Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $Root -OperationId $OperationId -ApplicationId $ApplicationId -ReconciliationResult $ReconciliationResult -PriorState $null
         }
 
-        $stateUpdate.IsSuccessful | Should -BeTrue
-        $stateUpdate.Status | Should -Be 'StateUpdated'
-        $stateUpdate.State.InstallationState | Should -Be 'Installed'
-        $stateUpdate.State.Version | Should -Be $result.Evidence.Version
+        $authoritativeUpdate.IsSuccessful | Should -BeTrue
+        $authoritativeUpdate.Status | Should -Be 'Persisted'
+        $authoritativeUpdate.Persisted | Should -BeTrue
+        $authoritativeUpdate.State.InstallationState | Should -Be 'Installed'
+        $authoritativeUpdate.State.Version | Should -Be $result.Evidence.Version
 
         $authoritative = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId $request.ApplicationId -OperationId $request.OperationId
         $authoritative.IsSuccessful | Should -BeTrue
