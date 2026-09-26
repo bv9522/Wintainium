@@ -40,5 +40,5 @@ function Get-WintainiumApplicationUpdateDecision {
         [string]$OperationId
     )
 
-    Get-WintainiumApplicationUpdateDecision -ManifestPath $ManifestPath -StateRoot $StateRoot -MachineArchitecture $MachineArchitecture -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
+    Get-WintainiumApplicationUpdateDecisionInternal -ManifestPath $ManifestPath -StateRoot $StateRoot -MachineArchitecture $MachineArchitecture -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
 }
