@@ -81,6 +81,7 @@ internal sealed class WintainiumApplicationOnboardingService
             IconUri: null,
             InstallationState: WintainiumInstallationState.Unknown,
             InstalledVersion: null,
+            AvailableVersion: null,
             LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
             SourceProviderId: SourceProviderId(manifest),
