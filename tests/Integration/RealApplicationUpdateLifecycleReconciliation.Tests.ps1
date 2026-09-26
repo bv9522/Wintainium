@@ -73,9 +73,15 @@ Describe 'Real application update lifecycle reconciliation' {
                 }
             }
             Mock Invoke-WintainiumProviderOperation { $release }
-            Mock Get-WintainiumInstalledApplicationState {
-                [pscustomobject]@{ ApplicationId = $manifest.Id; InstallationState = 'NotInstalled'; Version = ''; VersionSource = ''; Architecture = 'unknown'; Channel = 'unknown'; InstallationLocation = '' }
-            }
+            Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State ([pscustomobject]@{
+                ApplicationId = $manifest.Id
+                InstallationState = 'NotInstalled'
+                Version = $null
+                VersionSource = $null
+                Architecture = 'unknown'
+                Channel = 'unknown'
+                InstallationLocation = $null
+            }) | Out-Null
             Mock Get-WintainiumUpdateDecision { $decision }
             Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId = $operationId; UpdateDecision = $decision; SelectedRelease = $decision.SelectedRelease; SelectedArtifact = $decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload { $download }
