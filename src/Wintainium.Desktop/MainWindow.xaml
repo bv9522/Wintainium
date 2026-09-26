@@ -64,17 +64,23 @@
                             </Border>
                             <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding PublisherText}"
+                                       Opacity="0.72"
+                                       TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="{Binding InstalledVersionText}"
                                        Opacity="0.72" />
                             <TextBlock Text="{Binding AvailableVersionText}"
                                        Opacity="0.72" />
                             <TextBlock Text="{Binding InstallationStateText}" />
                             <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
+                            <TextBlock Text="{Binding SourceProviderText}"
+                                       Opacity="0.60"
+                                       TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </DataTemplate>
                 </GridView.ItemTemplate>
             </GridView>
-<ListView
+            <ListView
                 x:Name="ApplicationListView"
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
@@ -93,7 +99,12 @@
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="3">
                                 <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding ApplicationId}" Opacity="0.65" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding PublisherText}"
+                                           Opacity="0.65"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding SourceProviderText}"
+                                           Opacity="0.55"
+                                           TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="3">
                                 <TextBlock Text="{Binding InstalledVersionText}"
