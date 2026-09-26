@@ -22,8 +22,7 @@
     "settings": {
       "registry": {
         "locations": [
-          {"scope": "machine", "view": "64"},
-          {"scope": "machine", "view": "32"}
+          {"scope": "machine", "view": "64"}
         ],
         "match": [
           {"value": "subkey", "equals": "Wintainium.Phase13D.DefinitelyNotInstalled"}
