@@ -23,20 +23,20 @@ internal static class WintainiumApplicationUpdateDecisionMapper
             OperationState: DetermineState(Boolean(result, "IsSuccessful")));
     }
 
-    private static WintainiumApplicationInstalledStateResult MapInstalledState(PSObject source)
+    private static WintainiumInstalledStateObservation MapInstalledState(PSObject source)
     {
-        var stateValue = source.Properties["State"]?.Value;
-        var state = stateValue is null ? null : WintainiumApplicationModelMapper.MapInstalledStateResult(source);
+        var installationStateText = Required(source, "InstallationState");
+        if (!Enum.TryParse<WintainiumInstallationState>(installationStateText, ignoreCase: false, out var installationState))
+            throw new InvalidOperationException($"Core update status result returned unknown InstallationState '{installationStateText}'.");
 
-        return new WintainiumApplicationInstalledStateResult(
-            Required(source, "OperationId"),
+        return new WintainiumInstalledStateObservation(
             Required(source, "ApplicationId"),
-            Boolean(source, "IsSuccessful"),
-            Nullable(source, "Status"),
-            state,
-            Diagnostics(source, "Errors"),
-            Diagnostics(source, "Warnings"),
-            WintainiumOperationStateMapper.Map(source).State);
+            installationState,
+            Nullable(source, "Version"),
+            Nullable(source, "VersionSource"),
+            Nullable(source, "Architecture"),
+            Nullable(source, "Channel"),
+            Nullable(source, "InstallationLocation"));
     }
 
     private static WintainiumApplicationUpdateDecisionModel MapDecision(PSObject decision) =>
