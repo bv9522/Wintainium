@@ -87,12 +87,13 @@ Describe 'Wintainium public result contract' {
             (Get-WintainiumManifest -Path $manifestCollection)
             (Test-WintainiumApplicationDefinition -ManifestPath $manifestPath)
             (Get-WintainiumApplicationRelease -ManifestPath $manifestPath)
+            (Get-WintainiumApplicationUpdateStatus -ManifestPath $manifestPath -StateRoot (Join-Path $TestDrive 'state') -MachineArchitecture 'x64')
         )
 
         $expectedPropertySets = @(
             ,@('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'ReconciliationPlugin', 'Errors', 'Warnings', 'LogEvents')
-            ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'InstalledState', 'Decision', 'Errors', 'Warnings', 'LogEvents')
         )
 
         for ($index = 0; $index -lt $results.Count; $index++) {
