@@ -14,6 +14,8 @@ Describe 'Real application update lifecycle reconciliation' {
             SchemaPath = $script:schemaPath
             PluginRoot = $script:pluginRoot
         } {
+            param($ManifestPath, $SchemaPath, $PluginRoot)
+
             $importResult = Import-WintainiumManifest -Path $ManifestPath -SchemaPath $SchemaPath
             $importResult.IsValid | Should -BeTrue -Because (($importResult.Errors | ForEach-Object { $_.Message }) -join ' | ')
             $manifest = $importResult.Manifest
