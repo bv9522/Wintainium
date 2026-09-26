@@ -162,7 +162,7 @@ internal sealed class WintainiumCoreClient
         AddOptional(parameters, "OperationId", operationId);
 
         return _host.InvokeAsync(
-            "Get-WintainiumApplicationUpdateDecision",
+            "Get-WintainiumApplicationUpdateStatus",
             parameters,
             cancellationToken);
     }
