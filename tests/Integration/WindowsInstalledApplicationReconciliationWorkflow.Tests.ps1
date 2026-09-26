@@ -41,6 +41,7 @@ Describe 'Core production Windows installed-application reconciliation workflow'
         $pluginModule = Import-Module -Name $modulePath -Force -PassThru
         $directResult = & (Get-Command -Module $pluginModule.Name -Name 'Invoke-WintainiumReconciliation') -Request $request
         $directResult.IsSuccessful | Should -BeTrue -Because ("Direct plugin invocation: Status=$($directResult.Status); Errors=$(@($directResult.Errors | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | '); Warnings=$(@($directResult.Warnings | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | ')")
+        $directResult.Status | Should -Be 'Reconciled' -Because ("Direct plugin registry diagnostics: Errors=$(@($directResult.Errors | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | '); Warnings=$(@($directResult.Warnings | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | ')")
         
         $result = InModuleScope Wintainium.Core -Parameters @{ Plugin = $resolution.Plugin; Request = $request } {
             Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $Plugin -Request $Request
