@@ -14,6 +14,7 @@ internal sealed record WintainiumApplicationModel(
     string? IconUri,
     WintainiumInstallationState InstallationState,
     string? InstalledVersion,
+    string? AvailableVersion,
     DateTimeOffset? LastUpdated,
     WintainiumUpdateStatus UpdateStatus,
     string? SourceProviderId,
