@@ -58,6 +58,28 @@ Describe 'Wintainium public CLI contract' {
         $command.Parameters.Keys | Should -Contain 'SchemaPath'
     }
 
+    It 'uses the approved parameter contract on the public application update status command' {
+        $command = Get-Command -Name Get-WintainiumApplicationUpdateStatus -Module Wintainium.Core
+
+        $command.Parameters.Keys | Should -Contain 'ManifestPath'
+        $command.Parameters.Keys | Should -Contain 'StateRoot'
+        $command.Parameters.Keys | Should -Contain 'MachineArchitecture'
+        $command.Parameters.Keys | Should -Contain 'PluginRoot'
+        $command.Parameters.Keys | Should -Contain 'SchemaPath'
+        $command.Parameters.Keys | Should -Contain 'OperationId'
+    }
+
+    It 'documents the public application update status structured output contract' {
+        $helpText = Get-Help -Name Get-WintainiumApplicationUpdateStatus -Full | Out-String
+
+        foreach ($property in @('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'InstalledState', 'Decision', 'Errors', 'Warnings', 'LogEvents')) {
+            $helpText | Should -Match $property
+        }
+
+        $helpText | Should -Match 'does not download'
+        $helpText | Should -Match 'presentation clients'
+    }
+
     It 'uses the approved parameter contract on the public application update command' {
         $command = Get-Command -Name Invoke-WintainiumApplicationUpdate -Module Wintainium.Core
 
