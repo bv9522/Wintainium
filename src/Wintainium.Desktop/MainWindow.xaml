@@ -64,9 +64,12 @@
                             </Border>
                             <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding InstalledVersion, TargetNullValue=Not installed}"
+                            <TextBlock Text="{Binding InstalledVersionText}"
                                        Opacity="0.72" />
-                            <TextBlock Text="{Binding UpdateStatus}" Opacity="0.72" />
+                            <TextBlock Text="{Binding AvailableVersionText}"
+                                       Opacity="0.72" />
+                            <TextBlock Text="{Binding InstallationStateText}" />
+                            <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
                         </StackPanel>
                     </DataTemplate>
                 </GridView.ItemTemplate>
