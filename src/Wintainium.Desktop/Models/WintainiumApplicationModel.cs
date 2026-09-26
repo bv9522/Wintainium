@@ -19,7 +19,26 @@ internal sealed record WintainiumApplicationModel(
     WintainiumUpdateStatus UpdateStatus,
     string? SourceProviderId,
     string? ManifestPath = null,
-    WintainiumInstalledStateObservation? InstalledState = null);
+    WintainiumInstalledStateObservation? InstalledState = null)
+{
+    public string InstallationStateText => InstallationState switch
+    {
+        WintainiumInstallationState.Installed => "Installed",
+        WintainiumInstallationState.NotInstalled => "Not installed",
+        _ => "Unknown"
+    };
+
+    public string UpdateStatusText => UpdateStatus switch
+    {
+        WintainiumUpdateStatus.UpdateAvailable => "Update available",
+        WintainiumUpdateStatus.UpToDate => "Up to date",
+        _ => "Unknown"
+    };
+
+    public string InstalledVersionText => InstalledVersion ?? "Not installed";
+
+    public string AvailableVersionText => AvailableVersion ?? "—";
+}
 
 internal enum WintainiumInstallationState
 {
