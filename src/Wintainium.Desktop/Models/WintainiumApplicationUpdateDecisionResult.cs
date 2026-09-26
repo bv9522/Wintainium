@@ -5,7 +5,7 @@ internal sealed record WintainiumApplicationUpdateDecisionResult(
     bool IsSuccessful,
     string? Status,
     WintainiumApplicationUpdateDecisionModel? Decision,
-    WintainiumApplicationInstalledStateResult? InstalledState,
+    WintainiumInstalledStateObservation? InstalledState,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
     WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
