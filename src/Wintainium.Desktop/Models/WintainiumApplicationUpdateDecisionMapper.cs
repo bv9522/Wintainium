@@ -17,10 +17,26 @@ internal static class WintainiumApplicationUpdateDecisionMapper
             IsSuccessful: Boolean(result, "IsSuccessful"),
             Status: Nullable(result, "Status"),
             Decision: decisionValue is null ? null : MapDecision(PSObject.AsPSObject(decisionValue)),
-            InstalledState: installedValue is null ? null : WintainiumApplicationInstalledStateMapper.Map(PSObject.AsPSObject(installedValue)),
+            InstalledState: installedValue is null ? null : MapInstalledState(PSObject.AsPSObject(installedValue)),
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
             OperationState: DetermineState(Boolean(result, "IsSuccessful")));
+    }
+
+    private static WintainiumApplicationInstalledStateResult MapInstalledState(PSObject source)
+    {
+        var stateValue = source.Properties["State"]?.Value;
+        var state = stateValue is null ? null : WintainiumApplicationModelMapper.MapInstalledStateResult(source);
+
+        return new WintainiumApplicationInstalledStateResult(
+            Required(source, "OperationId"),
+            Required(source, "ApplicationId"),
+            Boolean(source, "IsSuccessful"),
+            Nullable(source, "Status"),
+            state,
+            Diagnostics(source, "Errors"),
+            Diagnostics(source, "Warnings"),
+            WintainiumOperationStateMapper.Map(source).State);
     }
 
     private static WintainiumApplicationUpdateDecisionModel MapDecision(PSObject decision) =>
