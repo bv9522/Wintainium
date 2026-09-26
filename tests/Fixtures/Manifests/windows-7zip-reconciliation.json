@@ -1,0 +1,41 @@
+{
+  "manifestVersion": "1.1",
+  "id": "org.7-zip.7-zip",
+  "name": "7-Zip",
+  "source": {
+    "pluginId": "Wintainium.provider.github-releases",
+    "requiredContractVersion": "1",
+    "settings": {
+      "repository": "ip7z/7zip"
+    }
+  },
+  "installer": {
+    "pluginId": "Wintainium.installer.portable-zip",
+    "requiredContractVersion": "1",
+    "settings": {
+      "entryPoint": "7z.exe"
+    }
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.windows-installed-application",
+    "requiredContractVersion": "1",
+    "settings": {
+      "registry": {
+        "locations": [
+          {"scope": "machine", "view": "64"},
+          {"scope": "machine", "view": "32"},
+          {"scope": "user", "view": "native"}
+        ],
+        "match": [
+          {"value": "subkey", "equals": "7-Zip"}
+        ]
+      }
+    }
+  },
+  "release": {"channel": "stable"},
+  "artifact": {
+    "formats": ["zip"],
+    "architectures": ["x64"],
+    "allowUnknownArchitecture": false
+  }
+}
