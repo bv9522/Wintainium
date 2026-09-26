@@ -45,7 +45,6 @@ internal static class WintainiumApplicationUpdateDecisionMapper
             ReasonCode: Nullable(decision, "ReasonCode"),
             Reason: Nullable(decision, "Reason"),
             SelectedRelease: MapRelease(decision.Properties["SelectedRelease"]?.Value),
-            SelectedArtifact: MapArtifact(decision.Properties["SelectedArtifact"]?.Value),
             IsDeterministic: Boolean(decision, "IsDeterministic"));
 
     private static WintainiumApplicationReleaseModel? MapRelease(object? value)
