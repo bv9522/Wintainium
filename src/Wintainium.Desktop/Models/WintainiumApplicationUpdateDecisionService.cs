@@ -21,7 +21,7 @@ internal sealed class WintainiumApplicationUpdateDecisionService
         if (string.IsNullOrWhiteSpace(machineArchitecture))
             throw new ArgumentException("The machine architecture is required.", nameof(machineArchitecture));
 
-        var invocation = await _coreClient.GetApplicationUpdateDecisionAsync(
+        var invocation = await _coreClient.GetApplicationUpdateStatusAsync(
             manifestPath,
             WintainiumDesktopPaths.InstalledStateRoot,
             machineArchitecture,
@@ -29,7 +29,7 @@ internal sealed class WintainiumApplicationUpdateDecisionService
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
             invocation,
-            "Get-WintainiumApplicationUpdateDecision",
+            "Get-WintainiumApplicationUpdateStatus",
             cancellationToken);
 
         return WintainiumApplicationUpdateDecisionMapper.Map(result);
