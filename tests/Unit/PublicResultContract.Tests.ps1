@@ -93,6 +93,7 @@ Describe 'Wintainium public result contract' {
         $expectedPropertySets = @(
             ,@('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'ReconciliationPlugin', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'InstalledState', 'Decision', 'Errors', 'Warnings', 'LogEvents')
         )
 
