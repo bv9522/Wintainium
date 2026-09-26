@@ -59,5 +59,28 @@ Describe 'Real-application Windows installed-application reconciliation' {
         $result.Evidence.EvidenceSource | Should -Be 'WindowsUninstallRegistry'
         $result.Evidence.Version | Should -Not -BeNullOrEmpty
         $result.Evidence.VersionSource | Should -Be 'Registry'
+
+        $stateRoot = Join-Path $TestDrive 'installed-state'
+        $stateUpdate = InModuleScope Wintainium.Core -Parameters @{
+            Root = $stateRoot
+            ReconciliationResult = $result
+        } {
+            param($Root, $ReconciliationResult)
+            Set-WintainiumInstalledApplicationStateFromReconciliation -StateRoot $Root -ReconciliationResult $ReconciliationResult
+        }
+
+        $stateUpdate.IsSuccessful | Should -BeTrue
+        $stateUpdate.Status | Should -Be 'StateUpdated'
+        $stateUpdate.State.InstallationState | Should -Be 'Installed'
+        $stateUpdate.State.Version | Should -Be $result.Evidence.Version
+
+        $authoritative = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId $request.ApplicationId -OperationId $request.OperationId
+        $authoritative.IsSuccessful | Should -BeTrue
+        $authoritative.Status | Should -Be 'Installed'
+        $authoritative.State.ApplicationId | Should -Be $request.ApplicationId
+        $authoritative.State.InstallationState | Should -Be 'Installed'
+        $authoritative.State.Version | Should -Be $result.Evidence.Version
+        $authoritative.State.VersionSource | Should -Be 'Registry'
+        $authoritative.State.Architecture | Should -Be 'unknown'
     }
 }
