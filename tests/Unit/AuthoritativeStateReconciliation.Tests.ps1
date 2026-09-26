@@ -79,6 +79,81 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
         }
     }
 
+
+    It 'enforces the authoritative state-transition matrix' {
+        InModuleScope Wintainium.Core {
+            $transitions = @(
+                @{ Name='Installed to Installed'; Prior='Installed'; Observed='Installed'; Expected='Installed'; Persisted=$true; Version='2.0.0' }
+                @{ Name='Installed to NotInstalled'; Prior='Installed'; Observed='NotInstalled'; Expected='NotInstalled'; Persisted=$true; Version=$null }
+                @{ Name='Installed to Unknown'; Prior='Installed'; Observed='Unknown'; Expected='Installed'; Persisted=$false; Version='1.0.0' }
+                @{ Name='Unknown to Installed'; Prior='Unknown'; Observed='Installed'; Expected='Installed'; Persisted=$true; Version='2.0.0' }
+                @{ Name='Unknown to NotInstalled'; Prior='Unknown'; Observed='NotInstalled'; Expected='NotInstalled'; Persisted=$true; Version=$null }
+                @{ Name='Unknown to Unknown'; Prior='Unknown'; Observed='Unknown'; Expected='Unknown'; Persisted=$false; Version=$null }
+            )
+
+            foreach ($transition in $transitions) {
+                $stateRoot = Join-Path $TestDrive ($transition.Name -replace ' ', '-')
+                $operationId = [guid]::NewGuid().ToString()
+                $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState $transition.Prior -Version $(if ($transition.Prior -eq 'Installed') { '1.0.0' } else { $null }) -VersionSource $(if ($transition.Prior -eq 'Installed') { 'Prior' } else { $null }) -Architecture x64 -Channel stable -InstallationLocation '/opt/example'
+                if ($transition.Prior -eq 'Installed') {
+                    Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State $priorState | Out-Null
+                }
+
+                $evidence = [pscustomobject]@{
+                    ApplicationId='example.app'
+                    InstallationState=$transition.Observed
+                    Version=$transition.Version
+                    VersionSource=$(if ($transition.Observed -eq 'Installed') { 'Observed' } else { $null })
+                    Architecture='unknown'
+                    Channel='unknown'
+                    InstallationLocation=$(if ($transition.Observed -eq 'Installed') { '/opt/example-v2' } else { $null })
+                    EvidenceSource='Fixture'
+                }
+                $reconciliation = [pscustomobject]@{
+                    OperationId=$operationId
+                    IsSuccessful=$true
+                    Status='Reconciled'
+                    Evidence=$evidence
+                    Errors=@()
+                    Warnings=@()
+                    LogEvents=@()
+                }
+
+                $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+                $result.IsSuccessful | Should -BeTrue -Because $transition.Name
+                $result.Persisted | Should -Be $transition.Persisted -Because $transition.Name
+                $result.State.InstallationState | Should -Be $transition.Expected -Because $transition.Name
+
+                if ($transition.Observed -eq 'Unknown') {
+                    $result.ReasonCode | Should -Be 'UnknownEvidencePreserved' -Because $transition.Name
+                    $result.State.Version | Should -Be $priorState.Version -Because $transition.Name
+                }
+                elseif ($transition.Observed -eq 'Installed') {
+                    $result.State.Version | Should -Be '2.0.0' -Because $transition.Name
+                    $result.State.VersionSource | Should -Be 'Observed' -Because $transition.Name
+                }
+                else {
+                    $result.State.Version | Should -BeNullOrEmpty -Because $transition.Name
+                }
+
+                $persistedPath = Join-Path $stateRoot 'installed-state.json'
+                if ($transition.Persisted) {
+                    Test-Path $persistedPath | Should -BeTrue -Because $transition.Name
+                    (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').InstallationState | Should -Be $transition.Expected -Because $transition.Name
+                }
+                else {
+                    if ($transition.Prior -eq 'Installed') {
+                        (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').InstallationState | Should -Be 'Installed' -Because $transition.Name
+                    }
+                    else {
+                        Test-Path $persistedPath | Should -BeFalse -Because $transition.Name
+                    }
+                }
+            }
+        }
+    }
+
     It 'rejects reconciliation evidence with a mismatched OperationId without persistence' {
         InModuleScope Wintainium.Core {
             $stateRoot = Join-Path $TestDrive 'operation-id'
