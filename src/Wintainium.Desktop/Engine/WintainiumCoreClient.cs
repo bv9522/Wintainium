@@ -141,7 +141,7 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
-    public Task<WintainiumPowerShellInvocationResult> GetApplicationUpdateDecisionAsync(
+    public Task<WintainiumPowerShellInvocationResult> GetApplicationUpdateStatusAsync(
         string manifestPath,
         string stateRoot,
         string machineArchitecture,
