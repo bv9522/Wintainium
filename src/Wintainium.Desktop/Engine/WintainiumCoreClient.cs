@@ -141,6 +141,32 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
+    public Task<WintainiumPowerShellInvocationResult> GetApplicationUpdateDecisionAsync(
+        string manifestPath,
+        string stateRoot,
+        string machineArchitecture,
+        string? pluginRoot = null,
+        string? schemaPath = null,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["StateRoot"] = stateRoot,
+            ["MachineArchitecture"] = machineArchitecture
+        };
+
+        AddOptional(parameters, "PluginRoot", pluginRoot);
+        AddOptional(parameters, "SchemaPath", schemaPath);
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Get-WintainiumApplicationUpdateDecision",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> UpdateApplicationAsync(
         string manifestPath,
         string stateRoot,
