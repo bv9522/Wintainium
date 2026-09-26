@@ -42,5 +42,39 @@ function Get-WintainiumApplicationUpdateStatus {
         [string]$OperationId
     )
 
-    Get-WintainiumApplicationUpdateDecision -ManifestPath $ManifestPath -StateRoot $StateRoot -MachineArchitecture $MachineArchitecture -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
+    $result = Get-WintainiumApplicationUpdateDecision -ManifestPath $ManifestPath -StateRoot $StateRoot -MachineArchitecture $MachineArchitecture -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
+
+    $decision = $null
+    if ($null -ne $result.Decision) {
+        $selectedRelease = $result.Decision.SelectedRelease
+        $decision = [pscustomobject][ordered]@{
+            IsUpdateAvailable = $result.Decision.IsUpdateAvailable
+            ReasonCode = $result.Decision.ReasonCode
+            Reason = $result.Decision.Reason
+            IsDeterministic = $result.Decision.IsDeterministic
+            SelectedRelease = if ($null -eq $selectedRelease) {
+                $null
+            }
+            else {
+                [pscustomobject][ordered]@{
+                    ReleaseId = [string]$selectedRelease.ReleaseId
+                    Version = [string]$selectedRelease.Version
+                    Channel = [string]$selectedRelease.Channel
+                    PublishedAt = $selectedRelease.PublishedAt
+                }
+            }
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        OperationId = $result.OperationId
+        IsSuccessful = $result.IsSuccessful
+        Status = $result.Status
+        Manifest = $result.Manifest
+        InstalledState = $result.InstalledState
+        Decision = $decision
+        Errors = @($result.Errors)
+        Warnings = @($result.Warnings)
+        LogEvents = @($result.LogEvents)
+    }
 }
