@@ -38,8 +38,16 @@ internal sealed record WintainiumApplicationModel(
     public string InstalledVersionText => InstalledVersion ?? "Not installed";
 
     public string AvailableVersionText => AvailableVersion ?? "—";
-}
 
+    public string PublisherText => string.IsNullOrWhiteSpace(Publisher)
+        ? "Publisher unknown"
+        : Publisher;
+
+    public string SourceProviderText => string.IsNullOrWhiteSpace(SourceProviderId)
+        ? "Source unknown"
+        : SourceProviderId;
+}
+    
 internal enum WintainiumInstallationState
 {
     Installed,
