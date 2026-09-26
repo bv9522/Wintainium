@@ -49,7 +49,7 @@
         </Grid>
 
         <Grid Grid.Row="1" Margin="28,0,28,16">
-                        <GridView
+            <GridView
                 x:Name="ApplicationGridView"
                 Visibility="Collapsed"
                 SelectionMode="Single"
@@ -96,9 +96,14 @@
                                 <TextBlock Text="{Binding ApplicationId}" Opacity="0.65" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="3">
-                                <TextBlock Text="{Binding InstalledVersion, TargetNullValue=Not installed}"
+                                <TextBlock Text="{Binding InstalledVersionText}"
                                            HorizontalAlignment="Right" />
-                                <TextBlock Text="{Binding UpdateStatus}" Opacity="0.72" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding AvailableVersionText}"
+                                           HorizontalAlignment="Right"
+                                           Opacity="0.72" />
+                                <TextBlock Text="{Binding InstallationStateText}"
+                                           HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" HorizontalAlignment="Right" />
                             </StackPanel>
                         </Grid>
                     </DataTemplate>
