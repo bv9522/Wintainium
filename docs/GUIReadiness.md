@@ -90,7 +90,7 @@ The GUI must present `Unknown` as unknown/indeterminate and must not silently re
 
 ## Current update boundary
 
-The current public surface includes the complete Core-owned application update operation: Invoke-WintainiumApplicationUpdate. The earlier internal Get-WintainiumApplicationUpdateDecision composition boundary remains private; the public command owns lifecycle composition and returns the documented projected update result.
+The current public surface includes the complete Core-owned application update operation: Invoke-WintainiumApplicationUpdate, plus the read-only Get-WintainiumApplicationUpdateStatus boundary used by presentation clients. The detailed Get-WintainiumApplicationUpdateDecision composition remains private. The status command exposes structured decision observations without exposing private orchestration objects or execution authority.
 
 The public update operation is now authoritative for the end-to-end update lifecycle. A GUI must invoke it through the documented Core boundary rather than assembling a pseudo-update workflow from private stages or internal requests.
 
@@ -121,6 +121,6 @@ The GUI seam is considered ready when:
 
 ## 8F audit result
 
-All eight acceptance criteria remain satisfied by the current engine boundary and contract tests. The supported presentation surface is the six exported public commands, while internal update-decision composition and the Phase 7 lifecycle remain private. The public update result is projected into a stable presentation-neutral contract, and public collection properties remain arrays, including empty collections.
+All eight acceptance criteria remain satisfied by the current engine boundary and contract tests. The supported presentation surface is the seven exported public commands, including the read-only update-status observation boundary, while internal update-decision composition and the Phase 7 lifecycle remain private. The public update result is projected into a stable presentation-neutral contract, and public collection properties remain arrays, including empty collections.
 
-Phase 8F therefore established GUI readiness as an architectural contract, not as a GUI implementation. Phase 10 subsequently completed and exposed the public update operation without weakening that seam. Phase 11 can therefore build the Windows presentation client against the documented four-command boundary without reproducing engine policy or reaching into private orchestration.
+Phase 8F therefore established GUI readiness as an architectural contract, not as a GUI implementation. Phase 10 subsequently completed and exposed the public update operation without weakening that seam. Phase 11 and later desktop work can therefore consume the documented presentation boundary without reproducing engine policy or reaching into private orchestration.
