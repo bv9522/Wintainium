@@ -11,6 +11,7 @@ Describe 'Real application update lifecycle reconciliation' {
         InModuleScope Wintainium.Core -Parameters @{
             ManifestPath = (Join-Path $script:manifestRoot 'windows-7zip-reconciliation.json')
             SchemaPath = $script:schemaPath
+            PluginRoot = $script:pluginRoot
         } {
             $importResult = Import-WintainiumManifest -Path $ManifestPath -SchemaPath $SchemaPath
             $importResult.IsValid | Should -BeTrue -Because (($importResult.Errors | ForEach-Object { $_.Message }) -join ' | ')
@@ -19,7 +20,7 @@ Describe 'Real application update lifecycle reconciliation' {
 
             $provider = [pscustomobject]@{ PluginId = [string]$manifest.Source.pluginId; PluginType = 'Provider'; EntryPoint = 'provider.psm1'; DescriptorPath = '/fixture/provider/plugin.json' }
             $installer = [pscustomobject]@{ PluginId = [string]$manifest.Installer.pluginId; PluginType = 'Installer'; EntryPoint = 'installer.psm1'; DescriptorPath = '/fixture/installer/plugin.json' }
-            $reconciliationPlugin = [pscustomobject]@{ PluginId = [string]$manifest.Reconciliation.pluginId; PluginType = 'Reconciliation'; EntryPoint = 'Wintainium.reconciliation.windows-installed-application.psm1'; DescriptorPath = '/fixture/reconciliation/plugin.json' }
+            $reconciliationPlugin = [pscustomobject]@{ PluginId = [string]$manifest.Reconciliation.pluginId; PluginType = 'Reconciliation'; EntryPoint = 'Wintainium.reconciliation.windows-installed-application.psm1'; DescriptorPath = (Join-Path $PluginRoot 'Wintainium.reconciliation.windows-installed-application/plugin.json') }
 
             $release = [pscustomobject]@{
                 OperationId = $operationId
