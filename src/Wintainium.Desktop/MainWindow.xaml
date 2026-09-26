@@ -39,8 +39,9 @@
                 x:Name="ViewModeButton"
                 Grid.Column="2"
                 Margin="0,0,8,0"
-                Content="List"
-                Click="ViewModeButton_Click" />
+                Content="Grid"
+                Click="ViewModeButton_Click"
+                ToolTipService.ToolTip="Switch to grid view" />
 
             <Button
                 Grid.Column="3"
@@ -54,29 +55,39 @@
                 Visibility="Collapsed"
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
-                ItemClick="ApplicationGridView_ItemClick">
+                ItemClick="ApplicationGridView_ItemClick"
+                Padding="4"
+                HorizontalAlignment="Stretch">
                 <GridView.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Width="220" Spacing="8" Padding="12">
-                            <Border Width="64" Height="64" CornerRadius="12" HorizontalAlignment="Left">
-                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="28"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding PublisherText}"
-                                       Opacity="0.72"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding InstalledVersionText}"
-                                       Opacity="0.72" />
-                            <TextBlock Text="{Binding AvailableVersionText}"
-                                       Opacity="0.72" />
-                            <TextBlock Text="{Binding InstallationStateText}" />
-                            <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
-                            <TextBlock Text="{Binding SourceProviderText}"
-                                       Opacity="0.60"
-                                       TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                        <Border Width="220" Padding="12" CornerRadius="8">
+                            <StackPanel Spacing="8">
+                                <Border Width="56" Height="56" CornerRadius="10" HorizontalAlignment="Left">
+                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{Binding Name}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxLines="2" />
+                                <TextBlock Text="{Binding PublisherText}"
+                                           Opacity="0.72"
+                                           TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding InstallationStateText}" />
+                                    <TextBlock Text="·" Opacity="0.45" />
+                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding InstalledVersionText}"
+                                           Opacity="0.72" />
+                                <TextBlock Text="{Binding AvailableVersionText}"
+                                           Opacity="0.72" />
+                                <TextBlock Text="{Binding SourceProviderText}"
+                                           Opacity="0.60"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </GridView.ItemTemplate>
             </GridView>
@@ -84,7 +95,8 @@
                 x:Name="ApplicationListView"
                 SelectionMode="Single"
                 IsItemClickEnabled="True"
-                ItemClick="ApplicationListView_ItemClick">
+                ItemClick="ApplicationListView_ItemClick"
+                Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="8,10">
