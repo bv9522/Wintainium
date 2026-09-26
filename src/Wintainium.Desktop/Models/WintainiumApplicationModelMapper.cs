@@ -98,6 +98,49 @@ internal static class WintainiumApplicationModelMapper
         };
     }
 
+    public static WintainiumApplicationModel ApplyUpdateDecision(
+        WintainiumApplicationModel application,
+        WintainiumApplicationUpdateDecisionResult decisionResult)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+        ArgumentNullException.ThrowIfNull(decisionResult);
+
+        var decision = decisionResult.Decision;
+        if (!decisionResult.IsSuccessful || decision is null)
+        {
+            return application with
+            {
+                AvailableVersion = null,
+                UpdateStatus = WintainiumUpdateStatus.Unknown
+            };
+        }
+
+        if (decision.IsUpdateAvailable == true)
+        {
+            return application with
+            {
+                AvailableVersion = decision.SelectedRelease?.Version,
+                UpdateStatus = WintainiumUpdateStatus.UpdateAvailable
+            };
+        }
+
+        if (decision.IsUpdateAvailable == false &&
+            application.InstallationState == WintainiumInstallationState.Installed)
+        {
+            return application with
+            {
+                AvailableVersion = null,
+                UpdateStatus = WintainiumUpdateStatus.UpToDate
+            };
+        }
+
+        return application with
+        {
+            AvailableVersion = null,
+            UpdateStatus = WintainiumUpdateStatus.Unknown
+        };
+    }
+
     public static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(PSObject source, string propertyName) =>
         GetCollection(source, propertyName)
             .Select(item => new WintainiumOperationDiagnostic(
