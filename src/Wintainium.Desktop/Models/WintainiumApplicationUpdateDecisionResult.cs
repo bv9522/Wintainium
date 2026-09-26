@@ -15,5 +15,4 @@ internal sealed record WintainiumApplicationUpdateDecisionModel(
     string? ReasonCode,
     string? Reason,
     WintainiumApplicationReleaseModel? SelectedRelease,
-    WintainiumReleaseArtifactModel? SelectedArtifact,
     bool IsDeterministic);
