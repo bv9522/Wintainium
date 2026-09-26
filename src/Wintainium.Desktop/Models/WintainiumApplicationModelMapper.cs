@@ -42,6 +42,7 @@ internal static class WintainiumApplicationModelMapper
             IconUri: null,
             InstallationState: WintainiumInstallationState.Unknown,
             InstalledVersion: null,
+            AvailableVersion: null,
             LastUpdated: null,
             UpdateStatus: WintainiumUpdateStatus.Unknown,
             SourceProviderId: GetSourceProviderId(manifest),
