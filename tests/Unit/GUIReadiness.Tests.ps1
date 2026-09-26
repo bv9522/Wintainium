@@ -14,6 +14,7 @@ Describe 'Wintainium GUI-facing public boundary' {
         $exported | Should -Be @(
             'Get-WintainiumApplicationInstalledState'
             'Get-WintainiumApplicationRelease'
+            'Get-WintainiumApplicationUpdateDecision'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationUpdate'
@@ -22,7 +23,7 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'does not export internal orchestration or installer request helpers' {
-        Get-Command -Name 'Get-WintainiumApplicationUpdateDecision' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        Get-Command -Name 'Get-WintainiumApplicationUpdateDecisionInternal' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'New-WintainiumInstallerRequest' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'Invoke-WintainiumOrchestrationLifecycle' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
     }
@@ -60,6 +61,28 @@ Describe 'Wintainium GUI-facing public boundary' {
         $result.IsSuccessful | Should -BeFalse
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.Releases.GetType() | Should -Be ([object[]])
+        $result.Errors.GetType() | Should -Be ([object[]])
+        $result.Warnings.GetType() | Should -Be ([object[]])
+        $result.LogEvents.GetType() | Should -Be ([object[]])
+    }
+
+    It 'returns a structured update decision result at the presentation boundary' {
+        $missingManifest = Join-Path -Path $TestDrive -ChildPath 'missing-update-decision-manifest.json'
+        $stateRoot = Join-Path -Path $TestDrive -ChildPath 'state'
+
+        $result = Get-WintainiumApplicationUpdateDecision -ManifestPath $missingManifest -StateRoot $stateRoot -MachineArchitecture 'x64'
+
+        $result.PSObject.Properties.Name | Should -Contain 'OperationId'
+        $result.PSObject.Properties.Name | Should -Contain 'IsSuccessful'
+        $result.PSObject.Properties.Name | Should -Contain 'Status'
+        $result.PSObject.Properties.Name | Should -Contain 'Manifest'
+        $result.PSObject.Properties.Name | Should -Contain 'InstalledState'
+        $result.PSObject.Properties.Name | Should -Contain 'Decision'
+        $result.PSObject.Properties.Name | Should -Contain 'Errors'
+        $result.PSObject.Properties.Name | Should -Contain 'Warnings'
+        $result.PSObject.Properties.Name | Should -Contain 'LogEvents'
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'ProviderDiscoveryUnsuccessful'
         $result.Errors.GetType() | Should -Be ([object[]])
         $result.Warnings.GetType() | Should -Be ([object[]])
         $result.LogEvents.GetType() | Should -Be ([object[]])
