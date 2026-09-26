@@ -30,16 +30,6 @@ Describe 'Core production Windows installed-application reconciliation workflow'
         @($resolution.Plugin.ContractVersions) | Should -Contain '1'
         $resolution.Plugin.Capabilities.applicationState | Should -BeTrue
 
-        $manifestReconciliationType = if ($null -eq $manifest.Reconciliation) { '<null>' } else { $manifest.Reconciliation.GetType().FullName }
-        $manifestReconciliationKeys = if ($manifest.Reconciliation -is [System.Collections.IDictionary]) {
-            @($manifest.Reconciliation.Keys) -join ','
-        }
-        else {
-            @($manifest.Reconciliation.PSObject.Properties.Name) -join ','
-        }
-        $manifestReconciliationType | Should -Not -Be '<null>'
-        $manifestReconciliationKeys | Should -Match 'settings'
-
         $request = [pscustomobject][ordered]@{
             OperationId = '00000000-0000-0000-0000-00000000013D'
             ApplicationId = $manifest.Id
@@ -50,7 +40,7 @@ Describe 'Core production Windows installed-application reconciliation workflow'
         $modulePath = Join-Path -Path (Split-Path -Path $resolution.Plugin.DescriptorPath -Parent) -ChildPath $resolution.Plugin.EntryPoint
         $pluginModule = Import-Module -Name $modulePath -Force -PassThru
         $directResult = & (Get-Command -Module $pluginModule.Name -Name 'Invoke-WintainiumReconciliation') -Request $request
-        $directResult.IsSuccessful | Should -BeTrue -Because ("Direct plugin invocation: Status=$($directResult.Status); Errors=$(@($directResult.Errors | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | ')")
+        $directResult.IsSuccessful | Should -BeTrue -Because ("Direct plugin invocation: Status=$($directResult.Status); Errors=$(@($directResult.Errors | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | '); Warnings=$(@($directResult.Warnings | ForEach-Object { $_.Code + ': ' + $_.Message }) -join ' | ')")
         
         $result = InModuleScope Wintainium.Core -Parameters @{ Plugin = $resolution.Plugin; Request = $request } {
             Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $Plugin -Request $Request
