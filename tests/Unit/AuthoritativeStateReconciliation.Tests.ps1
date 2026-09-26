@@ -154,6 +154,98 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
         }
     }
 
+
+    It 'rejects malformed reconciliation evidence without persistence' {
+        InModuleScope Wintainium.Core {
+            $stateRoot = Join-Path $TestDrive 'malformed-evidence'
+            $operationId = [guid]::NewGuid().ToString()
+            $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0' -VersionSource 'Prior' -Architecture x64 -Channel stable
+            Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State $priorState | Out-Null
+            $reconciliation = [pscustomobject]@{
+                OperationId=$operationId
+                IsSuccessful=$true
+                Status='Reconciled'
+                Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='Installed' }
+                Errors=@(); Warnings=@(); LogEvents=@()
+            }
+
+            $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+            $result.IsSuccessful | Should -BeFalse
+            $result.Persisted | Should -BeFalse
+            $result.ReasonCode | Should -Be 'ReconciliationEvidenceInvalid'
+            (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').Version | Should -Be '1.0.0'
+        }
+    }
+
+    It 'rejects reconciliation evidence for a different application without persistence' {
+        InModuleScope Wintainium.Core {
+            $stateRoot = Join-Path $TestDrive 'application-id'
+            $operationId = [guid]::NewGuid().ToString()
+            $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0' -VersionSource 'Prior' -Architecture x64 -Channel stable
+            Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State $priorState | Out-Null
+            $reconciliation = [pscustomobject]@{
+                OperationId=$operationId
+                IsSuccessful=$true
+                Status='Reconciled'
+                Evidence=[pscustomobject]@{ ApplicationId='other.app'; InstallationState='Installed'; EvidenceSource='Fixture'; Version='9.9.9' }
+                Errors=@(); Warnings=@(); LogEvents=@()
+            }
+
+            $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+            $result.IsSuccessful | Should -BeFalse
+            $result.Persisted | Should -BeFalse
+            $result.ReasonCode | Should -Be 'ReconciliationEvidenceInvalid'
+            (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').Version | Should -Be '1.0.0'
+        }
+    }
+
+    It 'rejects an unsuccessful reconciliation result without overwriting authoritative state' {
+        InModuleScope Wintainium.Core {
+            $stateRoot = Join-Path $TestDrive 'reconciliation-failed'
+            $operationId = [guid]::NewGuid().ToString()
+            $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0' -VersionSource 'Prior' -Architecture x64 -Channel stable
+            Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State $priorState | Out-Null
+            $reconciliation = [pscustomobject]@{
+                OperationId=$operationId
+                IsSuccessful=$false
+                Status='Failed'
+                Evidence=[pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled'; EvidenceSource='Fixture' }
+                Errors=@([pscustomobject]@{ Code='WindowsRegistryLocationReadFailed'; Message='registry unavailable' })
+                Warnings=@(); LogEvents=@()
+            }
+
+            $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+            $result.IsSuccessful | Should -BeFalse
+            $result.Persisted | Should -BeFalse
+            $result.ReasonCode | Should -Be 'ReconciliationFailed'
+            $result.State.Version | Should -Be '1.0.0'
+            (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').InstallationState | Should -Be 'Installed'
+        }
+    }
+
+    It 'reports authoritative persistence failure without claiming the new state was persisted' {
+        InModuleScope Wintainium.Core {
+            $stateRoot = Join-Path $TestDrive 'persistence-failed'
+            $operationId = [guid]::NewGuid().ToString()
+            $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0' -VersionSource 'Prior' -Architecture x64 -Channel stable
+            $evidence = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled'; EvidenceSource='Fixture' }
+            $reconciliation = [pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='Reconciled'; Evidence=$evidence; Errors=@(); Warnings=@(); LogEvents=@() }
+
+            Mock Set-WintainiumInstalledApplicationState { throw 'synthetic persistence failure' }
+
+            $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+            $result.IsSuccessful | Should -BeFalse
+            $result.Persisted | Should -BeFalse
+            $result.ReasonCode | Should -Be 'InstalledStatePersistenceFailed'
+            $result.State | Should -Be $priorState
+            Should -Invoke Set-WintainiumInstalledApplicationState -Times 1 -Exactly
+        }
+    }
+
     It 'rejects reconciliation evidence with a mismatched OperationId without persistence' {
         InModuleScope Wintainium.Core {
             $stateRoot = Join-Path $TestDrive 'operation-id'
