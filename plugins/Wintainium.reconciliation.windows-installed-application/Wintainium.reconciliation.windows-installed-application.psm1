@@ -41,8 +41,8 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $reader = {
             param($location)
             $subKeyPath = 'Software\Microsoft\Windows\CurrentVersion\Uninstall'
-            $scope = [string](Get-WintainiumWindowsSettingValue -Object $location -Name 'scope')
-            $locationView = [string](Get-WintainiumWindowsSettingValue -Object $location -Name 'view')
+            $scope = if ($location -is [System.Collections.IDictionary]) { [string]$location['scope'] } else { [string]$location.PSObject.Properties['scope'].Value }
+            $locationView = if ($location -is [System.Collections.IDictionary]) { [string]$location['view'] } else { [string]$location.PSObject.Properties['view'].Value }
             $hive = switch ($scope) {
                 'machine' { [Microsoft.Win32.RegistryHive]::LocalMachine; break }
                 'user' { [Microsoft.Win32.RegistryHive]::CurrentUser; break }
