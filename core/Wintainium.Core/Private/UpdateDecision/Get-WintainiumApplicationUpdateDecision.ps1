@@ -1,4 +1,4 @@
-function Get-WintainiumApplicationUpdateDecision {
+function Get-WintainiumApplicationUpdateDecisionInternal {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$ManifestPath,
