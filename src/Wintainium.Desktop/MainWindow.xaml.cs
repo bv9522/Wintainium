@@ -66,6 +66,7 @@ public sealed partial class MainWindow : Window
 
     private void ViewModeButton_Click(object sender, RoutedEventArgs e)
     {
+        var selectedApplicationId = GetSelectedApplicationId();
         var nextMode = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
             ? WintainiumApplicationViewMode.Grid
             : WintainiumApplicationViewMode.List;
@@ -73,13 +74,53 @@ public sealed partial class MainWindow : Window
         _applicationCollection.SetViewMode(nextMode);
         UpdateViewModeButton();
         UpdateCollectionVisibility();
+        RestoreSelectedApplication(selectedApplicationId);
     }
 
     private void UpdateViewModeButton()
     {
-        ViewModeButton.Content = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
-            ? "List"
-            : "Grid";
+        var switchingToGrid = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List;
+        ViewModeButton.Content = switchingToGrid ? "Grid" : "List";
+        ToolTipService.SetToolTip(
+            ViewModeButton,
+            switchingToGrid ? "Switch to grid view" : "Switch to list view");
+    }
+
+    private string? GetSelectedApplicationId()
+    {
+        var selected = _applicationCollection.ViewMode == WintainiumApplicationViewMode.List
+            ? ApplicationListView.SelectedItem as WintainiumApplicationModel
+            : ApplicationGridView.SelectedItem as WintainiumApplicationModel;
+
+        return selected?.ApplicationId;
+    }
+
+    private void RestoreSelectedApplication(string? applicationId)
+    {
+        if (string.IsNullOrWhiteSpace(applicationId))
+        {
+            return;
+        }
+
+        var selected = _applicationCollection.Applications.FirstOrDefault(
+            application => string.Equals(
+                application.ApplicationId,
+                applicationId,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (selected is null)
+        {
+            return;
+        }
+
+        if (_applicationCollection.ViewMode == WintainiumApplicationViewMode.List)
+        {
+            ApplicationListView.SelectedItem = selected;
+        }
+        else
+        {
+            ApplicationGridView.SelectedItem = selected;
+        }
     }
 
     private async void ApplicationGridView_ItemClick(object sender, ItemClickEventArgs e)
