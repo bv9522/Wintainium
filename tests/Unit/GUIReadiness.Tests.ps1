@@ -14,7 +14,7 @@ Describe 'Wintainium GUI-facing public boundary' {
         $exported | Should -Be @(
             'Get-WintainiumApplicationInstalledState'
             'Get-WintainiumApplicationRelease'
-            'Get-WintainiumApplicationUpdateDecision'
+            'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationUpdate'
@@ -23,7 +23,7 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'does not export internal orchestration or installer request helpers' {
-        Get-Command -Name 'Get-WintainiumApplicationUpdateDecisionInternal' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        Get-Command -Name 'Get-WintainiumApplicationUpdateStatus' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'New-WintainiumInstallerRequest' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'Invoke-WintainiumOrchestrationLifecycle' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
     }
@@ -70,7 +70,7 @@ Describe 'Wintainium GUI-facing public boundary' {
         $missingManifest = Join-Path -Path $TestDrive -ChildPath 'missing-update-decision-manifest.json'
         $stateRoot = Join-Path -Path $TestDrive -ChildPath 'state'
 
-        $result = Get-WintainiumApplicationUpdateDecision -ManifestPath $missingManifest -StateRoot $stateRoot -MachineArchitecture 'x64'
+        $result = Get-WintainiumApplicationUpdateStatus -ManifestPath $missingManifest -StateRoot $stateRoot -MachineArchitecture 'x64'
 
         $result.PSObject.Properties.Name | Should -Contain 'OperationId'
         $result.PSObject.Properties.Name | Should -Contain 'IsSuccessful'
