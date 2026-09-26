@@ -23,7 +23,7 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'does not export internal orchestration or installer request helpers' {
-        Get-Command -Name 'Get-WintainiumApplicationUpdateStatus' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        Get-Command -Name 'Get-WintainiumApplicationUpdateDecision' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'New-WintainiumInstallerRequest' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         Get-Command -Name 'Invoke-WintainiumOrchestrationLifecycle' -Module Wintainium.Core -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
     }
