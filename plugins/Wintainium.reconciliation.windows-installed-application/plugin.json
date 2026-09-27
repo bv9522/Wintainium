@@ -4,6 +4,7 @@
   "contractVersions": ["1"],
   "entryPoint": "Wintainium.reconciliation.windows-installed-application.psm1",
   "capabilities": {
-    "applicationState": true
+    "applicationState": true,
+    "requiresConfiguration": true
   }
 }
