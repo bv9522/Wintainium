@@ -43,6 +43,7 @@ Describe 'Wintainium installer selection' {
         $result.IsSelected | Should -Be $true
         $result.InstallerPlugin.PluginId | Should -Be 'Wintainium.installer.exe'
         $result.ArtifactFormat | Should -Be 'exe'
+        $result.InstallationMode | Should -Be 'process'
         $result.Error | Should -Be $null
     }
 
