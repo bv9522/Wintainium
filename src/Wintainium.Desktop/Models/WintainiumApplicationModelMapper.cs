@@ -55,21 +55,50 @@ internal static class WintainiumApplicationModelMapper
         if (source is null)
             return null;
 
-        // Core preserves the manifest's declarative Source object as an IDictionary.
-        // PowerShell's PSObject property adapter does not reliably expose dictionary
-        // keys as PSObject properties, so read the pluginId key explicitly at the
-        // presentation boundary rather than teaching Core to reshape its manifest.
-        var pluginId = GetNullableString(source, "PluginId");
-        if (!string.IsNullOrWhiteSpace(pluginId))
-            return pluginId;
+        // Source is declarative manifest data. Depending on how PowerShell materializes
+        // the object at the hosting boundary, it may arrive as a PSObject wrapping an
+        // IDictionary rather than exposing dictionary keys through PSObject.Properties.
+        // Read the declared pluginId without reshaping or interpreting the manifest.
+        return GetObjectMemberString(source, "pluginId");
+    }
 
-        if (source.BaseObject is IDictionary dictionary)
+    private static string? GetObjectMemberString(PSObject source, string memberName)
+    {
+        for (var current = source; current is not null;)
         {
-            foreach (DictionaryEntry entry in dictionary)
+            var property = current.Properties[memberName];
+            if (property?.Value is not null)
             {
-                if (string.Equals(Convert.ToString(entry.Key), "pluginId", StringComparison.OrdinalIgnoreCase))
-                    return entry.Value is null ? null : Convert.ToString(entry.Value);
+                var value = Convert.ToString(property.Value);
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
             }
+
+            if (current.BaseObject is IDictionary dictionary)
+            {
+                foreach (DictionaryEntry entry in dictionary)
+                {
+                    if (string.Equals(
+                        Convert.ToString(entry.Key),
+                        memberName,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        var value = entry.Value is null ? null : Convert.ToString(entry.Value);
+                        if (!string.IsNullOrWhiteSpace(value))
+                            return value;
+                    }
+                }
+
+                return null;
+            }
+
+            if (current.BaseObject is PSObject nested)
+            {
+                current = nested;
+                continue;
+            }
+
+            return null;
         }
 
         return null;
