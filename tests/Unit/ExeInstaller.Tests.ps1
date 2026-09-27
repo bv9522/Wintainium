@@ -6,6 +6,7 @@ BeforeAll {
 
     Import-Module $script:modulePath -Force
     $script:installerModule = Import-Module $script:installerPath -Force -PassThru
+    $script:installerCommand = Get-Command -Module $script:installerModule.Name -Name 'Invoke-WintainiumInstaller' -CommandType Function
 
     $script:tempRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('Wintainium-ExeInstaller-' + [guid]::NewGuid().ToString())
     New-Item -ItemType Directory -Path $script:tempRoot -Force | Out-Null
@@ -40,7 +41,7 @@ Describe 'Wintainium generic EXE installer' {
     }
 
     It 'uses the downloaded artifact as the executable path' {
-        $result = & $script:installerModule -Invocation $script:invocation
+        $result = & $script:installerCommand -Invocation $script:invocation
 
         $result.ExecutablePath | Should -Be ([System.IO.Path]::GetFullPath($script:artifactPath))
         @($result.Arguments) | Should -Be @('/S', '/D=C:Program FilesTest')
