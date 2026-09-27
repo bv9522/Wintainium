@@ -27,6 +27,15 @@ Desktop presents update outcome
 WintainiumApplicationInstalledStateService
         |
         v
+Invoke-WintainiumApplicationReconciliation
+        |
+        v
+Windows/application reconciliation plugin
+        |
+        v
+Authoritative installed-state persistence
+        |
+        v
 Get-WintainiumApplicationInstalledState
         |
         v
@@ -44,7 +53,7 @@ state describes what Core's authoritative state boundary reports afterward.
 The desktop client may:
 
 - retain the structured update result for presentation;
-- request a fresh installed-state observation after the update operation returns;
+- request a fresh installed-state observation after the update operation returns;\n- request Core reconciliation when the application collection is refreshed so persisted state can be established from real system evidence;
 - replace its presentation model with the returned installed-state observation;
 - present structured refresh errors without inventing state.
 
@@ -69,7 +78,7 @@ unchanged and surfaces the structured refresh diagnostics.
 
 ## Checkpoint
 
-The Phase 12F automated checkpoint is green. Brian observed the x64 Debug desktop build succeed and the complete desktop EngineProbe pass, including:
+The Phase 12F automated checkpoint is green. The later reconciliation integration work also establishes a public Core refresh boundary so the desktop can populate installed state from Windows evidence rather than requiring prior update execution. Brian observed the x64 Debug desktop build succeed and the complete desktop EngineProbe pass, including:
 
 - Authoritative installed-state refresh
 - Structured operation state and diagnostics
