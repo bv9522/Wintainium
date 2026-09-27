@@ -54,7 +54,7 @@ Describe 'Wintainium generic EXE installer' {
             Settings = [ordered]@{}
         }
 
-        $result = & $script:installerModule -Invocation $invocation
+        $result = & $script:installerCommand -Invocation $invocation
 
         @($result.Arguments).Count | Should -Be 0
     }
