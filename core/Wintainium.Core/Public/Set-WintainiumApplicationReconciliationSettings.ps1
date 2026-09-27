@@ -152,11 +152,18 @@ function Set-WintainiumApplicationReconciliationSettings {
         }
     }
 
-    $updated = $manifest | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    # Reconstruct the persisted manifest from its original JSON shape rather than the
+    # presentation model returned by Import-WintainiumManifest. The model intentionally
+    # exposes optional properties as null, but JSON Schema does not permit null values for
+    # those optional string/object fields.
+    $rawManifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding utf8 -ErrorAction Stop |
+        ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop
+
     # Normalize caller-provided structured settings through JSON so ordered dictionaries
     # and other dictionary implementations become ordinary manifest-compatible objects.
-    $normalizedSettings = $Settings | ConvertTo-Json -Depth 30 | ConvertFrom-Json
-    $updated.reconciliation.settings = $normalizedSettings
+    $normalizedSettings = $Settings | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable -Depth 100
+    $rawManifest['reconciliation']['settings'] = $normalizedSettings
+    $updated = [pscustomobject]$rawManifest
 
     try {
         $destination = Set-WintainiumApplicationDefinition -ApplicationDefinition $updated -ManifestRoot (Split-Path -Path $ManifestPath -Parent) -SchemaPath $SchemaPath
