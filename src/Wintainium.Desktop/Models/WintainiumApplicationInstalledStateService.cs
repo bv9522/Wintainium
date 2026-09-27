@@ -36,6 +36,33 @@ internal sealed class WintainiumApplicationInstalledStateService
         return Map(result);
     }
 
+    public async Task<WintainiumApplicationInstalledStateResult> RefreshAsync(
+        string manifestPath,
+        string stateRoot,
+        string? pluginRoot = null,
+        string? schemaPath = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(manifestPath))
+            throw new ArgumentException("The application manifest path is required.", nameof(manifestPath));
+        if (string.IsNullOrWhiteSpace(stateRoot))
+            throw new ArgumentException("The installed-state path is required.", nameof(stateRoot));
+
+        var invocation = await _coreClient.ReconcileApplicationAsync(
+            manifestPath,
+            stateRoot,
+            pluginRoot,
+            schemaPath,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var result = WintainiumCoreInvocationGuard.RequireSingleResult(
+            invocation,
+            "Invoke-WintainiumApplicationReconciliation",
+            cancellationToken);
+
+        return Map(result);
+    }
+
     private static WintainiumApplicationInstalledStateResult Map(PSObject result)
     {
         return new WintainiumApplicationInstalledStateResult(
