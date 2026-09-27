@@ -17,46 +17,32 @@ function Test-WintainiumPluginDescriptor {
     }
 
     if ($null -ne $descriptor) {
-        # ConvertFrom-Json represents a one-element JSON array as a scalar in some
-        # PowerShell object graphs. Validate the original JSON shape so a scalar
-        # supportedFormats value cannot be mistaken for an array.
         try {
             $jsonDocument = [System.Text.Json.JsonDocument]::Parse($json)
             $root = $jsonDocument.RootElement
-
             if ($root.ValueKind -eq [System.Text.Json.JsonValueKind]::Object) {
                 $pluginTypeElement = $root.GetProperty('pluginType')
-                if ($pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and
-                    $pluginTypeElement.GetString() -eq 'Installer') {
+                if ($pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and $pluginTypeElement.GetString() -eq 'Installer') {
                     $capabilitiesElement = $root.GetProperty('capabilities')
                     $formatsElement = $capabilitiesElement.GetProperty('supportedFormats')
                     if ($formatsElement.ValueKind -ne [System.Text.Json.JsonValueKind]::Array) {
-                        $errors.Add([pscustomobject]@{
-                                Code = 'DescriptorInstallerFormatsInvalid'
-                                Message = 'Installer supportedFormats must be an array of format identifier strings.'
-                            })
+                        $errors.Add([pscustomobject]@{ Code='DescriptorInstallerFormatsInvalid'; Message='Installer supportedFormats must be an array of format identifier strings.' })
                     }
                 }
             }
-
             $jsonDocument.Dispose()
         }
-        catch {
-            # JSON syntax/shape validity is reported by the regular descriptor
-            # validation below when required properties are missing or malformed.
-        }
+        catch { }
+
         if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer|reconciliation)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginIdInvalid'; Message = 'pluginId is missing or invalid.' })
         }
-
         if (-not $descriptor.ContainsKey('pluginType') -or $descriptor.pluginType -notin @('Provider', 'Installer', 'Reconciliation')) {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginTypeInvalid'; Message = 'pluginType must be Provider, Installer, or Reconciliation.' })
         }
-
         if (-not $descriptor.ContainsKey('contractVersions') -or $descriptor.contractVersions.Count -eq 0 -or @($descriptor.contractVersions | Where-Object { $_ -notmatch '^[1-9][0-9]*$' }).Count -gt 0) {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorContractVersionsInvalid'; Message = 'contractVersions must contain one or more positive major versions.' })
         }
-
         if (-not $descriptor.ContainsKey('capabilities') -or $descriptor.capabilities -isnot [System.Collections.IDictionary]) {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorCapabilitiesInvalid'; Message = 'capabilities must be an object.' })
         }
@@ -65,43 +51,37 @@ function Test-WintainiumPluginDescriptor {
         $capabilities = if ($descriptor.ContainsKey('capabilities') -and $descriptor.capabilities -is [System.Collections.IDictionary]) { $descriptor.capabilities } else { $null }
 
         if ($pluginType -eq 'Provider') {
-            if (-not $descriptor.ContainsKey('entryPoint') -or
-                $descriptor.entryPoint -isnot [string] -or
-                $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or
-                $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
+            if (-not $descriptor.ContainsKey('entryPoint') -or $descriptor.entryPoint -isnot [string] -or $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
                 $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderEntryPointInvalid'; Message = 'Provider descriptors require a relative .psm1 entryPoint without parent-directory traversal.' })
             }
 
             if ($null -ne $capabilities) {
-                if (-not $capabilities.ContainsKey('releaseDiscovery') -or $capabilities.releaseDiscovery -ne $true) {
-                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderReleaseDiscoveryMissing'; Message = 'Provider descriptors require capabilities.releaseDiscovery=true.' })
+                $sourceResolution = $capabilities.ContainsKey('sourceResolution') -and $capabilities.sourceResolution -eq $true
+                $releaseDiscovery = $capabilities.ContainsKey('releaseDiscovery') -and $capabilities.releaseDiscovery -eq $true
+                $artifactDiscovery = $capabilities.ContainsKey('artifactDiscovery') -and $capabilities.artifactDiscovery -eq $true
+
+                if (-not $sourceResolution -and (-not $releaseDiscovery -or -not $artifactDiscovery)) {
+                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderDiscoveryCapabilitiesMissing'; Message = 'Provider descriptors must advertise sourceResolution=true or both releaseDiscovery=true and artifactDiscovery=true.' })
                 }
 
-                if (-not $capabilities.ContainsKey('artifactDiscovery') -or $capabilities.artifactDiscovery -ne $true) {
-                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderArtifactDiscoveryMissing'; Message = 'Provider descriptors require capabilities.artifactDiscovery=true.' })
+                if (($releaseDiscovery -or $artifactDiscovery) -and (-not $releaseDiscovery -or -not $artifactDiscovery)) {
+                    $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderDiscoveryCapabilitiesIncomplete'; Message = 'Provider releaseDiscovery and artifactDiscovery capabilities must be declared together.' })
                 }
             }
         }
 
         if ($pluginType -eq 'Reconciliation') {
-            if (-not $descriptor.ContainsKey('entryPoint') -or
-                $descriptor.entryPoint -isnot [string] -or
-                $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or
-                $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
+            if (-not $descriptor.ContainsKey('entryPoint') -or $descriptor.entryPoint -isnot [string] -or $descriptor.entryPoint -notmatch '^[^\\/:*?"<>|]+\.psm1$' -or $descriptor.entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
                 $errors.Add([pscustomobject]@{ Code = 'DescriptorReconciliationEntryPointInvalid'; Message = 'Reconciliation descriptors require a relative .psm1 entryPoint without parent-directory traversal.' })
             }
-
-            if ($null -ne $capabilities -and
-                (-not $capabilities.ContainsKey('applicationState') -or $capabilities.applicationState -ne $true)) {
+            if ($null -ne $capabilities -and (-not $capabilities.ContainsKey('applicationState') -or $capabilities.applicationState -ne $true)) {
                 $errors.Add([pscustomobject]@{ Code = 'DescriptorReconciliationApplicationStateMissing'; Message = 'Reconciliation descriptors require capabilities.applicationState=true.' })
             }
         }
 
         if ($pluginType -eq 'Installer' -and $null -ne $capabilities) {
             $installerResult = Test-WintainiumInstallerDescriptor -Descriptor $descriptor
-            foreach ($installerError in @($installerResult.Errors)) {
-                $errors.Add($installerError)
-            }
+            foreach ($installerError in @($installerResult.Errors)) { $errors.Add($installerError) }
         }
     }
 
