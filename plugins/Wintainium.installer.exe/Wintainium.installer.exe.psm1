@@ -43,7 +43,7 @@ function Invoke-WintainiumInstaller {
         throw 'EXE installer requires an existing absolute artifact path.'
     }
 
-    if (-not [string]$Invocation.ArtifactFormat -ieq 'exe') {
+    if (-not ([string]$Invocation.ArtifactFormat -ieq 'exe')) {
         throw "EXE installer requires artifact format 'exe'."
     }
 
