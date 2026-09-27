@@ -35,7 +35,7 @@ Describe 'Wintainium application update decision composition' {
         }
     }
 
-    It 'composes persisted installed state into the Phase 4 decision without exposing internal inputs to the caller' {
+    It 'composes freshly reconciled installed state into the Phase 4 decision without exposing internal inputs to the caller' {
         $stateRoot = Join-Path $TestDrive 'state'
         InModuleScope Wintainium.Core -Parameters @{ Manifest=$manifest; Release=$successfulRelease; StateRoot=$stateRoot } {
             param($Manifest,$Release,$StateRoot)
@@ -97,6 +97,31 @@ Describe 'Wintainium application update decision composition' {
             $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
             $result.Status | Should -Be 'ApplicationNotInstalled'
             $result.Decision.IsUpdateAvailable | Should -BeFalse
+        }
+    }
+
+    It 'does not make an update decision when installed-state reconciliation fails' {
+        $stateRoot = Join-Path $TestDrive 'reconciliation-failure'
+        $reconciliationFailure = [pscustomobject]@{
+            OperationId = $successfulRelease.OperationId
+            IsSuccessful = $false
+            Status = 'ReconciliationUnavailable'
+            State = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Unknown
+            Errors = @([pscustomobject]@{ Code='ReconciliationPluginUnavailable'; Message='Reconciliation plugin is unavailable.' })
+            Warnings = @()
+            LogEvents = @()
+        }
+        InModuleScope Wintainium.Core -Parameters @{ Release=$successfulRelease; StateRoot=$stateRoot; Failure=$reconciliationFailure } {
+            param($Release,$StateRoot,$Failure)
+            Mock Get-WintainiumApplicationRelease { $Release }
+            Mock Invoke-WintainiumApplicationReconciliation { $Failure }
+            Mock Get-WintainiumInstalledApplicationState { throw 'Update decision must not bypass failed reconciliation.' }
+            $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
+            $result.IsSuccessful | Should -BeFalse
+            $result.Status | Should -Be 'InstalledStateReconciliationUnsuccessful'
+            $result.Errors[0].Code | Should -Be 'ReconciliationPluginUnavailable'
+            $result.InstalledState.InstallationState | Should -Be 'Unknown'
+            Should -Invoke Get-WintainiumInstalledApplicationState -Times 0
         }
     }
 
