@@ -81,7 +81,7 @@ Describe 'Wintainium application update lifecycle composition' {
             Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
             Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{ OperationId=$operationId; IsValid=$true; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; ReconciliationPlugin=$reconciliation; Errors=@(); Warnings=@(); LogEvents=@() } }
             Mock Invoke-WintainiumProviderOperation { $release }
-            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ ApplicationId='example.app'; InstallationState='Unknown'; Version=$null; VersionSource=$null; Architecture=$null; Channel=$null; InstallationLocation=$null } }
+            Mock Get-WintainiumInstalledApplicationState { New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Unknown }
             Mock Get-WintainiumUpdateDecision { $decision }
             Mock Invoke-WintainiumDownload { throw 'should not execute' }
             Mock Invoke-WintainiumArtifactVerification { throw 'should not execute' }
