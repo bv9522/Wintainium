@@ -106,7 +106,10 @@ Describe 'Wintainium application update decision composition' {
             OperationId = $successfulRelease.OperationId
             IsSuccessful = $false
             Status = 'ReconciliationUnavailable'
-            State = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Unknown
+            State = [pscustomobject]@{
+                ApplicationId = 'example.app'
+                InstallationState = 'Unknown'
+            }
             Errors = @([pscustomobject]@{ Code='ReconciliationPluginUnavailable'; Message='Reconciliation plugin is unavailable.' })
             Warnings = @()
             LogEvents = @()
