@@ -69,6 +69,11 @@ function New-WintainiumInstallerInvocation {
     }
 
     $settings = if ($null -ne $installer -and $installer.PSObject.Properties.Name -contains 'settings') { $installer.settings } else { $null }
+    $installationMode = if ($Selection.PSObject.Properties.Name -contains 'InstallationMode' -and -not [string]::IsNullOrWhiteSpace([string]$Selection.InstallationMode)) {
+        ([string]$Selection.InstallationMode).Trim().ToLowerInvariant()
+    } else {
+        'process'
+    }
     if ($null -eq $settings -or ($settings -isnot [System.Collections.IDictionary] -and $settings -isnot [pscustomobject])) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationSettingsInvalid'; Message = 'Installer invocation requires structured installer settings.' } }
     }
@@ -82,6 +87,7 @@ function New-WintainiumInstallerInvocation {
             PluginModulePath = $resolvedEntryPoint
             ArtifactPath = [System.IO.Path]::GetFullPath($artifactPath)
             ArtifactFormat = $artifactFormat
+            InstallationMode = $installationMode
             Settings = $settings
         }
         Error = $null
