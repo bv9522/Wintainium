@@ -1,7 +1,11 @@
-$script:testRoot = Split-Path -Path (Split-Path -Parent $PSScriptRoot) -Parent
-$modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+BeforeAll {
+    $script:testRoot = Split-Path -Path (Split-Path -Parent $PSScriptRoot) -Parent
+    $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+}
 
-Import-Module $modulePath -Force
+$modulePath = $script:modulePath
+
+Import-Module $script:modulePath -Force
 
 Describe 'Wintainium public installed application state command' {
     BeforeEach {
@@ -77,8 +81,8 @@ Describe 'Wintainium public installed application state command' {
         @($result.Errors | Where-Object Code -eq 'OperationIdInvalid').Count | Should -Be 1
     }
     It 'refreshes installed state through the declared reconciliation plugin' {
-        $manifestPath = Join-Path $script:testRoot 'tests/Fixtures/Manifests/windows-7zip-reconciliation.json'
-        $result = Invoke-WintainiumApplicationReconciliation -ManifestPath $manifestPath -StateRoot $stateRoot -PluginRoot (Join-Path $script:testRoot 'plugins') -SchemaPath (Join-Path $script:testRoot 'schemas/application-manifest.schema.json')
+        $manifestPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests/windows-7zip-reconciliation.json'
+        $result = Invoke-WintainiumApplicationReconciliation -ManifestPath $manifestPath -StateRoot $stateRoot -PluginRoot (Join-Path -Path $script:testRoot -ChildPath 'plugins') -SchemaPath (Join-Path -Path $script:testRoot -ChildPath 'schemas/application-manifest.schema.json')
 
         $result.IsSuccessful | Should -BeTrue
         $result.Status | Should -Be 'Persisted'
