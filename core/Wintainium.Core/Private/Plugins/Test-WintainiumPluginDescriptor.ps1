@@ -23,6 +23,9 @@ function Test-WintainiumPluginDescriptor {
         try {
             $jsonDocument = [System.Text.Json.JsonDocument]::Parse($json)
             $root = $jsonDocument.RootElement
+            [System.Text.Json.JsonElement]$pluginTypeElement = default
+            [System.Text.Json.JsonElement]$capabilitiesElement = default
+            [System.Text.Json.JsonElement]$formatsElement = default
             if ($root.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
                 $root.TryGetProperty('pluginType', [ref]$pluginTypeElement) -and
                 $pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and
