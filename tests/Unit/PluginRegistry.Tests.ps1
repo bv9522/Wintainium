@@ -31,7 +31,7 @@ Describe 'Wintainium plugin registry' {
         @($installer[0].ContractVersions) | Should -Contain '1'
         @($installer[0].Capabilities.supportedFormats) | Should -Be @('exe')
         $installer[0].Capabilities.installationMode | Should -Be 'process'
-        Test-Path -LiteralPath $installer[0].EntryPointPath -PathType Leaf | Should -Be $true
+        Test-Path -LiteralPath (Join-Path (Split-Path $installer[0].DescriptorPath -Parent) $installer[0].EntryPoint) -PathType Leaf | Should -Be $true
     }
 
     It 'default policy resolves the production EXE installer without ambiguity' {
