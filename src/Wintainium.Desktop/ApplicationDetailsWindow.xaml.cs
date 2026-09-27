@@ -248,10 +248,10 @@ public sealed partial class ApplicationDetailsWindow : Window
     {
         try
         {
-            var stateResult = await _installedStateService.GetAsync(
+            var stateResult = await _installedStateService.RefreshAsync(
+                _application.ManifestPath!,
                 WintainiumDesktopPaths.InstalledStateRoot,
-                _application.ApplicationId,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (!stateResult.IsSuccessful)
             {
