@@ -33,6 +33,7 @@ function Select-WintainiumInstaller {
             IsSelected = $false
             InstallerPlugin = $null
             ArtifactFormat = $null
+            InstallationMode = $null
             Error = [pscustomobject]@{
                 Code = 'InstallerSelectionArtifactFormatMissing'
                 Message = 'Installer selection requires the selected artifact to declare a format.'
@@ -46,11 +47,16 @@ function Select-WintainiumInstaller {
             IsSelected = $false
             InstallerPlugin = $null
             ArtifactFormat = $artifactFormat
+            InstallationMode = $null
             Error = $resolution.Error
         }
     }
 
     $capabilities = $resolution.Plugin.Capabilities
+    $installationMode = 'process'
+    if ($capabilities -is [System.Collections.IDictionary] -and $capabilities.Contains('installationMode') -and -not [string]::IsNullOrWhiteSpace([string]$capabilities['installationMode'])) {
+        $installationMode = ([string]$capabilities['installationMode']).Trim().ToLowerInvariant()
+    }
     $supportedFormats = @()
     if ($capabilities -is [System.Collections.IDictionary] -and $capabilities.Contains('supportedFormats')) {
         $supportedFormats = @($capabilities['supportedFormats'] | ForEach-Object {
@@ -65,6 +71,7 @@ function Select-WintainiumInstaller {
             IsSelected = $false
             InstallerPlugin = $null
             ArtifactFormat = $artifactFormat
+            InstallationMode = $installationMode
             Error = [pscustomobject]@{
                 Code = 'InstallerSelectionArtifactIncompatible'
                 Message = "Installer plugin '$pluginId' does not support artifact format '$artifactFormat'."
@@ -76,6 +83,7 @@ function Select-WintainiumInstaller {
         IsSelected = $true
         InstallerPlugin = $resolution.Plugin
         ArtifactFormat = $artifactFormat
+        InstallationMode = $installationMode
         Error = $null
     }
 }
