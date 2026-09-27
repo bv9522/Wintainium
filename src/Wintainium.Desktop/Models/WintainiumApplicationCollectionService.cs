@@ -10,16 +10,13 @@ namespace Wintainium.Desktop.Models;
 internal sealed class WintainiumApplicationCollectionService
 {
     private readonly WintainiumCoreClient _coreClient;
-    private readonly WintainiumApplicationInstalledStateService _installedState;
     private readonly WintainiumApplicationUpdateDecisionService _updateDecision;
 
     public WintainiumApplicationCollectionService(
         WintainiumCoreClient coreClient,
-        WintainiumApplicationInstalledStateService installedState,
         WintainiumApplicationUpdateDecisionService updateDecision)
     {
         _coreClient = coreClient ?? throw new ArgumentNullException(nameof(coreClient));
-        _installedState = installedState ?? throw new ArgumentNullException(nameof(installedState));
         _updateDecision = updateDecision ?? throw new ArgumentNullException(nameof(updateDecision));
     }
 
@@ -47,24 +44,20 @@ internal sealed class WintainiumApplicationCollectionService
 
         foreach (var application in collection.Applications)
         {
-            var stateResult = await _installedState.RefreshAsync(
-                application.ManifestPath!,
-                WintainiumDesktopPaths.InstalledStateRoot,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-
-            var withState = WintainiumApplicationModelMapper.ApplyInstalledState(
-                application, stateResult.State);
-
-            errors.AddRange(stateResult.Errors);
-            warnings.AddRange(stateResult.Warnings);
+            var withState = application;
 
             try
             {
+                // Update status is a single Core-owned observation that already refreshes
+                // authoritative installed state through reconciliation. Reuse that state
+                // for the application model instead of performing a second reconciliation.
                 var decisionResult = await _updateDecision.EvaluateAsync(
                     application.ManifestPath!,
                     GetMachineArchitecture(),
                     cancellationToken).ConfigureAwait(false);
 
+                withState = WintainiumApplicationModelMapper.ApplyInstalledState(
+                    withState, decisionResult.InstalledState);
                 withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(
                     withState, decisionResult);
                 errors.AddRange(decisionResult.Errors);

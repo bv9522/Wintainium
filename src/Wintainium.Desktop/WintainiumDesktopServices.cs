@@ -20,7 +20,7 @@ internal sealed class WintainiumDesktopServices : IAsyncDisposable
         CoreClient = new WintainiumCoreClient(_powerShellHost);
         InstalledApplicationState = new WintainiumApplicationInstalledStateService(CoreClient);
         ApplicationUpdateDecision = new WintainiumApplicationUpdateDecisionService(CoreClient);
-        ApplicationCollection = new WintainiumApplicationCollectionService(CoreClient, InstalledApplicationState, ApplicationUpdateDecision);
+        ApplicationCollection = new WintainiumApplicationCollectionService(CoreClient, ApplicationUpdateDecision);
         ApplicationValidation = new WintainiumApplicationValidationService(CoreClient);
         ApplicationRelease = new WintainiumApplicationReleaseService(CoreClient);
         ApplicationUpdate = new WintainiumApplicationUpdateService(CoreClient);
