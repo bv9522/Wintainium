@@ -9,6 +9,7 @@ Describe 'Wintainium public Core boundary' {
         $exported = @(Get-Command -Module Wintainium.Core | Select-Object -ExpandProperty Name | Sort-Object)
         $expected = @(
             'Get-WintainiumApplicationInstalledState'
+            'Invoke-WintainiumApplicationReconciliation'
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
