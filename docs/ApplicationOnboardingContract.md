@@ -74,7 +74,7 @@ The current default policy requires:
 - `x64`, `x86`, `arm64`, and `neutral` artifact architectures;
 - unknown artifact architecture disallowed.
 
-Zero or multiple eligible installer/reconciliation plugins produce a structured `ApplicationPolicyUnavailable` or `ApplicationPolicyAmbiguous` failure. Core does not silently select a plugin when the policy is ambiguous.
+Zero or multiple eligible installer/reconciliation plugins produce a structured `ApplicationPolicyUnavailable` or `ApplicationPolicyAmbiguous` failure. A reconciliation plugin may also declare `capabilities.requiresConfiguration=true` when its settings are necessarily application-specific. Such a plugin is not eligible for the default policy unless an explicit policy supplies its configuration; Core must not persist an empty settings object and call that configuration. Core does not silently select a plugin when the policy is ambiguous or under-configured.
 
 This keeps lifecycle policy authoritative in Core while allowing the desktop client to remain a thin presentation/application client.
 
