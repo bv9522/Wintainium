@@ -1,8 +1,6 @@
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Parent $PSScriptRoot) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
-}
-
     Import-Module $script:modulePath -Force
 }
 
