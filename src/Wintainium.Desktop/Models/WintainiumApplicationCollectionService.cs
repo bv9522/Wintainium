@@ -47,9 +47,10 @@ internal sealed class WintainiumApplicationCollectionService
 
         foreach (var application in collection.Applications)
         {
-            var stateResult = await _installedState.GetAsync(
+            var stateResult = await _installedState.RefreshAsync(
+                application.ManifestPath!,
                 WintainiumDesktopPaths.InstalledStateRoot,
-                application.ApplicationId, cancellationToken).ConfigureAwait(false);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var withState = WintainiumApplicationModelMapper.ApplyInstalledState(
                 application, stateResult.State);
