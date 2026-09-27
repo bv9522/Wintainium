@@ -97,6 +97,33 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
+    public Task<WintainiumPowerShellInvocationResult> ReconcileApplicationAsync(
+        string manifestPath,
+        string stateRoot,
+        string? pluginRoot = null,
+        string? schemaPath = null,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stateRoot);
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["StateRoot"] = stateRoot
+        };
+
+        AddOptional(parameters, "PluginRoot", pluginRoot);
+        AddOptional(parameters, "SchemaPath", schemaPath);
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Invoke-WintainiumApplicationReconciliation",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> ValidateApplicationDefinitionAsync(
         string manifestPath,
         string? pluginRoot = null,
