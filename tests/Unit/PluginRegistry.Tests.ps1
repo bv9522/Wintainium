@@ -17,6 +17,39 @@ Describe 'Wintainium plugin registry' {
         $registry.DescriptorErrors.Count | Should -Be 1
     }
 
+    It 'registers the production EXE installer descriptor' {
+        $productionPluginRoot = Join-Path $script:testRoot 'plugins'
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $productionPluginRoot } {
+            Get-WintainiumPluginRegistry -PluginRoot $Path
+        }
+
+        $installer = @($registry.Plugins | Where-Object {
+            $_.PluginId -eq 'Wintainium.installer.exe' -and $_.PluginType -eq 'Installer'
+        })
+
+        $installer.Count | Should -Be 1
+        @($installer[0].ContractVersions) | Should -Contain '1'
+        @($installer[0].Capabilities.supportedFormats) | Should -Be @('exe')
+        $installer[0].Capabilities.installationMode | Should -Be 'process'
+        Test-Path -LiteralPath $installer[0].EntryPointPath -PathType Leaf | Should -Be $true
+    }
+
+    It 'default policy resolves the production EXE installer without ambiguity' {
+        $productionPluginRoot = Join-Path $script:testRoot 'plugins'
+        $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $productionPluginRoot } {
+            Get-WintainiumPluginRegistry -PluginRoot $Path
+        }
+        $policy = InModuleScope Wintainium.Core -Parameters @{ Registry = $registry } {
+            Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry
+        }
+
+        $policy.IsSuccessful | Should -Be $true
+        $policy.Status | Should -Be 'Resolved'
+        $policy.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.exe'
+        $policy.Policy.Installer.RequiredContractVersion | Should -Be '1'
+        @($policy.Policy.Artifact.Formats) | Should -Be @('exe')
+    }
+
     It 'resolves an installer by id, type, and contract version' {
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
