@@ -9,7 +9,7 @@ Describe 'Wintainium reconciliation settings boundary' {
         $script:manifestRoot = Join-Path $TestDrive -ChildPath ("manifests-" + [guid]::NewGuid().Guid)
         New-Item -ItemType Directory -Path $script:manifestRoot -Force | Out-Null
 
-        $script:manifestPath = Join-Path $script:manifestRoot 'example.app.wintainium.json'
+        $script:manifestPath = Join-Path $script:manifestRoot 'org.7-zip.7-zip.wintainium.json'
         $fixturePath = Join-Path $script:testRoot 'tests/Fixtures/Manifests/windows-7zip-reconciliation.json'
         Copy-Item -LiteralPath $fixturePath -Destination $script:manifestPath -Force
 
