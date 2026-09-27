@@ -17,8 +17,42 @@ function Get-WintainiumApplicationUpdateDecision {
     }
 
     $manifest = $releaseResult.Manifest
-    $installedState = Get-WintainiumInstalledApplicationState -StateRoot $StateRoot -ApplicationId ([string]$manifest.Id)
-    $providerResult = [pscustomobject][ordered]@{ IsSuccessful=$releaseResult.IsSuccessful; Status=$releaseResult.Status; Releases=@($releaseResult.Releases); Errors=@($releaseResult.Errors); Warnings=@($releaseResult.Warnings); LogEvents=@($releaseResult.LogEvents) }
+
+    # Update status is an authoritative observation, not a read of potentially stale
+    # persisted state. Refresh installed state through the Core reconciliation boundary
+    # before evaluating whether a newer release is applicable.
+    $reconciliationParameters = @{
+        ManifestPath = $ManifestPath
+        StateRoot = $StateRoot
+        PluginRoot = $PluginRoot
+        SchemaPath = $SchemaPath
+        OperationId = $releaseResult.OperationId
+    }
+    $reconciliation = Invoke-WintainiumApplicationReconciliation @reconciliationParameters
+
+    if (-not [bool]$reconciliation.IsSuccessful) {
+        return [pscustomobject][ordered]@{
+            OperationId=$releaseResult.OperationId
+            IsSuccessful=$false
+            Status='InstalledStateReconciliationUnsuccessful'
+            Manifest=$manifest
+            InstalledState=$reconciliation.State
+            Decision=$null
+            Errors=@($reconciliation.Errors)
+            Warnings=@($releaseResult.Warnings)+@($reconciliation.Warnings)
+            LogEvents=@($releaseResult.LogEvents)+@($reconciliation.LogEvents)
+        }
+    }
+
+    $installedState = $reconciliation.State
+    $providerResult = [pscustomobject][ordered]@{
+        IsSuccessful=$releaseResult.IsSuccessful
+        Status=$releaseResult.Status
+        Releases=@($releaseResult.Releases)
+        Errors=@($releaseResult.Errors)
+        Warnings=@($releaseResult.Warnings)+@($reconciliation.Warnings)
+        LogEvents=@($releaseResult.LogEvents)+@($reconciliation.LogEvents)
+    }
     $decisionInput = New-WintainiumUpdateDecisionInput -Manifest $manifest -InstalledState $installedState -ProviderResult $providerResult
     $decision = Get-WintainiumUpdateDecision -UpdateDecisionInput $decisionInput -MachineArchitecture $MachineArchitecture
 
