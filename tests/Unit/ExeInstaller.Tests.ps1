@@ -66,7 +66,7 @@ Describe 'Wintainium generic EXE installer' {
             Settings = [ordered]@{}
         }
 
-        { & $script:installerModule -Invocation $invocation } | Should -Throw
+        { & $script:installerCommand -Invocation $invocation } | Should -Throw
     }
 
     It 'rejects a scalar arguments setting' {
@@ -76,7 +76,7 @@ Describe 'Wintainium generic EXE installer' {
             Settings = [ordered]@{ arguments = '/S' }
         }
 
-        { & $script:installerModule -Invocation $invocation } | Should -Throw
+        { & $script:installerCommand -Invocation $invocation } | Should -Throw
     }
 
     It 'rejects non-string arguments' {
@@ -86,11 +86,11 @@ Describe 'Wintainium generic EXE installer' {
             Settings = [ordered]@{ arguments = @('/S', 7) }
         }
 
-        { & $script:installerModule -Invocation $invocation } | Should -Throw
+        { & $script:installerCommand -Invocation $invocation } | Should -Throw
     }
 
     It 'does not construct a shell command' {
-        $result = & $script:installerModule -Invocation $script:invocation
+        $result = & $script:installerCommand -Invocation $script:invocation
 
         $result.PSObject.Properties.Name | Should -Contain 'ExecutablePath'
         $result.PSObject.Properties.Name | Should -Contain 'Arguments'
