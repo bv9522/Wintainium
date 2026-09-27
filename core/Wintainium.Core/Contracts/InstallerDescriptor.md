@@ -1,59 +1,32 @@
-# Phase 6B — Installer Descriptor and Capability Contract
+# Installer Descriptor Contract
 
 ## Purpose
 
-Phase 6B defines the Core-owned descriptor contract used to describe an installer plugin's capabilities before installer selection or execution.
+An installer descriptor declares the capabilities of an installer plugin. It is declarative metadata only; it does not contain executable commands or authorize artifact execution.
 
-An installer descriptor is declarative metadata. It identifies a plugin and the artifact formats it can accept. It does not contain executable commands, arguments, shell expressions, or installation instructions.
+## Required fields
 
-## Required descriptor fields
+- `pluginId` — unique `Wintainium.installer.*` identifier.
+- `pluginType` — `Installer`.
+- `contractVersions` — one or more positive major installer contract versions.
+- `capabilities.supportedFormats` — non-empty array of artifact-format identifiers.
 
-An installer descriptor must contain:
+## Installation mechanism
 
-- `pluginId` — a stable `Wintainium.installer.*` identifier;
-- `pluginType` — `Installer`;
-- `contractVersions` — one or more positive major installer contract versions;
-- `capabilities` — an object containing `supportedFormats`.
+Installers may additionally declare:
 
-`supportedFormats` must be a non-empty JSON array of non-empty string format identifiers. Format identifiers are compared case-insensitively. Core validates their shape but does not maintain a universal list of installer formats.
+- `capabilities.installationMode` — a non-empty mechanism identifier such as `process`, `archive`, or `msix`.
 
-## Capability semantics
+The identifier is intentionally extensible rather than an exhaustive enum. Core owns the execution semantics for mechanisms it understands; a plugin declaring an unsupported mechanism cannot be executed merely because its artifact format is recognized.
 
-`capabilities.supportedFormats` answers:
+For backward compatibility with existing Contract v1 installer plugins, an omitted `installationMode` is treated as `process`. New production installer plugins should declare their mechanism explicitly.
 
-> Which artifact formats can this installer plugin accept at its installer boundary?
+## Supported formats
 
-The capability declaration does not authorize execution, establish artifact trust, or imply support for every possible invocation option associated with a format.
+`supportedFormats` describes plugin capability, not trust, authenticity, integrity, signature validity, or permission to execute an artifact. Format identifiers are normalized case-insensitively for compatibility checks.
 
-Additional capability fields may be added through a future contract version. Unknown capability fields are preserved as descriptor metadata and do not become Core behavior merely by appearing in a descriptor.
+A plugin may support more than one format when the same installation mechanism legitimately handles those formats.
 
-## Validation
+## Security boundary
 
-The Core descriptor boundary validates installer-specific requirements before a descriptor enters the plugin registry.
-
-Invalid installer descriptors are rejected when:
-
-- the plugin identity or type is invalid;
-- no compatible contract version is declared;
-- `capabilities` is not an object;
-- `supportedFormats` is missing, empty, or not an array;
-- a supported format is not a string;
-- a supported format is empty or malformed; or
-- duplicate supported formats are declared.
-
-Validation is structural and deterministic. It does not load installer code, inspect executable contents, execute a plugin, or access the network.
-
-## Phase boundary
-
-Phase 6B defines what an installer plugin claims to support.
-
-It does **not**:
-
-- choose an installer plugin;
-- verify downloaded artifact bytes;
-- establish trust or signature validity;
-- construct installer command lines;
-- execute installer processes; or
-- reconcile installed application state.
-
-Installer selection belongs to Phase 6C. Controlled invocation and process lifecycle behavior belong to later Phase 6 boundaries.
+Installer descriptors do not contain shell commands, executable paths, arbitrary command text, or inferred installation instructions. Core remains responsible for selecting the plugin, validating the artifact and invocation boundary, and applying the mechanism-specific execution contract.
