@@ -10,7 +10,7 @@
     }
   },
   "installer": {
-    "pluginId": "Wintainium.installer.portable-zip",
+    "pluginId": "Wintainium.installer.exe",
     "requiredContractVersion": "1",
     "settings": {
       "entryPoint": "7z.exe"
@@ -34,7 +34,7 @@
   },
   "release": {"channel": "stable"},
   "artifact": {
-    "formats": ["zip"],
+    "formats": ["exe"],
     "architectures": ["x64"],
     "allowUnknownArchitecture": false
   }
