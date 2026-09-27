@@ -17,6 +17,30 @@ function Test-WintainiumPluginDescriptor {
     }
 
     if ($null -ne $descriptor) {
+        # ConvertFrom-Json represents a one-element JSON array as a scalar in some
+        # PowerShell object graphs. Validate the original JSON shape so a scalar
+        # supportedFormats value cannot be mistaken for an array.
+        try {
+            $jsonDocument = [System.Text.Json.JsonDocument]::Parse($json)
+            $root = $jsonDocument.RootElement
+            if ($root.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $root.TryGetProperty('pluginType', [ref]$pluginTypeElement) -and
+                $pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and
+                $pluginTypeElement.GetString() -eq 'Installer' -and
+                $root.TryGetProperty('capabilities', [ref]$capabilitiesElement) -and
+                $capabilitiesElement.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $capabilitiesElement.TryGetProperty('supportedFormats', [ref]$formatsElement) -and
+                $formatsElement.ValueKind -ne [System.Text.Json.JsonValueKind]::Array) {
+                $errors.Add([pscustomobject]@{
+                        Code = 'DescriptorInstallerFormatsInvalid'
+                        Message = 'Installer supportedFormats must be an array of format identifier strings.'
+                    })
+            }
+            $jsonDocument.Dispose()
+        }
+        catch {
+            # JSON syntax validity is already reported by ConvertFrom-Json above.
+        }
         if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer|reconciliation)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginIdInvalid'; Message = 'pluginId is missing or invalid.' })
         }
