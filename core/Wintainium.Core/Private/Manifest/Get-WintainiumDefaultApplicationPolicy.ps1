@@ -63,7 +63,13 @@ function Get-WintainiumDefaultApplicationPolicy {
     $installer = $installers[0]
     $reconciler = $reconcilers[0]
 
-    if ([bool]$reconciler.Capabilities.requiresConfiguration -eq $true) {
+    $reconciliationRequiresConfiguration = (
+        $reconciler.Capabilities -is [System.Collections.IDictionary] -and
+        $reconciler.Capabilities.Contains('requiresConfiguration') -and
+        [bool]$reconciler.Capabilities['requiresConfiguration'] -eq $true
+    )
+
+    if ($reconciliationRequiresConfiguration) {
         return [pscustomobject][ordered]@{
             IsSuccessful=$false
             Status='ApplicationPolicyConfigurationRequired'
