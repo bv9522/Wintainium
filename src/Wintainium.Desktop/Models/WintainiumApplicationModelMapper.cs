@@ -52,7 +52,27 @@ internal static class WintainiumApplicationModelMapper
     private static string? GetSourceProviderId(PSObject manifest)
     {
         var source = GetProperty(manifest, "Source");
-        return source is null ? null : GetNullableString(source, "PluginId");
+        if (source is null)
+            return null;
+
+        // Core preserves the manifest's declarative Source object as an IDictionary.
+        // PowerShell's PSObject property adapter does not reliably expose dictionary
+        // keys as PSObject properties, so read the pluginId key explicitly at the
+        // presentation boundary rather than teaching Core to reshape its manifest.
+        var pluginId = GetNullableString(source, "PluginId");
+        if (!string.IsNullOrWhiteSpace(pluginId))
+            return pluginId;
+
+        if (source.BaseObject is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                if (string.Equals(Convert.ToString(entry.Key), "pluginId", StringComparison.OrdinalIgnoreCase))
+                    return entry.Value is null ? null : Convert.ToString(entry.Value);
+            }
+        }
+
+        return null;
     }
 
     public static WintainiumInstalledStateObservation? MapInstalledStateResult(PSObject result)
