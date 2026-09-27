@@ -76,4 +76,15 @@ Describe 'Wintainium public installed application state command' {
         $result.Status | Should -Be 'InvalidInput'
         @($result.Errors | Where-Object Code -eq 'OperationIdInvalid').Count | Should -Be 1
     }
+    It 'refreshes installed state through the declared reconciliation plugin' {
+        $manifestPath = Join-Path $testRoot 'tests/Fixtures/Manifests/windows-7zip-reconciliation.json'
+        $result = Invoke-WintainiumApplicationReconciliation -ManifestPath $manifestPath -StateRoot $stateRoot -PluginRoot (Join-Path $testRoot 'plugins') -SchemaPath (Join-Path $testRoot 'schemas/application-manifest.schema.json')
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Persisted'
+        $result.State.InstallationState | Should -Be 'Installed'
+        $result.State.Version | Should -Not -BeNullOrEmpty
+        $result.State.VersionSource | Should -Be 'Registry'
+    }
+
 }
