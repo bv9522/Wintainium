@@ -87,6 +87,7 @@ Describe 'Wintainium public result contract' {
             (Get-WintainiumManifest -Path $manifestCollection)
             (Test-WintainiumApplicationDefinition -ManifestPath $manifestPath)
             (Get-WintainiumApplicationRelease -ManifestPath $manifestPath)
+            (Invoke-WintainiumApplicationReconciliation -ManifestPath $manifestPath -StateRoot (Join-Path $TestDrive 'state'))
             (Get-WintainiumApplicationUpdateStatus -ManifestPath $manifestPath -StateRoot (Join-Path $TestDrive 'state') -MachineArchitecture 'x64')
         )
 
@@ -94,6 +95,7 @@ Describe 'Wintainium public result contract' {
             ,@('OperationId', 'IsSuccessful', 'Candidates', 'ManifestPaths', 'Manifests', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsValid', 'Manifest', 'ProviderPlugin', 'InstallerPlugin', 'ReconciliationPlugin', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'ProviderPlugin', 'Releases', 'Errors', 'Warnings', 'LogEvents')
+            ,@('OperationId', 'IsSuccessful', 'Status', 'ApplicationId', 'State', 'Reconciliation', 'Errors', 'Warnings', 'LogEvents')
             ,@('OperationId', 'IsSuccessful', 'Status', 'Manifest', 'InstalledState', 'Decision', 'Errors', 'Warnings', 'LogEvents')
         )
 
