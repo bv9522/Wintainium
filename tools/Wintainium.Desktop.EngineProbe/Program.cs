@@ -41,6 +41,21 @@ if (validationResult.IsValid ||
 
 Console.WriteLine("Application validation service: PASS");
 
+var reconciliationProbe = await client.ReconcileApplicationAsync(
+    Path.Combine(Path.GetDirectoryName(modulePath)!, "missing-phase-12a-manifest.wintainium.json"),
+    Path.Combine(Path.GetTempPath(), "Wintainium-ReconciliationProbe-" + Guid.NewGuid().ToString("N")));
+
+if (reconciliationProbe.CommandName != "Invoke-WintainiumApplicationReconciliation" ||
+    reconciliationProbe.WasCancelled ||
+    reconciliationProbe.Output.Count != 1)
+{
+    Console.Error.WriteLine("Public reconciliation command was not available through the desktop Core boundary.");
+    return 1;
+}
+
+Console.WriteLine("Public reconciliation command boundary: PASS");
+
+
 var refreshStateRoot = Path.Combine(Path.GetTempPath(), "Wintainium-Phase12F-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(refreshStateRoot);
 
