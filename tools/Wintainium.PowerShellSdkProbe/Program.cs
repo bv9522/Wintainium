@@ -1,9 +1,10 @@
+using System.Collections;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 
-if (args.Length != 1)
+if (args.Length is < 1 or > 2)
 {
-    Console.Error.WriteLine("Usage: dotnet run -- <path-to-Wintainium.Core.psd1>");
+    Console.Error.WriteLine("Usage: dotnet run -- <path-to-Wintainium.Core.psd1> [<manifest-root-or-file>]");
     return 2;
 }
 
@@ -68,13 +69,19 @@ if (powershell.HadErrors || commandResults.Count != 1)
 powershell.Commands.Clear();
 powershell.Streams.Error.Clear();
 
-var manifestRoot = Path.Combine(Path.GetTempPath(), "Wintainium.PowerShellSdkProbe", Guid.NewGuid().ToString("N"));
-Directory.CreateDirectory(manifestRoot);
+var manifestPath = args.Length == 2
+    ? Path.GetFullPath(args[1])
+    : Path.Combine(Path.GetTempPath(), "Wintainium.PowerShellSdkProbe", Guid.NewGuid().ToString("N"));
+
+if (args.Length == 1)
+{
+    Directory.CreateDirectory(manifestPath);
+}
 
 try
 {
     powershell.AddCommand("Get-WintainiumManifest")
-        .AddParameter("Path", manifestRoot);
+        .AddParameter("Path", manifestPath);
 
     var results = powershell.Invoke();
 
@@ -91,13 +98,13 @@ try
 
     var pipelineResult = results[0];
     var baseObject = pipelineResult.BaseObject;
-    var runtimeType = baseObject.GetType();
 
     Console.WriteLine("PowerShell SDK hosting: PASS");
     Console.WriteLine($"Imported module: {modulePath}");
     Console.WriteLine("Public command resolved: Get-WintainiumManifest");
+    Console.WriteLine($"Manifest probe path: {manifestPath}");
     Console.WriteLine($"Pipeline result type: {pipelineResult.GetType().FullName}");
-    Console.WriteLine($"Base object type: {runtimeType.FullName}");
+    Console.WriteLine($"Base object type: {baseObject.GetType().FullName}");
     Console.WriteLine($"Base object string: {baseObject}");
 
     var properties = pipelineResult.Properties
@@ -116,16 +123,74 @@ try
         Console.WriteLine($"  {property.Name}: {property.ValueType} = {property.Value}");
     }
 
+    var manifestsProperty = pipelineResult.Properties["Manifests"]?.Value;
+    if (manifestsProperty is null)
+    {
+        Console.WriteLine("Manifest collection: <null or not exposed>");
+        return 0;
+    }
+
+    var manifestItems = manifestsProperty is IEnumerable enumerable and not string
+        ? enumerable.Cast<object>().ToArray()
+        : new[] { manifestsProperty };
+
+    Console.WriteLine($"Manifest entries: {manifestItems.Length}");
+
+    if (manifestItems.Length == 0)
+    {
+        return 0;
+    }
+
+    var manifest = PSObject.AsPSObject(manifestItems[0]);
+    Console.WriteLine($"First manifest PSObject type: {manifest.GetType().FullName}");
+    Console.WriteLine($"First manifest base object type: {manifest.BaseObject.GetType().FullName}");
+    Console.WriteLine("First manifest properties:");
+
+    foreach (var property in manifest.Properties.OrderBy(p => p.Name))
+    {
+        Console.WriteLine($"  {property.Name}: {property.Value?.GetType().FullName ?? "<null>"} = {property.Value}");
+    }
+
+    var sourceProperty = manifest.Properties["Source"];
+    if (sourceProperty?.Value is null)
+    {
+        Console.WriteLine("Source property: <null or not exposed through PSObject.Properties>");
+        return 0;
+    }
+
+    var source = PSObject.AsPSObject(sourceProperty.Value);
+    Console.WriteLine($"Source PSObject type: {source.GetType().FullName}");
+    Console.WriteLine($"Source base object type: {source.BaseObject.GetType().FullName}");
+    Console.WriteLine($"Source base object string: {source.BaseObject}");
+    Console.WriteLine("Source PSObject properties:");
+
+    foreach (var property in source.Properties.OrderBy(p => p.Name))
+    {
+        Console.WriteLine($"  {property.Name}: {property.Value?.GetType().FullName ?? "<null>"} = {property.Value}");
+    }
+
+    if (source.BaseObject is IDictionary dictionary)
+    {
+        Console.WriteLine("Source dictionary entries:");
+        foreach (DictionaryEntry entry in dictionary)
+        {
+            Console.WriteLine($"  [{entry.Key}] ({entry.Key?.GetType().FullName ?? "<null>"}) = {entry.Value} ({entry.Value?.GetType().FullName ?? "<null>"})");
+        }
+    }
+
     return 0;
 }
 finally
 {
-    try
+    if (args.Length == 1)
     {
-        Directory.Delete(manifestRoot, recursive: true);
-    }
-    catch
-    {
-        // Probe cleanup is best-effort.
+        try
+        {
+            Directory.Delete(manifestPath, recursive: true);
+        }
+        catch
+        {
+            // Probe cleanup is best-effort.
+        }
     }
 }
