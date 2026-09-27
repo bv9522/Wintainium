@@ -3,6 +3,7 @@
   "pluginType": "Installer",
   "contractVersions": ["1"],
   "capabilities": {
-    "supportedFormats": ["exe", "msi"]
+    "supportedFormats": ["exe", "msi"],
+    "installationMode": "process"
   }
 }
