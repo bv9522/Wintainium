@@ -59,6 +59,27 @@ Describe 'Wintainium public CLI contract' {
         $command.Parameters.Keys | Should -Contain 'SchemaPath'
     }
 
+    It 'uses the approved parameter contract on the public application reconciliation command' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationReconciliation -Module Wintainium.Core
+
+        $command.Parameters.Keys | Should -Contain 'ManifestPath'
+        $command.Parameters.Keys | Should -Contain 'StateRoot'
+        $command.Parameters.Keys | Should -Contain 'PluginRoot'
+        $command.Parameters.Keys | Should -Contain 'SchemaPath'
+        $command.Parameters.Keys | Should -Contain 'OperationId'
+    }
+
+    It 'documents the public application reconciliation structured output contract' {
+        $helpText = Get-Help -Name Invoke-WintainiumApplicationReconciliation -Full | Out-String
+
+        foreach ($property in @('OperationId', 'IsSuccessful', 'Status', 'ApplicationId', 'State', 'Reconciliation', 'Errors', 'Warnings', 'LogEvents')) {
+            $helpText | Should -Match $property
+        }
+
+        $helpText | Should -Match 'authoritative installed state'
+        $helpText | Should -Match 'Unknown evidence'
+    }
+
     It 'uses the approved parameter contract on the public application update status command' {
         $command = Get-Command -Name Get-WintainiumApplicationUpdateStatus -Module Wintainium.Core
 
