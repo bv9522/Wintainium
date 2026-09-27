@@ -58,6 +58,44 @@ Describe 'Wintainium public application update status command' {
         }
     }
 
+    It 'derives the current OS architecture when presentation callers omit it' {
+        InModuleScope Wintainium.Core {
+            Mock Get-WintainiumApplicationUpdateDecision {
+                param(
+                    [string]$ManifestPath,
+                    [string]$StateRoot,
+                    [string]$MachineArchitecture
+                )
+
+                [pscustomobject][ordered]@{
+                    OperationId = 'operation-update-status-default-architecture'
+                    IsSuccessful = $true
+                    Status = 'NoUpdateAvailable'
+                    Manifest = [pscustomobject]@{ Id = 'example.app'; Name = 'Example' }
+                    InstalledState = [pscustomobject]@{ ApplicationId = 'example.app'; InstallationState = 'Installed'; Version = '26.03' }
+                    Decision = [pscustomobject][ordered]@{
+                        IsUpdateAvailable = $false
+                        ReasonCode = 'Current'
+                        Reason = 'Installed version is current.'
+                        IsDeterministic = $true
+                        SelectedRelease = $null
+                    }
+                    Errors = @()
+                    Warnings = @()
+                    LogEvents = @()
+                }
+            }
+
+            $result = Get-WintainiumApplicationUpdateStatus -ManifestPath 'C:\manifest.json' -StateRoot 'C:\state'
+
+            $expectedArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+            $result.IsSuccessful | Should -BeTrue
+            Should -Invoke Get-WintainiumApplicationUpdateDecision -Times 1 -Exactly -ParameterFilter {
+                $MachineArchitecture -eq $expectedArchitecture
+            }
+        }
+    }
+
     It 'preserves reconciliation failure diagnostics without inventing update status' {
         InModuleScope Wintainium.Core {
             Mock Get-WintainiumApplicationUpdateDecision {
