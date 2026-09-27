@@ -1,0 +1,10 @@
+{
+  "pluginId": "Wintainium.installer.exe",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.installer.exe.psm1",
+  "capabilities": {
+    "supportedFormats": ["exe"],
+    "installationMode": "process"
+  }
+}
