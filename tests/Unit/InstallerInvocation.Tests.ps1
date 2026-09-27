@@ -24,6 +24,7 @@ Describe 'Wintainium installer invocation preparation' {
         $result.Invocation.PluginModulePath | Should -Be (Join-Path $script:pluginRoot 'Installer.psm1')
         $result.Invocation.ArtifactPath | Should -Be (Join-Path $script:pluginRoot 'artifact.exe')
         $result.Invocation.ArtifactFormat | Should -Be 'exe'
+        $result.Invocation.InstallationMode | Should -Be 'process'
         $result.Invocation.Settings.silent | Should -Be $true
         $result.Error | Should -Be $null
     }
