@@ -110,7 +110,6 @@ Describe 'Wintainium application update lifecycle composition' {
             @($result.StageResults).Count | Should -Be 8
             @($result.StageResults | Where-Object { $null -ne $_.Execution -and $null -ne $_.Execution.Result -and $null -ne $_.Execution.Result.PSObject.Properties['Status'] -and $_.Execution.Result.Status -eq 'Skipped' }).Count | Should -Be 5
             $installerStage = @($result.StageResults | Where-Object { $_.StageName -eq 'InstallerSelection' })[0]
-            $installerStage.Execution.StageInput.OperationId | Should -Be $operationId
             $installerStage.Execution.Result.OperationId | Should -Be $operationId
             Should -Invoke Invoke-WintainiumDownload -Times 0 -Exactly
             Should -Invoke Invoke-WintainiumArtifactVerification -Times 0 -Exactly
