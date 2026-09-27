@@ -41,59 +41,9 @@ function Test-WintainiumInstallerDescriptor {
     else {
         if ($Descriptor.capabilities.ContainsKey('installationMode')) {
             $mode = $Descriptor.capabilities['installationMode']
-            if ($mode -isnot [string] -or $mode.Trim().Length -eq 0 -or $mode -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._+-]*
-
-        if (-not $Descriptor.capabilities.ContainsKey('supportedFormats') -or $null -eq $rawFormats) {
-            $errors.Add([pscustomobject]@{
-                    Code = 'DescriptorInstallerFormatsMissing'
-                    Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
-                })
-        }
-        elseif ($rawFormats -is [string] -or $rawFormats -is [System.Collections.IDictionary]) {
-            $errors.Add([pscustomobject]@{
-                    Code = 'DescriptorInstallerFormatsInvalid'
-                    Message = 'Installer supportedFormats must be an array of format identifier strings.'
-                })
-        }
-        else {
-            $formats = @($rawFormats)
-            if ($formats.Count -eq 0) {
-                $errors.Add([pscustomobject]@{
-                        Code = 'DescriptorInstallerFormatsMissing'
-                        Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
-                    })
-            }
-            else {
-                $invalidFormats = @($formats | Where-Object {
-                        $_ -isnot [string] -or
-                        $_.Trim().Length -eq 0 -or
-                        $_ -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._+-]*$'
-                    })
-
-                if ($invalidFormats.Count -gt 0) {
-                    $errors.Add([pscustomobject]@{
-                            Code = 'DescriptorInstallerFormatsInvalid'
-                            Message = 'Installer supportedFormats must contain non-empty format identifiers using letters, numbers, dot, underscore, plus, or hyphen.'
-                        })
-                }
-
-                $normalizedFormats = @($formats | ForEach-Object { $_.ToString().Trim().ToLowerInvariant() })
-                if ($normalizedFormats.Count -ne (@($normalizedFormats | Select-Object -Unique).Count)) {
-                    $errors.Add([pscustomobject]@{
-                            Code = 'DescriptorInstallerFormatsDuplicate'
-                            Message = 'Installer supportedFormats must not contain duplicate identifiers.'
-                        })
-                }
-            }
-        }
-    }
-
-    [pscustomobject][ordered]@{
-        IsValid = $errors.Count -eq 0
-        Errors = $errors.ToArray()
-    }
-}
-) {
+            if ($mode -isnot [string] -or
+                $mode.Trim().Length -eq 0 -or
+                $mode -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._+-]*$') {
                 $errors.Add([pscustomobject]@{
                         Code = 'DescriptorInstallerInstallationModeInvalid'
                         Message = 'Installer installationMode must be a non-empty mechanism identifier using letters, numbers, dot, underscore, plus, or hyphen.'
@@ -101,9 +51,10 @@ function Test-WintainiumInstallerDescriptor {
             }
         }
 
-        $rawFormats = $Descriptor.capabilities['supportedFormats']
+        $hasFormats = $Descriptor.capabilities.ContainsKey('supportedFormats')
+        $rawFormats = if ($hasFormats) { $Descriptor.capabilities['supportedFormats'] } else { $null }
 
-        if (-not $Descriptor.capabilities.ContainsKey('supportedFormats') -or $null -eq $rawFormats) {
+        if (-not $hasFormats -or $null -eq $rawFormats) {
             $errors.Add([pscustomobject]@{
                     Code = 'DescriptorInstallerFormatsMissing'
                     Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
