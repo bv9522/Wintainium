@@ -23,6 +23,9 @@ Describe 'Wintainium plugin registry' {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
 
+        $registry.DescriptorErrors.Count | Should -Be 0
+        @($registry.Plugins | Where-Object { $_.PluginId -eq 'Wintainium.provider.official-download-page' -and $_.PluginType -eq 'Provider' }).Count | Should -Be 1
+
         $installer = @($registry.Plugins | Where-Object {
             $_.PluginId -eq 'Wintainium.installer.exe' -and $_.PluginType -eq 'Installer'
         })
