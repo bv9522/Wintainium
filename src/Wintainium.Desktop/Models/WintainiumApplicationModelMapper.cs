@@ -213,10 +213,28 @@ internal static class WintainiumApplicationModelMapper
         return [value];
     }
 
-    private static PSObject? GetProperty(PSObject source, string propertyName) =>
-        source.Properties[propertyName]?.Value is null
-            ? null
-            : PSObject.AsPSObject(source.Properties[propertyName]!.Value);
+    private static PSObject? GetProperty(PSObject source, string propertyName)
+    {
+        // PowerShell may materialize nested manifest objects as dictionaries at the
+        // SDK boundary. Prefer the actual dictionary key when present, then fall
+        // back to PowerShell's adapted property surface.
+        if (source.BaseObject is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                if (string.Equals(
+                    Convert.ToString(entry.Key),
+                    propertyName,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Value is null ? null : PSObject.AsPSObject(entry.Value);
+                }
+            }
+        }
+
+        var property = source.Properties[propertyName];
+        return property?.Value is null ? null : PSObject.AsPSObject(property.Value);
+    }
 
     private static string GetRequiredString(PSObject source, string propertyName)
     {
