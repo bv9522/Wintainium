@@ -66,6 +66,36 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Release.channel | Should -Be 'stable'
     }
 
+    It 'does not select a reconciliation plugin that requires application-specific configuration' {
+        $registry = [pscustomobject]@{
+            Plugins = @(
+                [pscustomobject]@{
+                    PluginId = 'Wintainium.installer.test'
+                    PluginType = 'Installer'
+                    ContractVersions = @('1')
+                    Capabilities = [ordered]@{ supportedFormats = @('exe') }
+                    DescriptorPath = 'installer/plugin.json'
+                }
+                [pscustomobject]@{
+                    PluginId = 'Wintainium.reconciliation.windows-installed-application'
+                    PluginType = 'Reconciliation'
+                    ContractVersions = @('1')
+                    Capabilities = [ordered]@{ applicationState = $true; requiresConfiguration = $true }
+                    DescriptorPath = 'reconciliation/plugin.json'
+                }
+            )
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Registry = $registry } {
+            Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry
+        }
+
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'ApplicationPolicyConfigurationRequired'
+        $result.Errors[0].Code | Should -Be 'ApplicationPolicyConfigurationRequired'
+        $result.Errors[0].Path | Should -Be '$.Policy.Reconciliation.Settings'
+    }
+
     It 'does not mutate persistence when source resolution fails' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/software' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $false
