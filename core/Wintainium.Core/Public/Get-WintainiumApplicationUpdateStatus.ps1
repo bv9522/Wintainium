@@ -16,7 +16,8 @@ Absolute path to the application manifest.
 Root directory containing authoritative installed-application state.
 
 .PARAMETER MachineArchitecture
-Normalized target-machine architecture used by Core target resolution.
+Optional normalized target-machine architecture used by Core target resolution.
+When omitted, Core derives the current operating-system architecture.
 
 .PARAMETER PluginRoot
 Root directory containing Wintainium plugins.
@@ -36,11 +37,15 @@ function Get-WintainiumApplicationUpdateStatus {
     param(
         [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$ManifestPath,
         [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$StateRoot,
-        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$MachineArchitecture,
+        [string]$MachineArchitecture,
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [string]$OperationId
     )
+
+    if ([string]::IsNullOrWhiteSpace($MachineArchitecture)) {
+        $MachineArchitecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+    }
 
     $result = Get-WintainiumApplicationUpdateDecision -ManifestPath $ManifestPath -StateRoot $StateRoot -MachineArchitecture $MachineArchitecture -PluginRoot $PluginRoot -SchemaPath $SchemaPath -OperationId $OperationId
 
