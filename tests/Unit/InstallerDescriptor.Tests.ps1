@@ -26,6 +26,7 @@ Describe 'Wintainium installer descriptor contract' {
 
         $result.IsValid | Should -Be $true
         @($result.Descriptor.capabilities.supportedFormats) | Should -Be @('exe', 'msi')
+        $result.Descriptor.capabilities.installationMode | Should -Be 'process'
     }
 
     It 'rejects a non-string supported format' {
@@ -66,6 +67,26 @@ Describe 'Wintainium installer descriptor contract' {
 
         $result.IsValid | Should -Be $false
         @($result.Errors.Code) | Should -Contain 'DescriptorInstallerFormatsDuplicate'
+    }
+
+    It 'accepts an installer descriptor without an explicit installation mode for backward compatibility' {
+        $descriptorPath = Join-Path -Path $script:pluginRoot -ChildPath 'ValidInstaller/plugin.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
+        }
+
+        $result.IsValid | Should -Be $true
+        $result.Descriptor.capabilities.ContainsKey('installationMode') | Should -Be $false
+    }
+
+    It 'rejects an invalid installation mechanism identifier' {
+        $descriptorPath = Join-Path -Path $script:installerContractFixtureRoot -ChildPath 'InvalidInstallationMode/plugin.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
+        }
+
+        $result.IsValid | Should -Be $false
+        @($result.Errors.Code) | Should -Contain 'DescriptorInstallerInstallationModeInvalid'
     }
 
     It 'rejects an installer descriptor without supported formats' {
