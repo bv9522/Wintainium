@@ -3,9 +3,7 @@ BeforeAll {
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 }
 
-$modulePath = $script:modulePath
-
-Import-Module $script:modulePath -Force
+    Import-Module $script:modulePath -Force
 
 Describe 'Wintainium public installed application state command' {
     BeforeEach {
