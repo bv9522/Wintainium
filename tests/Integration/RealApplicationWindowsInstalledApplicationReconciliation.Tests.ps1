@@ -77,6 +77,13 @@ Describe 'Real-application Windows installed-application reconciliation' {
         $authoritativeUpdate.State.InstallationState | Should -Be 'Installed'
         $authoritativeUpdate.State.Version | Should -Be $result.Evidence.Version
 
+        $authoritativeRefresh = Invoke-WintainiumApplicationReconciliation -ManifestPath $manifestPath -StateRoot $stateRoot -PluginRoot $script:pluginRoot -SchemaPath $script:schemaPath -OperationId $request.OperationId
+        $authoritativeRefresh.IsSuccessful | Should -BeTrue
+        $authoritativeRefresh.Status | Should -Be 'Persisted'
+        $authoritativeRefresh.State.InstallationState | Should -Be 'Installed'
+        $authoritativeRefresh.State.Version | Should -Be $result.Evidence.Version
+        $authoritativeRefresh.State.VersionSource | Should -Be 'Registry'
+
         $authoritative = Get-WintainiumApplicationInstalledState -StateRoot $stateRoot -ApplicationId $request.ApplicationId -OperationId $request.OperationId
         $authoritative.IsSuccessful | Should -BeTrue
         $authoritative.Status | Should -Be 'Installed'
