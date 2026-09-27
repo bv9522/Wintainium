@@ -10,6 +10,7 @@
     FunctionsToExport = @(
         'Get-WintainiumManifest'
         'Get-WintainiumApplicationInstalledState'
+        'Invoke-WintainiumApplicationReconciliation'
         'Test-WintainiumApplicationDefinition'
         'Get-WintainiumApplicationRelease'
         'Get-WintainiumApplicationUpdateStatus'
