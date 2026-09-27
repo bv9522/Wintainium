@@ -1,5 +1,5 @@
 $script:testRoot = Split-Path -Path (Split-Path -Parent $PSScriptRoot) -Parent
-$modulePath = Join-Path -Path $testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
+$modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
 
 Import-Module $modulePath -Force
 
