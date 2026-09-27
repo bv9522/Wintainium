@@ -23,26 +23,27 @@ function Test-WintainiumPluginDescriptor {
         try {
             $jsonDocument = [System.Text.Json.JsonDocument]::Parse($json)
             $root = $jsonDocument.RootElement
-            [System.Text.Json.JsonElement]$pluginTypeElement = default
-            [System.Text.Json.JsonElement]$capabilitiesElement = default
-            [System.Text.Json.JsonElement]$formatsElement = default
-            if ($root.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
-                $root.TryGetProperty('pluginType', [ref]$pluginTypeElement) -and
-                $pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and
-                $pluginTypeElement.GetString() -eq 'Installer' -and
-                $root.TryGetProperty('capabilities', [ref]$capabilitiesElement) -and
-                $capabilitiesElement.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
-                $capabilitiesElement.TryGetProperty('supportedFormats', [ref]$formatsElement) -and
-                $formatsElement.ValueKind -ne [System.Text.Json.JsonValueKind]::Array) {
-                $errors.Add([pscustomobject]@{
-                        Code = 'DescriptorInstallerFormatsInvalid'
-                        Message = 'Installer supportedFormats must be an array of format identifier strings.'
-                    })
+
+            if ($root.ValueKind -eq [System.Text.Json.JsonValueKind]::Object) {
+                $pluginTypeElement = $root.GetProperty('pluginType')
+                if ($pluginTypeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String -and
+                    $pluginTypeElement.GetString() -eq 'Installer') {
+                    $capabilitiesElement = $root.GetProperty('capabilities')
+                    $formatsElement = $capabilitiesElement.GetProperty('supportedFormats')
+                    if ($formatsElement.ValueKind -ne [System.Text.Json.JsonValueKind]::Array) {
+                        $errors.Add([pscustomobject]@{
+                                Code = 'DescriptorInstallerFormatsInvalid'
+                                Message = 'Installer supportedFormats must be an array of format identifier strings.'
+                            })
+                    }
+                }
             }
+
             $jsonDocument.Dispose()
         }
         catch {
-            # JSON syntax validity is already reported by ConvertFrom-Json above.
+            # JSON syntax/shape validity is reported by the regular descriptor
+            # validation below when required properties are missing or malformed.
         }
         if (-not $descriptor.ContainsKey('pluginId') -or $descriptor.pluginId -notmatch '^Wintainium\.(provider|installer|reconciliation)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
             $errors.Add([pscustomobject]@{ Code = 'DescriptorPluginIdInvalid'; Message = 'pluginId is missing or invalid.' })
