@@ -91,6 +91,20 @@ Describe 'Wintainium application update lifecycle composition' {
 
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
+            if (-not $result.IsSuccessful) {
+                $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
+                $errorCode = if ($null -ne $result.Error) { [string]$result.Error.Code } else { '<none>' }
+                $errorMessage = if ($null -ne $result.Error) { [string]$result.Error.Message } else { '<none>' }
+                $stateStatus = if ($null -ne $result.State) { [string]$result.State.Status } else { '<none>' }
+                $stageSummary = @($result.StageResults | ForEach-Object {
+                        $executionResult = if ($null -ne $_.Execution) { $_.Execution.Result } else { $null }
+                        $status = if ($null -ne $executionResult -and $executionResult.PSObject.Properties['Status']) { [string]$executionResult.Status } else { '<none>' }
+                        $successful = if ($null -ne $executionResult -and $executionResult.PSObject.Properties['IsSuccessful']) { [string]$executionResult.IsSuccessful } else { '<none>' }
+                        "{0}:Status={1};IsSuccessful={2}" -f $_.StageName,$status,$successful
+                    }) -join ' | '
+                throw "Decision-indeterminate lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$stateStatus; FailedStage=$failedStage; Stages=$stageSummary"
+            }
+
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
             @($result.StageResults).Count | Should -Be 8
