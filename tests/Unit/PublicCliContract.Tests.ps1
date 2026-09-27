@@ -12,11 +12,11 @@ Describe 'Wintainium public CLI contract' {
 
         $commands | Should -Be @(
             'Get-WintainiumApplicationInstalledState'
-            'Invoke-WintainiumApplicationReconciliation'
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
+            'Invoke-WintainiumApplicationReconciliation'
             'Invoke-WintainiumApplicationUpdate'
             'Test-WintainiumApplicationDefinition'
         )
