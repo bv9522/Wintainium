@@ -11,6 +11,7 @@
         'Get-WintainiumManifest'
         'Get-WintainiumApplicationInstalledState'
         'Invoke-WintainiumApplicationReconciliation'
+        'Set-WintainiumApplicationReconciliationSettings'
         'Test-WintainiumApplicationDefinition'
         'Get-WintainiumApplicationRelease'
         'Get-WintainiumApplicationUpdateStatus'
