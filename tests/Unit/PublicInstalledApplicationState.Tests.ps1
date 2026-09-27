@@ -4,6 +4,7 @@ BeforeAll {
 }
 
     Import-Module $script:modulePath -Force
+}
 
 Describe 'Wintainium public installed application state command' {
     BeforeEach {
