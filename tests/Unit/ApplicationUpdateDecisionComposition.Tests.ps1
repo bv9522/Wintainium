@@ -40,9 +40,14 @@ Describe 'Wintainium application update decision composition' {
         InModuleScope Wintainium.Core -Parameters @{ Manifest=$manifest; Release=$successfulRelease; StateRoot=$stateRoot } {
             param($Manifest,$Release,$StateRoot)
             Mock Get-WintainiumApplicationRelease { $Release }
-            Mock Get-WintainiumInstalledApplicationState {
-                New-WintainiumInstalledApplicationState -ApplicationId $Manifest.Id -InstallationState Installed -Version '1.0.0' -VersionSource 'Wintainium' -Architecture x64 -Channel stable
+            Mock Invoke-WintainiumApplicationReconciliation {
+                [pscustomobject]@{
+                    OperationId=$Release.OperationId; IsSuccessful=$true; Status='Persisted'
+                    State=(New-WintainiumInstalledApplicationState -ApplicationId $Manifest.Id -InstallationState Installed -Version '1.0.0' -VersionSource 'Wintainium' -Architecture x64 -Channel stable)
+                    Warnings=@(); Errors=@(); LogEvents=@()
+                }
             }
+            Mock Get-WintainiumInstalledApplicationState { throw 'Update decision must use freshly reconciled state.' }
             $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
             $result.OperationId | Should -Be 'release-operation'
             $result.IsSuccessful | Should -BeTrue
@@ -51,7 +56,8 @@ Describe 'Wintainium application update decision composition' {
             $result.InstalledState.Version | Should -Be '1.0.0'
             $result.Decision.SelectedRelease.ReleaseId | Should -Be 'release-2'
             Should -Invoke Get-WintainiumApplicationRelease -Times 1 -Exactly
-            Should -Invoke Get-WintainiumInstalledApplicationState -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumApplicationReconciliation -Times 1 -Exactly
+            Should -Invoke Get-WintainiumInstalledApplicationState -Times 0 -Exactly
         }
     }
 
@@ -60,9 +66,14 @@ Describe 'Wintainium application update decision composition' {
         InModuleScope Wintainium.Core -Parameters @{ Release=$successfulRelease; StateRoot=$stateRoot } {
             param($Release,$StateRoot)
             Mock Get-WintainiumApplicationRelease { $Release }
-            Mock Get-WintainiumInstalledApplicationState {
-                New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Unknown
+            Mock Invoke-WintainiumApplicationReconciliation {
+                [pscustomobject]@{
+                    OperationId=$Release.OperationId; IsSuccessful=$true; Status='Preserved'
+                    State=(New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Unknown)
+                    Warnings=@(); Errors=@(); LogEvents=@()
+                }
             }
+            Mock Get-WintainiumInstalledApplicationState { throw 'Update decision must use freshly reconciled state.' }
             $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
             $result.Status | Should -Be 'DecisionIndeterminate'
             $result.Decision.ReasonCode | Should -Be 'InstalledStateUnknown'
@@ -75,9 +86,14 @@ Describe 'Wintainium application update decision composition' {
         InModuleScope Wintainium.Core -Parameters @{ Release=$successfulRelease; StateRoot=$stateRoot } {
             param($Release,$StateRoot)
             Mock Get-WintainiumApplicationRelease { $Release }
-            Mock Get-WintainiumInstalledApplicationState {
-                New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState NotInstalled
+            Mock Invoke-WintainiumApplicationReconciliation {
+                [pscustomobject]@{
+                    OperationId=$Release.OperationId; IsSuccessful=$true; Status='Persisted'
+                    State=(New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState NotInstalled)
+                    Warnings=@(); Errors=@(); LogEvents=@()
+                }
             }
+            Mock Get-WintainiumInstalledApplicationState { throw 'Update decision must use freshly reconciled state.' }
             $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
             $result.Status | Should -Be 'ApplicationNotInstalled'
             $result.Decision.IsUpdateAvailable | Should -BeFalse
@@ -113,9 +129,14 @@ Describe 'Wintainium application update decision composition' {
         InModuleScope Wintainium.Core -Parameters @{ Manifest=$manifest; Release=$successfulRelease; StateRoot=$stateRoot } {
             param($Manifest,$Release,$StateRoot)
             Mock Get-WintainiumApplicationRelease { $Release }
-            Mock Get-WintainiumInstalledApplicationState {
-                New-WintainiumInstalledApplicationState -ApplicationId $Manifest.Id -InstallationState Installed -Version '1.0.0' -Architecture x64 -Channel stable
+            Mock Invoke-WintainiumApplicationReconciliation {
+                [pscustomobject]@{
+                    OperationId=$Release.OperationId; IsSuccessful=$true; Status='Persisted'
+                    State=(New-WintainiumInstalledApplicationState -ApplicationId $Manifest.Id -InstallationState Installed -Version '1.0.0' -Architecture x64 -Channel stable)
+                    Warnings=@(); Errors=@(); LogEvents=@()
+                }
             }
+            Mock Get-WintainiumInstalledApplicationState { throw 'Update decision must use freshly reconciled state.' }
             $result = Get-WintainiumApplicationUpdateDecision -ManifestPath 'C:\example.manifest.json' -StateRoot $StateRoot -MachineArchitecture x64
             $result.OperationId | Should -Be $Release.OperationId
         }
