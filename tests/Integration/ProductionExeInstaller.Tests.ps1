@@ -9,8 +9,10 @@ BeforeAll {
 Describe 'Production EXE installer composition' {
     It 'flows from registry selection through invocation and controlled process execution' {
         $pwshPath = (Get-Command pwsh -CommandType Application).Source
-        $artifactPath = Join-Path $TestDrive 'safe-fixture.exe'
-        Copy-Item -LiteralPath $pwshPath -Destination $artifactPath
+        # Use the installed PowerShell apphost directly. Renaming a .NET apphost can
+        # change the adjacent runtime/dll resolution behavior, so the test artifact
+        # remains the real executable while still exercising the production EXE path.
+        $artifactPath = [System.IO.Path]::GetFullPath($pwshPath)
 
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:productionPluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
