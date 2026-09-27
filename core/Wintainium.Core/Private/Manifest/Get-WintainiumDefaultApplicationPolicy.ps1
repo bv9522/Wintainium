@@ -61,6 +61,21 @@ function Get-WintainiumDefaultApplicationPolicy {
     }
 
     $installer = $installers[0]
+    $reconciler = $reconcilers[0]
+
+    if ([bool]$reconciler.Capabilities.requiresConfiguration -eq $true) {
+        return [pscustomobject][ordered]@{
+            IsSuccessful=$false
+            Status='ApplicationPolicyConfigurationRequired'
+            Policy=$null
+            Errors=@([pscustomobject][ordered]@{
+                Code='ApplicationPolicyConfigurationRequired'
+                Path='$.Policy.Reconciliation.Settings'
+                Message="The selected reconciliation plugin '$($reconciler.PluginId)' requires application-specific settings and cannot be selected by the default onboarding policy without them."
+            })
+        }
+    }
+
     $supportedFormats = @($installer.Capabilities.supportedFormats | ForEach-Object { [string]$_ } | Where-Object { $_ -in @('zip','msi','exe') } | Select-Object -Unique)
     if ($supportedFormats.Count -eq 0) {
         return [pscustomobject][ordered]@{
@@ -85,7 +100,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                 Settings=@{}
             }
             Reconciliation=[pscustomobject][ordered]@{
-                PluginId=[string]$reconcilers[0].PluginId
+                PluginId=[string]$reconciler.PluginId
                 RequiredContractVersion='1'
                 Settings=@{}
             }
