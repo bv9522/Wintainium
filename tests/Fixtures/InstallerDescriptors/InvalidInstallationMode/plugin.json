@@ -1,0 +1,9 @@
+{
+  "pluginId": "Wintainium.installer.invalid-mode",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "capabilities": {
+    "supportedFormats": ["exe"],
+    "installationMode": "not a mechanism"
+  }
+}
