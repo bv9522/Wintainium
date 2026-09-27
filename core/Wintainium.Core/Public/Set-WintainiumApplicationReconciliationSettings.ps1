@@ -153,7 +153,10 @@ function Set-WintainiumApplicationReconciliationSettings {
     }
 
     $updated = $manifest | ConvertTo-Json -Depth 30 | ConvertFrom-Json
-    $updated.reconciliation.settings = $Settings
+    # Normalize caller-provided structured settings through JSON so ordered dictionaries
+    # and other dictionary implementations become ordinary manifest-compatible objects.
+    $normalizedSettings = $Settings | ConvertTo-Json -Depth 30 | ConvertFrom-Json
+    $updated.reconciliation.settings = $normalizedSettings
 
     try {
         $destination = Set-WintainiumApplicationDefinition -ApplicationDefinition $updated -ManifestRoot (Split-Path -Path $ManifestPath -Parent) -SchemaPath $SchemaPath
