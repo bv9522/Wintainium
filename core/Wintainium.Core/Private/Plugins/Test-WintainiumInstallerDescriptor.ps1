@@ -60,7 +60,7 @@ function Test-WintainiumInstallerDescriptor {
                     Message = 'Installer descriptors require a non-empty capabilities.supportedFormats array.'
                 })
         }
-        elseif ($rawFormats -is [string] -or $rawFormats -is [System.Collections.IDictionary]) {
+        elseif ($rawFormats -is [System.Collections.IDictionary]) {
             $errors.Add([pscustomobject]@{
                     Code = 'DescriptorInstallerFormatsInvalid'
                     Message = 'Installer supportedFormats must be an array of format identifier strings.'
