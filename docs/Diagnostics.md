@@ -127,6 +127,29 @@ If release discovery fails:
 
 A successful release-discovery operation can legitimately contain no applicable release observations. Release discovery is not the update-decision stage.
 
+## Installer and reconciliation diagnostics
+
+Installer failures should be diagnosed from the structured installer error code
+and lifecycle stage rather than from process text. In particular, distinguish
+installer selection failures from installer execution failures:
+
+- selection failures indicate an invalid/missing installer capability, contract
+  incompatibility, unsupported artifact format, or ambiguous plugin identity;
+- invocation failures indicate invalid descriptor binding, module-path/entry-point
+  validation, artifact handoff, or structured settings problems;
+- execution failures indicate that the selected installer process or plugin
+  operation could not complete successfully.
+
+For Windows installed-application reconciliation, an Unknown result is not a
+successful NotInstalled result. Inspect the structured reconciliation evidence
+and diagnostics. Multiple matching installed records are intentionally
+ambiguous rather than silently resolved.
+
+Plugin descriptor validation is an integrity boundary, not a sandbox. A valid
+descriptor does not mean that the plugin's PowerShell code is untrusted or
+isolated. Plugin distribution and installation are therefore trusted
+administrative operations.
+
 ## JSON diagnostics
 
 Structured results can be captured without depending on console formatting:
