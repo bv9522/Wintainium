@@ -42,6 +42,9 @@ function Invoke-WintainiumInstallerOperation {
     }
 
     $modulePath = [System.IO.Path]::GetFullPath($modulePath)
+    if (-not [string]::Equals([System.IO.Path]::GetExtension($modulePath), '.psm1', [System.StringComparison]::OrdinalIgnoreCase)) {
+        return & $failure 'InvalidInvocation' 'Installer invocation must identify a PowerShell module (.psm1) path.'
+    }
     try {
         $module = Get-Module | Where-Object {
             $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $modulePath)
