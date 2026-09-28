@@ -416,3 +416,142 @@ Phase 12 connects the desktop shell to real Wintainium operations and extends Ad
 
 **Status: In progress — automated checkpoints complete.** Final integration hardening is implemented and documented. The x64 Debug desktop build passed, the Desktop EngineProbe passed all checks, and the full PowerShell/Pester regression is **524/524 green**. The only remaining lock gate is the practical real-application desktop update observation. See `docs/Phase12HFinalIntegrationHardening.md`.
 
+
+## Phase 13 — Windows Installed-Application Reconciliation
+
+**Status: Complete and locked.**
+
+Phase 13 added the general Windows installed-application reconciliation plugin
+that was missing from the original lifecycle implementation. It establishes a
+Windows uninstall-evidence boundary without making reconciliation a second
+installer system or a second authoritative managed-state store.
+
+The production reconciler:
+
+- reads Windows installed-application evidence across the relevant registry
+  views;
+- performs exact case-insensitive application matching;
+- preserves NotInstalled when no candidates exist;
+- preserves Unknown when evidence is ambiguous or insufficient;
+- does not silently choose among multiple candidates;
+- distinguishes registry view/architecture evidence from application
+  architecture itself; and
+- returns normalized evidence through the Core reconciliation contract.
+
+Focused reconciliation and workflow checkpoints were completed before the
+installer-production work.
+
+## Phase 13.5 — Installer Contract / Production Installers
+
+**Status: 13.5A–13.5H complete; 13.5I in progress.**
+
+Phase 13.5 closes the gap between the lifecycle's installer abstraction and
+production installer implementations.
+
+### 13.5A — Installer Contract Review
+- Review the installer descriptor and invocation contracts.
+- Establish format/capability declarations and compatibility checks.
+
+**Status: Complete.**
+
+### 13.5B — EXE Installer
+- Implement the production EXE installer plugin.
+- Preserve structured process invocation and installer-owned settings.
+
+**Status: Complete.**
+
+### 13.5C — MSI Installer
+- Implement the production MSI installer plugin.
+- Preserve the same structured process boundary used by EXE installation.
+
+**Status: Complete.**
+
+### 13.5D — Archive / Portable Installer
+- Implement the portable ZIP installer.
+- Require an absolute destination path.
+- Reject absolute and parent-traversing archive entry points.
+
+**Status: Complete.**
+
+### 13.5E — MSIX Installer
+- Implement the production MSIX installer.
+- Pass structured settings as JSON arguments to a fixed system PowerShell
+  command rather than interpolating settings into shell text.
+
+**Status: Complete.**
+
+### 13.5F — Policy Integration
+- Integrate installer capability into the Core default application policy.
+- Keep artifact selection and installer selection separate.
+- Preserve architecture priority over format preference.
+- Do not silently switch away from an explicitly declared installer.
+
+**Status: Complete.**
+
+### 13.5G — Validation & Security Boundaries
+- Revalidate installer descriptors at invocation preparation.
+- Bind descriptor identity/type/entry point to the selected plugin.
+- Reject duplicate plugin identities.
+- Validate resolved plugin module paths before loading.
+- Preserve structured process/argument boundaries and archive path safety.
+- Document the distinction between descriptor validation and sandboxing.
+
+**Status: Complete.**
+
+### 13.5H — Focused Tests
+- Run the consolidated installer/provider/reconciliation contract checkpoint.
+
+**Status: Complete — 123/123 green.**
+
+### 13.5I — Documentation
+- Reconcile architecture, manifest authoring, installer contract, release
+  packaging, roadmap, and project documentation with the production plugin set.
+- Document installer selection, artifact selection, architecture handling,
+  structured invocation, reconciliation boundaries, and actual security
+  guarantees.
+
+**Status: In progress.**
+
+### 13.5J — Real Application Validation
+- Validate a real 7-Zip application lifecycle through the production plugin
+  chain.
+- Observe installation and subsequent reconciliation using the actual Windows
+  installed-application evidence boundary.
+- Validate the update path against a later 7-Zip release without replacing
+  Core policy with application-specific code.
+
+**Status: Pending.**
+
+### 13.5K — Phase Lock
+- Run the full PowerShell/Pester regression.
+- Re-run the x64 desktop build and desktop smoke/EngineProbe checkpoint.
+- Reconcile final documentation and establish the production baseline.
+
+**Status: Pending.**
+
+## Phase 14 — GUI Polish / Productization
+
+Phase 14 is the original GUI productization phase, resumed after the missing
+reconciliation and production-installer work was completed.
+
+### 14A — Application Metadata Presentation
+- Present complete application metadata through the desktop model.
+- Keep the presentation mapper aligned with the public Core status contract.
+- Remove private artifact projections from the desktop boundary.
+
+**Status: Complete.**
+
+### 14B — List/Grid Presentation
+- Refine application list and grid presentation.
+- Preserve application selection when switching views.
+
+**Status: Complete.**
+
+### 14C — Navigation & Application Presentation Polish
+- Refine main-window navigation and application collection presentation.
+- Improve application cards/list rows, icons, version presentation, and
+  update indicators.
+- Preserve the presentation-only boundary and Core-owned status/state.
+- Keep productization changes independent from installer/reconciliation policy.
+
+**Status: In progress.**
