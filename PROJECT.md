@@ -31,8 +31,10 @@ constraints applied to the early architecture work and are no longer a
 statement of the project's current capability boundary.
 
 The implemented engine now includes provider-backed release discovery,
-download, installation, reconciliation, authoritative installed-state
-handling, and complete lifecycle orchestration. The public PowerShell surface now exposes six stable commands, including the
+download, verification, installation, Windows installed-application
+reconciliation, authoritative installed-state handling, and complete lifecycle
+orchestration. Production installer capabilities currently include EXE, MSI,
+portable ZIP, and MSIX. The public PowerShell surface now exposes six stable commands, including the
 installed-state, onboarding, and end-to-end update operations and their
 presentation-neutral structured result contracts.
 
@@ -44,3 +46,30 @@ interactive CLI presentation layer or a future C#/.NET client. Presentation
 formatting and UI concerns remain outside Core.
 
 The Phase 11 desktop client is the implemented C#/.NET WinUI 3 presentation client over that boundary. It hosts the documented PowerShell Core commands in-process through Microsoft.PowerShell.SDK, maps structured results into desktop presentation models, and keeps engine decisions, provider/installer behavior, lifecycle execution, verification, reconciliation, and cancellation semantics in Core.
+
+
+## Production plugin boundary
+
+The current production architecture separates discovery, decision, acquisition,
+verification, installation, reconciliation, and presentation:
+
+- Providers discover upstream releases and artifact candidates.
+- Core decides release/update eligibility, artifact selection, and installer
+  selection.
+- Download obtains the selected artifact.
+- Verification establishes artifact trust before installation.
+- Installer plugins apply artifacts through a structured invocation boundary.
+- The Windows reconciliation plugin observes installed-application evidence.
+- Core remains authoritative for managed installed state.
+- The WinUI desktop client presents Core-owned results and does not become a
+  second engine.
+
+The production installer set is EXE, MSI, portable ZIP, and MSIX. The default
+installer mechanism preference is Core policy and can be constrained by a
+manifest; it is not an application-universal hard-coded ranking.
+
+Plugin descriptor validation protects contract integrity but is not a sandbox.
+Production plugin modules are trusted executable code and run in-process.
+Structured process arguments, path containment, archive traversal checks, and
+fixed MSIX invocation reduce concrete command-boundary risks without claiming
+isolation from malicious plugin code.
