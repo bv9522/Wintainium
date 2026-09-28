@@ -103,6 +103,9 @@ function New-WintainiumInstallerInvocation {
         [string]$descriptor.pluginType -ne 'Installer') {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin does not match its descriptor identity.' } }
     }
+    if (-not ([string]$descriptor.entryPoint).Equals($entryPoint, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin entryPoint does not match its descriptor.' } }
+    }
 
     $pluginRoot = Split-Path -Path $descriptorPath -Parent
     $entryPointPath = Join-Path -Path $pluginRoot -ChildPath $entryPoint
