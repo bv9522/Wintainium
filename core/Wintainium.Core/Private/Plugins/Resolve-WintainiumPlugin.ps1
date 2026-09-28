@@ -37,6 +37,22 @@ function Resolve-WintainiumPlugin {
         }
     }
 
+    if ($pluginsByIdentity.Count -gt 1) {
+        $errorCode = switch ($PluginType) {
+            'Provider' { 'ProviderIdentityAmbiguous' }
+            'Reconciliation' { 'ReconciliationIdentityAmbiguous' }
+            default { 'PluginIdentityAmbiguous' }
+        }
+        return [pscustomobject]@{
+            IsResolved = $false
+            Plugin = $null
+            Error = [pscustomobject]@{
+                Code = $errorCode
+                Message = "Multiple $PluginType plugins were registered for '$PluginId'. Plugin identities must be unique."
+            }
+        }
+    }
+
     $compatiblePlugins = @($pluginsByIdentity | Where-Object {
             $_.ContractVersions -contains $RequiredContractVersion
         })
