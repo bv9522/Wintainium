@@ -31,7 +31,7 @@ BeforeAll {
         Capabilities = [ordered]@{ supportedFormats = @('zip') }
         DescriptorPath = 'C:\plugins\zip\plugin.json'
     }
-
+}
 
 Describe 'Wintainium installer selection' {
     It 'selects the manifest-declared installer when the artifact format is supported' {
