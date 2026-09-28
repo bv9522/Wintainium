@@ -19,7 +19,7 @@ Describe 'Wintainium MSIX installer plugin' {
         $result.Descriptor.capabilities.installationMode | Should -Be 'package'
     }
 
-    It 'targets Add-AppxPackage with the absolute MSIX artifact' {
+    It 'targets the system Windows PowerShell executable with the absolute MSIX artifact' {
         $module = Import-Module $script:modulePath -Force -PassThru
         $invocation = [pscustomobject]@{
             ArtifactPath = $script:artifactPath
@@ -29,11 +29,12 @@ Describe 'Wintainium MSIX installer plugin' {
 
         $result = & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation
 
-        $result.ExecutablePath | Should -Be (Get-Command powershell.exe).Path
+        $expectedPowerShell = [System.IO.Path]::GetFullPath((Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'))
+        $result.ExecutablePath | Should -Be $expectedPowerShell
         $result.Arguments[0..3] | Should -Be @('-NoProfile','-NonInteractive','-Command','$settings = $args[1] | ConvertFrom-Json -AsHashtable; Add-AppxPackage -Path $args[0] @settings')
         $result.Arguments[4] | Should -Be ([System.IO.Path]::GetFullPath($script:artifactPath))
         $result.Arguments[5] | Should -Be '{}'
-        $result.Arguments -join ' ' | Should -Not -Match '(?i)cmd\.exe|start-process|invoke-expression'
+        $result.Arguments -join ' ' | Should -Not -Match '(?i)cmd.exe|start-process|invoke-expression'
     }
 
     It 'serializes structured Add-AppxPackage settings without constructing a shell command' {
