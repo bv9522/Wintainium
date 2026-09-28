@@ -28,7 +28,8 @@ Describe 'Wintainium generic portable ZIP installer' {
     It 'returns a process specification for archive extraction' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination}}
         $result=&$script:installerCommand -Invocation $inv
-        $result.ExecutablePath | Should -Not -BeNullOrEmpty
+        $expectedPowerShell=[System.IO.Path]::GetFullPath((Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'))
+        $result.ExecutablePath | Should -Be $expectedPowerShell
         @($result.Arguments) | Should -Contain $script:artifactPath
         @($result.Arguments) | Should -Contain $script:destination
     }
