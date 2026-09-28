@@ -7,6 +7,10 @@ Validates the application's manifest, resolves its declared reconciliation
 plugin, obtains fresh installed-application evidence, and persists trustworthy
 evidence through Core's authoritative state boundary. Unknown evidence never
 overwrites an existing trustworthy state.
+
+.OUTPUTS
+A structured result containing OperationId, IsSuccessful, Status, ApplicationId,
+State, Reconciliation, Errors, Warnings, and LogEvents.
 #>
 function Invoke-WintainiumApplicationReconciliation {
     [CmdletBinding()]
