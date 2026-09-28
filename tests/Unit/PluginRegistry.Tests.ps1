@@ -65,6 +65,33 @@ Describe 'Wintainium plugin registry' {
         $resolved.Plugin.PluginType | Should -Be 'Installer'
     }
 
+    It 'rejects duplicate plugin identities instead of selecting one deterministically' {
+        $duplicatePlugins = @(
+            [pscustomobject]@{
+                PluginId = 'Wintainium.installer.test'
+                PluginType = 'Installer'
+                ContractVersions = @('1')
+                Capabilities = [ordered]@{ supportedFormats = @('exe') }
+                DescriptorPath = 'C:\plugins\one\plugin.json'
+            },
+            [pscustomobject]@{
+                PluginId = 'Wintainium.installer.test'
+                PluginType = 'Installer'
+                ContractVersions = @('1')
+                Capabilities = [ordered]@{ supportedFormats = @('exe') }
+                DescriptorPath = 'C:\plugins\two\plugin.json'
+            }
+        )
+
+        $resolved = InModuleScope Wintainium.Core -Parameters @{ Plugins = $duplicatePlugins } {
+            Resolve-WintainiumPlugin -Plugins $Plugins -PluginId 'Wintainium.installer.test' -PluginType Installer -RequiredContractVersion '1'
+        }
+
+        $resolved.IsResolved | Should -Be $false
+        $resolved.Plugin | Should -Be $null
+        $resolved.Error.Code | Should -Be 'PluginIdentityAmbiguous'
+    }
+
     It 'rejects an installer that supports none of the requested formats' {
         $manifestPath = Join-Path -Path $script:manifestRoot -ChildPath 'incompatible-installer.json'
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
