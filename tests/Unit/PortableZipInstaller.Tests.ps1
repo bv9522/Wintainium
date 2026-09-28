@@ -48,6 +48,14 @@ Describe 'Wintainium generic portable ZIP installer' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{}}
         { &$script:installerCommand -Invocation $inv } | Should -Throw
     }
+    It 'rejects an absolute entryPoint' {
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint=(Join-Path $script:destination 'bin/app.exe')}}
+        { &$script:installerCommand -Invocation $inv } | Should -Throw
+    }
+    It 'rejects parent-directory traversal in entryPoint' {
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint='../outside/app.exe'}}
+        { &$script:installerCommand -Invocation $inv } | Should -Throw
+    }
     It 'rejects an empty entryPoint' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint=''}}
         { &$script:installerCommand -Invocation $inv } | Should -Throw
