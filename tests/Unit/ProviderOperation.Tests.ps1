@@ -112,6 +112,31 @@ Describe 'Wintainium provider operation contract' {
         @($result.Errors.Code) | Should -Contain 'ProviderResultOperationIdMismatch'
     }
 
+    It 'rejects a resolved provider entry point that is not a PowerShell module' {
+        $invalidProvider = [pscustomobject]@{
+            PluginId = $script:provider.PluginId
+            PluginType = 'Provider'
+            DescriptorPath = $script:provider.DescriptorPath
+            EntryPoint = 'plugin.json'
+        }
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000007'
+            ApplicationId = 'example.application'
+            ProviderId = $script:provider.PluginId
+            RequiredContractVersion = '1'
+            Settings = @{}
+            DiscoveryContext = @{}
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Provider = $invalidProvider; Request = $request } {
+            Invoke-WintainiumProviderOperation -Provider $Provider -Request $Request
+        }
+
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'ProviderInternalError'
+        @($result.Errors.Code) | Should -Contain 'ProviderInvalidPluginModulePath'
+    }
+
     It 'rejects a provider result containing malformed normalized release data' {
         $request = [pscustomobject]@{
             OperationId = '00000000-0000-0000-0000-000000000006'
