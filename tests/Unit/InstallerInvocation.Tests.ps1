@@ -16,7 +16,14 @@ BeforeAll {
 AfterAll { Remove-Item -LiteralPath $script:tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Describe 'Wintainium installer invocation preparation' {
     BeforeEach {
-        Set-Content -LiteralPath $script:descriptorPath -Value '{}' -Encoding utf8
+        $descriptor = @{
+            pluginId = 'Wintainium.installer.exe'
+            pluginType = 'Installer'
+            contractVersions = @('1')
+            entryPoint = 'Installer.psm1'
+            capabilities = @{ supportedFormats = @('exe') }
+        } | ConvertTo-Json -Depth 10
+        Set-Content -LiteralPath $script:descriptorPath -Value $descriptor -Encoding utf8
     }
 
     It 'prepares a constrained invocation from a successful selection and installer request' {
