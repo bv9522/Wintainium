@@ -33,6 +33,48 @@ Describe 'Wintainium manifest import' {
         $result.Manifest.Id | Should -Be 'org.neovim.neovim'
     }
 
+
+    It 'accepts MSIX as a valid artifact format' {
+        $path = Join-Path -Path $TestDrive -ChildPath 'valid-msix-schema.json'
+        @'
+{
+  "manifestVersion": "1.1",
+  "id": "org.example.msix",
+  "name": "MSIX Example",
+  "source": {
+    "pluginId": "Wintainium.provider.example",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "installer": {
+    "pluginId": "Wintainium.installer.msix",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.example",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["msix"],
+    "architectures": ["x64"]
+  }
+}
+'@ | Set-Content -LiteralPath $path -Encoding utf8
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path; SchemaPath = $script:schemaPath } {
+            Import-WintainiumManifest -Path $Path -SchemaPath $SchemaPath
+        }
+
+        $result.IsValid | Should -Be $true
+        $result.Manifest.Artifact.formats | Should -Contain 'msix'
+        $result.Errors.Count | Should -Be 0
+    }
+
     It 'returns ManifestFileNotFound for a missing file' {
         $path = Join-Path -Path $TestDrive -ChildPath 'does-not-exist.json'
         $result = InModuleScope Wintainium.Core -Parameters @{ Path = $path; SchemaPath = $script:schemaPath } {
