@@ -1,5 +1,40 @@
 # Changelog
 
+## Unreleased — Phase 13.5 Installer Production & Phase 14 GUI Productization
+
+### Phase 13 — Windows Installed-Application Reconciliation
+
+- Added the general Windows installed-application reconciliation plugin and
+  normalized installed-evidence boundary.
+- Added exact case-insensitive matching with explicit NotInstalled and Unknown
+  outcomes and no silent selection among multiple matches.
+- Preserved registry-view/architecture distinctions without conflating registry
+  view with application architecture.
+
+### Phase 13.5 — Production Installers
+
+- Added production EXE, MSI, portable ZIP, and MSIX installer plugins under
+  the versioned installer contract.
+- Added Core-owned installer capability/default-policy integration while keeping
+  artifact selection and installer selection as separate decisions.
+- Added architecture-aware artifact policy with explicit x64/x86/arm64/neutral
+  handling and no silent installer substitution.
+- Hardened installer invocation descriptor validation, plugin identity binding,
+  plugin-root containment, module-path validation, structured process
+  arguments, archive path safety, and fixed MSIX command construction.
+- Rejected duplicate plugin identities instead of selecting a descriptor by
+  path order.
+- Added docs/InstallerContract.md documenting the production installer boundary,
+  security guarantees, and non-sandbox trust model.
+- Consolidated focused installer/provider/reconciliation coverage to **123/123
+  green**.
+
+### Phase 14 — GUI Productization
+
+- Preserved and documented the completed 14A application-metadata presentation
+  and 14B list/grid presentation work.
+- Roadmap now tracks the next productization work under 14C.
+
 ## Unreleased — Phase 12H Final Integration Hardening & Phase 12 Lock
 
 ### Phase 12H — Final Integration Hardening
