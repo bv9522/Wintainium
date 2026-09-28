@@ -53,8 +53,6 @@ function Invoke-WintainiumInstaller {
         $entryPoint = [string]$entryPoint
         if ([string]::IsNullOrWhiteSpace($entryPoint) -or
             [System.IO.Path]::IsPathFullyQualified($entryPoint) -or
-            $entryPoint.Contains([char]92) -or
-            $entryPoint.Contains([char]47) -or
             $entryPoint -match '(^|[\\/])\.\.([\\/]|$)') {
             throw 'Portable ZIP installer entryPoint must be a non-empty relative path without parent-directory traversal.'
         }
