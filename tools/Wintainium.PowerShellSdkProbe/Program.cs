@@ -188,6 +188,15 @@ try
     Console.WriteLine($"  pluginId found: {extractedPluginId is not null}");
     Console.WriteLine($"  pluginId value: {extractedPluginId ?? "<null>"}");
 
+    Console.WriteLine("Full mapper-equivalent Source extraction:");
+    var mapperSource = GetProperty(manifest, "Source");
+    Console.WriteLine($"  Source found: {mapperSource is not null}");
+    var mapperPluginId = mapperSource is null
+        ? null
+        : GetObjectMemberString(mapperSource, "pluginId");
+    Console.WriteLine($"  pluginId found: {mapperPluginId is not null}");
+    Console.WriteLine($"  pluginId value: {mapperPluginId ?? "<null>"}");
+
     return 0;
 }
 finally
@@ -296,6 +305,26 @@ static string DescribeObject(object? value)
     return $"{value.GetType().FullName} = {baseObject}";
 }
 
+
+static PSObject? GetProperty(PSObject source, string propertyName)
+{
+    if (source.BaseObject is IDictionary dictionary)
+    {
+        foreach (DictionaryEntry entry in dictionary)
+        {
+            if (string.Equals(
+                Convert.ToString(entry.Key),
+                propertyName,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return entry.Value is null ? null : PSObject.AsPSObject(entry.Value);
+            }
+        }
+    }
+
+    var property = source.Properties[propertyName];
+    return property?.Value is null ? null : PSObject.AsPSObject(property.Value);
+}
 
 static string? GetObjectMemberString(PSObject source, string memberName)
 {
