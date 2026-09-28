@@ -20,19 +20,23 @@ function Get-WintainiumDefaultApplicationPolicy {
     # manifest may explicitly choose another installer and format.
     $preferredFormats = @('exe','msi','msix','zip')
 
-    $installerCandidates = foreach ($format in $preferredFormats) {
-        foreach ($installer in @($installers | Sort-Object DescriptorPath)) {
-            $supportedFormats = @($installer.Capabilities.supportedFormats | ForEach-Object {
-                if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
-            })
-            if ($supportedFormats -contains $format) {
-                [pscustomobject]@{
-                    Installer = $installer
-                    Format = $format
+    $installerCandidates = @()
+    foreach ($format in $preferredFormats) {
+        $matches = @(
+            foreach ($installer in @($installers | Sort-Object DescriptorPath)) {
+                $supportedFormats = @($installer.Capabilities.supportedFormats | ForEach-Object {
+                    if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
+                })
+                if ($supportedFormats -contains $format) {
+                    [pscustomobject]@{
+                        Installer = $installer
+                        Format = $format
+                    }
                 }
             }
-        }
-        if (@($installerCandidates | Where-Object Format -eq $format).Count -gt 0) {
+        )
+        if ($matches.Count -gt 0) {
+            $installerCandidates = $matches
             break
         }
     }
