@@ -43,10 +43,18 @@ function Invoke-WintainiumInstaller {
 
     $settingsJson = ConvertTo-Json -InputObject $settings -Compress -Depth 20
 
-    $powershell = Get-Command powershell.exe -ErrorAction Stop
+    if ([string]::IsNullOrWhiteSpace($env:WINDIR)) {
+        throw 'MSIX installer requires the Windows directory environment variable.'
+    }
+
+    $powershellPath = Join-Path -Path $env:WINDIR -ChildPath 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    if (-not [System.IO.Path]::IsPathFullyQualified($powershellPath) -or
+        -not (Test-Path -LiteralPath $powershellPath -PathType Leaf)) {
+        throw 'MSIX installer could not locate the Windows PowerShell executable.'
+    }
 
     [pscustomobject][ordered]@{
-        ExecutablePath = $powershell.Path
+        ExecutablePath = [System.IO.Path]::GetFullPath($powershellPath)
         Arguments = [string[]]@(
             '-NoProfile',
             '-NonInteractive',
