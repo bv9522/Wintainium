@@ -62,6 +62,8 @@ Describe 'Wintainium release packaging boundary' {
             'Get-WintainiumApplicationRelease'
             'Invoke-WintainiumApplicationUpdate'
             'Invoke-WintainiumApplicationOnboarding'
+            'Invoke-WintainiumApplicationReconciliation'
+            'Set-WintainiumApplicationReconciliationSettings'
         )
     }
 }
