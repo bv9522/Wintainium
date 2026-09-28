@@ -43,6 +43,8 @@ function Invoke-WintainiumInstaller {
 
     $settingsJson = ConvertTo-Json -InputObject $settings -Compress -Depth 20
 
+    $powershell = Get-Command powershell.exe -ErrorAction Stop
+
     [pscustomobject][ordered]@{
         ExecutablePath = $powershell.Path
         Arguments = [string[]]@(
