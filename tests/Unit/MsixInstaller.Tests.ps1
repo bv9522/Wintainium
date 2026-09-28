@@ -10,8 +10,8 @@ BeforeAll {
 
 Describe 'Wintainium MSIX installer plugin' {
     It 'has a valid package installer descriptor' {
-        $result = InModuleScope Wintainium.Core {
-            Test-WintainiumPluginDescriptor -DescriptorPath $using:descriptorPath
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $script:descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
         }
         $result.IsValid | Should -Be $true
         $result.Descriptor.pluginId | Should -Be 'Wintainium.installer.msix'
@@ -29,7 +29,7 @@ Describe 'Wintainium MSIX installer plugin' {
 
         $result = & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation
 
-        $result.ExecutablePath | Should -Be (Get-Command powershell.exe).Source
+        $result.ExecutablePath | Should -Be (Get-Command powershell.exe).Path
         $result.Arguments[0..3] | Should -Be @('-NoProfile','-NonInteractive','-Command','$settings = $args[1] | ConvertFrom-Json -AsHashtable; Add-AppxPackage -Path $args[0] @settings')
         $result.Arguments[4] | Should -Be ([System.IO.Path]::GetFullPath($script:artifactPath))
         $result.Arguments[5] | Should -Be '{}'
