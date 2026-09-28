@@ -210,7 +210,8 @@ Describe 'Wintainium default application installer policy' {
             $script:reconciler
         )
 
-        $result = InModuleScope Wintainium.Core -Parameters @{ Registry = [pscustomobject]@{ Plugins = $Registry.Plugins } } {
+        $registry = [pscustomobject]@{ Plugins = $plugins }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Registry = $registry } {
             Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry
         }
 
