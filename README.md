@@ -52,7 +52,7 @@ See [PROJECT.md](PROJECT.md), [ROADMAP.md](ROADMAP.md), and
 contract documentation lives under `docs/`.
 
 The production plugin set currently includes GitHub Releases and official
--download-page providers, four installer implementations (EXE, MSI, portable
+download-page providers, four installer implementations (EXE, MSI, portable
 ZIP, and MSIX), and the Windows installed-application reconciliation plugin.
 Installer selection, artifact selection, verification, reconciliation, and
 lifecycle policy remain Core-owned boundaries; the desktop client presents
