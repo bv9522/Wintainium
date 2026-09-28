@@ -84,4 +84,63 @@ Describe 'Wintainium artifact selection' {
         $result=InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest;MachineArchitecture='x64'} { param($Release,$Manifest,$MachineArchitecture) Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture $MachineArchitecture }
         $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app.unknown.msi'
     }
+    It 'does not let a preferred EXE outrank a compatible MSI when EXE architecture is incompatible' {
+        $artifacts=@(
+            [pscustomobject]@{ Uri='https://example.test/app.x64.msi'; Format='msi'; Architecture='x64' },
+            [pscustomobject]@{ Uri='https://example.test/app.arm64.exe'; Format='exe'; Architecture='arm64' }
+        )
+        $release=[pscustomobject]@{ ReleaseId='release-2.0.0'; Version='2.0.0'; Channel='stable'; Artifacts=$artifacts }
+        $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('exe','msi'); architectures=@('x64','neutral','arm64'); allowUnknownArchitecture=$false } }
+        $result=InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest;MachineArchitecture='x64'} {
+            param($Release,$Manifest,$MachineArchitecture)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        }
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app.x64.msi'
+        $result.Observations[1].ReasonCode | Should -Be 'ArchitectureIncompatible'
+    }
+
+    It 'does not select a preferred EXE when no artifact is compatible' {
+        $artifacts=@(
+            [pscustomobject]@{ Uri='https://example.test/app.arm64.exe'; Format='exe'; Architecture='arm64' },
+            [pscustomobject]@{ Uri='https://example.test/app.x86.msi'; Format='msi'; Architecture='x86' }
+        )
+        $release=[pscustomobject]@{ ReleaseId='release-2.0.0'; Version='2.0.0'; Channel='stable'; Artifacts=$artifacts }
+        $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('exe','msi'); architectures=@('x64','neutral','arm64','x86'); allowUnknownArchitecture=$false } }
+        $result=InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest;MachineArchitecture='x64'} {
+            param($Release,$Manifest,$MachineArchitecture)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        }
+        $result.SelectedArtifact | Should -BeNullOrEmpty
+        @($result.Observations | Where-Object Eligible).Count | Should -Be 0
+    }
+
+    It 'keeps a compatible EXE ahead of a compatible MSI when both share the same architecture' {
+        $artifacts=@(
+            [pscustomobject]@{ Uri='https://example.test/app.msi'; Format='msi'; Architecture='x64' },
+            [pscustomobject]@{ Uri='https://example.test/app.exe'; Format='exe'; Architecture='x64' }
+        )
+        $release=[pscustomobject]@{ ReleaseId='release-2.0.0'; Version='2.0.0'; Channel='stable'; Artifacts=$artifacts }
+        $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('exe','msi'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false } }
+        $result=InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest;MachineArchitecture='x64'} {
+            param($Release,$Manifest,$MachineArchitecture)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        }
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app.exe'
+    }
+
+    It 'honors an explicit manifest format constraint over the default EXE preference' {
+        $artifacts=@(
+            [pscustomobject]@{ Uri='https://example.test/app.exe'; Format='exe'; Architecture='x64' },
+            [pscustomobject]@{ Uri='https://example.test/app.msi'; Format='msi'; Architecture='x64' }
+        )
+        $release=[pscustomobject]@{ ReleaseId='release-2.0.0'; Version='2.0.0'; Channel='stable'; Artifacts=$artifacts }
+        $manifest=[pscustomobject]@{ artifact=[pscustomobject]@{ formats=@('msi'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false } }
+        $result=InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest;MachineArchitecture='x64'} {
+            param($Release,$Manifest,$MachineArchitecture)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture $MachineArchitecture
+        }
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app.msi'
+        $result.Observations[0].ReasonCode | Should -Be 'FormatNotPermitted'
+    }
+
 }
