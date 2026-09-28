@@ -49,6 +49,22 @@ Describe 'Invoke-WintainiumInstallerOperation' {
         $result.ErrorMessage | Should -Be $null
     }
 
+    It 'rejects a non-module plugin path before loading code' {
+        $pluginRoot = Join-Path $TestDrive 'InvalidModulePath'
+        New-Item -ItemType Directory -Path $pluginRoot | Out-Null
+        $modulePath = Join-Path $pluginRoot 'not-a-module.ps1'
+        Set-Content -LiteralPath $modulePath -Value 'Write-Output invalid' -NoNewline
+        $invocation = New-TestInvocation -PluginModulePath $modulePath
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation } {
+            Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 1000
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'InvalidInvocation'
+        $result.ExitCode | Should -Be $null
+    }
+
     It 'rejects an installer plugin that does not export the fixed operation' {
         $pluginRoot = Join-Path $TestDrive 'MissingOperation'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
