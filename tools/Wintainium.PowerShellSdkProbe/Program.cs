@@ -183,6 +183,11 @@ try
         }
     }
 
+    Console.WriteLine("Mapper-equivalent Source extraction:");
+    var extractedPluginId = GetObjectMemberString(source, "pluginId");
+    Console.WriteLine($"  pluginId found: {extractedPluginId is not null}");
+    Console.WriteLine($"  pluginId value: {extractedPluginId ?? "<null>"}");
+
     return 0;
 }
 finally
@@ -289,4 +294,47 @@ static string DescribeObject(object? value)
     var baseObject = psObject.BaseObject;
 
     return $"{value.GetType().FullName} = {baseObject}";
+}
+
+
+static string? GetObjectMemberString(PSObject source, string memberName)
+{
+    for (var current = source; current is not null;)
+    {
+        var property = current.Properties[memberName];
+        if (property?.Value is not null)
+        {
+            var value = Convert.ToString(property.Value);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        if (current.BaseObject is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                if (string.Equals(
+                    Convert.ToString(entry.Key),
+                    memberName,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    var value = entry.Value is null ? null : Convert.ToString(entry.Value);
+                    if (!string.IsNullOrWhiteSpace(value))
+                        return value;
+                }
+            }
+
+            return null;
+        }
+
+        if (current.BaseObject is PSObject nested)
+        {
+            current = nested;
+            continue;
+        }
+
+        return null;
+    }
+
+    return null;
 }
