@@ -1,6 +1,6 @@
 # Wintainium Getting Started
 
-Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, application validation, release discovery, and the complete application update lifecycle.
+Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, installed-state access, application validation, release discovery, application onboarding, and the complete application update lifecycle.
 
 ## Prerequisites
 
@@ -26,8 +26,11 @@ Get-Command -Module Wintainium.Core
 The supported user-facing commands are:
 
 - `Get-WintainiumManifest`
+- `Get-WintainiumApplicationInstalledState`
 - `Test-WintainiumApplicationDefinition`
 - `Get-WintainiumApplicationRelease`
+- `Invoke-WintainiumApplicationUpdate`
+- `Invoke-WintainiumApplicationOnboarding`
 - `Invoke-WintainiumApplicationUpdate`
 
 These commands return structured objects. They do not print a presentation-specific result that callers must parse.
