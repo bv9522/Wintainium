@@ -54,7 +54,7 @@ function New-WintainiumApplicationDefinitionFromSource {
             if ($architectures.Count -eq 0) {
                 $errors.Add([pscustomobject][ordered]@{ Code='ApplicationPolicyInvalid'; Path='$.Policy.Artifact.Architectures'; Message='At least one artifact architecture is required.' })
             }
-            $invalidFormats = @($formats | Where-Object { $_ -notin @('zip','msi','exe') })
+            $invalidFormats = @($formats | Where-Object { $_ -notin @('zip','msi','msix','exe') })
             $invalidArchitectures = @($architectures | Where-Object { $_ -notin @('x64','x86','arm64','neutral') })
             if ($invalidFormats.Count -gt 0) {
                 $errors.Add([pscustomobject][ordered]@{ Code='ApplicationPolicyInvalid'; Path='$.Policy.Artifact.Formats'; Message="Unsupported artifact format '$($invalidFormats[0])'." })
