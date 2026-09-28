@@ -3,8 +3,9 @@
 ## Boundary
 
 The PowerShell engine owns discovery, trust evaluation, validation, downloads,
-installation coordination, configuration, and logging. A future GUI is a
-client of that engine and must not duplicate engine rules.
+installation coordination, configuration, logging, and lifecycle policy. The
+C#/.NET WinUI desktop client is a presentation client of that engine and must
+not duplicate engine rules.
 
 Configuration is an engine responsibility, but the current public contract does
 not yet expose a general-purpose configuration command or persistence surface.
@@ -208,3 +209,90 @@ than guessed selections.
 Phase 4 decides **what** update target, if any, should be considered. It does
 not download data, verify downloaded bytes, choose an installer, or execute an
 installation. Those responsibilities begin in Phases 5 and 6.
+
+
+## Installer architecture
+
+Installer plugins are execution capabilities, not application-specific policy.
+The production Contract 1 installer set currently contains four implementations:
+
+| Plugin | Formats | Installation mode |
+| --- | --- | --- |
+| Wintainium.installer.exe | exe | process |
+| Wintainium.installer.msi | msi | process |
+| Wintainium.installer.portable-zip | zip | archive |
+| Wintainium.installer.msix | msix | package |
+
+Core owns installer selection. A manifest may explicitly identify an installer
+plugin; in that case Core resolves that exact plugin, validates its Contract 1
+compatibility, and requires the selected artifact format to be supported by
+that plugin. Core does not silently switch to a different installer because
+another format is available.
+
+When a manifest uses the Core-owned default application policy, the default
+mechanism preference is exe, msi, msix, then zip, subject to registered
+Contract 1 plugins and the manifest's declared capabilities. This is policy,
+not a universal installer ordering: application-specific manifest policy can
+constrain acceptable formats, and an explicitly selected installer remains
+authoritative.
+
+Artifact selection and installer selection are separate decisions. Core first
+selects an eligible artifact using architecture and manifest format policy;
+installer selection then verifies that the selected artifact can be handled by
+the declared or policy-selected installer. Architecture compatibility takes
+priority over format preference. The normal architecture preference is exact
+machine architecture, then neutral, then explicitly allowed unknown
+architecture. x64 and x86 registry/platform concepts remain distinct.
+
+Installer plugins receive a downloaded artifact through a structured Core
+boundary. EXE and MSI installers return structured process specifications
+rather than shell command strings. The portable ZIP installer returns a
+constrained archive-installation process specification and requires an
+absolute destination path; an optional archive entry point must remain a
+relative, non-traversing path. The MSIX installer uses the system Windows
+PowerShell executable with settings serialized as JSON arguments rather than
+interpolated into a command string.
+
+Before an installer module is loaded, Core revalidates the descriptor and
+binds its plugin identity, plugin type, and declared entry point to the
+selection. Plugin entry points must resolve to absolute existing .psm1 files
+inside the selected plugin root. Duplicate plugin identities are rejected
+rather than resolved by path order.
+
+Descriptor validation establishes plugin identity, contract, capability, and
+entry-point integrity. It is not a sandbox. Production plugin modules are
+trusted executable code and run in-process under the Core process. The
+structured process boundary limits command/argument ambiguity for child
+processes, but it does not turn arbitrary plugin code into untrusted sandboxed
+code.
+
+## Installation and reconciliation boundary
+
+Installation and reconciliation answer different questions. The installer
+applies the selected artifact. The Windows installed-application reconciliation
+plugin observes Windows uninstall evidence and reports normalized installation
+evidence. Reconciliation does not replace the installer subsystem and does not
+become a second authoritative managed-state store.
+
+A reconciliation result may establish an installed/not-installed observation or
+remain Unknown when evidence is insufficient or ambiguous. Core does not
+silently choose among multiple matching Windows uninstall records. Matching is
+case-insensitive and exact against the application identity contract. Windows
+registry evidence from current-user/machine and 64-bit/32-bit registry views is
+handled as distinct evidence sources; architecture is not inferred merely
+from the existence of a particular registry view.
+
+## Plugin trust boundary
+
+Wintainium's plugin architecture is extensible, but plugin extensibility is not
+a security sandbox. Core validates descriptors, contract versions, capabilities,
+entry-point shape, plugin identity, and structured operation results. It also
+validates installer invocation inputs and process specifications before
+execution. Those controls protect the Core contract and reduce malformed-input
+and command-boundary risks; they do not establish isolation from malicious
+plugin code. Plugin installation and distribution therefore remain a trusted
+administrative boundary.
+
+The architectural flow remains:
+
+**Manifest describes → Provider discovers → Core decides → Download obtains → Verification establishes trust → Installer applies → Reconciliation observes → Orchestration coordinates → UX presents.**
