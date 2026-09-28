@@ -1,0 +1,10 @@
+{
+  "pluginId": "Wintainium.installer.portable-zip",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.installer.portable-zip.psm1",
+  "capabilities": {
+    "supportedFormats": ["zip"],
+    "installationMode": "archive"
+  }
+}
