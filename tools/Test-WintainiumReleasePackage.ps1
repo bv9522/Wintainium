@@ -76,6 +76,7 @@ $expectedExports = @(
     'Get-WintainiumApplicationInstalledState'
     'Test-WintainiumApplicationDefinition'
     'Get-WintainiumApplicationRelease'
+    'Get-WintainiumApplicationUpdateStatus'
     'Invoke-WintainiumApplicationUpdate'
     'Invoke-WintainiumApplicationOnboarding'
     'Invoke-WintainiumApplicationReconciliation'
