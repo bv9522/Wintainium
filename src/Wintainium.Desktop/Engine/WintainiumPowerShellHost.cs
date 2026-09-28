@@ -16,6 +16,7 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
             "Invoke-WintainiumApplicationReconciliation",
             "Test-WintainiumApplicationDefinition",
             "Get-WintainiumApplicationRelease",
+            "Get-WintainiumApplicationUpdateStatus",
             "Invoke-WintainiumApplicationUpdate",
             "Invoke-WintainiumApplicationOnboarding"
         };
