@@ -443,7 +443,7 @@ installer-production work.
 
 ## Phase 13.5 — Installer Contract / Production Installers
 
-**Status: 13.5A–13.5H complete; 13.5I in progress.**
+**Status: 13.5A–13.5J complete; 13.5K pending final local validation.**
 
 Phase 13.5 closes the gap between the lifecycle's installer abstraction and
 production installer implementations.
@@ -523,14 +523,14 @@ installer/reconciliation boundaries and their actual security guarantees.
 - Validate the update path against a later 7-Zip release without replacing
   Core policy with application-specific code.
 
-**Status: Pending.**
+**Status: Complete.** The production 7-Zip reconciliation integration checkpoint passed through the generic provider/installer/reconciliation path using real Windows installed-application evidence. No 7-Zip-specific reconciliation implementation was required.
 
 ### 13.5K — Phase Lock
 - Run the full PowerShell/Pester regression.
 - Re-run the x64 desktop build and desktop smoke/EngineProbe checkpoint.
 - Reconcile final documentation and establish the production baseline.
 
-**Status: Pending.**
+**Status: Pending local checkpoint.**
 
 ## Phase 14 — GUI Polish / Productization
 
