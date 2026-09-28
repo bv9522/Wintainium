@@ -55,6 +55,14 @@ function Invoke-WintainiumReconciliationOperation {
             }) @()
     }
 
+    if (-not [IO.Path]::IsPathFullyQualified($resolvedModulePath) -or
+        [IO.Path]::GetExtension($resolvedModulePath) -ne '.psm1') {
+        return & $baseResult $false 'ReconciliationInternalError' $null @([pscustomobject]@{
+                Code='ReconciliationInvalidPluginModulePath'
+                Message="Reconciliation plugin module path '$resolvedModulePath' must be an absolute .psm1 file."
+            }) @()
+    }
+
     try {
         $module = Get-Module | Where-Object {
             $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath)
