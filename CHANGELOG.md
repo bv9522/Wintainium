@@ -28,6 +28,8 @@
   security guarantees, and non-sandbox trust model.
 - Consolidated focused installer/provider/reconciliation coverage to **123/123
   green**.
+- Completed the real 7-Zip integration checkpoint through the generic production
+  provider, installer, and Windows installed-application reconciliation path.
 
 ### Phase 14 — GUI Productization
 
