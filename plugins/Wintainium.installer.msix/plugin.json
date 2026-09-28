@@ -1,0 +1,10 @@
+{
+  "pluginId": "Wintainium.installer.msix",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.installer.msix.psm1",
+  "capabilities": {
+    "supportedFormats": ["msix"],
+    "installationMode": "package"
+  }
+}
