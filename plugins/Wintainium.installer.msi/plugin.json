@@ -1,0 +1,10 @@
+{
+  "pluginId": "Wintainium.installer.msi",
+  "pluginType": "Installer",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.installer.msi.psm1",
+  "capabilities": {
+    "supportedFormats": ["msi"],
+    "installationMode": "process"
+  }
+}
