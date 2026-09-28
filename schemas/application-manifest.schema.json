@@ -94,7 +94,7 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": {
-            "enum": ["zip", "msi", "exe"]
+            "enum": ["zip", "msi", "msix", "exe"]
           }
         },
         "architectures": {
