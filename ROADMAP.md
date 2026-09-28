@@ -510,7 +510,10 @@ production installer implementations.
   structured invocation, reconciliation boundaries, and actual security
   guarantees.
 
-**Status: In progress.**
+**Status: Complete.** The architecture, project charter, README, roadmap,
+changelog, manifest-authoring, diagnostics, release-packaging, Getting Started,
+and dedicated installer-contract documentation now describe the production
+installer/reconciliation boundaries and their actual security guarantees.
 
 ### 13.5J — Real Application Validation
 - Validate a real 7-Zip application lifecycle through the production plugin
