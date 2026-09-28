@@ -12,7 +12,30 @@ function Get-WintainiumDefaultApplicationPolicy {
         $_.Capabilities -is [System.Collections.IDictionary] -and
         @($_.Capabilities.supportedFormats).Count -gt 0 -and
         @($_.ContractVersions) -contains '1'
-    } | Sort-Object DescriptorPath)
+    })
+
+    # Default onboarding policy is Core-owned and deterministic. Artifact
+    # architecture/eligibility is evaluated later and outranks format choice.
+    # The order below is only the default mechanism preference; an authored
+    # manifest may explicitly choose another installer and format.
+    $preferredFormats = @('exe','msi','msix','zip')
+
+    $installerCandidates = foreach ($format in $preferredFormats) {
+        foreach ($installer in @($installers | Sort-Object DescriptorPath)) {
+            $supportedFormats = @($installer.Capabilities.supportedFormats | ForEach-Object {
+                if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
+            })
+            if ($supportedFormats -contains $format) {
+                [pscustomobject]@{
+                    Installer = $installer
+                    Format = $format
+                }
+            }
+        }
+        if (@($installerCandidates | Where-Object Format -eq $format).Count -gt 0) {
+            break
+        }
+    }
 
     if ($installers.Count -eq 0) {
         $errors.Add([pscustomobject][ordered]@{
@@ -21,11 +44,18 @@ function Get-WintainiumDefaultApplicationPolicy {
             Message='No registered installer plugin supports application onboarding under Core contract version 1.'
         })
     }
-    elseif ($installers.Count -gt 1) {
+    elseif (@($installerCandidates).Count -eq 0) {
+        $errors.Add([pscustomobject][ordered]@{
+            Code='ApplicationPolicyUnavailable'
+            Path='$.Policy.Installer'
+            Message='No registered installer plugin advertises a supported default application artifact format.'
+        })
+    }
+    elseif (@($installerCandidates).Count -gt 1) {
         $errors.Add([pscustomobject][ordered]@{
             Code='ApplicationPolicyAmbiguous'
             Path='$.Policy.Installer'
-            Message='Multiple registered installer plugins are eligible for the Core onboarding default policy.'
+            Message="Multiple registered installer plugins support the default artifact format '$($installerCandidates[0].Format)'; Core will not silently choose between them."
         })
     }
 
@@ -60,7 +90,8 @@ function Get-WintainiumDefaultApplicationPolicy {
         }
     }
 
-    $installer = $installers[0]
+    $installer = $installerCandidates[0].Installer
+    $selectedFormat = $installerCandidates[0].Format
     $reconciler = $reconcilers[0]
 
     $reconciliationRequiresConfiguration = (
@@ -82,20 +113,6 @@ function Get-WintainiumDefaultApplicationPolicy {
         }
     }
 
-    $supportedFormats = @($installer.Capabilities.supportedFormats | ForEach-Object { [string]$_ } | Where-Object { $_ -in @('zip','msi','exe') } | Select-Object -Unique)
-    if ($supportedFormats.Count -eq 0) {
-        return [pscustomobject][ordered]@{
-            IsSuccessful=$false
-            Status='ApplicationPolicyUnavailable'
-            Policy=$null
-            Errors=@([pscustomobject][ordered]@{
-                Code='ApplicationPolicyUnavailable'
-                Path='$.Policy.Artifact.Formats'
-                Message='The selected installer does not advertise a supported application artifact format.'
-            })
-        }
-    }
-
     [pscustomobject][ordered]@{
         IsSuccessful=$true
         Status='Resolved'
@@ -112,7 +129,7 @@ function Get-WintainiumDefaultApplicationPolicy {
             }
             Release=[pscustomobject][ordered]@{ Channel='stable' }
             Artifact=[pscustomobject][ordered]@{
-                Formats=$supportedFormats
+                Formats=@($selectedFormat)
                 Architectures=@('x64','x86','arm64','neutral')
                 AllowUnknownArchitecture=$false
             }
