@@ -41,47 +41,18 @@ function Invoke-WintainiumInstaller {
         throw 'MSIX installer requires structured installer settings.'
     }
 
-    $arguments = [System.Collections.Generic.List[string]]::new()
-    [void]$arguments.Add('-NoProfile')
-    [void]$arguments.Add('-NonInteractive')
-    [void]$arguments.Add('-Command')
-    [void]$arguments.Add('Add-AppxPackage -Path $args[0]')
-
-    $argumentsToPass = [System.Collections.Generic.List[string]]::new()
-    [void]$argumentsToPass.Add([System.IO.Path]::GetFullPath($artifactPath))
-
-    $rawArguments = Get-WintainiumInstallerSetting -Settings $settings -Name 'arguments'
-    if ($null -ne $rawArguments) {
-        if ($rawArguments -is [string] -or
-            $rawArguments -is [System.Collections.IDictionary] -or
-            $rawArguments -isnot [System.Collections.IEnumerable]) {
-            throw 'MSIX installer setting arguments must be an array of strings.'
-        }
-
-        $extraArguments = @($rawArguments)
-        if (@($extraArguments | Where-Object { $_ -isnot [string] }).Count -gt 0) {
-            throw 'MSIX installer setting arguments must contain only strings.'
-        }
-
-        foreach ($argument in $extraArguments) {
-            if ([string]::IsNullOrWhiteSpace($argument)) {
-                throw 'MSIX installer setting arguments must not contain empty strings.'
-            }
-        }
-
-        if ($extraArguments.Count -gt 0) {
-            $arguments[3] = 'Add-AppxPackage -Path $args[0] ' + ($extraArguments -join ' ')
-        }
-    }
-
-    $powershell = Get-Command powershell.exe -ErrorAction Stop
-    if ($null -eq $powershell -or [string]::IsNullOrWhiteSpace($powershell.Source)) {
-        throw 'MSIX installer requires Windows PowerShell.'
-    }
+    $settingsJson = ConvertTo-Json -InputObject $settings -Compress -Depth 20
 
     [pscustomobject][ordered]@{
         ExecutablePath = $powershell.Source
-        Arguments = [string[]]($arguments + $argumentsToPass)
+        Arguments = [string[]]@(
+            '-NoProfile',
+            '-NonInteractive',
+            '-Command',
+            '$settings = $args[1] | ConvertFrom-Json -AsHashtable; Add-AppxPackage -Path $args[0] @settings',
+            [System.IO.Path]::GetFullPath($artifactPath),
+            $settingsJson
+        )
     }
 }
 
