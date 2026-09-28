@@ -17,7 +17,9 @@ Describe 'Wintainium GUI-facing public boundary' {
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
+            'Invoke-WintainiumApplicationReconciliation'
             'Invoke-WintainiumApplicationUpdate'
+            'Set-WintainiumApplicationReconciliationSettings'
             'Test-WintainiumApplicationDefinition'
         )
     }
