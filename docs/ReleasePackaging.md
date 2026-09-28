@@ -6,7 +6,7 @@ Phase 8D defines the release boundary for a distributable Wintainium source pack
 
 The release package is deterministic in **contents and relative layout**: the same repository state produces the same selected files and package structure. The ZIP archive itself is not required to be byte-for-byte identical across builds because archive metadata such as timestamps may vary.
 
-Release packaging does not introduce application execution, installation, persistence, or upgrade behavior. Those concerns remain separate engine and Phase 8E responsibilities.
+Release packaging does not itself execute application-management stages. The distributable runtime does include the production provider, installer, and reconciliation plugins required by the supported engine boundary.
 
 ## Authoritative version source
 
@@ -72,8 +72,11 @@ A valid package must contain:
 The Core manifest must declare the supported three-command public surface:
 
 - `Get-WintainiumManifest`
+- `Get-WintainiumApplicationInstalledState`
 - `Test-WintainiumApplicationDefinition`
 - `Get-WintainiumApplicationRelease`
+- `Invoke-WintainiumApplicationUpdate`
+- `Invoke-WintainiumApplicationOnboarding`
 
 ## Excluded development material
 
