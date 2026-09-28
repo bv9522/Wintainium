@@ -65,6 +65,7 @@ A valid package must contain:
 - `docs/PublicResultContract.md`
 - `docs/PublicPowerShellContract.md`
 - `docs/ReleasePackaging.md`
+- `docs/InstallerContract.md`
 - `core/Wintainium.Core/Wintainium.Core.psd1`
 - `core/Wintainium.Core/Wintainium.Core.psm1`
 - `schemas/application-manifest.schema.json`
