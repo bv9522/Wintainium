@@ -10,13 +10,16 @@ namespace Wintainium.Desktop.Models;
 internal sealed class WintainiumApplicationCollectionService
 {
     private readonly WintainiumCoreClient _coreClient;
+    private readonly WintainiumApplicationInstalledStateService _installedState;
     private readonly WintainiumApplicationUpdateDecisionService _updateDecision;
 
     public WintainiumApplicationCollectionService(
         WintainiumCoreClient coreClient,
+        WintainiumApplicationInstalledStateService installedState,
         WintainiumApplicationUpdateDecisionService updateDecision)
     {
         _coreClient = coreClient ?? throw new ArgumentNullException(nameof(coreClient));
+        _installedState = installedState ?? throw new ArgumentNullException(nameof(installedState));
         _updateDecision = updateDecision ?? throw new ArgumentNullException(nameof(updateDecision));
     }
 
@@ -48,9 +51,26 @@ internal sealed class WintainiumApplicationCollectionService
 
             try
             {
-                // Update status is a single Core-owned observation that already refreshes
-                // authoritative installed state through reconciliation. Reuse that state
-                // for the application model instead of performing a second reconciliation.
+                // Installed state is an independent Core-owned observation and must remain
+                // available even when update-decision evaluation fails. This keeps the
+                // collection's installed facts independent from update availability.
+                var installedStateResult = await _installedState.GetAsync(
+                    WintainiumDesktopPaths.InstalledStateRoot,
+                    application.ApplicationId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (installedStateResult.IsSuccessful)
+                {
+                    withState = WintainiumApplicationModelMapper.ApplyInstalledState(
+                        withState, installedStateResult.State);
+                }
+
+                errors.AddRange(installedStateResult.Errors);
+                warnings.AddRange(installedStateResult.Warnings);
+
+                // Update status is a separate Core-owned observation. If it succeeds,
+                // its installed-state observation may be newer (for example after Core
+                // reconciliation), so it remains authoritative for this composed model.
                 var decisionResult = await _updateDecision.EvaluateAsync(
                     application.ManifestPath!,
                     GetMachineArchitecture(),
