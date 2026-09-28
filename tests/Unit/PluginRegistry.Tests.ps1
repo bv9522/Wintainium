@@ -37,7 +37,7 @@ Describe 'Wintainium plugin registry' {
         Test-Path -LiteralPath (Join-Path (Split-Path $installer[0].DescriptorPath -Parent) $installer[0].EntryPoint) -PathType Leaf | Should -Be $true
     }
 
-    It 'default policy resolves the production EXE installer without ambiguity' {
+    It 'default policy requires configuration for the production Windows reconciliation plugin' {
         $productionPluginRoot = Join-Path $script:testRoot 'plugins'
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $productionPluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
@@ -46,11 +46,12 @@ Describe 'Wintainium plugin registry' {
             Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry
         }
 
-        $policy.IsSuccessful | Should -Be $true
-        $policy.Status | Should -Be 'Resolved'
-        $policy.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.exe'
-        $policy.Policy.Installer.RequiredContractVersion | Should -Be '1'
-        @($policy.Policy.Artifact.Formats) | Should -Be @('exe')
+        $policy.IsSuccessful | Should -Be $false
+        $policy.Status | Should -Be 'ApplicationPolicyConfigurationRequired'
+        $policy.Policy | Should -BeNullOrEmpty
+        @($policy.Errors | Where-Object { $_.Code -eq 'ApplicationPolicyConfigurationRequired' }).Count | Should -Be 1
+        $policy.Errors[0].Path | Should -Be '$.Policy.Reconciliation.Settings'
+        $policy.Errors[0].Message | Should -Match 'Wintainium.reconciliation.windows-installed-application'
     }
 
     It 'resolves an installer by id, type, and contract version' {
