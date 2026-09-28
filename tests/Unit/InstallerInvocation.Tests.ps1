@@ -15,6 +15,10 @@ BeforeAll {
 }
 AfterAll { Remove-Item -LiteralPath $script:tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 Describe 'Wintainium installer invocation preparation' {
+    BeforeEach {
+        Set-Content -LiteralPath $script:descriptorPath -Value '{}' -Encoding utf8
+    }
+
     It 'prepares a constrained invocation from a successful selection and installer request' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $script:request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
         $result.IsValid | Should -Be $true
@@ -55,6 +59,40 @@ Describe 'Wintainium installer invocation preparation' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
         $result.Error.Code | Should -Be 'InstallerInvocationDescriptorPathInvalid'
     }
+    It 'rejects a descriptor whose identity does not match the selected plugin' {
+        $descriptor = @{
+            pluginId = 'Wintainium.installer.other'
+            pluginType = 'Installer'
+            contractVersions = @('1')
+            entryPoint = 'Installer.psm1'
+            capabilities = @{ supportedFormats = @('exe') }
+        } | ConvertTo-Json -Depth 10
+        Set-Content -LiteralPath $script:descriptorPath -Value $descriptor -Encoding utf8
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $script:request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.Error.Code | Should -Be 'InstallerInvocationDescriptorMismatch'
+    }
+
+    It 'rejects a descriptor whose entry point differs from the selected plugin' {
+        $descriptor = @{
+            pluginId = 'Wintainium.installer.exe'
+            pluginType = 'Installer'
+            contractVersions = @('1')
+            entryPoint = 'Other.psm1'
+            capabilities = @{ supportedFormats = @('exe') }
+        } | ConvertTo-Json -Depth 10
+        Set-Content -LiteralPath $script:descriptorPath -Value $descriptor -Encoding utf8
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $script:request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.Error.Code | Should -Be 'InstallerInvocationDescriptorMismatch'
+    }
+
     It 'rejects a missing descriptor file' {
         $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.exe'; EntryPoint = 'Installer.psm1'; DescriptorPath = (Join-Path $script:pluginRoot 'missing.json') }
         $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; ArtifactFormat = 'exe'; Error = $null }
