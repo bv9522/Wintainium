@@ -31,6 +31,45 @@ BeforeAll {
         Capabilities = [ordered]@{ supportedFormats = @('zip') }
         DescriptorPath = 'C:\plugins\zip\plugin.json'
     }
+    It 'does not silently switch installers when an EXE manifest receives a different artifact format' {
+        $artifact = [ordered]@{ format = 'msi' }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $script:manifest; Artifact = $artifact; Plugins = @($script:exePlugin, $script:zipPlugin) } {
+            Select-WintainiumInstaller -Manifest $Manifest -Artifact $Artifact -Plugins $Plugins
+        }
+
+        $result.IsSelected | Should -Be $false
+        $result.Error.Code | Should -Be 'InstallerSelectionArtifactIncompatible'
+    }
+
+    It 'keeps explicit manifest installer selection authoritative even when another installer format exists' {
+        $manifest = [ordered]@{
+            installer = [ordered]@{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '1'
+                settings = [ordered]@{}
+            }
+            artifact = [ordered]@{
+                formats = @('exe','msi')
+                architectures = @('x64')
+            }
+        }
+        $artifact = [ordered]@{ format = 'msi' }
+        $msiPlugin = [pscustomobject]@{
+            PluginId = 'Wintainium.installer.msi'
+            PluginType = 'Installer'
+            ContractVersions = @('1')
+            Capabilities = [ordered]@{ supportedFormats = @('msi') }
+            DescriptorPath = 'C:pluginsmsiplugin.json'
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $manifest; Artifact = $artifact; Plugins = @($script:exePlugin, $msiPlugin) } {
+            Select-WintainiumInstaller -Manifest $Manifest -Artifact $Artifact -Plugins $Plugins
+        }
+
+        $result.IsSelected | Should -Be $false
+        $result.Error.Code | Should -Be 'InstallerSelectionArtifactIncompatible'
+    }
+
 }
 
 Describe 'Wintainium installer selection' {
