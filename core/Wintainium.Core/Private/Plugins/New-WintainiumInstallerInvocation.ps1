@@ -35,6 +35,20 @@ function New-WintainiumInstallerInvocation {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorPathMissing'; Message = 'The selected installer plugin descriptor file was not found.' } }
     }
 
+    $descriptorResult = Test-WintainiumPluginDescriptor -DescriptorPath $descriptorPath
+    if (-not $descriptorResult.IsValid -or $null -eq $descriptorResult.Descriptor) {
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorInvalid'; Message = 'The selected installer plugin descriptor is invalid.' } }
+    }
+
+    $descriptor = $descriptorResult.Descriptor
+    if (-not ([string]$descriptor.pluginId).Equals($pluginId, [System.StringComparison]::OrdinalIgnoreCase) -or
+        [string]$descriptor.pluginType -ne 'Installer') {
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin does not match its descriptor identity.' } }
+    }
+    if (-not ([string]$descriptor.entryPoint).Equals($entryPoint, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin entryPoint does not match its descriptor.' } }
+    }
+
     $entryPointHasPathSeparator = $entryPoint.Contains([char]92) -or $entryPoint.Contains([char]47)
     if ([System.IO.Path]::IsPathFullyQualified($entryPoint) -or $entryPointHasPathSeparator -or $entryPoint -notmatch '^[^:*?"<>|]+\.psm1$') {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationEntryPointInvalid'; Message = 'Installer entryPoint must be a relative .psm1 file name without path separators or parent-directory traversal.' } }
