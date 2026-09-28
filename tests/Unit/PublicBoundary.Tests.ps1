@@ -10,6 +10,7 @@ Describe 'Wintainium public Core boundary' {
         $expected = @(
             'Get-WintainiumApplicationInstalledState'
             'Invoke-WintainiumApplicationReconciliation'
+            'Set-WintainiumApplicationReconciliationSettings'
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
