@@ -40,6 +40,13 @@ function Invoke-WintainiumProviderOperation {
         return & $baseResult $false 'ProviderInternalError' @() @($error) @()
     }
 
+    if (-not [IO.Path]::IsPathFullyQualified($resolvedModulePath) -or
+        [IO.Path]::GetExtension($resolvedModulePath) -ne '.psm1') {
+        $error=[pscustomobject]@{Code='ProviderInvalidPluginModulePath';Message="Provider module path '$resolvedModulePath' must be an absolute .psm1 file."}
+        $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message $error.Message -Context @{ErrorCode=$error.Code}))
+        return & $baseResult $false 'ProviderInternalError' @() @($error) @()
+    }
+
     try {
         # Reuse the exact already-loaded module when present. This is important
         # for deterministic provider test doubles and also avoids replacing a
