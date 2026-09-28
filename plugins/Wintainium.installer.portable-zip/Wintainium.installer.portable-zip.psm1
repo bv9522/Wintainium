@@ -58,8 +58,18 @@ function Invoke-WintainiumInstaller {
         }
     }
 
+    if ([string]::IsNullOrWhiteSpace($env:WINDIR)) {
+        throw 'Portable ZIP installer requires the Windows directory environment variable.'
+    }
+
+    $powershellPath = Join-Path -Path $env:WINDIR -ChildPath 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    if (-not [System.IO.Path]::IsPathFullyQualified($powershellPath) -or
+        -not (Test-Path -LiteralPath $powershellPath -PathType Leaf)) {
+        throw 'Portable ZIP installer could not locate the Windows PowerShell executable.'
+    }
+
     [pscustomobject][ordered]@{
-        ExecutablePath = (Get-Command powershell.exe -ErrorAction Stop).Source
+        ExecutablePath = [System.IO.Path]::GetFullPath($powershellPath)
         Arguments = [string[]]@(
             '-NoProfile',
             '-NonInteractive',
