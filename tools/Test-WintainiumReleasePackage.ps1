@@ -78,6 +78,9 @@ $expectedExports = @(
     'Get-WintainiumApplicationRelease'
     'Invoke-WintainiumApplicationUpdate'
     'Invoke-WintainiumApplicationOnboarding'
+    'Invoke-WintainiumApplicationReconciliation'
+    'Set-WintainiumApplicationReconciliationSettings'
+    'Test-WintainiumApplicationDefinition'
 )
 $actualExports = @($moduleManifest.FunctionsToExport | ForEach-Object { [string]$_ })
 if (($actualExports -join "`n") -cne ($expectedExports -join "`n")) {
