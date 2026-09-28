@@ -1,6 +1,6 @@
 # Wintainium Manifest Authoring
 
-A Wintainium application manifest is a JSON declaration of how an application is identified, where its releases are discovered, which installer capability handles the artifact, and which release/artifact policies Core should apply.
+A Wintainium application manifest is a JSON declaration of how an application is identified, where its releases are discovered, which installer capability handles the artifact, and which release/artifact policies Core should apply, and which release/artifact policies Core should apply.
 
 The authoritative machine-readable definition is `schemas/application-manifest.schema.json` (JSON Schema Draft 2020-12). This guide explains the fields at a human level; the schema remains the final validation authority.
 
@@ -61,7 +61,7 @@ The `installer` object identifies the installer capability:
 }
 ```
 
-The installer reference declares capability and configuration. It does not cause installation during manifest import or validation.
+The installer reference declares capability and configuration. It does not cause installation during manifest import or validation. When present, pluginId is an explicit installer selection; Core does not silently substitute a different installer.
 
 ## Release policy
 
@@ -92,7 +92,7 @@ The `artifact` object declares formats and architectures that the application ca
 }
 ```
 
-Supported formats are `zip`, `msi`, and `exe`. Supported architectures are `x64`, `x86`, `arm64`, and `neutral`.
+Supported formats are `zip`, `msi`, `msix`, and `exe`. Supported architectures are `x64`, `x86`, `arm64`, and `neutral`.
 
 `allowUnknownArchitecture` may be set to `true` when the manifest explicitly permits an artifact whose architecture cannot be identified. This is a policy declaration; it does not bypass other artifact eligibility or verification rules.
 
@@ -189,3 +189,52 @@ Manifest authoring should therefore express policy and capability references, no
 - `docs/CLI.md` — public command reference.
 - `docs/PublicResultContract.md` — structured result contract.
 - `docs/ProviderContractTestHarness.md` — provider development/testing boundary.
+
+## Installer and artifact selection
+
+Artifact selection and installer selection are separate Core-owned decisions.
+
+Core first evaluates artifact eligibility and selects an artifact using
+architecture and manifest format policy. Exact machine architecture has
+priority over neutral artifacts, and unknown architecture is accepted only when
+the manifest explicitly allows it. The manifest's format order is considered
+within the eligible architecture set.
+
+The selected artifact is then checked against the installer capability. If the
+manifest explicitly names an installer plugin, that exact plugin must be
+registered, Contract 1 compatible, and capable of handling the selected format.
+Core does not silently switch installers.
+
+If the manifest leaves installer selection to the Core default application
+policy, Core currently prefers compatible mechanisms in this order:
+
+1. exe
+2. msi
+3. msix
+4. zip
+
+This is a policy default, not a universal ranking that overrides application
+requirements. Manifest-declared artifact formats can narrow the eligible set,
+and explicit installer selection remains authoritative.
+
+The production Contract 1 installer plugins are:
+
+- Wintainium.installer.exe — EXE process installation.
+- Wintainium.installer.msi — MSI process installation.
+- Wintainium.installer.msix — MSIX package installation.
+- Wintainium.installer.portable-zip — portable/archive installation.
+
+See docs/InstallerContract.md for the installer execution and security
+boundary.
+
+## Architecture policy
+
+Architecture is evaluated independently from installer format. The current
+Core policy distinguishes x64, x86, arm64, and neutral rather than treating
+32-bit and 64-bit Windows artifacts as interchangeable. On a 64-bit machine,
+an x64 artifact is preferred over a neutral artifact; an x86 artifact remains
+a distinct candidate and is not relabeled as x64.
+
+This same distinction matters to Windows installed-application reconciliation:
+32-bit and 64-bit registry views are evidence sources, not proof that an
+application itself has a particular architecture.
