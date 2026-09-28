@@ -155,6 +155,30 @@ Describe 'Wintainium reconciliation plugin contract' {
         @($result.Errors.Code) | Should -Contain 'ReconciliationInternalError'
     }
 
+    It 'rejects a resolved reconciliation entry point that is not a PowerShell module' {
+        $invalidPlugin = [pscustomobject]@{
+            PluginId = $script:reconciliation.PluginId
+            PluginType = 'Reconciliation'
+            DescriptorPath = $script:reconciliation.DescriptorPath
+            EntryPoint = 'plugin.json'
+        }
+        $request = [pscustomobject][ordered]@{
+            OperationId = '00000000-0000-0000-0000-000000000109'
+            ApplicationId = 'example.application'
+            Manifest = [pscustomobject]@{ id = 'example.application' }
+            PriorState = $null
+            Settings = @{}
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Plugin = $invalidPlugin; Request = $request } {
+            Invoke-WintainiumReconciliationOperation -ReconciliationPlugin $Plugin -Request $Request
+        }
+
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'ReconciliationInternalError'
+        @($result.Errors.Code) | Should -Contain 'ReconciliationInvalidPluginModulePath'
+    }
+
     It 'does not provide the reconciliation plugin with state persistence authority' {
         $request = [pscustomobject][ordered]@{
             OperationId = '00000000-0000-0000-0000-000000000108'
