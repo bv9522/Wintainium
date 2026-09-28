@@ -9,7 +9,7 @@ engine rather than contain its own package-management logic.
 
 ## Status
 
-Phases 1–11 are implemented, tested, and locked. Phase 12 is in progress, connecting the desktop client to Core-owned source onboarding and validating the source-resolution vertical slice.
+Phases 1–13.5 are implemented through the current production installer/reconciliation architecture. Phase 13.5 is in final real-application validation; Phase 14 GUI productization is in progress.
 
 The current public PowerShell surface consists of six commands:
 `Get-WintainiumManifest`, `Get-WintainiumApplicationInstalledState`,
@@ -40,6 +40,8 @@ persistence.
   policies, examples, and validation guidance.
 - [`docs/Diagnostics.md`](docs/Diagnostics.md) — structured errors, operation
   correlation, and troubleshooting guidance.
+- [`docs/InstallerContract.md`](docs/InstallerContract.md) — production installer
+  capabilities, selection boundaries, invocation rules, and security limits.
 - [`docs/PublicApplicationUpdateResult.md`](docs/PublicApplicationUpdateResult.md) —
   public update result contract.
 
@@ -48,3 +50,10 @@ persistence.
 See [PROJECT.md](PROJECT.md), [ROADMAP.md](ROADMAP.md), and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the current direction. Contributor and
 contract documentation lives under `docs/`.
+
+The production plugin set currently includes GitHub Releases and official
+-download-page providers, four installer implementations (EXE, MSI, portable
+ZIP, and MSIX), and the Windows installed-application reconciliation plugin.
+Installer selection, artifact selection, verification, reconciliation, and
+lifecycle policy remain Core-owned boundaries; the desktop client presents
+those results rather than implementing them.
