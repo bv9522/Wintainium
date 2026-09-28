@@ -23,6 +23,8 @@ Describe 'Wintainium Core module metadata' {
             'Get-WintainiumApplicationRelease'
             'Invoke-WintainiumApplicationUpdate'
             'Invoke-WintainiumApplicationOnboarding'
+            'Invoke-WintainiumApplicationReconciliation'
+            'Set-WintainiumApplicationReconciliationSettings'
         )
         @($manifest.CmdletsToExport) | Should -BeNullOrEmpty
         @($manifest.AliasesToExport) | Should -BeNullOrEmpty
