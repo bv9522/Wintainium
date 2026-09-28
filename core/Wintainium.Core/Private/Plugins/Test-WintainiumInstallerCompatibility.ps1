@@ -8,8 +8,13 @@ function Test-WintainiumInstallerCompatibility {
         [object]$InstallerPlugin
     )
 
-    $supportedFormats = @($InstallerPlugin.Capabilities.supportedFormats)
-    $matchingFormat = @($Manifest.artifact.formats | Where-Object { $_ -in $supportedFormats }) | Select-Object -First 1
+    $supportedFormats = @($InstallerPlugin.Capabilities.supportedFormats | ForEach-Object {
+        if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
+    })
+    $requestedFormats = @($Manifest.artifact.formats | ForEach-Object {
+        if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
+    })
+    $matchingFormat = @($requestedFormats | Where-Object { $_ -in $supportedFormats }) | Select-Object -First 1
 
     if ($null -eq $matchingFormat) {
         return [pscustomobject]@{
@@ -26,4 +31,3 @@ function Test-WintainiumInstallerCompatibility {
         Error = $null
     }
 }
-
