@@ -30,22 +30,24 @@ Describe 'Wintainium MSIX installer plugin' {
         $result = & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation
 
         $result.ExecutablePath | Should -Be (Get-Command powershell.exe).Source
-        $result.Arguments[0..3] | Should -Be @('-NoProfile','-NonInteractive','-Command','Add-AppxPackage -Path $args[0]')
+        $result.Arguments[0..3] | Should -Be @('-NoProfile','-NonInteractive','-Command','$settings = $args[1] | ConvertFrom-Json -AsHashtable; Add-AppxPackage -Path $args[0] @settings')
         $result.Arguments[4] | Should -Be ([System.IO.Path]::GetFullPath($script:artifactPath))
-        $result.Arguments -join ' ' | Should -Not -Match '(?i)cmd\.exe|start-process|&\s+.*msix'
+        $result.Arguments[5] | Should -Be '{}'
+        $result.Arguments -join ' ' | Should -Not -Match '(?i)cmd\.exe|start-process|invoke-expression'
     }
 
-    It 'accepts optional string-array Add-AppxPackage arguments' {
+    It 'serializes structured Add-AppxPackage settings without constructing a shell command' {
         $module = Import-Module $script:modulePath -Force -PassThru
         $invocation = [pscustomobject]@{
             ArtifactPath = $script:artifactPath
             ArtifactFormat = 'MSIX'
-            Settings = [pscustomobject]@{ arguments = @('-ForceApplicationShutdown') }
+            Settings = [pscustomobject]@{ ForceApplicationShutdown = $true }
         }
 
         $result = & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation
 
-        $result.Arguments[3] | Should -Be 'Add-AppxPackage -Path $args[0] -ForceApplicationShutdown'
+        $result.Arguments[5] | Should -Match '"ForceApplicationShutdown":true'
+        $result.Arguments[3] | Should -Not -Match '(?i)ForceApplicationShutdown'
     }
 
     It 'rejects non-MSIX artifacts' {
@@ -58,41 +60,5 @@ Describe 'Wintainium MSIX installer plugin' {
 
         { & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation } |
             Should -Throw "*artifact format 'msix'*"
-    }
-
-    It 'rejects scalar arguments' {
-        $module = Import-Module $script:modulePath -Force -PassThru
-        $invocation = [pscustomobject]@{
-            ArtifactPath = $script:artifactPath
-            ArtifactFormat = 'msix'
-            Settings = [pscustomobject]@{ arguments = '-ForceApplicationShutdown' }
-        }
-
-        { & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation } |
-            Should -Throw '*arguments must be an array of strings*'
-    }
-
-    It 'rejects non-string arguments' {
-        $module = Import-Module $script:modulePath -Force -PassThru
-        $invocation = [pscustomobject]@{
-            ArtifactPath = $script:artifactPath
-            ArtifactFormat = 'msix'
-            Settings = [pscustomobject]@{ arguments = @('-ForceApplicationShutdown', 7) }
-        }
-
-        { & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation } |
-            Should -Throw '*arguments must contain only strings*'
-    }
-
-    It 'rejects empty arguments' {
-        $module = Import-Module $script:modulePath -Force -PassThru
-        $invocation = [pscustomobject]@{
-            ArtifactPath = $script:artifactPath
-            ArtifactFormat = 'msix'
-            Settings = [pscustomobject]@{ arguments = @('') }
-        }
-
-        { & $module { param($value) Invoke-WintainiumInstaller -Invocation $value } $invocation } |
-            Should -Throw '*arguments must not contain empty strings*'
     }
 }
