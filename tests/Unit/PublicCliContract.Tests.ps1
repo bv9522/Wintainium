@@ -17,6 +17,7 @@ Describe 'Wintainium public CLI contract' {
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationReconciliation'
+            'Set-WintainiumApplicationReconciliationSettings'
             'Invoke-WintainiumApplicationUpdate'
             'Test-WintainiumApplicationDefinition'
         )
