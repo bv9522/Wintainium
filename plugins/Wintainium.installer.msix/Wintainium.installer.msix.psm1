@@ -44,7 +44,7 @@ function Invoke-WintainiumInstaller {
     $settingsJson = ConvertTo-Json -InputObject $settings -Compress -Depth 20
 
     [pscustomobject][ordered]@{
-        ExecutablePath = $powershell.Source
+        ExecutablePath = $powershell.Path
         Arguments = [string[]]@(
             '-NoProfile',
             '-NonInteractive',
