@@ -15,6 +15,8 @@
                         <TextBlock x:Name="ApplicationNameText"
                                    FontSize="28"
                                    FontWeight="SemiBold" />
+                        <TextBlock Text="Application Details"
+                                   Opacity="0.72" />
                         <TextBlock x:Name="ApplicationPublisherText"
                                    Opacity="0.72" />
                     </StackPanel>
@@ -31,15 +33,62 @@
                 </Grid>
 
                 <Border Padding="18">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="Application"
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Application Information"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
-                        <TextBlock x:Name="ApplicationIdText" />
-                        <TextBlock x:Name="InstalledVersionText" />
-                        <TextBlock x:Name="InstallationStateText" />
-                        <TextBlock x:Name="SourceText" />
+                        <TextBlock Text="Identity and current application state"
+                                   Opacity="0.65" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="Application ID" Opacity="0.60" />
+                            <TextBlock x:Name="ApplicationIdText"
+                                       Grid.Row="0"
+                                       Grid.Column="1"
+                                       TextWrapping="Wrap" />
+
+                            <TextBlock Grid.Row="1" Text="Installed version" Opacity="0.60" />
+                            <TextBlock x:Name="InstalledVersionText"
+                                       Grid.Row="1"
+                                       Grid.Column="1" />
+
+                            <TextBlock Grid.Row="2" Text="Installation state" Opacity="0.60" />
+                            <TextBlock x:Name="InstallationStateText"
+                                       Grid.Row="2"
+                                       Grid.Column="1" />
+
+                            <TextBlock Grid.Row="3" Text="Update status" Opacity="0.60" />
+                            <TextBlock x:Name="UpdateStatusText"
+                                       Grid.Row="3"
+                                       Grid.Column="1" />
+
+                            <TextBlock Grid.Row="4" Text="Source provider" Opacity="0.60" />
+                            <TextBlock x:Name="SourceText"
+                                       Grid.Row="4"
+                                       Grid.Column="1"
+                                       TextWrapping="Wrap" />
+
+                            <TextBlock Grid.Row="5" Text="Description" Opacity="0.60" />
+                            <TextBlock x:Name="DescriptionText"
+                                       Grid.Row="5"
+                                       Grid.Column="1"
+                                       TextWrapping="Wrap"
+                                       Text="Description unavailable." />
+                        </Grid>
                         <HyperlinkButton x:Name="HomepageButton"
-                                         Content="Open source homepage" />
+                                         Content="Open source homepage"
+                                         HorizontalAlignment="Left" />
                     </StackPanel>
                 </Border>
 
@@ -60,6 +109,8 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Operation Status"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Core operation results and diagnostics"
+                                   Opacity="0.65" />
                         <TextBlock x:Name="OperationStateText"
                                    Text="Not started." />
                         <TextBlock x:Name="OperationIdText"
@@ -88,6 +139,9 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Release Information"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Releases reported by the application's declared source"
+                                   Opacity="0.65"
+                                   TextWrapping="Wrap" />
                         <Button x:Name="CancelOperationButton"
                                 Content="Cancel"
                                 IsEnabled="False"
@@ -125,6 +179,8 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Notes"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Optional notes kept for this application session"
+                                   Opacity="0.65" />
                         <TextBox x:Name="NotesTextBox"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
