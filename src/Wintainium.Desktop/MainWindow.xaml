@@ -77,7 +77,7 @@
                 <GridView.ItemTemplate>
                     <DataTemplate>
                         <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="10">
                                 <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
                                     <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -98,10 +98,20 @@
                                         <TextBlock Text="{Binding UpdateStatusText}" />
                                     </Border>
                                 </StackPanel>
-                                <TextBlock Text="{Binding InstalledVersionText}"
-                                           Opacity="0.72" />
-                                <TextBlock Text="{Binding AvailableVersionText}"
-                                           Opacity="0.72" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" HorizontalAlignment="Right" Opacity="0.78" />
+                                    </StackPanel>
+                                </Grid>
                                 <TextBlock Text="{Binding SourceProviderText}"
                                            Opacity="0.60"
                                            TextTrimming="CharacterEllipsis" />
@@ -118,8 +128,8 @@
                 Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,2" Padding="10,12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                        <Grid>
+                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid MinHeight="64">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="52" />
                                 <ColumnDefinition Width="*" />
@@ -138,15 +148,21 @@
                                            Opacity="0.55"
                                            TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="3">
-                                <TextBlock Text="{Binding InstalledVersionText}"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Text="{Binding AvailableVersionText}"
-                                           HorizontalAlignment="Right"
-                                           Opacity="0.72" />
-                                <TextBlock Text="{Binding InstallationStateText}"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" HorizontalAlignment="Right" />
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="4">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" Opacity="0.78" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                    <TextBlock Text="{Binding InstallationStateText}" />
+                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                         </Border>
