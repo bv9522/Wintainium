@@ -41,7 +41,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _installedStateService = installedStateService;
         _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
 
-        Title = $"{application.Name} — Wintainium";
+        Title = $"{application.Name} — Application Details";
         AppWindow.Resize(new SizeInt32(820, 760));
 
         PopulateApplicationFacts();
@@ -58,10 +58,14 @@ public sealed partial class ApplicationDetailsWindow : Window
             ? "Publisher unavailable"
             : _application.Publisher;
 
-        ApplicationIdText.Text = $"Application ID: {_application.ApplicationId}";
-        InstalledVersionText.Text = $"Installed version: {_application.InstalledVersion ?? "Unknown"}";
-        InstallationStateText.Text = $"Installation state: {_application.InstallationState}";
-        SourceText.Text = $"Source provider: {_application.SourceProviderId ?? "Unknown"}";
+        ApplicationIdText.Text = _application.ApplicationId;
+        InstalledVersionText.Text = _application.InstalledVersion ?? "Unknown";
+        InstallationStateText.Text = _application.InstallationStateText;
+        UpdateStatusText.Text = _application.UpdateStatusText;
+        SourceText.Text = _application.SourceProviderText;
+        DescriptionText.Text = string.IsNullOrWhiteSpace(_application.Description)
+            ? "Description unavailable."
+            : _application.Description;
 
         if (Uri.TryCreate(_application.Homepage, UriKind.Absolute, out var homepage))
         {
