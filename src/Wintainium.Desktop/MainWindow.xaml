@@ -29,10 +29,17 @@
                     Opacity="0.72" />
             </StackPanel>
 
+            <TextBlock
+                x:Name="ApplicationSummaryText"
+                Grid.ColumnSpan="4"
+                Margin="0,52,0,0"
+                Text="0 applications"
+                Opacity="0.60" />
+
             <Button
                 Grid.Column="1"
                 Margin="12,0,8,0"
-                Content="Sort &amp; Filter"
+                Content="&#xE16E;  Sort &amp; Filter"
                 Click="SortAndFilterButton_Click" />
 
             <Button
@@ -60,10 +67,10 @@
                 HorizontalAlignment="Stretch">
                 <GridView.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="220" Padding="12" CornerRadius="8">
+                        <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                             <StackPanel Spacing="8">
-                                <Border Width="56" Height="56" CornerRadius="10" HorizontalAlignment="Left">
-                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                                <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
+                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                                 <TextBlock Text="{Binding Name}"
@@ -75,9 +82,12 @@
                                            Opacity="0.72"
                                            TextTrimming="CharacterEllipsis" />
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="{Binding InstallationStateText}" />
-                                    <TextBlock Text="·" Opacity="0.45" />
-                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Text="{Binding InstallationStateText}" />
+                                    </Border>
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Text="{Binding UpdateStatusText}" />
+                                    </Border>
                                 </StackPanel>
                                 <TextBlock Text="{Binding InstalledVersionText}"
                                            Opacity="0.72" />
@@ -99,7 +109,8 @@
                 Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Padding="8,10">
+                        <Border Margin="0,2" Padding="10,12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="52" />
                                 <ColumnDefinition Width="*" />
@@ -129,6 +140,7 @@
                                 <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" HorizontalAlignment="Right" />
                             </StackPanel>
                         </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -146,15 +158,20 @@
                            TextAlignment="Center"
                            Opacity="0.72"
                            TextWrapping="Wrap" />
+                <Button Content="&#xE710;  Add Software" Click="AddSoftwareButton_Click" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
 
         <Grid Grid.Row="2" Padding="28,12,28,24">
-            <Button
-                HorizontalAlignment="Right"
-                Content="&#xE710;  Add Software"
-                FontWeight="SemiBold"
-                Click="AddSoftwareButton_Click" />
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" />
+                <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
