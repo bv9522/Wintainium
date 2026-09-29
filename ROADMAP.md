@@ -527,10 +527,11 @@ installer/reconciliation boundaries and their actual security guarantees.
 
 ### 13.5K — Phase Lock
 - Run the full PowerShell/Pester regression.
-- Re-run the x64 desktop build and desktop smoke/EngineProbe checkpoint.
+- Re-run the x64 desktop build.
+- Confirm the current desktop integration surface remains buildable and aligned with the documented Core adapter boundary.
 - Reconcile final documentation and establish the production baseline.
 
-**Status: Pending local checkpoint.**
+**Status: Complete and locked.** The final full PowerShell/Pester regression is **623/623 green**. The x64 Debug desktop build for the production WinUI client also succeeded. The historical Phase 11/12 EngineProbe is not present in the current Phase 14 branch; no replacement probe was introduced solely for phase bookkeeping. The current automated Core/desktop integration coverage and successful production desktop build constitute the applicable final checkpoint. Phase 13.5 is now complete and locked.
 
 ## Phase 14 — GUI Polish / Productization
 
