@@ -16,6 +16,8 @@
                                    FontSize="28"
                                    FontWeight="SemiBold" />
                         <TextBlock Text="Application Details"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
                                    Opacity="0.72" />
                         <TextBlock x:Name="ApplicationPublisherText"
                                    Opacity="0.72" />
@@ -44,7 +46,6 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -79,12 +80,6 @@
                                        Grid.Column="1"
                                        TextWrapping="Wrap" />
 
-                            <TextBlock Grid.Row="5" Text="Description" Opacity="0.60" />
-                            <TextBlock x:Name="DescriptionText"
-                                       Grid.Row="5"
-                                       Grid.Column="1"
-                                       TextWrapping="Wrap"
-                                       Text="Description unavailable." />
                         </Grid>
                         <HyperlinkButton x:Name="HomepageButton"
                                          Content="Open source homepage"
