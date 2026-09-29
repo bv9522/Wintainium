@@ -63,9 +63,6 @@ public sealed partial class ApplicationDetailsWindow : Window
         InstallationStateText.Text = _application.InstallationStateText;
         UpdateStatusText.Text = _application.UpdateStatusText;
         SourceText.Text = _application.SourceProviderText;
-        DescriptionText.Text = string.IsNullOrWhiteSpace(_application.Description)
-            ? "Description unavailable."
-            : _application.Description;
 
         if (Uri.TryCreate(_application.Homepage, UriKind.Absolute, out var homepage))
         {
