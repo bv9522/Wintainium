@@ -72,6 +72,12 @@ public sealed partial class MainWindow : Window
 
     private void UpdateCollectionSummary()
     {
+        if (_collectionLoadInProgress)
+        {
+            ApplicationSummaryText.Text = "Loading applications…";
+            return;
+        }
+
         var visibleCount = _applicationCollection.Applications.Count;
         var updateCount = _applicationCollection.Applications.Count(
             application => application.UpdateStatus == WintainiumUpdateStatus.UpdateAvailable);
