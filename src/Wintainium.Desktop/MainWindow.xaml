@@ -175,7 +175,6 @@
                            TextAlignment="Center"
                            Opacity="0.72"
                            TextWrapping="Wrap" />
-                <Button Content="&#xE710;  Add Software" Click="AddSoftwareButton_Click" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
 
