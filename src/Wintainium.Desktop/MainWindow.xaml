@@ -175,6 +175,12 @@
                            TextAlignment="Center"
                            Opacity="0.72"
                            TextWrapping="Wrap" />
+                <TextBlock
+                    x:Name="CollectionLoadingText"
+                    Text="Loading your software collection…"
+                    HorizontalAlignment="Center"
+                    Opacity="0.60"
+                    Visibility="Collapsed" />
             </StackPanel>
         </Grid>
 
