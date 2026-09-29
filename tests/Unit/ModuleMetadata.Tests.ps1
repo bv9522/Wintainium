@@ -19,13 +19,13 @@ Describe 'Wintainium Core module metadata' {
         @($manifest.FunctionsToExport) | Should -Be @(
             'Get-WintainiumManifest'
             'Get-WintainiumApplicationInstalledState'
-            'Test-WintainiumApplicationDefinition'
-            'Get-WintainiumApplicationRelease'
-    'Get-WintainiumApplicationUpdateStatus'
-            'Invoke-WintainiumApplicationUpdate'
-            'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationReconciliation'
             'Set-WintainiumApplicationReconciliationSettings'
+            'Test-WintainiumApplicationDefinition'
+            'Get-WintainiumApplicationRelease'
+            'Get-WintainiumApplicationUpdateStatus'
+            'Invoke-WintainiumApplicationUpdate'
+            'Invoke-WintainiumApplicationOnboarding'
         )
         @($manifest.CmdletsToExport) | Should -BeNullOrEmpty
         @($manifest.AliasesToExport) | Should -BeNullOrEmpty
