@@ -42,8 +42,11 @@ public sealed partial class MainWindow : Window
 
     internal void SetApplicationQuery(WintainiumApplicationQuery query)
     {
+        var selectedApplicationId = GetSelectedApplicationId();
+
         _applicationCollection.SetQuery(query);
         UpdateCollectionVisibility();
+        RestoreSelectedApplication(selectedApplicationId);
     }
 
     private void Applications_CollectionChanged(
