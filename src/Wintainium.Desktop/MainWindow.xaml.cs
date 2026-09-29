@@ -60,6 +60,8 @@ public sealed partial class MainWindow : Window
     {
         var hasApplications = _applicationCollection.Applications.Count > 0;
         UpdateCollectionSummary();
+        CollectionLoadingText.Visibility =
+            _collectionLoadInProgress ? Visibility.Visible : Visibility.Collapsed;
         var showList = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.List;
         var showGrid = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.Grid;
 
@@ -218,6 +220,7 @@ public sealed partial class MainWindow : Window
 
         var selectedApplicationId = GetSelectedApplicationId();
         _collectionLoadInProgress = true;
+        UpdateCollectionVisibility();
         try
         {
             Directory.CreateDirectory(WintainiumDesktopPaths.ManifestRoot);
@@ -243,6 +246,7 @@ public sealed partial class MainWindow : Window
         finally
         {
             _collectionLoadInProgress = false;
+            UpdateCollectionVisibility();
         }
     }
 
