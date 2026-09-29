@@ -12,6 +12,10 @@
         </Grid.RowDefinitions>
 
         <Grid Padding="28,24,28,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -19,24 +23,27 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="4">
+            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
                     Text="My Software"
                     Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock
-                    Text="Software tracked by Wintainium"
+                        Text="Software tracked by Wintainium"
                     Style="{StaticResource BodyTextBlockStyle}"
                     Opacity="0.72" />
             </StackPanel>
 
             <TextBlock
                 x:Name="ApplicationSummaryText"
+                Grid.Row="1"
+                Grid.Column="0"
                 Grid.ColumnSpan="4"
-                Margin="0,52,0,0"
+                Margin="0,8,0,0"
                 Text="0 applications"
                 Opacity="0.60" />
 
             <Button
+                Grid.Row="0"
                 Grid.Column="1"
                 Margin="12,0,8,0"
                 Content="&#xE16E;  Sort &amp; Filter"
@@ -44,6 +51,7 @@
 
             <Button
                 x:Name="ViewModeButton"
+                Grid.Row="0"
                 Grid.Column="2"
                 Margin="0,0,8,0"
                 Content="Grid"
@@ -51,6 +59,7 @@
                 ToolTipService.ToolTip="Switch to grid view" />
 
             <Button
+                Grid.Row="0"
                 Grid.Column="3"
                 Content="Settings"
                 Click="SettingsButton_Click" />
