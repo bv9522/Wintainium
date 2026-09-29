@@ -37,7 +37,7 @@ Describe 'Wintainium provider contract' {
         }
 
         $result.IsValid | Should -Be $false
-        @($result.Errors.Code) | Should -Contain 'DescriptorProviderReleaseDiscoveryMissing'
+        @($result.Errors.Code) | Should -Contain 'DescriptorProviderDiscoveryCapabilitiesMissing'
     }
 
     It 'rejects a provider descriptor without artifact discovery capability' {
@@ -47,7 +47,7 @@ Describe 'Wintainium provider contract' {
         }
 
         $result.IsValid | Should -Be $false
-        @($result.Errors.Code) | Should -Contain 'DescriptorProviderArtifactDiscoveryMissing'
+        @($result.Errors.Code) | Should -Contain 'DescriptorProviderDiscoveryCapabilitiesMissing'
     }
 
     It 'distinguishes an unregistered provider from a contract-incompatible provider' {
