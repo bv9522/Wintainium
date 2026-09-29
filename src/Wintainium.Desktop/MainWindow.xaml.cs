@@ -56,12 +56,34 @@ public sealed partial class MainWindow : Window
     private void UpdateCollectionVisibility()
     {
         var hasApplications = _applicationCollection.Applications.Count > 0;
+        UpdateCollectionSummary();
         var showList = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.List;
         var showGrid = hasApplications && _applicationCollection.ViewMode == WintainiumApplicationViewMode.Grid;
 
         ApplicationListView.Visibility = showList ? Visibility.Visible : Visibility.Collapsed;
         ApplicationGridView.Visibility = showGrid ? Visibility.Visible : Visibility.Collapsed;
         EmptyStatePanel.Visibility = hasApplications ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void UpdateCollectionSummary()
+    {
+        var visibleCount = _applicationCollection.Applications.Count;
+        var updateCount = _applicationCollection.Applications.Count(
+            application => application.UpdateStatus == WintainiumUpdateStatus.UpdateAvailable);
+
+        ApplicationSummaryText.Text = visibleCount switch
+        {
+            0 => "No applications shown",
+            1 => updateCount == 1 ? "1 application • 1 update available" : "1 application",
+            _ => updateCount == 0
+                ? $"{visibleCount} applications"
+                : $"{visibleCount} applications • {updateCount} update{(updateCount == 1 ? "" : "s")} available"
+        };
+    }
+
+    private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshApplicationCollectionAsync();
     }
 
     private void ViewModeButton_Click(object sender, RoutedEventArgs e)
@@ -191,6 +213,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        var selectedApplicationId = GetSelectedApplicationId();
         _collectionLoadInProgress = true;
         try
         {
@@ -201,6 +224,7 @@ public sealed partial class MainWindow : Window
                 cancellationToken: CancellationToken.None);
 
             SetApplicationCollection(result.Applications);
+            RestoreSelectedApplication(selectedApplicationId);
 
             if (!result.IsSuccessful && result.Errors.Count > 0)
             {
