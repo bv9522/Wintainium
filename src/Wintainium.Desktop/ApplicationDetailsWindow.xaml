@@ -52,11 +52,6 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Text="Application ID" Opacity="0.60" />
-                            <TextBlock Grid.Row="1" Text="Publisher" Opacity="0.60" />
-                            <TextBlock x:Name="ApplicationPublisherText"
-                                       Grid.Row="1"
-                                       Grid.Column="1"
-                                       TextWrapping="Wrap" />
                             <TextBlock x:Name="ApplicationIdText"
                                        Grid.Row="0"
                                        Grid.Column="1"
