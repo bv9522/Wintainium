@@ -55,7 +55,15 @@ internal sealed record WintainiumApplicationModel(
         return char.ToUpperInvariant(name[0]) + name[1..];
     }
 
-    public string IconSourceText => IconSource switch\n    {\n        WintainiumIconSource.None => "No Icon",\n        WintainiumIconSource.WintainiumSourced => "Wintainium Sourced Icon",\n        WintainiumIconSource.Custom => "Custom Icon",\n        _ => "No Icon"\n    };\n\n    public string InstalledVersionText => InstalledVersion ?? "Not installed";
+    public string IconSourceText => IconSource switch
+    {
+        WintainiumIconSource.None => "No Icon",
+        WintainiumIconSource.WintainiumSourced => "Wintainium Sourced Icon",
+        WintainiumIconSource.Custom => "Custom Icon",
+        _ => "No Icon"
+    };
+
+    public string InstalledVersionText => InstalledVersion ?? "Not installed";
 
     public string AvailableVersionText => AvailableVersion ?? "—";
 
@@ -68,7 +76,14 @@ internal sealed record WintainiumApplicationModel(
         : SourceProviderId;
 }
     
-internal enum WintainiumIconSource\n{\n    None,\n    WintainiumSourced,\n    Custom\n}\n\ninternal enum WintainiumInstallationState
+internal enum WintainiumIconSource
+{
+    None,
+    WintainiumSourced,
+    Custom
+}
+
+internal enum WintainiumInstallationState
 {
     Installed,
     NotInstalled,
