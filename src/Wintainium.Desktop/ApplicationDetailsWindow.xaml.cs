@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
 using Windows.Graphics;
