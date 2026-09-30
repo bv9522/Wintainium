@@ -40,6 +40,8 @@ internal static class WintainiumApplicationModelMapper
             Homepage: GetNullableString(manifest, "Homepage"),
             Publisher: GetNullableString(manifest, "Publisher"),
             IconUri: GetIconUri(manifest),
+            AutomaticIconUri: GetAutomaticIconUri(manifest),
+            IconSource: GetIconSource(manifest),
             InstallationState: WintainiumInstallationState.Unknown,
             InstalledVersion: null,
             AvailableVersion: null,
@@ -47,6 +49,26 @@ internal static class WintainiumApplicationModelMapper
             UpdateStatus: WintainiumUpdateStatus.Unknown,
             SourceProviderId: GetSourceProviderId(manifest),
             ManifestPath: manifestPath);
+    }
+
+    private static WintainiumIconSource GetIconSource(PSObject manifest)
+    {
+        var icon = GetProperty(manifest, "icon");
+        if (icon is null)
+            return WintainiumIconSource.None;
+
+        if (!string.IsNullOrWhiteSpace(GetObjectMemberString(icon, "overrideUri")))
+            return WintainiumIconSource.Custom;
+
+        return string.IsNullOrWhiteSpace(GetObjectMemberString(icon, "automaticUri"))
+            ? WintainiumIconSource.None
+            : WintainiumIconSource.WintainiumSourced;
+    }
+
+    private static string? GetAutomaticIconUri(PSObject manifest)
+    {
+        var icon = GetProperty(manifest, "icon");
+        return icon is null ? null : GetObjectMemberString(icon, "automaticUri");
     }
 
     private static string? GetIconUri(PSObject manifest)
