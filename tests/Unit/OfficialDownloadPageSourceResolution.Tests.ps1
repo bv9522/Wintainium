@@ -61,6 +61,17 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.PSObject.Properties.Name | Should -Not -Contain 'DownloadUri'
     }
 
+    It 'defers GitHub sources to the GitHub provider' {
+        Mock Invoke-WebRequest { throw 'Network access must not occur.' } -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {
+            param($uri)
+            Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-github';SourceUri=$uri})
+        } 'https://github.com/audacity/audacity/releases/tag/Audacity-4.0.0'
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceUnsupported'
+        $result.Errors.Code | Should -Contain 'OfficialDownloadPageHostUnsupported'
+    }
+
     It 'rejects non-HTML content' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='MZ';Headers=@{'Content-Type'='application/octet-stream'}}} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-4';SourceUri='https://example.com/download'})}
