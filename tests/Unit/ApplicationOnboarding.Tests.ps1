@@ -12,6 +12,9 @@ Describe 'Wintainium application onboarding' {
         $githubPluginTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.github-releases'
         New-Item -ItemType Directory -Path $githubPluginTarget -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $githubPluginSource 'plugin.json') -Destination $githubPluginTarget -Force
+        $githubTestDescriptor = Get-Content -LiteralPath (Join-Path $githubPluginTarget 'plugin.json') -Raw | ConvertFrom-Json
+        $githubTestDescriptor.capabilities.iconDiscovery = $false
+        $githubTestDescriptor | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $githubPluginTarget 'plugin.json') -Encoding utf8
         Copy-Item -LiteralPath (Join-Path $githubPluginSource 'Wintainium.provider.github-releases.psm1') -Destination $githubPluginTarget -Force
 
         $installerFixture = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/ValidInstaller'
