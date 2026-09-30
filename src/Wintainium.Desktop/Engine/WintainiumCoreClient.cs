@@ -224,6 +224,29 @@ internal sealed class WintainiumCoreClient
     }
 
 
+    public Task<WintainiumPowerShellInvocationResult> RemoveApplicationAsync(
+        string manifestPath,
+        string manifestRoot,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestRoot);
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["ManifestRoot"] = manifestRoot
+        };
+
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Remove-WintainiumApplication",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> SetApplicationIconOverrideAsync(
         string manifestPath,
         string? iconUri,
