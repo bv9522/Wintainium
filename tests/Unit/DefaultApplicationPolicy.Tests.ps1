@@ -220,6 +220,36 @@ Describe 'Wintainium default application installer policy' {
         $result.Errors[0].Code | Should -Be 'ApplicationPolicyUnavailable'
     }
 
+    It 'derives explicit Windows reconciliation settings from the normalized application name when required' {
+        $reconcilingPlugin = [pscustomobject]@{
+            PluginId = 'Wintainium.reconciliation.windows-installed-application'
+            PluginType = 'Reconciliation'
+            ContractVersions = @('1')
+            Capabilities = [ordered]@{ applicationState = $true; requiresConfiguration = $true }
+            DescriptorPath = 'reconciliation/windows/plugin.json'
+        }
+        $installer = [pscustomobject]@{
+            PluginId = 'Wintainium.installer.exe'
+            PluginType = 'Installer'
+            ContractVersions = @('1')
+            Capabilities = [ordered]@{ supportedFormats = @('exe') }
+            DescriptorPath = 'installer/exe/plugin.json'
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            Registry = [pscustomobject]@{ Plugins = @($installer, $reconcilingPlugin) }
+            ApplicationName = 'Audacity'
+        } {
+            Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry -ApplicationName $ApplicationName
+        }
+
+        $result.IsSuccessful | Should -Be $true
+        $result.Policy.Reconciliation.PluginId | Should -Be 'Wintainium.reconciliation.windows-installed-application'
+        @($result.Policy.Reconciliation.Settings.registry.locations).Count | Should -Be 3
+        $result.Policy.Reconciliation.Settings.registry.match[0].value | Should -Be 'DisplayName'
+        $result.Policy.Reconciliation.Settings.registry.match[0].equals | Should -Be 'Audacity'
+    }
+
     It 'retains architecture as a separate policy dimension from installer format' {
         $plugins = @(
             [pscustomobject]@{
