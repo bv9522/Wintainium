@@ -50,9 +50,9 @@
 
                         <Border Grid.Row="0"
                                 Grid.Column="1"
-                                Width="44"
-                                Height="44"
-                                Margin="12,0,0,0"
+                                Width="32"
+                                Height="32"
+                                Margin="10,0,0,0"
                                 CornerRadius="8"
                                 Background="{ThemeResource AccentFillColorSecondaryBrush}"
                                 HorizontalAlignment="Left"
@@ -61,7 +61,7 @@
                                 <TextBlock x:Name="ApplicationIconGlyph"
                                            Text="&#xE71D;"
                                            FontFamily="Segoe MDL2 Assets"
-                                           FontSize="20"
+                                           FontSize="18"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
                                 <Image x:Name="ApplicationIconImage"
@@ -76,7 +76,7 @@
                                     Grid.ColumnSpan="2"
                                     Spacing="8">
                             <TextBlock x:Name="ApplicationIconStatusText"
-                                       Text="Using automatic icon behavior."
+                                       Text="No custom icon selected."
                                        Opacity="0.68"
                                        TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
