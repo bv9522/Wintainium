@@ -79,8 +79,13 @@
                         <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                             <StackPanel Spacing="10">
                                 <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
-                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Grid>
+                                        <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Image Source="{Binding IconUri}"
+                                               Stretch="Uniform"
+                                               Margin="8" />
+                                    </Grid>
                                 </Border>
                                 <TextBlock Text="{Binding DisplayName}"
                                            FontSize="16"
@@ -130,8 +135,13 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Border Width="40" Height="40" CornerRadius="8" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Grid>
+                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Image Source="{Binding IconUri}"
+                                           Stretch="Uniform"
+                                           Margin="7" />
+                                </Grid>
                             </Border>
                             <TextBlock Grid.Column="1"
                                        Text="{Binding DisplayName}"
