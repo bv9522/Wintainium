@@ -39,6 +39,9 @@
       "type": "string",
       "minLength": 1
     },
+    "icon": {
+      "$ref": "#/$defs/iconMetadata"
+    },
     "aliases": {
       "type": "array",
       "items": {
@@ -112,6 +115,20 @@
     }
   },
   "$defs": {
+    "iconMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "automaticUri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "overrideUri": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
     "providerPluginReference": {
       "type": "object",
       "additionalProperties": false,
