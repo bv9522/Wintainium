@@ -49,7 +49,6 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Text="Application ID" Opacity="0.60" />
@@ -63,24 +62,24 @@
                                        Grid.Column="1"
                                        TextWrapping="Wrap" />
 
-                            <TextBlock Grid.Row="2" Text="Installed version" Opacity="0.60" />
+                            <TextBlock Grid.Row="1" Text="Installed version" Opacity="0.60" />
                             <TextBlock x:Name="InstalledVersionText"
+                                       Grid.Row="1"
+                                       Grid.Column="1" />
+
+                            <TextBlock Grid.Row="2" Text="Installation state" Opacity="0.60" />
+                            <TextBlock x:Name="InstallationStateText"
                                        Grid.Row="2"
                                        Grid.Column="1" />
 
-                            <TextBlock Grid.Row="3" Text="Installation state" Opacity="0.60" />
-                            <TextBlock x:Name="InstallationStateText"
+                            <TextBlock Grid.Row="3" Text="Update status" Opacity="0.60" />
+                            <TextBlock x:Name="UpdateStatusText"
                                        Grid.Row="3"
                                        Grid.Column="1" />
 
-                            <TextBlock Grid.Row="4" Text="Update status" Opacity="0.60" />
-                            <TextBlock x:Name="UpdateStatusText"
-                                       Grid.Row="4"
-                                       Grid.Column="1" />
-
-                            <TextBlock Grid.Row="5" Text="Source provider" Opacity="0.60" />
+                            <TextBlock Grid.Row="4" Text="Source provider" Opacity="0.60" />
                             <TextBlock x:Name="SourceText"
-                                       Grid.Row="5"
+                                       Grid.Row="4"
                                        Grid.Column="1"
                                        TextWrapping="Wrap" />
 
