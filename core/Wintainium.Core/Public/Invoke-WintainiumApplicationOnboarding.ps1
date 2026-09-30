@@ -86,6 +86,28 @@ function Invoke-WintainiumApplicationOnboarding {
     }
 
     $sourceResolution=$successful[0].Result
+    $sourceProvider=$successful[0].Provider
+    $automaticIconUri=$null
+
+    if ($sourceProvider.Capabilities -is [System.Collections.IDictionary] -and
+        $sourceProvider.Capabilities.ContainsKey('iconDiscovery') -and
+        $sourceProvider.Capabilities.iconDiscovery -eq $true) {
+        $iconRequest=[pscustomobject][ordered]@{
+            OperationId=$resolvedOperationId
+            Source=$sourceResolution.Source
+        }
+        $iconResolution=Invoke-WintainiumCoreProviderIconDiscovery -Provider $sourceProvider -Request $iconRequest
+        if ($iconResolution.IsSuccessful -and -not [string]::IsNullOrWhiteSpace([string]$iconResolution.IconUri)) {
+            $automaticIconUri=[string]$iconResolution.IconUri
+        }
+        elseif ([string]$iconResolution.Status -ne 'NoTrustedIcon' -and [string]$iconResolution.Status -ne 'IconDiscoveryUnsupported') {
+            $warnings.Add([pscustomobject][ordered]@{
+                Code='IconDiscoveryUnavailable'
+                Message='Wintainium could not obtain a trusted automatic application icon during onboarding.'
+                Detail=@($iconResolution.Errors)
+            })
+        }
+    }
 
     if ($null -eq $Policy) {
         $policyResolution = Get-WintainiumDefaultApplicationPolicy -PluginRegistry $registry -ApplicationName ([string]$sourceResolution.Source.Name)
@@ -106,7 +128,7 @@ function Invoke-WintainiumApplicationOnboarding {
         $Policy = $policyResolution.Policy
     }
 
-    $normalization=New-WintainiumApplicationDefinitionFromSource -Source $sourceResolution.Source -Policy $Policy -OperationId $resolvedOperationId
+    $normalization=New-WintainiumApplicationDefinitionFromSource -Source $sourceResolution.Source -Policy $Policy -OperationId $resolvedOperationId -AutomaticIconUri $automaticIconUri
     foreach($warning in @($normalization.Warnings)){$warnings.Add($warning)}
     foreach($errorRecord in @($normalization.Errors)){$errors.Add($errorRecord)}
     foreach($event in @($normalization.LogEvents)){$logEvents.Add($event)}
