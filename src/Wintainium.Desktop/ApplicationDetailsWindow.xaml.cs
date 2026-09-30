@@ -169,7 +169,15 @@ public sealed partial class ApplicationDetailsWindow : Window
                 return;
             }
 
-            _application = _application with\n            {\n                IconUri = iconUri ?? _application.AutomaticIconUri,\n                IconSource = iconUri is null\n                    ? (string.IsNullOrWhiteSpace(_application.AutomaticIconUri)\n                        ? WintainiumIconSource.None\n                        : WintainiumIconSource.WintainiumSourced)\n                    : WintainiumIconSource.Custom\n            };
+            _application = _application with
+            {
+                IconUri = iconUri ?? _application.AutomaticIconUri,
+                IconSource = iconUri is null
+                    ? (string.IsNullOrWhiteSpace(_application.AutomaticIconUri)
+                        ? WintainiumIconSource.None
+                        : WintainiumIconSource.WintainiumSourced)
+                    : WintainiumIconSource.Custom
+            };
             UpdateIconPresentation();
 
             if (_onAuthoritativeStateChanged is not null)
@@ -195,7 +203,7 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         if (string.IsNullOrWhiteSpace(_application.IconUri))
         {
-            ApplicationIconStatusText.Text = "Using automatic icon behavior.";
+            ApplicationIconStatusText.Text = _application.IconSourceText;
             return;
         }
 
