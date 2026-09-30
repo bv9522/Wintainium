@@ -41,7 +41,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _installedStateService = installedStateService;
         _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
 
-        Title = $"{application.Name} — Application Details";
+        Title = $"{application.DisplayName} — Application Details";
         AppWindow.Resize(new SizeInt32(820, 760));
 
         PopulateApplicationFacts();
@@ -53,7 +53,7 @@ public sealed partial class ApplicationDetailsWindow : Window
 
     private void PopulateApplicationFacts()
     {
-        ApplicationNameText.Text = _application.Name;
+        ApplicationNameText.Text = _application.DisplayName;
         ApplicationIdText.Text = _application.ApplicationId;
         InstalledVersionText.Text = _application.InstalledVersion ?? "Unknown";
         InstallationStateText.Text = _application.InstallationStateText;
