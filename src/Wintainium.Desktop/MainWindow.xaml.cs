@@ -167,21 +167,9 @@ public sealed partial class MainWindow : Window
 
         e.Handled = true;
         var flyout = new MenuFlyout();
-
-        var detailsItem = new MenuFlyoutItem { Text = "Open Details" };
-        detailsItem.Click += async (_, _) => await OpenApplicationDetailsAsync(application);
-
-        var iconItem = new MenuFlyoutItem { Text = "Change Icon" };
-        iconItem.Click += async (_, _) => await OpenApplicationDetailsAsync(application);
-
         var removeItem = new MenuFlyoutItem { Text = "Remove Software" };
         removeItem.Click += async (_, _) => await RemoveApplicationAsync(application);
-
-        flyout.Items.Add(detailsItem);
-        flyout.Items.Add(iconItem);
-        flyout.Items.Add(new MenuFlyoutSeparator());
         flyout.Items.Add(removeItem);
-
         flyout.ShowAt(element, e.GetPosition(element));
     }
 
