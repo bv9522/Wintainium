@@ -1,7 +1,9 @@
 function Get-WintainiumDefaultApplicationPolicy {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateNotNull()][object]$PluginRegistry
+        [Parameter(Mandatory)][ValidateNotNull()][object]$PluginRegistry,
+
+        [string]$ApplicationName
     )
 
     $errors = [System.Collections.Generic.List[object]]::new()
@@ -105,16 +107,59 @@ function Get-WintainiumDefaultApplicationPolicy {
     )
 
     if ($reconciliationRequiresConfiguration) {
-        return [pscustomobject][ordered]@{
-            IsSuccessful=$false
-            Status='ApplicationPolicyConfigurationRequired'
-            Policy=$null
-            Errors=@([pscustomobject][ordered]@{
-                Code='ApplicationPolicyConfigurationRequired'
-                Path='$.Policy.Reconciliation.Settings'
-                Message="The selected reconciliation plugin '$($reconciler.PluginId)' requires application-specific settings and cannot be selected by the default onboarding policy without them."
-            })
+        if ([string]::IsNullOrWhiteSpace($ApplicationName)) {
+            return [pscustomobject][ordered]@{
+                IsSuccessful=$false
+                Status='ApplicationPolicyConfigurationRequired'
+                Policy=$null
+                Errors=@([pscustomobject][ordered]@{
+                    Code='ApplicationPolicyConfigurationRequired'
+                    Path='$.Policy.Reconciliation.Settings'
+                    Message="The selected reconciliation plugin '$($reconciler.PluginId)' requires application-specific settings and cannot be selected by the default onboarding policy without them."
+                })
+            }
         }
+
+        # The application source has already established a normalized name. Make
+        # the Windows reconciler's registry criterion explicit in the manifest,
+        # rather than allowing the reconciler to infer it from manifest.name.
+        $reconciliationSettings = [ordered]@{
+            registry = [ordered]@{
+                locations = @(
+                    [ordered]@{ scope='machine'; view='64' }
+                    [ordered]@{ scope='machine'; view='32' }
+                    [ordered]@{ scope='user'; view='native' }
+                )
+                match = @(
+                    [ordered]@{ value='DisplayName'; equals=[string]$ApplicationName }
+                )
+            }
+        }
+
+        [pscustomobject][ordered]@{
+            IsSuccessful=$true
+            Status='Resolved'
+            Policy=[pscustomobject][ordered]@{
+                Installer=[pscustomobject][ordered]@{
+                    PluginId=[string]$installer.PluginId
+                    RequiredContractVersion='1'
+                    Settings=@{}
+                }
+                Reconciliation=[pscustomobject][ordered]@{
+                    PluginId=[string]$reconciler.PluginId
+                    RequiredContractVersion='1'
+                    Settings=$reconciliationSettings
+                }
+                Release=[pscustomobject][ordered]@{ Channel='stable' }
+                Artifact=[pscustomobject][ordered]@{
+                    Formats=@($selectedFormat)
+                    Architectures=@('x64','x86','arm64','neutral')
+                    AllowUnknownArchitecture=$false
+                }
+            }
+            Errors=@()
+        }
+        return
     }
 
     [pscustomobject][ordered]@{
