@@ -49,11 +49,10 @@ internal sealed record WintainiumApplicationModel(
         if (string.IsNullOrWhiteSpace(name) || name.Any(char.IsUpper))
             return name;
 
-        var firstLetter = name.IndexOfAny("abcdefghijklmnopqrstuvwxyz".ToCharArray());
-        if (firstLetter < 0)
+        if (name[0] is < 'a' or > 'z')
             return name;
 
-        return name[..firstLetter] + char.ToUpperInvariant(name[firstLetter]) + name[(firstLetter + 1)..];
+        return char.ToUpperInvariant(name[0]) + name[1..];
     }
 
     public string InstalledVersionText => InstalledVersion ?? "Not installed";
