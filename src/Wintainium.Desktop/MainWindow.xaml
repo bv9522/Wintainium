@@ -76,7 +76,7 @@
                 HorizontalAlignment="Stretch">
                 <GridView.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
                             <StackPanel Spacing="10">
                                 <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
                                     <Grid>
@@ -127,7 +127,7 @@
                 Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
                         <Grid MinHeight="64">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="52" />
