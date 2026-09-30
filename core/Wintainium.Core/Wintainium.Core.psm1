@@ -22,4 +22,5 @@ Export-ModuleMember -Function @(
     'Get-WintainiumApplicationUpdateStatus'
     'Invoke-WintainiumApplicationUpdate'
     'Invoke-WintainiumApplicationOnboarding'
+    'Set-WintainiumApplicationIconOverride'
 )
