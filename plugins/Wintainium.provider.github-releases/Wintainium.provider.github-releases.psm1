@@ -373,4 +373,87 @@ function Invoke-WintainiumProviderSourceResolution {
     New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $true -Status 'Resolved' -Source $source
 }
 
-Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution
+function New-GitHubIconDiscoveryResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [string]$IconUri = $null,
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @()
+    )
+    [pscustomobject][ordered]@{
+        OperationId=$OperationId; IsSuccessful=$IsSuccessful; Status=$Status
+        IconUri=$IconUri; Errors=@($Errors); Warnings=@($Warnings)
+    }
+}
+
+function Invoke-WintainiumProviderIconDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $source=$Request.Source
+    if ($null -eq $source -or [string]::IsNullOrWhiteSpace([string]$source.ProviderSettings.repository)) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubIconSourceMissing' -Message 'GitHub source repository is required for icon discovery.')
+        )
+    }
+
+    $repository=[string]$source.ProviderSettings.repository
+    if ($repository -notmatch '^[^/\s]+/[^/\s]+
+) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubRepositoryInvalid' -Message "GitHub repository '$repository' must use the owner/repository form.")
+        )
+    }
+
+    $parts=$repository.Split('/',2)
+    $repoUri="https://api.github.com/repos/$([uri]::EscapeDataString($parts[0]))/$([uri]::EscapeDataString($parts[1]))"
+    try {
+        $repo=Invoke-RestMethod -Method Get -Uri $repoUri -Headers @{
+            Accept='application/vnd.github+json'
+            'User-Agent'='Wintainium/0.1'
+        } -ErrorAction Stop
+    }
+    catch {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubIconRepositoryLookupFailed' -Message $_.Exception.Message)
+        )
+    }
+
+    $homepage=$null
+    if ($repo.PSObject.Properties['homepage'] -and -not [string]::IsNullOrWhiteSpace([string]$repo.homepage)) {
+        try { $homepage=[Uri]([string]$repo.homepage) } catch { $homepage=$null }
+    }
+
+    if ($null -eq $homepage -or -not $homepage.IsAbsoluteUri -or $homepage.Scheme -notin @('http','https')) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try {
+        $page=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -ErrorAction Stop
+        $links=@($page.Links | Where-Object {
+            $_.rel -and ([string]$_.rel -split '\s+') -contains 'icon' -or
+            $_.rel -and ([string]$_.rel -split '\s+') -contains 'shortcut' -or
+            $_.rel -and ([string]$_.rel -split '\s+') -contains 'apple-touch-icon'
+        })
+        foreach ($link in $links) {
+            $href=[string]$link.href
+            if ([string]::IsNullOrWhiteSpace($href)) { continue }
+            try { $iconUri=[Uri]::new($homepage,$href) } catch { continue }
+            if ($iconUri.Scheme -in @('http','https') -and $iconUri.Host -eq $homepage.Host) {
+                return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'IconResolved' -IconUri $iconUri.AbsoluteUri
+            }
+        }
+    }
+    catch {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubIconHomepageLookupFailed' -Message $_.Exception.Message)
+        )
+    }
+
+    New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+}
+
+Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery
