@@ -82,7 +82,7 @@
                                     <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
-                                <TextBlock Text="{Binding Name}"
+                                <TextBlock Text="{Binding DisplayName}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
                                            TextTrimming="CharacterEllipsis"
@@ -134,7 +134,7 @@
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <TextBlock Grid.Column="1"
-                                       Text="{Binding Name}"
+                                       Text="{Binding DisplayName}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"
