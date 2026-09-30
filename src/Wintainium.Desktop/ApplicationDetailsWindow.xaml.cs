@@ -169,7 +169,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 return;
             }
 
-            _application = _application with { IconUri = iconUri };
+            _application = _application with\n            {\n                IconUri = iconUri ?? _application.AutomaticIconUri,\n                IconSource = iconUri is null\n                    ? (string.IsNullOrWhiteSpace(_application.AutomaticIconUri)\n                        ? WintainiumIconSource.None\n                        : WintainiumIconSource.WintainiumSourced)\n                    : WintainiumIconSource.Custom\n            };
             UpdateIconPresentation();
 
             if (_onAuthoritativeStateChanged is not null)
@@ -207,7 +207,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 new Uri(_application.IconUri));
             ApplicationIconImage.Visibility = Visibility.Visible;
             ApplicationIconGlyph.Visibility = Visibility.Collapsed;
-            ApplicationIconStatusText.Text = "Using your selected icon.";
+            ApplicationIconStatusText.Text = _application.IconSourceText;
         }
         catch
         {
