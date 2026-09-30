@@ -12,6 +12,8 @@ internal sealed record WintainiumApplicationModel(
     string? Homepage,
     string? Publisher,
     string? IconUri,
+    string? AutomaticIconUri,
+    WintainiumIconSource IconSource,
     WintainiumInstallationState InstallationState,
     string? InstalledVersion,
     string? AvailableVersion,
