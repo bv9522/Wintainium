@@ -26,6 +26,7 @@ internal sealed class WintainiumDesktopServices : IAsyncDisposable
         ApplicationUpdate = new WintainiumApplicationUpdateService(CoreClient);
         ApplicationOnboarding = new WintainiumApplicationOnboardingService(CoreClient);
         ApplicationIcon = new WintainiumApplicationIconService(CoreClient);
+        ApplicationRemoval = new WintainiumApplicationRemovalService(CoreClient);
     }
 
     public WintainiumCoreClient CoreClient { get; }
@@ -45,6 +46,8 @@ internal sealed class WintainiumDesktopServices : IAsyncDisposable
     public WintainiumApplicationOnboardingService ApplicationOnboarding { get; }
 
     public WintainiumApplicationIconService ApplicationIcon { get; }
+
+    public WintainiumApplicationRemovalService ApplicationRemoval { get; }
 
     public ValueTask DisposeAsync()
     {
