@@ -17,6 +17,7 @@
         'Get-WintainiumApplicationUpdateStatus'
         'Invoke-WintainiumApplicationUpdate'
         'Invoke-WintainiumApplicationOnboarding'
+        'Set-WintainiumApplicationIconOverride'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
