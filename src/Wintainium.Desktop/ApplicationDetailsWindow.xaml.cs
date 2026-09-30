@@ -58,6 +58,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             ? "Publisher unavailable"
             : _application.Publisher;
 
+        ApplicationIdText.Text = _application.ApplicationId;
         InstalledVersionText.Text = _application.InstalledVersion ?? "Unknown";
         InstallationStateText.Text = _application.InstallationStateText;
         UpdateStatusText.Text = _application.UpdateStatusText;
