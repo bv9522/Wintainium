@@ -3,7 +3,8 @@ function New-WintainiumApplicationDefinitionFromSource {
     param(
         [Parameter(Mandatory)][object]$Source,
         [Parameter(Mandatory)][AllowNull()][object]$Policy,
-        [string]$OperationId
+        [string]$OperationId,
+        [string]$AutomaticIconUri
     )
 
     $operationId = if ([string]::IsNullOrWhiteSpace($OperationId)) { [guid]::NewGuid().ToString() } else { $OperationId }
@@ -78,6 +79,7 @@ function New-WintainiumApplicationDefinitionFromSource {
         manifestVersion='1.1'
         id=[string]$Source.ApplicationId
         name=[string]$Source.Name
+        icon=if (-not [string]::IsNullOrWhiteSpace($AutomaticIconUri)) { [ordered]@{ automaticUri=[string]$AutomaticIconUri } } else { $null }
         homepage=if ($Source.PSObject.Properties['Homepage']) {[string]$Source.Homepage} else {$null}
         publisher=if ($Source.PSObject.Properties['Publisher']) {[string]$Source.Publisher} else {$null}
         source=[ordered]@{
@@ -103,6 +105,7 @@ function New-WintainiumApplicationDefinitionFromSource {
         }
     }
 
+    if ($application.icon -eq $null) { $application.Remove('icon') }
     if ($application.homepage -eq $null) { $application.Remove('Homepage') }
     if ($application.publisher -eq $null) { $application.Remove('Publisher') }
 
