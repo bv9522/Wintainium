@@ -54,10 +54,6 @@ public sealed partial class ApplicationDetailsWindow : Window
     private void PopulateApplicationFacts()
     {
         ApplicationNameText.Text = _application.Name;
-        ApplicationPublisherText.Text = string.IsNullOrWhiteSpace(_application.Publisher)
-            ? "Publisher unavailable"
-            : _application.Publisher;
-
         ApplicationIdText.Text = _application.ApplicationId;
         InstalledVersionText.Text = _application.InstalledVersion ?? "Unknown";
         InstallationStateText.Text = _application.InstallationStateText;
