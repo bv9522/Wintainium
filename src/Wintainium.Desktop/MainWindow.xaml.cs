@@ -265,43 +265,204 @@ public sealed partial class MainWindow : Window
             TextWrapping = TextWrapping.NoWrap
         };
 
+        var progressRing = new ProgressRing
+        {
+            IsActive = false,
+            Visibility = Visibility.Collapsed,
+            Width = 20,
+            Height = 20
+        };
+
+        var statusText = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Visibility = Visibility.Collapsed
+        };
+
+        var recoveryButton = new Button
+        {
+            Content = "Open Source",
+            Visibility = Visibility.Collapsed
+        };
+
+        var content = new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                sourceTextBox,
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    Children =
+                    {
+                        progressRing,
+                        statusText
+                    }
+                },
+                recoveryButton
+            }
+        };
+
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "Add Software",
-            Content = sourceTextBox,
+            Content = content,
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
 
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary ||
-            string.IsNullOrWhiteSpace(sourceTextBox.Text))
-        {
-            return;
-        }
+        var onboardingComplete = false;
+        var sourceUri = string.Empty;
 
-        try
+        recoveryButton.Click += async (_, _) =>
         {
-            var result = await _services.ApplicationOnboarding.OnboardAsync(
-                sourceTextBox.Text.Trim(),
-                WintainiumDesktopPaths.ManifestRoot,
-                cancellationToken: CancellationToken.None);
-
-            if (!result.IsSuccessful)
+            if (string.IsNullOrWhiteSpace(sourceUri))
             {
-                await ShowOnboardingFailureAsync(
-                    sourceTextBox.Text.Trim(),
-                    result);
                 return;
             }
 
-            await RefreshApplicationCollectionAsync();
-        }
-        catch (Exception exception)
+            try
+            {
+                await Launcher.LaunchUriAsync(new Uri(sourceUri));
+            }
+            catch (Exception exception)
+            {
+                await ShowExceptionAsync("Source could not be opened", exception);
+            }
+        };
+
+        dialog.PrimaryButtonClick += async (_, args) =>
         {
-            await ShowExceptionAsync("Software could not be added", exception);
-        }
+            if (onboardingComplete)
+            {
+                return;
+            }
+
+            var deferral = args.GetDeferral();
+            try
+            {
+                sourceUri = sourceTextBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(sourceUri))
+                {
+                    args.Cancel = true;
+                    statusText.Text = "Enter a source URL to add software.";
+                    statusText.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                args.Cancel = true;
+                sourceTextBox.IsEnabled = false;
+                dialog.IsPrimaryButtonEnabled = false;
+                dialog.IsSecondaryButtonEnabled = false;
+                recoveryButton.Visibility = Visibility.Collapsed;
+                progressRing.Visibility = Visibility.Visible;
+                progressRing.IsActive = true;
+                statusText.Text = "Resolving source…";
+                statusText.Visibility = Visibility.Visible;
+                dialog.PrimaryButtonText = "Adding…";
+
+                try
+                {
+                    var result = await _services.ApplicationOnboarding.OnboardAsync(
+                        sourceUri,
+                        WintainiumDesktopPaths.ManifestRoot,
+                        cancellationToken: CancellationToken.None);
+
+                    if (!result.IsSuccessful)
+                    {
+                        var (_, message, canOpenSource) = GetOnboardingFailurePresentation(result);
+                        var diagnostics = result.Errors.Count == 0
+                            ? string.Empty
+                            : string.Join(Environment.NewLine, result.Errors.Select(FormatDiagnostic));
+
+                        statusText.Text = string.IsNullOrWhiteSpace(diagnostics)
+                            ? message
+                            : $"{message}{Environment.NewLine}{Environment.NewLine}{diagnostics}";
+                        statusText.Visibility = Visibility.Visible;
+                        recoveryButton.Visibility = canOpenSource ? Visibility.Visible : Visibility.Collapsed;
+                        sourceTextBox.IsEnabled = true;
+                        dialog.IsPrimaryButtonEnabled = true;
+                        dialog.IsSecondaryButtonEnabled = true;
+                        dialog.PrimaryButtonText = "Try Again";
+                        progressRing.IsActive = false;
+                        progressRing.Visibility = Visibility.Collapsed;
+                        return;
+                    }
+
+                    await RefreshApplicationCollectionAsync();
+
+                    onboardingComplete = true;
+                    sourceTextBox.Visibility = Visibility.Collapsed;
+                    recoveryButton.Visibility = Visibility.Collapsed;
+                    progressRing.IsActive = false;
+                    progressRing.Visibility = Visibility.Collapsed;
+                    statusText.Text = "Software was added to your Wintainium collection.";
+                    statusText.Visibility = Visibility.Visible;
+                    dialog.Title = "Software Added";
+                    dialog.PrimaryButtonText = "Done";
+                    dialog.CloseButtonText = null;
+                    dialog.IsPrimaryButtonEnabled = true;
+                    dialog.IsSecondaryButtonEnabled = false;
+                }
+                catch (Exception exception)
+                {
+                    statusText.Text = $"Software could not be added.{Environment.NewLine}{Environment.NewLine}{exception.Message}";
+                    statusText.Visibility = Visibility.Visible;
+                    sourceTextBox.IsEnabled = true;
+                    dialog.IsPrimaryButtonEnabled = true;
+                    dialog.IsSecondaryButtonEnabled = true;
+                    dialog.PrimaryButtonText = "Try Again";
+                    progressRing.IsActive = false;
+                    progressRing.Visibility = Visibility.Collapsed;
+                }
+            }
+            finally
+            {
+                deferral.Complete();
+            }
+        };
+
+        await dialog.ShowAsync();
+    }
+
+    private static (string Title, string Message, bool CanOpenSource) GetOnboardingFailurePresentation(
+        WintainiumApplicationOnboardingResult result)
+    {
+        return result.Status switch
+        {
+            "SourceUnsupported" => (
+                "Source not supported",
+                "Wintainium could not identify a supported source provider for this URL. No application was added.",
+                false),
+            "SourceAmbiguous" => (
+                "Source is ambiguous",
+                "More than one source provider resolved this URL. Wintainium did not choose one automatically, and no application was added.",
+                false),
+            "SourceUnavailable" => (
+                "Source is unavailable",
+                "The source could not be resolved because the upstream source is currently unavailable. No application was added.",
+                false),
+            "AuthenticationRequired" => (
+                "Authentication required",
+                "The source requires authentication before Wintainium can resolve it. You can open the source in your browser and then try again.",
+                true),
+            "InteractiveResolutionRequired" => (
+                "Interactive resolution required",
+                "This source requires interactive browser resolution. You can open the source in your browser and then try again.",
+                true),
+            "SourceResponseInvalid" => (
+                "Source response could not be resolved",
+                "The source returned information that Wintainium could not validate as a deterministic application identity. No application was added.",
+                false),
+            _ => (
+                "Software could not be added",
+                "Wintainium could not add this software. No application was added.",
+                false)
+        };
     }
 
     private async Task ShowOnboardingFailureAsync(
