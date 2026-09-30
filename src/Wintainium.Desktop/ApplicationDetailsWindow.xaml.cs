@@ -153,7 +153,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         {
             ResetIconButton.IsEnabled = false;
             ApplicationIconStatusText.Text = iconUri is null
-                ? "Resetting to automatic icon behavior…"
+                ? "Removing custom icon…"
                 : "Saving selected icon…";
 
             var result = await _iconService.SetOverrideAsync(
@@ -176,8 +176,8 @@ public sealed partial class ApplicationDetailsWindow : Window
                 await _onAuthoritativeStateChanged();
 
             ApplicationIconStatusText.Text = iconUri is null
-                ? "Using automatic icon behavior."
-                : "Using your selected icon.";
+                ? "No custom icon selected."
+                : "Using a custom icon.";
         }
         catch (Exception exception)
         {
