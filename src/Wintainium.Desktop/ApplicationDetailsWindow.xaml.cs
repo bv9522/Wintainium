@@ -175,9 +175,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             if (_onAuthoritativeStateChanged is not null)
                 await _onAuthoritativeStateChanged();
 
-            ApplicationIconStatusText.Text = iconUri is null
-                ? "No custom icon selected."
-                : "Using a custom icon.";
+            ApplicationIconStatusText.Text = _application.IconSourceText;
         }
         catch (Exception exception)
         {
