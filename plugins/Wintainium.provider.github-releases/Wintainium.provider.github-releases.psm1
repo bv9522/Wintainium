@@ -411,7 +411,7 @@ function Invoke-WintainiumProviderIconDiscovery {
     $parts=$repository.Split('/',2)
     $repoUri="https://api.github.com/repos/$([uri]::EscapeDataString($parts[0]))/$([uri]::EscapeDataString($parts[1]))"
     try {
-        $repo=Invoke-RestMethod -Method Get -Uri $repoUri -Headers @{
+        $repo=Invoke-RestMethod -Method Get -Uri $repoUri -TimeoutSec 10 -Headers @{
             Accept='application/vnd.github+json'
             'User-Agent'='Wintainium/0.1'
         } -ErrorAction Stop
