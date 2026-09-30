@@ -160,7 +160,9 @@ internal static class WintainiumApplicationModelMapper
             return application with
             {
                 AvailableVersion = null,
-                UpdateStatus = WintainiumUpdateStatus.Unknown
+                UpdateStatus = application.InstallationState == WintainiumInstallationState.NotInstalled
+                    ? WintainiumUpdateStatus.NotInstalled
+                    : WintainiumUpdateStatus.Unknown
             };
         }
 
@@ -186,7 +188,9 @@ internal static class WintainiumApplicationModelMapper
         return application with
         {
             AvailableVersion = null,
-            UpdateStatus = WintainiumUpdateStatus.Unknown
+            UpdateStatus = application.InstallationState == WintainiumInstallationState.NotInstalled
+                ? WintainiumUpdateStatus.NotInstalled
+                : WintainiumUpdateStatus.Unknown
         };
     }
 
