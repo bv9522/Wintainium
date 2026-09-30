@@ -67,6 +67,25 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Release.channel | Should -Be 'stable'
     }
 
+    It 'creates explicit Windows reconciliation settings during default production onboarding' {
+        Remove-Item -LiteralPath (Join-Path $script:pluginRoot 'Wintainium.reconciliation.valid-fixture') -Recurse -Force
+
+        $reconciliationSource = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.reconciliation.windows-installed-application'
+        $reconciliationTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.reconciliation.windows-installed-application'
+        New-Item -ItemType Directory -Path $reconciliationTarget -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $reconciliationSource 'plugin.json') -Destination $reconciliationTarget -Force
+        Copy-Item -LiteralPath (Join-Path $reconciliationSource 'Wintainium.reconciliation.windows-installed-application.psm1') -Destination $reconciliationTarget -Force
+
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/audacity/audacity/releases/tag/Audacity-4.0.0' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot
+
+        $result.IsSuccessful | Should -Be $true
+        $result.ApplicationDefinition.Reconciliation.pluginId | Should -Be 'Wintainium.reconciliation.windows-installed-application'
+        @($result.ApplicationDefinition.Reconciliation.Settings.registry.locations).Count | Should -Be 3
+        $result.ApplicationDefinition.Reconciliation.Settings.registry.match[0].value | Should -Be 'DisplayName'
+        $result.ApplicationDefinition.Reconciliation.Settings.registry.match[0].equals | Should -Be 'Audacity'
+        @($result.Errors).Count | Should -Be 0
+    }
+
     It 'does not select a reconciliation plugin that requires application-specific configuration' {
         $registry = [pscustomobject]@{
             Plugins = @(
