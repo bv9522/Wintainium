@@ -401,62 +401,7 @@ function Invoke-WintainiumProviderIconDiscovery {
     }
 
     $repository=[string]$source.ProviderSettings.repository
-    if ($repository -notmatch '^[^/\s]+/[^/\s]+
-        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
-            (New-GitHubProviderError -Code 'GitHubRepositoryInvalid' -Message "GitHub repository '$repository' must use the owner/repository form.")
-        )
-    }
-
-    $parts=$repository.Split('/',2)
-    $repoUri="https://api.github.com/repos/$([uri]::EscapeDataString($parts[0]))/$([uri]::EscapeDataString($parts[1]))"
-    try {
-        $repo=Invoke-RestMethod -Method Get -Uri $repoUri -TimeoutSec 10 -Headers @{
-            Accept='application/vnd.github+json'
-            'User-Agent'='Wintainium/0.1'
-        } -ErrorAction Stop
-    }
-    catch {
-        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
-            (New-GitHubProviderError -Code 'GitHubIconRepositoryLookupFailed' -Message $_.Exception.Message)
-        )
-    }
-
-    $homepage=$null
-    if ($repo.PSObject.Properties['homepage'] -and -not [string]::IsNullOrWhiteSpace([string]$repo.homepage)) {
-        try { $homepage=[Uri]([string]$repo.homepage) } catch { $homepage=$null }
-    }
-
-    if ($null -eq $homepage -or -not $homepage.IsAbsoluteUri -or $homepage.Scheme -notin @('http','https')) {
-        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
-    }
-
-    try {
-        $page=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -ErrorAction Stop
-        $links=@($page.Links | Where-Object {
-            if (-not $_.rel) { return $false }
-            $rels=[string]$_.rel -split '\s+'
-            return (($rels -contains 'icon') -or ($rels -contains 'shortcut') -or ($rels -contains 'apple-touch-icon'))
-        })
-        foreach ($link in $links) {
-            $href=[string]$link.href
-            if ([string]::IsNullOrWhiteSpace($href)) { continue }
-            try { $iconUri=[Uri]::new($homepage,$href) } catch { continue }
-            if ($iconUri.Scheme -in @('http','https') -and $iconUri.Host -eq $homepage.Host) {
-                return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'IconResolved' -IconUri $iconUri.AbsoluteUri
-            }
-        }
-    }
-    catch {
-        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
-            (New-GitHubProviderError -Code 'GitHubIconHomepageLookupFailed' -Message $_.Exception.Message)
-        )
-    }
-
-    New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
-}
-
-Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery
-) {
+    if ($repository -notmatch '^[^/\s]+/[^/\s]+$') {
         return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
             (New-GitHubProviderError -Code 'GitHubRepositoryInvalid' -Message "GitHub repository '$repository' must use the owner/repository form.")
         )
