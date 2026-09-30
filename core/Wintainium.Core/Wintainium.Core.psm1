@@ -23,4 +23,5 @@ Export-ModuleMember -Function @(
     'Invoke-WintainiumApplicationUpdate'
     'Invoke-WintainiumApplicationOnboarding'
     'Set-WintainiumApplicationIconOverride'
+    'Remove-WintainiumApplication'
 )
