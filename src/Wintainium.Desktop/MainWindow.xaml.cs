@@ -186,6 +186,7 @@ public sealed partial class MainWindow : Window
                 _services.ApplicationRelease,
                 _services.ApplicationUpdate,
                 _services.InstalledApplicationState,
+                _services.ApplicationIcon,
                 RefreshApplicationCollectionAsync);
             _applicationDetailsWindows[application.ApplicationId] = window;
             window.Closed += (_, _) => _applicationDetailsWindows.Remove(application.ApplicationId);
