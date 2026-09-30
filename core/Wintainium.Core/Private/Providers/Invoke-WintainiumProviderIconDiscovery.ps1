@@ -14,7 +14,7 @@ function Invoke-WintainiumCoreProviderIconDiscovery {
             Status=$Status
             IconUri=$IconUri
             Errors=@($Errors)
-            Warnings=@()
+            Warnings=@($Warnings)
         }
     }
 
