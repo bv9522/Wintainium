@@ -76,7 +76,7 @@
                                     Grid.ColumnSpan="2"
                                     Spacing="8">
                             <TextBlock x:Name="ApplicationIconStatusText"
-                                       Text="No custom icon selected."
+                                       Text="No Icon"
                                        Opacity="0.68"
                                        TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
