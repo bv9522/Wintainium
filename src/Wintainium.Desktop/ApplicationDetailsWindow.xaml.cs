@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
 using Windows.Graphics;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace Wintainium.Desktop;
 
@@ -15,6 +17,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly WintainiumApplicationReleaseService _releaseService;
     private readonly WintainiumApplicationUpdateService _updateService;
     private readonly WintainiumApplicationInstalledStateService _installedStateService;
+    private readonly WintainiumApplicationIconService _iconService;
     private readonly Func<Task>? _onAuthoritativeStateChanged;
     private WintainiumApplicationUpdateResult? _lastUpdateResult;
     private string _savedNotes = string.Empty;
@@ -25,12 +28,14 @@ public sealed partial class ApplicationDetailsWindow : Window
         WintainiumApplicationReleaseService releaseService,
         WintainiumApplicationUpdateService updateService,
         WintainiumApplicationInstalledStateService installedStateService,
+        WintainiumApplicationIconService iconService,
         Func<Task>? onAuthoritativeStateChanged = null)
     {
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
         ArgumentNullException.ThrowIfNull(updateService);
         ArgumentNullException.ThrowIfNull(installedStateService);
+        ArgumentNullException.ThrowIfNull(iconService);
 
         InitializeComponent();
         Closed += ApplicationDetailsWindow_Closed;
@@ -39,12 +44,14 @@ public sealed partial class ApplicationDetailsWindow : Window
         _releaseService = releaseService;
         _updateService = updateService;
         _installedStateService = installedStateService;
+        _iconService = iconService;
         _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
 
         Title = $"{application.DisplayName} — Application Details";
         AppWindow.Resize(new SizeInt32(820, 760));
 
         PopulateApplicationFacts();
+        UpdateIconPresentation();
         ReleaseListView.ItemsSource = new ObservableCollection<WintainiumApplicationReleaseModel>();
         ErrorItemsControl.ItemsSource = Array.Empty<string>();
         WarningItemsControl.ItemsSource = Array.Empty<string>();
@@ -68,6 +75,142 @@ public sealed partial class ApplicationDetailsWindow : Window
         else
         {
             HomepageButton.IsEnabled = false;
+        }
+    }
+
+    private async void ChooseIconButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_application.ManifestPath))
+        {
+            ShowDetailsError("The application's manifest path is not available, so the icon override cannot be saved.");
+            return;
+        }
+
+        var picker = new FileOpenPicker();
+        picker.FileTypeFilter.Add(".ico");
+        picker.FileTypeFilter.Add(".png");
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+
+        var file = await picker.PickSingleFileAsync();
+        if (file is null)
+            return;
+
+        await SetIconOverrideAsync(new Uri(file.Path).AbsoluteUri);
+    }
+
+    private async void UseIconUrlButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_application.ManifestPath))
+        {
+            ShowDetailsError("The application's manifest path is not available, so the icon override cannot be saved.");
+            return;
+        }
+
+        var textBox = new TextBox
+        {
+            Header = "Icon URL",
+            PlaceholderText = "https://example.com/icon.png",
+            TextWrapping = TextWrapping.Wrap
+        };
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "Use Icon URL",
+            Content = textBox,
+            PrimaryButtonText = "Use Icon",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            return;
+
+        if (!Uri.TryCreate(textBox.Text.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            ShowDetailsError("Enter a valid HTTP or HTTPS icon URL.");
+            return;
+        }
+
+        await SetIconOverrideAsync(uri.AbsoluteUri);
+    }
+
+    private async void ResetIconButton_Click(object sender, RoutedEventArgs e)
+    {
+        await SetIconOverrideAsync(null);
+    }
+
+    private async Task SetIconOverrideAsync(string? iconUri)
+    {
+        if (string.IsNullOrWhiteSpace(_application.ManifestPath))
+            return;
+
+        try
+        {
+            ResetIconButton.IsEnabled = false;
+            ApplicationIconStatusText.Text = iconUri is null
+                ? "Resetting to automatic icon behavior…"
+                : "Saving selected icon…";
+
+            var result = await _iconService.SetOverrideAsync(
+                _application.ManifestPath,
+                iconUri,
+                CancellationToken.None);
+
+            if (!result.IsSuccessful)
+            {
+                ShowDetailsError(result.Errors.Count == 0
+                    ? "The icon override could not be saved."
+                    : string.Join(Environment.NewLine, result.Errors.Select(FormatDiagnostic)));
+                return;
+            }
+
+            _application = _application with { IconUri = iconUri };
+            UpdateIconPresentation();
+
+            if (_onAuthoritativeStateChanged is not null)
+                await _onAuthoritativeStateChanged();
+
+            ApplicationIconStatusText.Text = iconUri is null
+                ? "Using automatic icon behavior."
+                : "Using your selected icon.";
+        }
+        catch (Exception exception)
+        {
+            ShowDetailsError($"The application icon could not be updated.{Environment.NewLine}{exception.Message}");
+        }
+        finally
+        {
+            ResetIconButton.IsEnabled = true;
+        }
+    }
+
+    private void UpdateIconPresentation()
+    {
+        ResetIconButton.IsEnabled = !string.IsNullOrWhiteSpace(_application.IconUri);
+        ApplicationIconImage.Visibility = Visibility.Collapsed;
+        ApplicationIconGlyph.Visibility = Visibility.Visible;
+
+        if (string.IsNullOrWhiteSpace(_application.IconUri))
+        {
+            ApplicationIconStatusText.Text = "Using automatic icon behavior.";
+            return;
+        }
+
+        try
+        {
+            ApplicationIconImage.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(
+                new Uri(_application.IconUri));
+            ApplicationIconImage.Visibility = Visibility.Visible;
+            ApplicationIconGlyph.Visibility = Visibility.Collapsed;
+            ApplicationIconStatusText.Text = "Using your selected icon.";
+        }
+        catch
+        {
+            ApplicationIconStatusText.Text = "A custom icon is configured, but it could not be previewed.";
         }
     }
 
