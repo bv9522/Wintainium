@@ -434,9 +434,9 @@ function Invoke-WintainiumProviderIconDiscovery {
     try {
         $page=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -ErrorAction Stop
         $links=@($page.Links | Where-Object {
-            $_.rel -and ([string]$_.rel -split '\s+') -contains 'icon' -or
-            $_.rel -and ([string]$_.rel -split '\s+') -contains 'shortcut' -or
-            $_.rel -and ([string]$_.rel -split '\s+') -contains 'apple-touch-icon'
+            if (-not $_.rel) { return $false }
+            $rels=[string]$_.rel -split '\s+'
+            return (($rels -contains 'icon') -or ($rels -contains 'shortcut') -or ($rels -contains 'apple-touch-icon'))
         })
         foreach ($link in $links) {
             $href=[string]$link.href
