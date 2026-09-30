@@ -146,4 +146,70 @@ function Invoke-WintainiumProviderSourceResolution {
     }
     New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source
 }
-Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
+function New-OfficialDownloadPageIconDiscoveryResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [string]$IconUri = $null,
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @()
+    )
+    [pscustomobject][ordered]@{
+        OperationId=$OperationId; IsSuccessful=$IsSuccessful; Status=$Status
+        IconUri=$IconUri; Errors=@($Errors); Warnings=@($Warnings)
+    }
+}
+
+function Invoke-WintainiumProviderIconDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $source=$Request.Source
+    if ($null -eq $source -or [string]::IsNullOrWhiteSpace([string]$source.Homepage)) {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try { $homepage=[Uri]$source.Homepage } catch {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconHomepageInvalid' 'The resolved official homepage is not a valid URI.')
+        )
+    }
+
+    if (-not $homepage.IsAbsoluteUri -or $homepage.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconHomepageInvalid' 'The resolved official homepage must use HTTP or HTTPS.')
+        )
+    }
+
+    try {
+        $response=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop
+        $html=[string]$response.Content
+    }
+    catch {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconRequestFailed' $_.Exception.Message)
+        )
+    }
+
+    $tags=[regex]::Matches($html,'<link\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($tag in $tags) {
+        $relMatch=[regex]::Match($tag.Value,'\brel\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $relMatch.Success) { continue }
+        $rels=[string]$relMatch.Groups[1].Value -split '\s+'
+        $isIcon=$rels | Where-Object { $_ -ieq 'icon' -or $_ -ieq 'shortcut' -or $_ -ieq 'apple-touch-icon' }
+        if (-not $isIcon) { continue }
+
+        $hrefMatch=[regex]::Match($tag.Value,'\bhref\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $hrefMatch.Success) { continue }
+        try { $iconUri=[Uri]::new($homepage,$hrefMatch.Groups[1].Value) } catch { continue }
+        if ($iconUri.Scheme -in @('http','https') -and $iconUri.Host -eq $homepage.Host) {
+            return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'IconResolved' -IconUri $iconUri.AbsoluteUri
+        }
+    }
+
+    New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+}
+
+Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery
