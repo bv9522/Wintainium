@@ -33,15 +33,29 @@
                 </Grid>
 
                 <Border Padding="18">
-                    <Grid>
+                    <Grid RowSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="72" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="56" Height="56" CornerRadius="10"
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Text="Application Icon"
+                                   Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                        <Border Grid.Row="0"
+                                Grid.Column="1"
+                                Width="56"
+                                Height="56"
+                                CornerRadius="10"
                                 Background="{ThemeResource AccentFillColorSecondaryBrush}"
-                                VerticalAlignment="Top"
-                                Grid.Column="1">
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
                             <Grid>
                                 <TextBlock x:Name="ApplicationIconGlyph"
                                            Text="&#xE71D;"
@@ -55,6 +69,25 @@
                                        Margin="8" />
                             </Grid>
                         </Border>
+
+                        <StackPanel Grid.Row="1"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="2"
+                                    Spacing="8">
+                            <TextBlock x:Name="ApplicationIconStatusText"
+                                       Text="Using automatic icon behavior."
+                                       Opacity="0.68"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Choose Image…" Click="ChooseIconButton_Click" />
+                                <Button Content="Use Icon URL…" Click="UseIconUrlButton_Click" />
+                                <Button x:Name="ResetIconButton"
+                                        Content="Reset to Automatic"
+                                        Click="ResetIconButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
                         <StackPanel Grid.Column="1" Spacing="8">
                             <TextBlock Text="Application Icon"
                                        Style="{StaticResource SubtitleTextBlockStyle}" />
