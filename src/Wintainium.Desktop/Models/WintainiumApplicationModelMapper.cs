@@ -143,6 +143,12 @@ internal static class WintainiumApplicationModelMapper
         {
             InstallationState = state.InstallationState,
             InstalledVersion = state.Version,
+            AvailableVersion = state.InstallationState == WintainiumInstallationState.NotInstalled
+                ? null
+                : application.AvailableVersion,
+            UpdateStatus = state.InstallationState == WintainiumInstallationState.NotInstalled
+                ? WintainiumUpdateStatus.NotInstalled
+                : application.UpdateStatus,
             InstalledState = state
         };
     }
