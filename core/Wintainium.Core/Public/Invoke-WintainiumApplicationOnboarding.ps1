@@ -75,6 +75,11 @@ function Invoke-WintainiumApplicationOnboarding {
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=$status;SourceResolution=if($failures.Count -eq 1){$failures[0]}else{$null};ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray()}
     }
 
+    # Provider declines are expected during capability-based source resolution.
+    # Once a provider has successfully resolved the source, do not surface the
+    # other providers' expected refusals as onboarding errors or diagnostics.
+    $errors.Clear()
+
     if($successful.Count -gt 1) {
         $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionAmbiguous';Path='$.SourceUri';Message='Multiple source-resolution providers successfully resolved the supplied source URI.'})
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceAmbiguous';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray()}
