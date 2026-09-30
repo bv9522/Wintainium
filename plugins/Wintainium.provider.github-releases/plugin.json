@@ -13,6 +13,7 @@
       "prerelease",
       "any"
     ],
-    "sourceResolution": true
+    "sourceResolution": true,
+    "iconDiscovery": true
   }
 }
