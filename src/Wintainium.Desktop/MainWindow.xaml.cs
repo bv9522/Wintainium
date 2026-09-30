@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Windows.System;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
@@ -153,6 +154,88 @@ public sealed partial class MainWindow : Window
         else
         {
             ApplicationGridView.SelectedItem = selected;
+        }
+    }
+
+    private async void ApplicationItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element ||
+            element.DataContext is not WintainiumApplicationModel application)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        var flyout = new MenuFlyout();
+
+        var detailsItem = new MenuFlyoutItem { Text = "Open Details" };
+        detailsItem.Click += async (_, _) => await OpenApplicationDetailsAsync(application);
+
+        var iconItem = new MenuFlyoutItem { Text = "Change Icon" };
+        iconItem.Click += async (_, _) => await OpenApplicationDetailsAsync(application);
+
+        var removeItem = new MenuFlyoutItem { Text = "Remove Software" };
+        removeItem.Click += async (_, _) => await RemoveApplicationAsync(application);
+
+        flyout.Items.Add(detailsItem);
+        flyout.Items.Add(iconItem);
+        flyout.Items.Add(new MenuFlyoutSeparator());
+        flyout.Items.Add(removeItem);
+
+        flyout.ShowAt(element, e.GetPosition(element));
+    }
+
+    private async Task RemoveApplicationAsync(WintainiumApplicationModel application)
+    {
+        if (string.IsNullOrWhiteSpace(application.ManifestPath))
+        {
+            await ShowExceptionAsync(
+                "Software could not be removed",
+                new InvalidOperationException("The application does not have a managed manifest path."));
+            return;
+        }
+
+        var confirmation = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = $"Remove {application.DisplayName}?",
+            Content = "This removes the software from your Wintainium collection. It does not uninstall the application from Windows.",
+            PrimaryButtonText = "Remove",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close
+        };
+
+        if (await confirmation.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await _services.ApplicationRemoval.RemoveFromCollectionAsync(
+                application.ManifestPath,
+                WintainiumDesktopPaths.ManifestRoot,
+                CancellationToken.None);
+
+            if (!result.IsSuccessful)
+            {
+                await ShowOperationFailureAsync(
+                    "Software could not be removed",
+                    result.Errors);
+                return;
+            }
+
+            if (_applicationDetailsWindows.TryGetValue(application.ApplicationId, out var detailsWindow))
+            {
+                detailsWindow.Close();
+                _applicationDetailsWindows.Remove(application.ApplicationId);
+            }
+
+            await RefreshApplicationCollectionAsync();
+        }
+        catch (Exception exception)
+        {
+            await ShowExceptionAsync("Software could not be removed", exception);
         }
     }
 
