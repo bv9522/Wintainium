@@ -279,6 +279,8 @@ public sealed partial class MainWindow : Window
             Visibility = Visibility.Collapsed
         };
 
+        Grid.SetColumn(statusText, 1);
+
         var recoveryButton = new Button
         {
             Content = "Open Source",
@@ -291,10 +293,13 @@ public sealed partial class MainWindow : Window
             Children =
             {
                 sourceTextBox,
-                new StackPanel
+                new Grid
                 {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 10,
+                    ColumnDefinitions =
+                    {
+                        new ColumnDefinition { Width = GridLength.Auto },
+                        new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+                    },
                     Children =
                     {
                         progressRing,
