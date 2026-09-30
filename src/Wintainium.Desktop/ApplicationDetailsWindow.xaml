@@ -35,12 +35,13 @@
                 <Border Padding="18">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="72" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="72" />
                         </Grid.ColumnDefinitions>
                         <Border Width="56" Height="56" CornerRadius="10"
                                 Background="{ThemeResource AccentFillColorSecondaryBrush}"
-                                VerticalAlignment="Top">
+                                VerticalAlignment="Top"
+                                Grid.Column="1">
                             <Grid>
                                 <TextBlock x:Name="ApplicationIconGlyph"
                                            Text="&#xE71D;"
