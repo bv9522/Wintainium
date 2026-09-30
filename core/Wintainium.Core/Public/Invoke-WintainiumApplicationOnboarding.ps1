@@ -83,7 +83,7 @@ function Invoke-WintainiumApplicationOnboarding {
     $sourceResolution=$successful[0].Result
 
     if ($null -eq $Policy) {
-        $policyResolution = Get-WintainiumDefaultApplicationPolicy -PluginRegistry $registry
+        $policyResolution = Get-WintainiumDefaultApplicationPolicy -PluginRegistry $registry -ApplicationName ([string]$sourceResolution.Source.Name)
         foreach ($policyError in @($policyResolution.Errors)) { $errors.Add($policyError) }
         if (-not $policyResolution.IsSuccessful) {
             return [pscustomobject][ordered]@{
