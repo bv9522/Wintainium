@@ -79,6 +79,8 @@ internal sealed class WintainiumApplicationOnboardingService
             Homepage: Nullable(manifest, "Homepage"),
             Publisher: Nullable(manifest, "Publisher"),
             IconUri: null,
+            AutomaticIconUri: null,
+            IconSource: WintainiumIconSource.None,
             InstallationState: WintainiumInstallationState.Unknown,
             InstalledVersion: null,
             AvailableVersion: null,
