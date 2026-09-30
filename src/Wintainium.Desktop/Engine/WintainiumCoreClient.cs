@@ -223,6 +223,31 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
+
+    public Task<WintainiumPowerShellInvocationResult> SetApplicationIconOverrideAsync(
+        string manifestPath,
+        string? iconUri,
+        string? schemaPath = null,
+        string? operationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["IconUri"] = iconUri ?? string.Empty
+        };
+
+        AddOptional(parameters, "SchemaPath", schemaPath);
+        AddOptional(parameters, "OperationId", operationId);
+
+        return _host.InvokeAsync(
+            "Set-WintainiumApplicationIconOverride",
+            parameters,
+            cancellationToken);
+    }
+
     private static void AddOptional(
         IDictionary<string, object?> parameters,
         string name,
