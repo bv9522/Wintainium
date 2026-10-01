@@ -106,8 +106,8 @@ function New-WintainiumApplicationDefinitionFromSource {
     }
 
     if ($application.icon -eq $null) { $application.Remove('icon') }
-    if ($application.homepage -eq $null) { $application.Remove('Homepage') }
-    if ($application.publisher -eq $null) { $application.Remove('Publisher') }
+    if ($application.homepage -eq $null) { $application.Remove('homepage') }
+    if ($application.publisher -eq $null) { $application.Remove('publisher') }
 
     [pscustomobject][ordered]@{
         OperationId=$operationId; IsSuccessful=$true; Status='Resolved'
