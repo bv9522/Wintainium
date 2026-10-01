@@ -60,6 +60,44 @@ Describe 'Wintainium official download page provider release discovery' {
         @($older.Artifacts).Count | Should -Be 2
     }
 
+    It 'discovers release sections that are presented as download labels instead of headings' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<p>Download Example 26.03 (2026-09-03) for Windows:</p>
+<table>
+<tr><td><a href="releases/example-26.03-x64.exe">Download</a> .exe 64-bit Windows x64</td></tr>
+<tr><td><a href="releases/example-26.03-x86.exe">Download</a> .exe 32-bit Windows x86</td></tr>
+<tr><td><a href="releases/example-26.03.msi">Download</a> .msi 64-bit Windows x64</td></tr>
+</table>
+<p>Download Example 25.01 (2025-01-10):</p>
+<a href="releases/example-25.01-x64.exe">Download</a>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $request = [pscustomobject]@{
+            OperationId = 'page-release-test-unheaded'
+            Settings = [ordered]@{ pageUri = 'https://www.example.com/download.html' }
+        }
+
+        $result = Invoke-WintainiumProvider -Request $request
+
+        $result.IsSuccessful | Should -Be $true
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 2
+        @($result.Releases)[0].Version | Should -Be '26.03'
+        @($result.Releases)[0].PublishedAt.ToString('yyyy-MM-dd') | Should -Be '2026-09-03'
+        @($result.Releases)[0].Artifacts.Count | Should -Be 3
+        @($result.Releases)[0].Artifacts[0].Architecture | Should -Be 'x64'
+        @($result.Releases)[0].Artifacts[1].Architecture | Should -Be 'x86'
+        @($result.Releases)[0].Artifacts[2].Format | Should -Be 'msi'
+    }
+
     It 'ignores unsupported and non-download links and resolves relative links against the source page' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
