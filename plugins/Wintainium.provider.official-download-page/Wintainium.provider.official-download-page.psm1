@@ -147,17 +147,34 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         )
     }
 
-    $headingMatches=[regex]::Matches($html,'<h([1-6])\b[^>]*>(.*?)</h\1\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    # Official download pages do not have a universal release-section HTML shape.
+    # Some use semantic headings, while others (including 7-Zip) present each
+    # release as a paragraph/table label such as "Download 7-Zip 26.03
+    # (2026-09-03)". Recognize both forms without making the provider
+    # application-specific.
+    $sectionMatches=[regex]::Matches(
+        $html,
+        '(?is)<h([1-6])\\b[^>]*>(.*?)</h\\1\\s*>|(?:^|>)\\s*(Download\\s+[^<\\r\\n]+?\\s+v?[0-9]+(?:\\.[0-9]+){1,3}\\s*\\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\\)[^<\\r\\n]*?)\\s*(?=<|$)',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    )
     $releases=[System.Collections.Generic.List[object]]::new()
 
-    for($i=0;$i -lt $headingMatches.Count;$i++) {
-        $heading=$headingMatches[$i]
-        $nextStart=if($i+1 -lt $headingMatches.Count){$headingMatches[$i+1].Index}else{$html.Length}
-        $bodyStart=$heading.Index+$heading.Length
+    for($i=0;$i -lt $sectionMatches.Count;$i++) {
+        $section=$sectionMatches[$i]
+        $nextStart=if($i+1 -lt $sectionMatches.Count){$sectionMatches[$i+1].Index}else{$html.Length}
+        $bodyStart=$section.Index+$section.Length
         if($bodyStart -ge $nextStart){continue}
+
+        $heading = if($section.Groups[2].Success) {
+            $section.Groups[2].Value
+        }
+        else {
+            $section.Groups[3].Value
+        }
+
         $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
         try {
-            $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading.Groups[2].Value -Body $body -BaseUri $baseUri
+            $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading -Body $body -BaseUri $baseUri
             if($null -ne $release){$releases.Add($release)}
         }
         catch {
