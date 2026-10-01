@@ -125,6 +125,7 @@ function Get-WintainiumDefaultApplicationPolicy {
         # rather than allowing the reconciler to infer it from manifest.name.
         $reconciliationSettings = [ordered]@{
             registry = [ordered]@{
+                matchMode = 'any'
                 locations = @(
                     [ordered]@{ scope='machine'; view='64' }
                     [ordered]@{ scope='machine'; view='32' }
@@ -132,6 +133,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                 )
                 match = @(
                     [ordered]@{ value='DisplayName'; equals=[string]$ApplicationName }
+                    [ordered]@{ value='subkey'; equals=[string]$ApplicationName }
                 )
             }
         }
