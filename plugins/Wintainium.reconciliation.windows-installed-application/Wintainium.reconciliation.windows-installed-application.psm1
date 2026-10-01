@@ -22,6 +22,9 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     if ($null -eq $registry) { throw [System.ArgumentException]::new("Windows reconciliation settings must contain a 'registry' object.") }
     $locations = Get-WintainiumWindowsSettingValue -Object $registry -Name 'locations'
     if (@($locations).Count -eq 0) { throw [System.ArgumentException]::new("Windows reconciliation settings must contain at least one registry location.") }
+    $matchMode = [string](Get-WintainiumWindowsSettingValue -Object $registry -Name 'matchMode')
+    if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
+    if ($matchMode -notin @('all','any')) { throw [System.ArgumentException]::new("Unsupported Windows registry match mode '$matchMode'.") }
     $match = Get-WintainiumWindowsSettingValue -Object $registry -Name 'match'
     if (@($match).Count -eq 0) { throw [System.ArgumentException]::new("Windows reconciliation settings must contain at least one registry match predicate.") }
 
@@ -99,7 +102,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             $errors.Add([pscustomobject]@{ Code='WindowsRegistryLocationReadFailed'; Message=$_.Exception.Message; Scope=$scope; View=$locationView }); continue
         }
         foreach ($entry in $entries) {
-            $matches = $true
+            $matches = if ($matchMode -eq 'any') { $false } else { $true }
             foreach ($predicate in $predicates) {
                 $actual = switch ($predicate.Value) {
                     'subkey' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey' }
@@ -111,7 +114,11 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $errors.Add([pscustomobject]@{ Code='WindowsRegistryValueMalformed'; Message="Registry value '$($predicate.Value)' for uninstall entry '$($entry.SubKey)' is not a scalar value."; Scope=$scope; View=$locationView; SubKey=[string]$entry.SubKey })
                     break
                 }
-                if ([string]$actual -ine $predicate.Equals) { $matches = $false; break }
+                $predicateMatches = [string]$actual -ieq $predicate.Equals
+                if ($matchMode -eq 'any') {
+                    if ($predicateMatches) { $matches = $true; break }
+                }
+                elseif (-not $predicateMatches) { $matches = $false; break }
             }
             if ($matches) {
                 $candidates.Add([pscustomobject]@{
