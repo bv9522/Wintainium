@@ -246,8 +246,12 @@ Describe 'Wintainium default application installer policy' {
         $result.IsSuccessful | Should -Be $true
         $result.Policy.Reconciliation.PluginId | Should -Be 'Wintainium.reconciliation.windows-installed-application'
         @($result.Policy.Reconciliation.Settings.registry.locations).Count | Should -Be 3
+        $result.Policy.Reconciliation.Settings.registry.matchMode | Should -Be 'any'
+        @($result.Policy.Reconciliation.Settings.registry.match).Count | Should -Be 2
         $result.Policy.Reconciliation.Settings.registry.match[0].value | Should -Be 'DisplayName'
         $result.Policy.Reconciliation.Settings.registry.match[0].equals | Should -Be 'Audacity'
+        $result.Policy.Reconciliation.Settings.registry.match[1].value | Should -Be 'subkey'
+        $result.Policy.Reconciliation.Settings.registry.match[1].equals | Should -Be 'Audacity'
     }
 
     It 'retains architecture as a separate policy dimension from installer format' {
