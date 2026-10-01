@@ -14,6 +14,7 @@ function ConvertTo-WintainiumManifestModel {
         Description = $Manifest['description']
         Homepage = $Manifest['homepage']
         Publisher = $Manifest['publisher']
+        Icon = $Manifest['icon']
         Aliases = @($Manifest['aliases'])
         Documentation = $Manifest['documentation']
         Notes = $Manifest['notes']
