@@ -37,7 +37,7 @@ Describe 'Wintainium official download page provider release discovery' {
             Settings = [ordered]@{ pageUri = 'https://www.example.com/download.html' }
         }
 
-        $result = Invoke-WintainiumProviderReleaseDiscovery -Request $request
+        $result = Invoke-WintainiumProvider -Request $request
 
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'Success'
