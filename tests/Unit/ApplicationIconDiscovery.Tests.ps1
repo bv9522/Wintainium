@@ -3,6 +3,32 @@ BeforeAll {
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     Import-Module $script:modulePath -Force
 
+    It 'omits empty optional homepage and publisher properties from the persisted definition' {
+        InModuleScope Wintainium.Core {
+            $source = [pscustomobject][ordered]@{
+                ApplicationId='example.application'
+                Name='Example'
+                CanonicalUri='https://example.com'
+                Homepage=''
+                Publisher='   '
+                ProviderId='Wintainium.provider.example'
+                ProviderContractVersion='1'
+                ProviderSettings=@{}
+            }
+            $policy = [pscustomobject][ordered]@{
+                Installer=[pscustomobject]@{PluginId='example.installer';RequiredContractVersion='1';Settings=@{}}
+                Reconciliation=[pscustomobject]@{PluginId='example.reconciliation';RequiredContractVersion='1';Settings=@{}}
+                Release=[pscustomobject]@{Channel='stable'}
+                Artifact=[pscustomobject]@{Formats=@('exe');Architectures=@('x64');AllowUnknownArchitecture=$false}
+            }
+
+            $result = New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy
+            $result.IsSuccessful | Should -Be $true
+            $result.ApplicationDefinition.PSObject.Properties.Name | Should -Not -Contain 'homepage'
+            $result.ApplicationDefinition.PSObject.Properties.Name | Should -Not -Contain 'publisher'
+        }
+    }
+
     It 'omits null optional homepage and publisher properties from the persisted definition' {
         InModuleScope Wintainium.Core {
             $source = [pscustomobject][ordered]@{
