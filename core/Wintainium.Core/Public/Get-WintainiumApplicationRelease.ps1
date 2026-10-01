@@ -44,6 +44,33 @@ function Get-WintainiumApplicationRelease {
     foreach($item in @($validation.Errors)){$errors.Add($item)}; foreach($item in @($validation.Warnings)){$warnings.Add($item)}; foreach($item in @($validation.LogEvents)){$logEvents.Add($item)}
     if(-not $validation.IsValid){return [pscustomobject][ordered]@{OperationId=$operationId;IsSuccessful=$false;Status='ApplicationDefinitionInvalid';Manifest=$validation.Manifest;ProviderPlugin=$validation.ProviderPlugin;Releases=$releases.ToArray();Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray()}}
     $manifest=$validation.Manifest; $provider=$validation.ProviderPlugin
+
+    # Release discovery is capability-driven. A valid provider may resolve and
+    # identify an application without implementing release discovery. In that
+    # case, return a successful structured result with a warning rather than
+    # invoking a missing provider operation and converting a valid application
+    # into a collection failure.
+    $supportsReleaseDiscovery = $provider.Capabilities -is [System.Collections.IDictionary] -and
+        $provider.Capabilities.ContainsKey('releaseDiscovery') -and
+        $provider.Capabilities.releaseDiscovery -eq $true
+    if (-not $supportsReleaseDiscovery) {
+        $warning=[pscustomobject][ordered]@{
+            Code='ReleaseDiscoveryUnsupported'
+            Message="Provider '$($provider.PluginId)' does not advertise release discovery capability for this application."
+        }
+        return [pscustomobject][ordered]@{
+            OperationId=$operationId
+            IsSuccessful=$true
+            Status='ReleaseDiscoveryUnsupported'
+            Manifest=$manifest
+            ProviderPlugin=$provider
+            Releases=@()
+            Errors=@()
+            Warnings=@($warning)
+            LogEvents=@()
+        }
+    }
+
     $request=[pscustomobject][ordered]@{OperationId=$operationId;ApplicationId=[string]$manifest.Id;ProviderId=[string]$provider.PluginId;RequiredContractVersion=[string]$manifest.Source.requiredContractVersion;Settings=if($manifest.Source.settings -is [System.Collections.IDictionary]){$manifest.Source.settings}else{@{}};DiscoveryContext=[pscustomobject][ordered]@{ReleaseChannel=[string]$manifest.Release.channel;ArtifactFormats=@($manifest.Artifact.formats);Architectures=@($manifest.Artifact.architectures);AllowUnknownArchitecture=[bool]$manifest.Artifact.allowUnknownArchitecture}}
     $providerResult=Invoke-WintainiumProviderOperation -Provider $provider -Request $request
     foreach($item in @($providerResult.Releases)){$releases.Add($item)}; foreach($item in @($providerResult.Errors)){$errors.Add($item)}; foreach($item in @($providerResult.Warnings)){$warnings.Add($item)}; foreach($item in @($providerResult.LogEvents)){$logEvents.Add($item)}
