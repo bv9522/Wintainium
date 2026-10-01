@@ -288,6 +288,9 @@ public sealed partial class ApplicationDetailsWindow : Window
                     GetMachineArchitecture(),
                     _operationCancellation.Token);
 
+                OperationStateText.Text = decisionResult.OperationState.ToString();
+                OperationIdText.Text = $"Operation ID: {decisionResult.OperationId}";
+
                 ErrorItemsControl.ItemsSource = result.Errors
                     .Concat(decisionResult.Errors)
                     .Select(FormatDiagnostic)
