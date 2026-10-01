@@ -175,13 +175,31 @@
                                    Opacity="0.72" />
                         <TextBlock Text="Lifecycle stages"
                                    FontWeight="SemiBold" />
-                        <ItemsControl x:Name="StageItemsControl" />
+                        <ItemsControl x:Name="StageItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock Text="Errors"
                                    FontWeight="SemiBold" />
-                        <ItemsControl x:Name="ErrorItemsControl" />
+                        <ItemsControl x:Name="ErrorItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock Text="Warnings"
                                    FontWeight="SemiBold" />
-                        <ItemsControl x:Name="WarningItemsControl" />
+                        <ItemsControl x:Name="WarningItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 
