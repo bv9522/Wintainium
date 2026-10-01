@@ -279,6 +279,19 @@ function Get-OfficialDownloadPageApplicationName {
     }
     return $null
 }
+function Invoke-WintainiumProvider {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    if ($null -eq $Request -or [string]::IsNullOrWhiteSpace([string]$Request.OperationId)) {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId ([guid]::NewGuid().ToString()) -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseRequestInvalid' 'A valid release discovery operation request is required.')
+        )
+    }
+
+    Invoke-WintainiumProviderReleaseDiscovery -Request $Request
+}
+
 function Invoke-WintainiumProviderSourceResolution {
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$Request)
@@ -388,4 +401,4 @@ function Invoke-WintainiumProviderIconDiscovery {
     New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
 }
 
-Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
+Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
