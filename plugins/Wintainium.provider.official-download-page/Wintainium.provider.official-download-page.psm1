@@ -388,4 +388,4 @@ function Invoke-WintainiumProviderIconDiscovery {
     New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
 }
 
-Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery
+Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
