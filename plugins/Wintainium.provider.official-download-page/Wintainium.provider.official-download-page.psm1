@@ -1,3 +1,179 @@
+
+function New-OfficialDownloadPageReleaseDiscoveryResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [object[]]$Releases = @(),
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @()
+    )
+    [pscustomobject][ordered]@{
+        OperationId=$OperationId; IsSuccessful=$IsSuccessful; Status=$Status
+        Releases=@($Releases); Errors=@($Errors); Warnings=@($Warnings); LogEvents=@()
+    }
+}
+
+function ConvertTo-OfficialDownloadPageArtifactFormat {
+    param([Parameter(Mandatory)][string]$FileName)
+    switch ([IO.Path]::GetExtension($FileName).ToLowerInvariant()) {
+        '.zip' { 'zip'; break }
+        '.msi' { 'msi'; break }
+        '.exe' { 'exe'; break }
+        default { 'unknown' }
+    }
+}
+
+function ConvertTo-OfficialDownloadPageArtifactArchitecture {
+    param([Parameter(Mandatory)][string]$Value)
+    $name=$Value.ToLowerInvariant()
+    if ($name -match '(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)') { return 'arm64' }
+    if ($name -match '(^|[^a-z0-9])(x64|amd64|64-bit|64bit)([^a-z0-9]|$)') { return 'x64' }
+    if ($name -match '(^|[^a-z0-9])(x86|win32|i[3-6]86|32-bit|32bit)([^a-z0-9]|$)') { return 'x86' }
+    return 'unknown'
+}
+
+function ConvertFrom-OfficialDownloadPageReleaseSection {
+    param(
+        [Parameter(Mandatory)][string]$Heading,
+        [Parameter(Mandatory)][string]$Body,
+        [Parameter(Mandatory)][Uri]$BaseUri
+    )
+
+    $headingText=ConvertFrom-OfficialDownloadPageHtmlText $Heading
+    if ([string]::IsNullOrWhiteSpace($headingText)) { return $null }
+
+    $versionMatch=[regex]::Match($headingText,'(?i)(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3})(?![a-z0-9])')
+    if (-not $versionMatch.Success) { return $null }
+    $version=$versionMatch.Groups[1].Value
+
+    $publishedAt=$null
+    $dateMatch=[regex]::Match($headingText,'(?<!\d)(20\d{2})[-./](\d{1,2})[-./](\d{1,2})(?!\d)')
+    if ($dateMatch.Success) {
+        try { $publishedAt=[DateTimeOffset]::ParseExact(
+            "$($dateMatch.Groups[1].Value)-$($dateMatch.Groups[2].Value.PadLeft(2,'0'))-$($dateMatch.Groups[3].Value.PadLeft(2,'0'))",
+            'yyyy-MM-dd',
+            [Globalization.CultureInfo]::InvariantCulture
+        ) } catch {}
+    }
+
+    $releaseText=ConvertFrom-OfficialDownloadPageHtmlText $Body
+    $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    $artifacts=[System.Collections.Generic.List[object]]::new()
+
+    foreach ($link in $links) {
+        $href=$link.Groups[1].Value
+        $label=ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+        if ([string]::IsNullOrWhiteSpace($href)) { continue }
+        try { $uri=[Uri]::new($BaseUri,$href) } catch { continue }
+        if ($uri.Scheme -notin @('http','https')) { continue }
+
+        $fileName=[IO.Path]::GetFileName($uri.AbsolutePath)
+        if ([string]::IsNullOrWhiteSpace($fileName)) { $fileName=$label }
+        $format=ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
+        if ($format -eq 'unknown') { continue }
+
+        $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label $releaseText"
+        $artifacts.Add([pscustomobject][ordered]@{
+            Uri=$uri.AbsoluteUri
+            FileName=$fileName
+            Format=$format
+            Architecture=$architecture
+            Size=$null
+            Hashes=@()
+            Signature=$null
+        })
+    }
+
+    if ($artifacts.Count -eq 0) { return $null }
+
+    $releaseKey="$($BaseUri.Host.ToLowerInvariant())|$version|$($publishedAt)"
+    $hash=[Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes=[Text.Encoding]::UTF8.GetBytes($releaseKey)
+        $digest=[Convert]::ToHexString($hash.ComputeHash($bytes)).ToLowerInvariant()
+    }
+    finally { $hash.Dispose() }
+
+    [pscustomobject][ordered]@{
+        ReleaseId="official.$digest"
+        Version=$version
+        Channel='stable'
+        PublishedAt=$publishedAt
+        Artifacts=@($artifacts)
+    }
+}
+
+function Invoke-WintainiumProviderReleaseDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $settings=$Request.Settings
+    $pageUri=$null
+
+    if ($settings -is [System.Collections.IDictionary] -and $settings.Contains('pageUri')) {
+        $pageUri=[string]$settings.pageUri
+    }
+    elseif ($null -ne $settings -and $settings.PSObject.Properties['pageUri']) {
+        $pageUri=[string]$settings.pageUri
+    }
+
+    try { $baseUri=[Uri]$pageUri } catch {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleasePageInvalid' 'Official download page setting pageUri must be a valid URI.')
+        )
+    }
+
+    if (-not $baseUri.IsAbsoluteUri -or $baseUri.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleasePageInvalid' 'Official download page setting pageUri must use HTTP or HTTPS.')
+        )
+    }
+
+    try {
+        $response=Invoke-WebRequest -Method Get -Uri $baseUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop
+        $html=[string]$response.Content
+    }
+    catch {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnavailable' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseRequestFailed' $_.Exception.Message)
+        )
+    }
+
+    if ([string]::IsNullOrWhiteSpace($html)) {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseContentEmpty' 'The official download page returned an empty HTML document.')
+        )
+    }
+
+    $headingMatches=[regex]::Matches($html,'<h([1-6])\b[^>]*>(.*?)</h\1\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    $releases=[System.Collections.Generic.List[object]]::new()
+
+    for($i=0;$i -lt $headingMatches.Count;$i++) {
+        $heading=$headingMatches[$i]
+        $nextStart=if($i+1 -lt $headingMatches.Count){$headingMatches[$i+1].Index}else{$html.Length}
+        $bodyStart=$heading.Index+$heading.Length
+        if($bodyStart -ge $nextStart){continue}
+        $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
+        try {
+            $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading.Groups[2].Value -Body $body -BaseUri $baseUri
+            if($null -ne $release){$releases.Add($release)}
+        }
+        catch {
+            return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
+                (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseInvalid' $_.Exception.Message)
+            )
+        }
+    }
+
+    if($releases.Count -eq 0){
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoReleasesFound'
+    }
+
+    New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'Success' -Releases $releases.ToArray()
+}
+
 function New-OfficialDownloadPageSourceResolutionResult {
     param([Parameter(Mandatory)][string]$OperationId,[Parameter(Mandatory)][bool]$IsSuccessful,[Parameter(Mandatory)][string]$Status,[object]$Source=$null,[object[]]$Errors=@(),[object[]]$Warnings=@(),[object[]]$LogEvents=@())
     [pscustomobject][ordered]@{OperationId=$OperationId;IsSuccessful=$IsSuccessful;Status=$Status;Source=$Source;Errors=@($Errors);Warnings=@($Warnings);LogEvents=@($LogEvents)}
