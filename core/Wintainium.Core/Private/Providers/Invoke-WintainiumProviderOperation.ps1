@@ -48,13 +48,28 @@ function Invoke-WintainiumProviderOperation {
     }
 
     try {
-        # Reuse the exact already-loaded module when present. This is important
-        # for deterministic provider test doubles and also avoids replacing a
-        # provider module unnecessarily.
+        # Reuse an exact already-loaded provider module when it exposes the
+        # required operation contract. If an older module instance is still
+        # loaded from the same path but lacks the current generic operation
+        # entry point, discard only that stale instance and reload the current
+        # provider module. This preserves deterministic loaded test doubles
+        # while allowing provider contract additions to self-heal in a long-
+        # lived desktop process.
         $module=Get-Module | Where-Object {
             $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath)
         } | Select-Object -First 1
-        if ($null -eq $module) { $module=Import-Module -Name $resolvedModulePath -PassThru -ErrorAction Stop }
+
+        if ($null -ne $module) {
+            $command=Get-Command -Module $module.Name -Name 'Invoke-WintainiumProvider' -CommandType Function -ErrorAction SilentlyContinue
+            if ($null -eq $command) {
+                Remove-Module -ModuleInfo $module -Force -ErrorAction Stop
+                $module=$null
+            }
+        }
+
+        if ($null -eq $module) {
+            $module=Import-Module -Name $resolvedModulePath -PassThru -Force -ErrorAction Stop
+        }
 
         $command=Get-Command -Module $module.Name -Name 'Invoke-WintainiumProvider' -CommandType Function -ErrorAction SilentlyContinue
         if ($null -eq $command) {
