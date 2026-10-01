@@ -127,5 +127,60 @@ Describe 'Windows installed-application reconciliation plugin' {
             $_.Evidence.InstallationLocation | Should -Be 'C:\Example'
         }
     }
+
+    It 'supports any-match reconciliation when one registry identity matches' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @(
+                    [pscustomobject]@{ value='DisplayName'; equals='7-Zip' }
+                    [pscustomobject]@{ value='subkey'; equals='7-Zip' }
+                )
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='7-Zip'
+                DisplayName='7-Zip 26.03 (x64 edition)'
+                DisplayVersion='26.03'; Publisher='Igor Pavlov'; InstallLocation='C:\Program Files\7-Zip'
+            }
+        }
+
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+
+        $observation.IsSuccessful | Should -BeTrue
+        $observation.Candidates.Count | Should -Be 1
+        $observation.Candidates[0].SubKey | Should -Be '7-Zip'
+    }
+
+    It 'retains all-match semantics when match mode is omitted' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @(
+                    [pscustomobject]@{ value='DisplayName'; equals='Example Application' }
+                    [pscustomobject]@{ value='subkey'; equals='Example' }
+                )
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='Example'
+                DisplayName='Example Application'; DisplayVersion='1.0'
+            }
+        }
+
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+
+        $observation.Candidates.Count | Should -Be 1
+    }
+
 }
 
