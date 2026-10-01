@@ -49,29 +49,42 @@ function Invoke-WintainiumProviderOperation {
 
     try {
         # Reuse an exact already-loaded provider module when it exposes the
-        # required operation contract. If an older module instance is still
-        # loaded from the same path but lacks the current generic operation
-        # entry point, discard only that stale instance and reload the current
-        # provider module. This preserves deterministic loaded test doubles
-        # while allowing provider contract additions to self-heal in a long-
-        # lived desktop process.
+        # required operation contract. Inspect the module's own exported-function
+        # table rather than Get-Command -Module <name>, because PowerShell can
+        # have multiple modules with the same name loaded from different paths.
+        # Invoke the FunctionInfo returned by that exact ModuleInfo so a stale
+        # same-name module cannot satisfy or intercept the provider contract.
         $module=Get-Module | Where-Object {
             $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath)
         } | Select-Object -First 1
 
-        if ($null -ne $module) {
-            $command=Get-Command -Module $module.Name -Name 'Invoke-WintainiumProvider' -CommandType Function -ErrorAction SilentlyContinue
-            if ($null -eq $command) {
-                Remove-Module -ModuleInfo $module -Force -ErrorAction Stop
-                $module=$null
-            }
+        if ($null -ne $module -and
+            -not $module.ExportedFunctions.ContainsKey('Invoke-WintainiumProvider')) {
+            Remove-Module -ModuleInfo $module -Force -ErrorAction Stop
+            $module=$null
         }
 
         if ($null -eq $module) {
-            $module=Import-Module -Name $resolvedModulePath -PassThru -Force -ErrorAction Stop
+            # If a different copy of the provider is already loaded under the
+            # same module name, remove it before importing the requested path.
+            # The registry's descriptor path is authoritative for this provider.
+            $moduleName=[IO.Path]::GetFileNameWithoutExtension($resolvedModulePath)
+            foreach ($loadedModule in @(Get-Module | Where-Object {
+                $_.Name -eq $moduleName
+            })) {
+                Remove-Module -ModuleInfo $loadedModule -Force -ErrorAction Stop
+            }
+
+            $module=Import-Module -Name $resolvedModulePath -PassThru -Force -ErrorAction Stop |
+                Where-Object { $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath) } |
+                Select-Object -First 1
         }
 
-        $command=Get-Command -Module $module.Name -Name 'Invoke-WintainiumProvider' -CommandType Function -ErrorAction SilentlyContinue
+        $command=$null
+        if ($null -ne $module) {
+            $command=$module.ExportedFunctions['Invoke-WintainiumProvider']
+        }
+
         if ($null -eq $command) {
             $error=[pscustomobject]@{Code='ProviderOperationNotFound';Message="Provider '$($Provider.PluginId)' does not export Invoke-WintainiumProvider."}
             $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message $error.Message -Context @{ErrorCode=$error.Code}))
