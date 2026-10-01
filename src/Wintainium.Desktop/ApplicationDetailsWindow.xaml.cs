@@ -17,6 +17,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private WintainiumApplicationModel _application;
     private readonly WintainiumApplicationReleaseService _releaseService;
     private readonly WintainiumApplicationUpdateService _updateService;
+    private readonly WintainiumApplicationUpdateDecisionService _updateDecisionService;
     private readonly WintainiumApplicationInstalledStateService _installedStateService;
     private readonly WintainiumApplicationIconService _iconService;
     private readonly Func<Task>? _onAuthoritativeStateChanged;
@@ -28,6 +29,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         WintainiumApplicationModel application,
         WintainiumApplicationReleaseService releaseService,
         WintainiumApplicationUpdateService updateService,
+        WintainiumApplicationUpdateDecisionService updateDecisionService,
         WintainiumApplicationInstalledStateService installedStateService,
         WintainiumApplicationIconService iconService,
         Func<Task>? onAuthoritativeStateChanged = null)
@@ -35,6 +37,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
         ArgumentNullException.ThrowIfNull(updateService);
+        ArgumentNullException.ThrowIfNull(updateDecisionService);
         ArgumentNullException.ThrowIfNull(installedStateService);
         ArgumentNullException.ThrowIfNull(iconService);
 
@@ -44,6 +47,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _application = application;
         _releaseService = releaseService;
         _updateService = updateService;
+        _updateDecisionService = updateDecisionService;
         _installedStateService = installedStateService;
         _iconService = iconService;
         _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
@@ -277,6 +281,43 @@ public sealed partial class ApplicationDetailsWindow : Window
                     Environment.NewLine,
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
+            else
+            {
+                var decisionResult = await _updateDecisionService.EvaluateAsync(
+                    _application.ManifestPath,
+                    GetMachineArchitecture(),
+                    _operationCancellation.Token);
+
+                ErrorItemsControl.ItemsSource = result.Errors
+                    .Concat(decisionResult.Errors)
+                    .Select(FormatDiagnostic)
+                    .ToArray();
+                WarningItemsControl.ItemsSource = result.Warnings
+                    .Concat(decisionResult.Warnings)
+                    .Select(FormatDiagnostic)
+                    .ToArray();
+
+                _application = _application with
+                {
+                    InstallationState = decisionResult.InstalledState?.InstallationState ?? _application.InstallationState,
+                    InstalledVersion = decisionResult.InstalledState?.Version ?? _application.InstalledVersion
+                };
+                _application = WintainiumApplicationModelMapper.ApplyUpdateDecision(
+                    _application,
+                    decisionResult);
+
+                PopulateApplicationFacts();
+
+                if (decisionResult.Errors.Count > 0)
+                {
+                    ShowDetailsError(string.Join(
+                        Environment.NewLine,
+                        decisionResult.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
+                }
+
+                if (_onAuthoritativeStateChanged is not null)
+                    await _onAuthoritativeStateChanged();
+            }
 
 
         }
@@ -299,6 +340,16 @@ public sealed partial class ApplicationDetailsWindow : Window
             _operationCancellation = null;
         }
     }
+
+    private static string GetMachineArchitecture() =>
+        RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant() switch
+        {
+            "x64" => "x64",
+            "x86" => "x86",
+            "arm64" => "arm64",
+            "arm" => "arm",
+            _ => "unknown"
+        };
 
     private async void RunUpdateButton_Click(object sender, RoutedEventArgs e)
     {
