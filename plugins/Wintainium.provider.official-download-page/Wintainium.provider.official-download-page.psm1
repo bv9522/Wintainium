@@ -154,7 +154,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # application-specific.
     $sectionMatches=[regex]::Matches(
         $html,
-        '(?is)<h([1-6])\\b[^>]*>(.*?)</h\\1\\s*>|(?:^|>)\\s*(Download\\s+[^<\\r\\n]+?\\s+v?[0-9]+(?:\\.[0-9]+){1,3}\\s*\\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\\)[^<\\r\\n]*?)\\s*(?=<|$)',
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $releases=[System.Collections.Generic.List[object]]::new()
