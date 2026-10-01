@@ -21,8 +21,11 @@ function Set-WintainiumApplicationDefinition {
         $json = $ApplicationDefinition | ConvertTo-Json -Depth 20
         Set-Content -LiteralPath $tempPath -Value $json -Encoding utf8 -ErrorAction Stop
 
-        if (-not (Test-WintainiumManifestSchema -ManifestPath $tempPath -SchemaPath $SchemaPath)) {
-            throw [System.ArgumentException]::new('Application definition does not satisfy the Wintainium manifest schema.')
+        try {
+            $json | Test-Json -SchemaFile $SchemaPath -ErrorAction Stop | Out-Null
+        }
+        catch {
+            throw [System.ArgumentException]::new("Application definition does not satisfy the Wintainium manifest schema. $($_.Exception.Message)", $_.Exception)
         }
 
         $applicationId = [string]$ApplicationDefinition.Id
