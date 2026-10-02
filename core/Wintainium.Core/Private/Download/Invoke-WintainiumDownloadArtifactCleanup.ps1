@@ -74,15 +74,43 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     }
 
     if ($Outcome -ne 'Completed') {
+        $artifactExists = Test-Path -LiteralPath $destination
+        $metadataPath = $null
+        $metadataWritten = $false
+
+        if ($artifactExists -and $artifactDirectory -ne $root -and (Test-Path -LiteralPath $artifactDirectory)) {
+            $metadataPath = Join-Path $artifactDirectory '.wintainium-artifact.json'
+            try {
+                [pscustomobject][ordered]@{
+                    SchemaVersion = '1.0'
+                    OperationId = if ($DownloadResult.PSObject.Properties['OperationId']) { [string]$DownloadResult.OperationId } else { $null }
+                    Outcome = $Outcome
+                    Uri = if ($DownloadResult.PSObject.Properties['Uri']) { [string]$DownloadResult.Uri } else { $null }
+                    FileName = if ($DownloadResult.PSObject.Properties['FileName']) { [string]$DownloadResult.FileName } else { $null }
+                    DestinationPath = $destination
+                    FailureKind = if ($DownloadResult.PSObject.Properties['FailureKind']) { [string]$DownloadResult.FailureKind } else { $null }
+                    ErrorMessage = if ($DownloadResult.PSObject.Properties['ErrorMessage']) { [string]$DownloadResult.ErrorMessage } else { $null }
+                    RetainedAtUtc = [DateTime]::UtcNow.ToString('o')
+                } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $metadataPath -Encoding UTF8
+                $metadataWritten = $true
+            }
+            catch {
+                # Retention itself remains authoritative. Metadata is diagnostic enrichment
+                # and must never delete or invalidate the retained artifact.
+            }
+        }
+
         return [pscustomobject][ordered]@{
             IsSuccessful = $true
-            Status = if (Test-Path -LiteralPath $destination) { 'Retained' } else { 'NoArtifact' }
+            Status = if ($artifactExists) { 'Retained' } else { 'NoArtifact' }
             Outcome = $Outcome
             Removed = $false
-            Retained = (Test-Path -LiteralPath $destination)
+            Retained = $artifactExists
             DestinationPath = $destination
             ArtifactDirectory = $artifactDirectory
-            ReasonCode = if (Test-Path -LiteralPath $destination) { 'ArtifactRetainedForTroubleshooting' } else { 'NoCompletedArtifactToRetain' }
+            MetadataPath = $metadataPath
+            MetadataWritten = $metadataWritten
+            ReasonCode = if ($artifactExists) { 'ArtifactRetainedForTroubleshooting' } else { 'NoCompletedArtifactToRetain' }
             Error = $null
         }
     }
