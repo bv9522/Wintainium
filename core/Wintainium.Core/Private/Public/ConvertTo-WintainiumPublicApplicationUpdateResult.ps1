@@ -71,6 +71,19 @@ function ConvertTo-WintainiumPublicApplicationUpdateResult {
         }
         if ($null -ne $execution -and $execution.PSObject.Properties['Error'] -and $null -ne $execution.Error) {
             $stageErrorCandidates.Add($execution.Error)
+            if ($execution.Error.PSObject.Properties['Detail'] -and $null -ne $execution.Error.Detail) {
+                $stageErrorCandidates.Add($execution.Error.Detail)
+            }
+        }
+        if ($null -ne $result -and
+            $null -ne $result.PSObject.Properties['ErrorMessage'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$result.ErrorMessage)) {
+            $stageErrorCandidates.Add([pscustomobject][ordered]@{
+                Code = if ($result.PSObject.Properties['FailureKind'] -and -not [string]::IsNullOrWhiteSpace([string]$result.FailureKind)) { [string]$result.FailureKind } else { 'OrchestrationStageStructuredFailure' }
+                Message = [string]$result.ErrorMessage
+                FailureKind = if ($result.PSObject.Properties['FailureKind']) { [string]$result.FailureKind } else { $null }
+                ErrorMessage = [string]$result.ErrorMessage
+            })
         }
         if ($null -ne $item.PSObject.Properties['Error'] -and $null -ne $item.Error) {
             $stageErrorCandidates.Add($item.Error)
