@@ -187,6 +187,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $releases=[System.Collections.Generic.List[object]]::new()
+    $githubReleaseCache=@{}
 
     for($i=0;$i -lt $sectionMatches.Count;$i++) {
         $section=$sectionMatches[$i]
@@ -204,7 +205,17 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
         try {
             $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading -Body $body -BaseUri $baseUri
-            if($null -ne $release){$releases.Add($release)}
+            if($null -ne $release){
+                foreach($artifact in @($release.Artifacts)){
+                    if($null -eq $artifact){continue}
+                    try{$artifactUri=[Uri]$artifact.Uri}catch{continue}
+                    $evidence=Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $artifactUri -ReleaseCache $githubReleaseCache
+                    if($null -ne $evidence){
+                        [void]$artifact.Hashes.Add($evidence)
+                    }
+                }
+                [void]$releases.Add($release)
+            }
         }
         catch {
             return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
