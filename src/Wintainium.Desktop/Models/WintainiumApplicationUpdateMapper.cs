@@ -35,8 +35,12 @@ internal static class WintainiumApplicationUpdateMapper
     private static WintainiumOperationDiagnostic? Diagnostic(PSObject source, string name)
     {
         var value = source.Properties[name]?.Value;
-        return value is null ? null : MapDiagnostic(PSObject.AsPSObject(value));
+        return IsNullLike(value) ? null : MapDiagnostic(PSObject.AsPSObject(value));
     }
+
+    private static bool IsNullLike(object? value) =>
+        value is null ||
+        value is PSObject { BaseObject: null };
 
     private static WintainiumOperationState DetermineState(bool isSuccessful, bool wasCancelled) =>
         wasCancelled ? WintainiumOperationState.Cancelled :
