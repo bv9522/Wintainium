@@ -28,6 +28,20 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         }
     }
 
+    if ([string]::IsNullOrWhiteSpace([string]$DownloadResult.DestinationPath)) {
+        return [pscustomobject][ordered]@{
+            IsSuccessful = $true
+            Status = 'NoArtifact'
+            Outcome = $Outcome
+            Removed = $false
+            Retained = $false
+            DestinationPath = $null
+            ArtifactDirectory = $null
+            ReasonCode = 'NoDownloadArtifactPath'
+            Error = $null
+        }
+    }
+
     $destination = [System.IO.Path]::GetFullPath([string]$DownloadResult.DestinationPath)
     $root = [System.IO.Path]::GetFullPath($DownloadRoot)
     $rootWithSeparator = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
@@ -50,6 +64,13 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         [System.IO.Path]::GetFullPath([string]$DownloadResult.ArtifactDirectory)
     } else {
         [System.IO.Path]::GetDirectoryName($destination)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($artifactDirectory)) {
+        $artifactDirectoryWithSeparator = $artifactDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+        if ($artifactDirectory -ne $root -and -not $artifactDirectory.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $artifactDirectory = [System.IO.Path]::GetDirectoryName($destination)
+        }
     }
 
     if ($Outcome -ne 'Completed') {
