@@ -21,6 +21,19 @@ Describe 'Resolve-WintainiumDownloadTarget' {
         $result.DestinationPath | Should -Be ([System.IO.Path]::GetFullPath((Join-Path $root 'Wintainium-1.2.3-x64.zip')))
     }
 
+    It 'isolates production artifacts inside an operation-specific directory when OperationId is supplied' {
+        $operationId = [guid]::NewGuid().ToString()
+        $request.OperationId = $operationId
+        $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+            param($Request, $Root)
+            Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+        }
+        $expectedDirectory = [System.IO.Path]::GetFullPath((Join-Path $root (Join-Path 'operations' $operationId)))
+        $result.ArtifactDirectory | Should -Be $expectedDirectory
+        $result.DestinationPath | Should -Be ([System.IO.Path]::GetFullPath((Join-Path $expectedDirectory $request.SelectedArtifact.FileName)))
+        $result.OperationId | Should -Be $operationId
+    }
+
     It 'rejects non-HTTPS URIs' {
         $request.SelectedArtifact.Uri = 'http://example.com/file.zip'
         { InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
