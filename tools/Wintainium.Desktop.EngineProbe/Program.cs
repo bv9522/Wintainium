@@ -576,6 +576,43 @@ if (earlyUpdateResult.OperationState != WintainiumOperationState.Failed ||
     return 1;
 }
 
+
+var nullLikeDiagnostic = new System.Management.Automation.PSObject();
+var nullLikeStage = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        Sequence = 1,
+        Name = "ManifestValidation",
+        Status = "Validated",
+        IsSuccessful = true,
+        WasCancelled = false
+    });
+nullLikeStage.Properties.Add(
+    new System.Management.Automation.PSNoteProperty("Error", nullLikeDiagnostic));
+
+var nullLikeUpdate = System.Management.Automation.PSObject.AsPSObject(
+    new
+    {
+        OperationId = "operation-null-like",
+        IsSuccessful = true,
+        WasCancelled = false,
+        Status = "Succeeded",
+        ApplicationId = "org.example.app",
+        Stages = new object[] { nullLikeStage },
+        Errors = Array.Empty<object>(),
+        Warnings = Array.Empty<object>(),
+        LogEvents = Array.Empty<object>()
+    });
+
+var nullLikeUpdateResult = WintainiumApplicationUpdateMapper.Map(nullLikeUpdate);
+if (nullLikeUpdateResult.Stages.Count != 1 ||
+    nullLikeUpdateResult.Stages[0].Error is not null ||
+    nullLikeUpdateResult.Error is not null)
+{
+    Console.Error.WriteLine("Application update mapping manufactured a diagnostic from a PowerShell null-like PSObject.");
+    return 1;
+}
+
 Console.WriteLine("Application update result mapping: PASS");
 
 Console.WriteLine("Application collection view mode: PASS");
