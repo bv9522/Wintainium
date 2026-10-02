@@ -39,6 +39,23 @@ Describe 'Wintainium installer input boundary' {
         }
     }
 
+    It 'accepts an installer reference represented as a hashtable from JSON manifest import' {
+        $manifest.Installer = @{
+            pluginId = 'Wintainium.installer.msi'
+            requiredContractVersion = '1'
+            settings = @{}
+        }
+
+        $result = & (Get-Module -Name Wintainium.Core) {
+            param($DownloadResult, $Manifest)
+            New-WintainiumInstallerRequest -DownloadResult $DownloadResult -Manifest $Manifest
+        } $downloadResult $manifest
+
+        $result.IsValid | Should -BeTrue
+        $result.Errors.Count | Should -Be 0
+        $result.Request.Installer.pluginId | Should -Be 'Wintainium.installer.msi'
+    }
+
     It 'accepts a completed download and a valid installer reference' {
         $result = & (Get-Module -Name Wintainium.Core) {
             param($DownloadResult, $Manifest)
