@@ -115,7 +115,7 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         $context = New-TestContext -OperationId $operationId
         $result = InModuleScope Wintainium.Core -Parameters @{ OperationState = $state; StagePlan = $plan; CancellationContext = $context } {
             param($OperationState, $StagePlan, $CancellationContext)
-            Invoke-WintainiumOrchestrationStageOperation -OperationState $OperationState -StagePlan $StagePlan -CancellationContext $CancellationContext -StageSequence 1 -StageName 'Download' -StageInput $null -StageExecutor {
+            Invoke-WintainiumOrchestrationStageOperation -OperationState $OperationState -StagePlan $StagePlan -CancellationContext $CancellationContext -StageSequence 1 -StageName 'ManifestValidation' -StageInput $null -StageExecutor {
                 [pscustomobject][ordered]@{
                     IsSuccessful = $false
                     Status = 'Failed'
