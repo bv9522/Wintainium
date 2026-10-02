@@ -47,7 +47,30 @@ function Invoke-WintainiumOrchestrationStageOperation {
             StageSequence = $execution.StageSequence
             StageName = $execution.StageName
             Result = $execution.Result
-            Error = if ($execution.Result.PSObject.Properties['Error'] -and $null -ne $execution.Result.Error) { $execution.Result.Error } else { [pscustomobject]@{ Code = 'OrchestrationStageStructuredFailure'; Message = 'The stage returned a structured unsuccessful result.' } }
+            Error = if ($execution.Result.PSObject.Properties['Error'] -and $null -ne $execution.Result.Error) {
+                $execution.Result.Error
+            } else {
+                $failureKind = if ($execution.Result.PSObject.Properties['FailureKind']) { [string]$execution.Result.FailureKind } else { $null }
+                $errorMessage = if ($execution.Result.PSObject.Properties['ErrorMessage']) { [string]$execution.Result.ErrorMessage } else { $null }
+                $status = if ($execution.Result.PSObject.Properties['Status']) { [string]$execution.Result.Status } else { $null }
+                $message = if (-not [string]::IsNullOrWhiteSpace($errorMessage)) {
+                    $errorMessage
+                } elseif (-not [string]::IsNullOrWhiteSpace($failureKind)) {
+                    "The stage returned a structured failure of kind '$failureKind'."
+                } elseif (-not [string]::IsNullOrWhiteSpace($status)) {
+                    "The stage returned unsuccessful status '$status'."
+                } else {
+                    'The stage returned a structured unsuccessful result.'
+                }
+                [pscustomobject][ordered]@{
+                    Code = 'OrchestrationStageStructuredFailure'
+                    Message = $message
+                    StageStatus = $status
+                    FailureKind = $failureKind
+                    ErrorMessage = $errorMessage
+                    Detail = $execution.Result
+                }
+            }
         }
     }
 
