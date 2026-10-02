@@ -21,9 +21,9 @@ function Invoke-WintainiumDownload {
     }
     $temporaryPath = Join-Path $artifactDirectory ([System.IO.Path]::GetRandomFileName())
     $ownsClient = $null -eq $HttpClient
-    if ($ownsClient) { $HttpClient = [System.Net.Http.HttpClient]::new() }
+    if ($ownsClient) { [void]($HttpClient = [System.Net.Http.HttpClient]::new()) }
     try {
-        try { $response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $CancellationToken).GetAwaiter().GetResult() }
+        try { [void]($response = $HttpClient.GetAsync($target.Uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $CancellationToken).GetAwaiter().GetResult()) }
         catch [System.OperationCanceledException] { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='Cancelled'; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$false; ErrorMessage='The download was cancelled.' } }
         catch { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='Network'; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$true; ErrorMessage=$_.Exception.Message } }
         try {
@@ -32,9 +32,9 @@ function Invoke-WintainiumDownload {
                 return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='Http'; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$retryable; ErrorMessage="HTTP status $([int]$response.StatusCode) ($($response.ReasonPhrase))." }
             }
             try {
-                $stream = $response.Content.ReadAsStreamAsync($CancellationToken).GetAwaiter().GetResult()
+                [void]($stream = $response.Content.ReadAsStreamAsync($CancellationToken).GetAwaiter().GetResult())
                 try {
-                    $fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+                    [void]($fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None))
                     try { $stream.CopyToAsync($fileStream, $CancellationToken).GetAwaiter().GetResult() }
                     finally { $fileStream.Dispose() }
                 } finally { $stream.Dispose() }
