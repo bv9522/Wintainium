@@ -211,7 +211,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
                     try{$artifactUri=[Uri]$artifact.Uri}catch{continue}
                     $evidence=Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $artifactUri -ReleaseCache $githubReleaseCache
                     if($null -ne $evidence){
-                        [void]$artifact.Hashes.Add($evidence)
+                        $artifact.Hashes=@($artifact.Hashes)+$evidence
                     }
                 }
                 [void]$releases.Add($release)
