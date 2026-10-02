@@ -49,5 +49,23 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
         [pscustomobject][ordered]@{StageInput=$result;StageExecutor=$executor}
     }
 
-    Invoke-WintainiumOrchestrationLifecycle -Request $request -StagePlan $plan -CancellationContext $cancellationContext -StageFactory $stageFactory
+    $lifecycleResult = Invoke-WintainiumOrchestrationLifecycle -Request $request -StagePlan $plan -CancellationContext $cancellationContext -StageFactory $stageFactory
+
+    $downloadStage = @($lifecycleResult.StageResults | Where-Object { [string]$_.StageName -eq 'Download' }) | Select-Object -Last 1
+    $downloadResult = if ($null -ne $downloadStage -and $null -ne $downloadStage.Execution) { $downloadStage.Execution.Result } else { $null }
+    $artifactOutcome = if ([bool]$lifecycleResult.WasCancelled) {
+        'Cancelled'
+    } elseif ([bool]$lifecycleResult.IsSuccessful) {
+        'Completed'
+    } else {
+        'Failed'
+    }
+
+    $artifactLifecycle = Invoke-WintainiumDownloadArtifactCleanup -DownloadResult $downloadResult -DownloadRoot $DownloadRoot -Outcome $artifactOutcome
+    $lifecycleResult | Add-Member -NotePropertyName ArtifactLifecycle -NotePropertyValue $artifactLifecycle -Force
+
+    # Artifact cleanup is deliberately non-authoritative. A successful update remains
+    # successful even if the final file removal cannot be completed; the cleanup result
+    # preserves the diagnostic while leaving the installed state authoritative.
+    $lifecycleResult
 }
