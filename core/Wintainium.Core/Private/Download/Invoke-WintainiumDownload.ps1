@@ -35,14 +35,14 @@ function Invoke-WintainiumDownload {
                 [void]($stream = $response.Content.ReadAsStreamAsync($CancellationToken).GetAwaiter().GetResult())
                 try {
                     [void]($fileStream = [System.IO.File]::Open($temporaryPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None))
-                    try { $stream.CopyToAsync($fileStream, $CancellationToken).GetAwaiter().GetResult() }
-                    finally { $fileStream.Dispose() }
-                } finally { $stream.Dispose() }
+                    try { [void]$stream.CopyToAsync($fileStream, $CancellationToken).GetAwaiter().GetResult() }
+                    finally { [void]$fileStream.Dispose() }
+                } finally { [void]$stream.Dispose() }
             }
             catch [System.OperationCanceledException] { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='Cancelled'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=if (Test-Path -LiteralPath $temporaryPath) { [System.IO.FileInfo]::new($temporaryPath).Length } else { 0 }; Retryable=$false; ErrorMessage='The download was cancelled.' } }
             catch { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='Transfer'; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=if (Test-Path -LiteralPath $temporaryPath) { [System.IO.FileInfo]::new($temporaryPath).Length } else { 0 }; Retryable=$true; ErrorMessage=$_.Exception.Message } }
-        } finally { $response.Dispose() }
-        try { [System.IO.File]::Move($temporaryPath, $target.DestinationPath) }
+        } finally { [void]$response.Dispose() }
+        try { [void][System.IO.File]::Move($temporaryPath, $target.DestinationPath) }
         catch {
             if (Test-Path -LiteralPath $target.DestinationPath) { return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='DestinationExists'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$false; ErrorMessage='The destination file already exists.' } }
             return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='DestinationWrite'; Uri=$target.Uri; FileName=$target.FileName; DestinationPath=$target.DestinationPath; BytesWritten=0; Retryable=$true; ErrorMessage=$_.Exception.Message }
@@ -50,7 +50,7 @@ function Invoke-WintainiumDownload {
         return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Downloaded'; FailureKind=$null; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=[System.IO.FileInfo]::new($target.DestinationPath).Length; Retryable=$false; ErrorMessage=$null }
     }
     finally {
-        if (Test-Path -LiteralPath $temporaryPath) { Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue }
-        if ($ownsClient) { $HttpClient.Dispose() }
+        if (Test-Path -LiteralPath $temporaryPath) { [void](Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue) }
+        if ($ownsClient) { [void]$HttpClient.Dispose() }
     }
 }
