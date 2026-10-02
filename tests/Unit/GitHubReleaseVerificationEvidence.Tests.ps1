@@ -33,7 +33,7 @@ Describe 'GitHub release asset verification evidence' {
         $artifact = $result.Releases[0].Artifacts[0]
         $artifact.Hashes.Count | Should -Be 1
         $artifact.Hashes[0].Algorithm | Should -Be 'SHA256'
-        $artifact.Hashes[0].Value | Should -Be '0859C524B8A63551848F0C246ABDDA9D5E8863E0C84B7AC026BC9625A1560'
+        $artifact.Hashes[0].Value | Should -Be '0859C524B8A63551848F0C246ABDDCB1D0B7B656B0FBFE879F8D85E61A9E6EDD'
     }
 
     It 'fails open on discovery enrichment when GitHub provides no usable digest, leaving verification to Core' {
