@@ -14,7 +14,8 @@ await using var host = new WintainiumPowerShellHost(modulePath);
 var client = new WintainiumCoreClient(host);
 
 var installedStateService = new WintainiumApplicationInstalledStateService(client);
-var collectionService = new WintainiumApplicationCollectionService(client, installedStateService);
+var updateDecisionService = new WintainiumApplicationUpdateDecisionService(client);
+var collectionService = new WintainiumApplicationCollectionService(client, installedStateService, updateDecisionService);
 var collectionResult = await collectionService.LoadAsync(Path.GetDirectoryName(modulePath)!);
 
 if (collectionResult.Applications.Count != 0 ||
@@ -81,7 +82,10 @@ try
         null,
         null,
         null,
+        null,
+        WintainiumIconSource.None,
         WintainiumInstallationState.Unknown,
+        null,
         null,
         null,
         WintainiumUpdateStatus.Unknown,
@@ -239,7 +243,10 @@ var queryApplications = new[]
         null,
         null,
         null,
+        null,
+        WintainiumIconSource.None,
         WintainiumInstallationState.Unknown,
+        null,
         null,
         null,
         WintainiumUpdateStatus.Unknown,
@@ -251,8 +258,11 @@ var queryApplications = new[]
         null,
         null,
         null,
+        null,
+        WintainiumIconSource.None,
         WintainiumInstallationState.Installed,
         "1.0.0",
+        null,
         null,
         WintainiumUpdateStatus.UpToDate,
         "provider.a"),
@@ -263,7 +273,10 @@ var queryApplications = new[]
         null,
         null,
         null,
+        null,
+        WintainiumIconSource.None,
         WintainiumInstallationState.NotInstalled,
+        null,
         null,
         null,
         WintainiumUpdateStatus.UpdateAvailable,
