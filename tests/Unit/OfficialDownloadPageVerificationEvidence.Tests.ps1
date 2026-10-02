@@ -36,7 +36,7 @@ Describe 'Official download page verification evidence discovery' {
         $artifact.Uri | Should -Be 'https://github.com/ip7z/7zip/releases/download/26.03/7z2603-x64.exe'
         $artifact.Hashes.Count | Should -Be 1
         $artifact.Hashes[0].Algorithm | Should -Be 'SHA256'
-        $artifact.Hashes[0].Value | Should -Be '0859C524B8A63551848F0C246ABDDA9D5E8863E0C84B7AC026BC9625A1560'
+        $artifact.Hashes[0].Value | Should -Be '0859C524B8A63551848F0C246ABDDCB1D0B7B656B0FBFE879F8D85E61A9E6EDD'
     }
 
     It 'does not invent verification evidence for non-GitHub artifacts' {
