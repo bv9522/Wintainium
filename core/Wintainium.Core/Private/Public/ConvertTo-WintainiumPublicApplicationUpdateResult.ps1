@@ -103,6 +103,27 @@ function ConvertTo-WintainiumPublicApplicationUpdateResult {
             $stageError = $stageErrorCandidates[0]
         }
 
+        if ($null -ne $stageError) {
+            $messageProperty = $stageError.PSObject.Properties['Message']
+            $errorMessageProperty = $stageError.PSObject.Properties['ErrorMessage']
+            if (($null -eq $messageProperty -or [string]::IsNullOrWhiteSpace([string]$messageProperty.Value)) -and
+                $null -ne $errorMessageProperty -and
+                -not [string]::IsNullOrWhiteSpace([string]$errorMessageProperty.Value)) {
+                $stageError = [pscustomobject][ordered]@{
+                    Code = if ($stageError.PSObject.Properties['Code'] -and -not [string]::IsNullOrWhiteSpace([string]$stageError.Code)) {
+                        [string]$stageError.Code
+                    } elseif ($stageError.PSObject.Properties['FailureKind'] -and -not [string]::IsNullOrWhiteSpace([string]$stageError.FailureKind)) {
+                        [string]$stageError.FailureKind
+                    } else {
+                        'OrchestrationStageStructuredFailure'
+                    }
+                    Message = [string]$stageError.ErrorMessage
+                    FailureKind = if ($stageError.PSObject.Properties['FailureKind']) { [string]$stageError.FailureKind } else { $null }
+                    ErrorMessage = [string]$stageError.ErrorMessage
+                }
+            }
+        }
+
         if ($null -eq $applicationId -and $null -ne $result -and $result.PSObject.Properties['Manifest'] -and $null -ne $result.Manifest) {
             if ($result.Manifest.PSObject.Properties['Id']) {
                 $applicationId = [string]$result.Manifest.Id
