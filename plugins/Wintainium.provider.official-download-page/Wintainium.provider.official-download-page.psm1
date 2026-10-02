@@ -57,7 +57,6 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         ) } catch {}
     }
 
-    $releaseText=ConvertFrom-OfficialDownloadPageHtmlText $Body
     $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
     $artifacts=[System.Collections.Generic.List[object]]::new()
 
@@ -73,7 +72,11 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         $format=ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
         if ($format -eq 'unknown') { continue }
 
-        $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label $releaseText"
+        # Architecture is an artifact-level property. Do not include the full release text here:
+        # unrelated links in the same release section can mention a different architecture
+        # and contaminate classification (for example, a 7-Zip x64 link being marked arm64
+        # merely because the same release also contains an ARM64 link).
+        $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
         $artifacts.Add([pscustomobject][ordered]@{
             Uri=$uri.AbsoluteUri
             FileName=$fileName
