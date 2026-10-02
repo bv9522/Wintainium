@@ -40,7 +40,8 @@ internal static class WintainiumApplicationUpdateMapper
 
     private static bool IsNullLike(object? value) =>
         value is null ||
-        value is PSObject { BaseObject: null };
+        value is PSObject { BaseObject: null } ||
+        value is PSObject psObject && psObject.Properties.Count == 0;
 
     private static WintainiumOperationState DetermineState(bool isSuccessful, bool wasCancelled) =>
         wasCancelled ? WintainiumOperationState.Cancelled :
