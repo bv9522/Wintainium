@@ -79,7 +79,7 @@ Describe 'Invoke-WintainiumDownload' {
     BeforeEach {
         $root = Join-Path $TestDrive ([guid]::NewGuid().ToString())
         $artifact = [pscustomobject]@{ Uri='https://example.com/releases/Wintainium-1.2.3-x64.zip'; FileName='Wintainium-1.2.3-x64.zip' }
-        $request = [pscustomobject]@{ SelectedArtifact=$artifact }
+        $request = [pscustomobject]@{ SelectedArtifact=$artifact; OperationId=$null }
     }
     It 'exposes the controlled download operation through the Core module boundary' { InModuleScope Wintainium.Core { Get-Command Invoke-WintainiumDownload -CommandType Function } | Should -Not -BeNullOrEmpty }
     It 'rejects an unsafe target before attempting network I/O' { $request.SelectedArtifact.Uri='http://example.com/file.zip'; { InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root} { param($Request,$Root); Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root } } | Should -Throw '*HTTPS is required*' }
