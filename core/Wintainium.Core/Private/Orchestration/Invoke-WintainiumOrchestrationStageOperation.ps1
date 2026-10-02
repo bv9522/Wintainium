@@ -62,12 +62,16 @@ function Invoke-WintainiumOrchestrationStageOperation {
                 } else {
                     'The stage returned a structured unsuccessful result.'
                 }
+                $resultType = try { $execution.Result.GetType().FullName } catch { 'Unknown' }
+                $resultProperties = @($execution.Result.PSObject.Properties.Name)
                 [pscustomobject][ordered]@{
                     Code = 'OrchestrationStageStructuredFailure'
                     Message = $message
                     StageStatus = $status
                     FailureKind = $failureKind
                     ErrorMessage = $errorMessage
+                    ResultType = $resultType
+                    ResultProperties = $resultProperties
                     Detail = $execution.Result
                 }
             }
