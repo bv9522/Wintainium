@@ -189,4 +189,63 @@ Describe 'Wintainium live download failure diagnostic boundary' {
             @($public.Errors | Where-Object { $_.Code -eq 'DestinationExists' }).Count | Should -Be 1
         }
     }
+
+    It 'projects the failure kind from the raw structured result when the orchestration wrapper is generic' {
+        InModuleScope Wintainium.Core {
+            $operationId = [guid]::NewGuid().ToString()
+            $downloadResult = [pscustomobject]@{
+                OperationId=$operationId
+                IsSuccessful=$false
+                Status='Failed'
+                FailureKind='Network'
+                ErrorMessage='The remote server closed the connection.'
+                Retryable=$true
+            }
+            $genericWrapper = [pscustomobject]@{
+                Code='OrchestrationStageStructuredFailure'
+                Message='The stage returned a structured unsuccessful result.'
+                StageStatus='Failed'
+                FailureKind=$null
+                ErrorMessage=$null
+                ResultType='System.Management.Automation.PSCustomObject'
+                ResultProperties=@('OperationId','IsSuccessful','Status','FailureKind','ErrorMessage','Retryable')
+                Detail=$downloadResult
+            }
+            $stageOperation = [pscustomobject]@{
+                IsSuccessful=$false
+                OperationId=$operationId
+                StageSequence=4
+                StageName='Download'
+                Execution=[pscustomobject]@{
+                    IsSuccessful=$false
+                    WasCancelled=$false
+                    OperationId=$operationId
+                    StageSequence=4
+                    StageName='Download'
+                    Result=$downloadResult
+                    Error=$genericWrapper
+                }
+                State=[pscustomobject]@{ Status='Failed' }
+                Error=[pscustomobject]@{
+                    Code='OrchestrationStageExecutionFailed'
+                    Message='The stage returned a structured unsuccessful result.'
+                }
+            }
+            $lifecycle=[pscustomobject]@{
+                IsSuccessful=$false
+                WasCancelled=$false
+                OperationId=$operationId
+                State=[pscustomobject]@{ Status='Failed' }
+                StageResults=@($stageOperation)
+                Error=$stageOperation.Error
+            }
+
+            $public = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $public.Stages[0].Error.Code | Should -Be 'Network'
+            $public.Stages[0].Error.Message | Should -Be 'The remote server closed the connection.'
+            $public.Stages[0].Error.FailureKind | Should -Be 'Network'
+            @($public.Errors | Where-Object { $_.Code -eq 'Network' }).Count | Should -Be 1
+        }
+    }
 }
