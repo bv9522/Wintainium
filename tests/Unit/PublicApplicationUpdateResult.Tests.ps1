@@ -176,6 +176,58 @@ Describe 'Wintainium public application update result' {
         }
     }
 
+    It 'preserves stage-operation sequence numbers and surfaces structured stage failures' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$false
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        StageSequence=1
+                        StageName='ManifestValidation'
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$true
+                            WasCancelled=$false
+                            Result=[pscustomobject]@{ IsSuccessful=$true; Status='Validated'; Errors=@(); Warnings=@(); LogEvents=@() }
+                        }
+                    },
+                    [pscustomobject]@{
+                        StageSequence=4
+                        StageName='Download'
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$false
+                            WasCancelled=$false
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$false
+                                Status='Failed'
+                                FailureKind='Network'
+                                ErrorMessage='The remote server returned an error.'
+                            }
+                            Error=[pscustomobject]@{
+                                Code='OrchestrationStageStructuredFailure'
+                                Message='The remote server returned an error.'
+                            }
+                        }
+                    }
+                )
+                Error=[pscustomobject]@{
+                    Code='OrchestrationStageExecutionFailed'
+                    Message='The remote server returned an error.'
+                }
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $result.Stages[0].Sequence | Should -Be 1
+            $result.Stages[1].Sequence | Should -Be 4
+            $result.Stages[1].Name | Should -Be 'Download'
+            $result.Stages[1].Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
+            $result.Stages[1].Error.Message | Should -Be 'The remote server returned an error.'
+            @($result.Errors).Code | Should -Contain 'OrchestrationStageStructuredFailure'
+        }
+    }
+
     It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
         InModuleScope Wintainium.Core {
             $operationId = [guid]::NewGuid().ToString()
