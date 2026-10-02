@@ -228,6 +228,57 @@ Describe 'Wintainium public application update result' {
         }
     }
 
+    It 'prefers specific nested stage diagnostics over generic orchestration wrappers' {
+        InModuleScope Wintainium.Core {
+            $specificError = [pscustomobject]@{
+                Code='Network'
+                Message='The remote server returned an error.'
+                FailureKind='Network'
+                ErrorMessage='The remote server returned an error.'
+            }
+
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$false
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        StageSequence=4
+                        StageName='Download'
+                        Error=[pscustomobject]@{
+                            Code='OrchestrationStageExecutionFailed'
+                            Message='The stage returned a structured unsuccessful result.'
+                        }
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$false
+                            Error=[pscustomobject]@{
+                                Code='OrchestrationStageStructuredFailure'
+                                Message='The stage returned a structured unsuccessful result.'
+                                Detail=$specificError
+                            }
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$false
+                                Status='Failed'
+                                FailureKind='Network'
+                                ErrorMessage='The remote server returned an error.'
+                            }
+                        }
+                    }
+                )
+                Error=[pscustomobject]@{
+                    Code='OrchestrationStageExecutionFailed'
+                    Message='The stage returned a structured unsuccessful result.'
+                }
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $result.Stages[0].Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
+            $result.Stages[0].Error.Message | Should -Be 'The stage returned a structured unsuccessful result.'
+            @($result.Errors).Count | Should -BeGreaterThan 0
+        }
+    }
+
     It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
         InModuleScope Wintainium.Core {
             $operationId = [guid]::NewGuid().ToString()
