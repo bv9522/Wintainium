@@ -280,6 +280,45 @@ Describe 'Wintainium public application update result' {
         }
     }
 
+    It 'normalizes ErrorMessage-only structured stage diagnostics for the desktop contract' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId=[guid]::NewGuid().ToString()
+                IsSuccessful=$false
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        StageSequence=4
+                        StageName='Download'
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$false
+                            WasCancelled=$false
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$false
+                                Status='Failed'
+                                FailureKind='DestinationExists'
+                                ErrorMessage='The destination file already exists.'
+                            }
+                            Error=[pscustomobject]@{
+                                Code='OrchestrationStageStructuredFailure'
+                                ErrorMessage='The destination file already exists.'
+                                FailureKind='DestinationExists'
+                            }
+                        }
+                    }
+                )
+                Error=$null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
+
+            $result.Stages[0].Error.Code | Should -Be 'DestinationExists'
+            $result.Stages[0].Error.Message | Should -Be 'The destination file already exists.'
+            $result.Stages[0].Error.FailureKind | Should -Be 'DestinationExists'
+            @($result.Errors).Code | Should -Contain 'DestinationExists'
+        }
+    }
+
     It 'uses the public projection at the command boundary rather than returning the internal lifecycle object' {
         InModuleScope Wintainium.Core {
             $operationId = [guid]::NewGuid().ToString()
