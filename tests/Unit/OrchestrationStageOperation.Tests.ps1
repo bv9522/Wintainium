@@ -108,6 +108,37 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         $result.State.StageResults[0].Result.Status | Should -Be 'ValidationFailed'
     }
 
+    It 'preserves failure kind and error message for structured failures without an Error object' {
+        $operationId = [guid]::NewGuid().Guid
+        $state = New-TestState -OperationId $operationId
+        $plan = New-TestStagePlan -OperationId $operationId
+        $context = New-TestContext -OperationId $operationId
+        $result = InModuleScope Wintainium.Core -Parameters @{ OperationState = $state; StagePlan = $plan; CancellationContext = $context } {
+            param($OperationState, $StagePlan, $CancellationContext)
+            Invoke-WintainiumOrchestrationStageOperation -OperationState $OperationState -StagePlan $StagePlan -CancellationContext $CancellationContext -StageSequence 1 -StageName 'Download' -StageInput $null -StageExecutor {
+                [pscustomobject][ordered]@{
+                    IsSuccessful = $false
+                    Status = 'Failed'
+                    FailureKind = 'DestinationExists'
+                    ErrorMessage = 'The destination file already exists.'
+                    Retryable = $false
+                }
+            }
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
+        $result.Error.Message | Should -Be 'The destination file already exists.'
+        $result.Error.StageStatus | Should -Be 'Failed'
+        $result.Error.FailureKind | Should -Be 'DestinationExists'
+        $result.Error.ErrorMessage | Should -Be 'The destination file already exists.'
+        $result.Error.Detail.Status | Should -Be 'Failed'
+        $result.Error.Detail.FailureKind | Should -Be 'DestinationExists'
+        $result.Error.Detail.Retryable | Should -BeFalse
+        $result.State.Status | Should -Be 'Failed'
+        $result.State.StageResults[0].Result.FailureKind | Should -Be 'DestinationExists'
+    }
+
     It 'does not transition state when execution is cancelled before start' {
         $operationId = [guid]::NewGuid().Guid
         $state = New-TestState -OperationId $operationId
