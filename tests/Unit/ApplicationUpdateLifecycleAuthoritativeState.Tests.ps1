@@ -84,6 +84,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
+            Mock Invoke-WintainiumDownloadArtifactCleanup { [pscustomobject]@{ IsSuccessful=$true; Status='Removed'; Outcome=$Outcome; Removed=$true; Retained=$false; ReasonCode='ArtifactRemovedAfterSuccessfulUpdate' } }
 
             $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
@@ -92,6 +93,8 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             $result.State.Status | Should -Be 'Completed'
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.Status | Should -Be 'Persisted'
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.State.Version | Should -Be '2.0.0'
+            $result.ArtifactLifecycle.Status | Should -Be 'Removed'
+            Should -Invoke Invoke-WintainiumDownloadArtifactCleanup -Times 1 -Exactly -ParameterFilter { $Outcome -eq 'Completed' }
             Should -Invoke Invoke-WintainiumAuthoritativeStateReconciliation -Times 1 -Exactly -ParameterFilter { $OperationId -eq $global:WintainiumAuthoritativeLifecycleFixture.OperationId -and $ApplicationId -eq 'example.app' -and $ReconciliationResult.OperationId -eq $global:WintainiumAuthoritativeLifecycleFixture.OperationId -and $PriorState.Version -eq '1.0.0' }
         }
     }
