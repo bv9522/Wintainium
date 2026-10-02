@@ -73,8 +73,26 @@ function Test-WintainiumInstallerInput {
     else {
         $installer = $Manifest.Installer
 
+        $hasProperty = {
+            param([object]$Object, [string]$Name)
+            if ($null -eq $Object) { return $false }
+            if ($Object -is [System.Collections.IDictionary]) { return $Object.Contains($Name) }
+            return $null -ne $Object.PSObject.Properties[$Name]
+        }
+        $getProperty = {
+            param([object]$Object, [string]$Name)
+            if ($null -eq $Object) { return $null }
+            if ($Object -is [System.Collections.IDictionary]) {
+                if ($Object.Contains($Name)) { return $Object[$Name] }
+                return $null
+            }
+            $property = $Object.PSObject.Properties[$Name]
+            if ($null -ne $property) { return $property.Value }
+            return $null
+        }
+
         foreach ($property in @('pluginId', 'requiredContractVersion', 'settings')) {
-            if ($null -eq $installer.PSObject.Properties[$property]) {
+            if (-not (& $hasProperty $installer $property)) {
                 $errors.Add([pscustomobject]@{
                     Code = 'InstallerInputManifestInstallerPropertyMissing'
                     Property = "Installer.$property"
@@ -83,8 +101,100 @@ function Test-WintainiumInstallerInput {
             }
         }
 
-        if ($null -ne $installer.PSObject.Properties['pluginId'] -and
-            [string]$installer.pluginId -notmatch '^Wintainium\.installer\.[a-z0-9-]+(?:\.[a-z0-9-]+)*$') {
+        $pluginId = & $getProperty $installer 'pluginId'
+        if ((& $hasProperty $installer 'pluginId') -and
+            [string]$pluginId -notmatch '^Wintainium\.installer\.[a-z0-9-]+(?:\.[a-z0-9-]+)*            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerIdInvalid'
+                Property = 'Installer.pluginId'
+                Message = 'Installer plugin reference must use a valid Wintainium.installer.* identifier.'
+            })
+        }
+
+        $requiredContractVersion = & $getProperty $installer 'requiredContractVersion'
+        if ((& $hasProperty $installer 'requiredContractVersion') -and
+            [string]$requiredContractVersion -notmatch '^[1-9][0-9]*
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerContractInvalid'
+                Property = 'Installer.requiredContractVersion'
+                Message = 'Installer plugin requiredContractVersion must be a positive major version.'
+            })
+        }
+
+        $settings = & $getProperty $installer 'settings'
+        if ((& $hasProperty $installer 'settings') -and
+            $settings -isnot [System.Management.Automation.PSCustomObject] -and
+            $settings -isnot [System.Collections.IDictionary]) {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerSettingsInvalid'
+                Property = 'Installer.settings'
+                Message = 'Installer plugin settings must be an object.'
+            })
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        IsValid = $errors.Count -eq 0
+        Errors = $errors.ToArray()
+    }
+}
+) {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerIdInvalid'
+                Property = 'Installer.pluginId'
+                Message = 'Installer plugin reference must use a valid Wintainium.installer.* identifier.'
+            })
+        }
+
+        if ($null -ne $installer.PSObject.Properties['requiredContractVersion'] -and
+            [string]$installer.requiredContractVersion -notmatch '^[1-9][0-9]*$') {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerContractInvalid'
+                Property = 'Installer.requiredContractVersion'
+                Message = 'Installer plugin requiredContractVersion must be a positive major version.'
+            })
+        }
+
+        if ($null -ne $installer.PSObject.Properties['settings'] -and
+            $installer.settings -isnot [System.Management.Automation.PSCustomObject] -and
+            $installer.settings -isnot [System.Collections.IDictionary]) {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerSettingsInvalid'
+                Property = 'Installer.settings'
+                Message = 'Installer plugin settings must be an object.'
+            })
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        IsValid = $errors.Count -eq 0
+        Errors = $errors.ToArray()
+    }
+}
+) {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerContractInvalid'
+                Property = 'Installer.requiredContractVersion'
+                Message = 'Installer plugin requiredContractVersion must be a positive major version.'
+            })
+        }
+
+        if ($null -ne $installer.PSObject.Properties['settings'] -and
+            $installer.settings -isnot [System.Management.Automation.PSCustomObject] -and
+            $installer.settings -isnot [System.Collections.IDictionary]) {
+            $errors.Add([pscustomobject]@{
+                Code = 'InstallerInputManifestInstallerSettingsInvalid'
+                Property = 'Installer.settings'
+                Message = 'Installer plugin settings must be an object.'
+            })
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        IsValid = $errors.Count -eq 0
+        Errors = $errors.ToArray()
+    }
+}
+) {
             $errors.Add([pscustomobject]@{
                 Code = 'InstallerInputManifestInstallerIdInvalid'
                 Property = 'Installer.pluginId'
