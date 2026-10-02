@@ -65,12 +65,29 @@ function ConvertTo-WintainiumPublicApplicationUpdateResult {
             $false
         }
 
-        $stageError = if ($null -ne $result -and $result.PSObject.Properties['Error']) {
-            $result.Error
-        } elseif ($null -ne $execution -and $execution.PSObject.Properties['Error']) {
-            $execution.Error
-        } else {
-            $null
+        $stageErrorCandidates = [System.Collections.Generic.List[object]]::new()
+        if ($null -ne $result -and $result.PSObject.Properties['Error'] -and $null -ne $result.Error) {
+            $stageErrorCandidates.Add($result.Error)
+        }
+        if ($null -ne $execution -and $execution.PSObject.Properties['Error'] -and $null -ne $execution.Error) {
+            $stageErrorCandidates.Add($execution.Error)
+        }
+        if ($null -ne $item.PSObject.Properties['Error'] -and $null -ne $item.Error) {
+            $stageErrorCandidates.Add($item.Error)
+        }
+
+        $stageError = $stageErrorCandidates | Where-Object {
+            $message = if ($_.PSObject.Properties['Message']) { [string]$_.Message } else { $null }
+            $code = if ($_.PSObject.Properties['Code']) { [string]$_.Code } else { $null }
+            -not (
+                [string]::Equals($code, 'OrchestrationStageExecutionFailed', [System.StringComparison]::OrdinalIgnoreCase) -or
+                ([string]::Equals($code, 'OrchestrationStageStructuredFailure', [System.StringComparison]::OrdinalIgnoreCase) -and
+                 [string]::Equals($message, 'The stage returned a structured unsuccessful result.', [System.StringComparison]::OrdinalIgnoreCase))
+            )
+        } | Select-Object -First 1
+
+        if ($null -eq $stageError -and $stageErrorCandidates.Count -gt 0) {
+            $stageError = $stageErrorCandidates[0]
         }
 
         if ($null -eq $applicationId -and $null -ne $result -and $result.PSObject.Properties['Manifest'] -and $null -ne $result.Manifest) {
