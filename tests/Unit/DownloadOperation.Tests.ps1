@@ -88,6 +88,26 @@ Describe 'Invoke-WintainiumDownload' {
         $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK); $response.Content=[System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('Wintainium test artifact')); $handler=[TestDownloadHandler]::new($response); $client=[System.Net.Http.HttpClient]::new($handler)
         try { $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client} { param($Request,$Root,$Client); Mock Resolve-WintainiumDownloadTarget { [pscustomobject]@{Uri=$Request.SelectedArtifact.Uri;DownloadRoot=$Root;FileName=$Request.SelectedArtifact.FileName;DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName} }; Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client }; $result.Status|Should -Be 'Downloaded'; $result.FailureKind|Should -BeNullOrEmpty; $result.Retryable|Should -BeFalse; $result.BytesWritten|Should -Be ([System.Text.Encoding]::UTF8.GetByteCount('Wintainium test artifact')); Test-Path -LiteralPath $result.DestinationPath|Should -BeTrue; [System.IO.File]::ReadAllText($result.DestinationPath)|Should -Be 'Wintainium test artifact'; Get-ChildItem -LiteralPath $root -File | Where-Object Name -ne $request.SelectedArtifact.FileName | Should -BeNullOrEmpty } finally { $client.Dispose(); $response.Dispose() }
     }
+    It 'uses an operation-specific artifact directory for production download requests' {
+        $operationId = [guid]::NewGuid().ToString()
+        $request.OperationId = $operationId
+        $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content=[System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('operation scoped artifact'))
+        $handler=[TestDownloadHandler]::new($response)
+        $client=[System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client} {
+                param($Request,$Root,$Client)
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $expectedDirectory=[System.IO.Path]::GetFullPath((Join-Path $root (Join-Path 'operations' $operationId)))
+            $result.Status | Should -Be 'Downloaded'
+            $result.ArtifactDirectory | Should -Be $expectedDirectory
+            $result.DestinationPath | Should -Be ([System.IO.Path]::GetFullPath((Join-Path $expectedDirectory $request.SelectedArtifact.FileName)))
+            Test-Path -LiteralPath $result.DestinationPath | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $root $request.SelectedArtifact.FileName) | Should -BeFalse
+        } finally { $client.Dispose(); $response.Dispose() }
+    }
     It 'returns a retryable HTTP failure without creating a destination file' {
         $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::ServiceUnavailable); $response.ReasonPhrase='Unavailable'; $handler=[TestDownloadHandler]::new($response); $client=[System.Net.Http.HttpClient]::new($handler)
         try { $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client} { param($Request,$Root,$Client); Mock Resolve-WintainiumDownloadTarget { [pscustomobject]@{Uri=$Request.SelectedArtifact.Uri;DownloadRoot=$Root;FileName=$Request.SelectedArtifact.FileName;DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName} }; Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client }; $result.Status|Should -Be 'Failed'; $result.FailureKind|Should -Be 'Http'; $result.Retryable|Should -BeTrue; Test-Path -LiteralPath (Join-Path $root $request.SelectedArtifact.FileName)|Should -BeFalse; Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue|Should -BeNullOrEmpty } finally { $client.Dispose(); $response.Dispose() }
