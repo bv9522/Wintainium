@@ -119,3 +119,91 @@ Describe 'Wintainium application update lifecycle composition' {
         }
     }
 }
+
+
+    It 'normalizes a download result without status as a failed stage instead of throwing' {
+        InModuleScope Wintainium.Core {
+            $operationId = [guid]::NewGuid().ToString()
+            $decision = [pscustomobject]@{
+                OperationId=$operationId
+                Status='UpdateAvailable'
+                IsUpdateAvailable=$true
+                SelectedRelease=[pscustomobject]@{ Version='2.0.0' }
+                SelectedArtifact=[pscustomobject]@{ Uri='https://example.test/app.exe'; FileName='app.exe' }
+            }
+            $state = [pscustomobject]@{
+                StageResults=@(
+                    [pscustomobject]@{
+                        Name='UpdateDecision'
+                        Result=$decision
+                    }
+                )
+            }
+            $stage = [pscustomobject]@{ Name='Download'; Sequence=4 }
+            $request = [pscustomobject]@{
+                OperationId=$operationId
+                ManifestPath='/tmp/example.json'
+                MachineArchitecture='x64'
+                DownloadRoot='/tmp/downloads'
+            }
+            $plan = [pscustomobject]@{
+                OperationId=$operationId
+                Stages=@($stage)
+            }
+            $context = [pscustomobject]@{
+                OperationId=$operationId
+                CancellationToken=[System.Threading.CancellationToken]::None
+            }
+            $malformedDownload = [pscustomobject]@{
+                OperationId=$operationId
+                Uri=$decision.SelectedArtifact.Uri
+                FileName=$decision.SelectedArtifact.FileName
+            }
+
+            Mock New-WintainiumOrchestrationRequest {
+                [pscustomobject]@{ IsValid=$true; Request=$request; Errors=@() }
+            }
+            Mock Get-WintainiumEnvironment {
+                [pscustomobject]@{ MachineArchitecture='x64' }
+            }
+            Mock New-WintainiumOrchestrationStagePlan {
+                [pscustomobject]@{ IsValid=$true; Plan=$plan; Errors=@() }
+            }
+            Mock Invoke-WintainiumOrchestrationWorkflow {
+                param($OperationState,$StagePlan,$CancellationContext,$StageFactory)
+                $binding = & $StageFactory $stage $state $context
+                $execution = & $binding.StageExecutor -StageInput $binding.StageInput -CancellationToken $context.CancellationToken
+                [pscustomobject]@{
+                    IsSuccessful=$false
+                    WasCancelled=$false
+                    State=$state
+                    StageResults=@([pscustomobject]@{
+                        StageName='Download'
+                        Execution=$execution
+                    })
+                    Error=[pscustomobject]@{
+                        Code='OrchestrationStageResultUnsuccessful'
+                        Message='The Download stage returned an unsuccessful result.'
+                    }
+                }
+            }
+            Mock New-WintainiumDownloadRequest {
+                [pscustomobject]@{
+                    OperationId=$operationId
+                    SelectedArtifact=$decision.SelectedArtifact
+                }
+            }
+            Mock Invoke-WintainiumDownload {
+                $malformedDownload
+            }
+
+            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath $request.ManifestPath -StateRoot '/tmp/state' -MachineArchitecture $request.MachineArchitecture -DownloadRoot $request.DownloadRoot
+
+            $result.IsSuccessful | Should -BeFalse
+            $result.Error.Code | Should -Be 'OrchestrationStageResultUnsuccessful'
+            $result.StageResults[0].Execution.IsSuccessful | Should -BeFalse
+            $result.StageResults[0].Execution.PSObject.Properties['Result'] | Should -Not -BeNullOrEmpty
+            $result.StageResults[0].Execution.Result.IsSuccessful | Should -BeFalse
+            Should -Invoke Invoke-WintainiumDownload -Times 1 -Exactly
+        }
+    }
