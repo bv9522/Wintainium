@@ -8,7 +8,7 @@ Describe 'Resolve-WintainiumDownloadTarget' {
             Uri = 'https://example.com/releases/Wintainium-1.2.3-x64.zip'
             FileName = 'Wintainium-1.2.3-x64.zip'
         }
-        $request = [pscustomobject]@{ SelectedArtifact = $artifact }
+        $request = [pscustomobject]@{ SelectedArtifact = $artifact; OperationId = $null }
     }
 
     It 'accepts an absolute HTTPS URI and resolves within the download root' {
