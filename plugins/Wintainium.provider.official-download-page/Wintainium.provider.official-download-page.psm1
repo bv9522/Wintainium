@@ -34,7 +34,10 @@ function ConvertTo-OfficialDownloadPageArtifactArchitecture {
 }
 
 function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
-    param([Parameter(Mandatory)][Uri]$ArtifactUri)
+    param(
+        [Parameter(Mandatory)][Uri]$ArtifactUri,
+        [Parameter(Mandatory)][hashtable]$ReleaseCache
+    )
 
     if ($ArtifactUri.Host -notin @('github.com','www.github.com')) {
         return $null
@@ -94,7 +97,7 @@ function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
         # and contaminate classification (for example, a 7-Zip x64 link being marked arm64
         # merely because the same release also contains an ARM64 link).
         $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
-        $verificationEvidence = Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $uri
+        $verificationEvidence = Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $uri -ReleaseCache $githubReleaseCache
         $hashes = if ($null -ne $verificationEvidence) {
             @([pscustomobject][ordered]@{
                 Algorithm = $verificationEvidence.Algorithm
@@ -188,6 +191,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $releases=[System.Collections.Generic.List[object]]::new()
+    $githubReleaseCache = @{}
 
     for($i=0;$i -lt $sectionMatches.Count;$i++) {
         $section=$sectionMatches[$i]
@@ -850,14 +854,21 @@ Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProvid
     $encodedTag = [Uri]::EscapeDataString($tag)
     $apiUri = "https://api.github.com/repos/$encodedOwner/$encodedRepository/releases/tags/$encodedTag"
 
-    try {
-        $release = Invoke-RestMethod -Method Get -Uri $apiUri -Headers @{
-            Accept = 'application/vnd.github+json'
-            'User-Agent' = 'Wintainium/0.1'
-        } -ErrorAction Stop
+    if ($ReleaseCache.ContainsKey($apiUri)) {
+        $release = $ReleaseCache[$apiUri]
     }
-    catch {
-        return $null
+    else {
+        try {
+            $release = Invoke-RestMethod -Method Get -Uri $apiUri -Headers @{
+                Accept = 'application/vnd.github+json'
+                'User-Agent' = 'Wintainium/0.1'
+            } -ErrorAction Stop
+        }
+        catch {
+            $release = [pscustomobject]@{ Assets = @() }
+        }
+
+        $ReleaseCache[$apiUri] = $release
     }
 
     if ($null -eq $release -or -not $release.PSObject.Properties['assets']) {
