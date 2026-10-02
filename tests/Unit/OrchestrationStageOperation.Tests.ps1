@@ -127,14 +127,16 @@ Describe 'Invoke-WintainiumOrchestrationStageOperation' {
         }
 
         $result.IsSuccessful | Should -BeFalse
-        $result.Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
+        $result.Error.Code | Should -Be 'OrchestrationStageExecutionFailed'
         $result.Error.Message | Should -Be 'The destination file already exists.'
-        $result.Error.StageStatus | Should -Be 'Failed'
-        $result.Error.FailureKind | Should -Be 'DestinationExists'
-        $result.Error.ErrorMessage | Should -Be 'The destination file already exists.'
-        $result.Error.Detail.Status | Should -Be 'Failed'
-        $result.Error.Detail.FailureKind | Should -Be 'DestinationExists'
-        $result.Error.Detail.Retryable | Should -BeFalse
+        $result.Execution.Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
+        $result.Execution.Error.Message | Should -Be 'The destination file already exists.'
+        $result.Execution.Error.StageStatus | Should -Be 'Failed'
+        $result.Execution.Error.FailureKind | Should -Be 'DestinationExists'
+        $result.Execution.Error.ErrorMessage | Should -Be 'The destination file already exists.'
+        $result.Execution.Error.Detail.Status | Should -Be 'Failed'
+        $result.Execution.Error.Detail.FailureKind | Should -Be 'DestinationExists'
+        $result.Execution.Error.Detail.Retryable | Should -BeFalse
         $result.State.Status | Should -Be 'Failed'
         $result.State.StageResults[0].Result.FailureKind | Should -Be 'DestinationExists'
     }
