@@ -273,9 +273,10 @@ Describe 'Wintainium public application update result' {
 
             $result = ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycle
 
-            $result.Stages[0].Error.Code | Should -Be 'OrchestrationStageStructuredFailure'
-            $result.Stages[0].Error.Message | Should -Be 'The stage returned a structured unsuccessful result.'
-            @($result.Errors).Count | Should -BeGreaterThan 0
+            $result.Stages[0].Error.Code | Should -Be 'Network'
+            $result.Stages[0].Error.Message | Should -Be 'The remote server returned an error.'
+            $result.Stages[0].Error.FailureKind | Should -Be 'Network'
+            @($result.Errors).Code | Should -Contain 'Network'
         }
     }
 
