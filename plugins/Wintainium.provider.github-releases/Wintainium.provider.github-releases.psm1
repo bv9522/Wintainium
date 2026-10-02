@@ -133,6 +133,13 @@ function ConvertFrom-GitHubRelease {
         if ($asset.PSObject.Properties['digest'] -and -not [string]::IsNullOrWhiteSpace([string]$asset.digest)) {
             $digest = [string]$asset.digest
             if ($digest -match '(?i)^sha256:([0-9a-f]{64})
+            FileName = $fileName
+            Format = ConvertTo-GitHubArtifactFormat -FileName $fileName
+            Architecture = ConvertTo-GitHubArtifactArchitecture -FileName $fileName
+            Size = $size
+            Hashes = $hashes
+            Signature = $null
+        }
     }
 
     $publishedAt = $null
@@ -465,7 +472,7 @@ Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProvid
             Format = ConvertTo-GitHubArtifactFormat -FileName $fileName
             Architecture = ConvertTo-GitHubArtifactArchitecture -FileName $fileName
             Size = $size
-            Hashes = $hashes
+            Hashes = @()
             Signature = $null
         }
     }
