@@ -80,16 +80,33 @@ function Resolve-WintainiumDownloadTarget {
     }
 
     $root = [System.IO.Path]::GetFullPath($DownloadRoot)
-    $destination = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($root, $rawName))
-    $rootWithSeparator = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+    $artifactDirectory = $root
+    $operationId = $null
+    if ($DownloadRequest.PSObject.Properties['OperationId']) {
+        $candidateOperationId = [string]$DownloadRequest.OperationId
+        $parsedOperationId = [guid]::Empty
+        if ([guid]::TryParse($candidateOperationId, [ref]$parsedOperationId)) {
+            $operationId = $parsedOperationId.ToString()
+            $artifactDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($root, 'operations', $operationId))
+        }
+    }
 
-    if (-not $destination.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw [System.ArgumentException]::new('Resolved artifact destination escapes the Core-controlled download root.')
+    $destination = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($artifactDirectory, $rawName))
+    $rootWithSeparator = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+    $artifactDirectoryWithSeparator = $artifactDirectory.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+
+    if (-not $artifactDirectory.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase) -and $artifactDirectory -ne $root) {
+        throw [System.ArgumentException]::new('Resolved artifact directory escapes the Core-controlled download root.')
+    }
+    if (-not $destination.StartsWith($artifactDirectoryWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw [System.ArgumentException]::new('Resolved artifact destination escapes the Core-controlled artifact directory.')
     }
 
     [pscustomobject][ordered]@{
         Uri = $uri.AbsoluteUri
         DownloadRoot = $root
+        ArtifactDirectory = $artifactDirectory
+        OperationId = $operationId
         FileName = $rawName
         DestinationPath = $destination
     }
