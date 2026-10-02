@@ -46,6 +46,8 @@ Describe 'Wintainium download artifact lifecycle' {
             $result.IsSuccessful | Should -BeTrue
             $result.Status | Should -Be 'Retained'
             $result.Retained | Should -BeTrue
+            $result.MetadataWritten | Should -BeTrue
+            Test-Path -LiteralPath $result.MetadataPath | Should -BeTrue
             Test-Path -LiteralPath $destination | Should -BeTrue
         }
     }
