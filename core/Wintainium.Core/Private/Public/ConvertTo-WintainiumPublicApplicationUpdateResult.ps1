@@ -76,14 +76,17 @@ function ConvertTo-WintainiumPublicApplicationUpdateResult {
             }
         }
         if ($null -ne $result -and
-            $null -ne $result.PSObject.Properties['ErrorMessage'] -and
-            -not [string]::IsNullOrWhiteSpace([string]$result.ErrorMessage)) {
-            $stageErrorCandidates.Add([pscustomobject][ordered]@{
-                Code = if ($result.PSObject.Properties['FailureKind'] -and -not [string]::IsNullOrWhiteSpace([string]$result.FailureKind)) { [string]$result.FailureKind } else { 'OrchestrationStageStructuredFailure' }
-                Message = [string]$result.ErrorMessage
-                FailureKind = if ($result.PSObject.Properties['FailureKind']) { [string]$result.FailureKind } else { $null }
-                ErrorMessage = [string]$result.ErrorMessage
-            })
+            ($result.PSObject.Properties['FailureKind'] -or $result.PSObject.Properties['ErrorMessage'])) {
+            $failureKind = if ($result.PSObject.Properties['FailureKind']) { [string]$result.FailureKind } else { $null }
+            $errorMessage = if ($result.PSObject.Properties['ErrorMessage']) { [string]$result.ErrorMessage } else { $null }
+            if (-not [string]::IsNullOrWhiteSpace($failureKind) -or -not [string]::IsNullOrWhiteSpace($errorMessage)) {
+                $stageErrorCandidates.Add([pscustomobject][ordered]@{
+                    Code = if (-not [string]::IsNullOrWhiteSpace($failureKind)) { $failureKind } else { 'OrchestrationStageStructuredFailure' }
+                    Message = if (-not [string]::IsNullOrWhiteSpace($errorMessage)) { $errorMessage } else { "The stage reported failure kind '$failureKind'." }
+                    FailureKind = $failureKind
+                    ErrorMessage = $errorMessage
+                })
+            }
         }
         if ($null -ne $item.PSObject.Properties['Error'] -and $null -ne $item.Error) {
             $stageErrorCandidates.Add($item.Error)
@@ -101,6 +104,24 @@ function ConvertTo-WintainiumPublicApplicationUpdateResult {
 
         if ($null -eq $stageError -and $stageErrorCandidates.Count -gt 0) {
             $stageError = $stageErrorCandidates[0]
+        }
+
+        if ($null -ne $stageError -and
+            -not $stageError.PSObject.Properties['Code'] -and
+            -not $stageError.PSObject.Properties['Message']) {
+            $detailProperties = @($stageError.PSObject.Properties.Name)
+            $stageError = [pscustomobject][ordered]@{
+                Code = if ($stageError.PSObject.Properties['FailureKind'] -and -not [string]::IsNullOrWhiteSpace([string]$stageError.FailureKind)) { [string]$stageError.FailureKind } else { 'OrchestrationStageStructuredFailure' }
+                Message = if ($stageError.PSObject.Properties['ErrorMessage'] -and -not [string]::IsNullOrWhiteSpace([string]$stageError.ErrorMessage)) {
+                    [string]$stageError.ErrorMessage
+                } else {
+                    "The stage returned a structured unsuccessful result without a usable error message. Result properties: $($detailProperties -join ', ')."
+                }
+                FailureKind = if ($stageError.PSObject.Properties['FailureKind']) { [string]$stageError.FailureKind } else { $null }
+                ErrorMessage = if ($stageError.PSObject.Properties['ErrorMessage']) { [string]$stageError.ErrorMessage } else { $null }
+                ResultProperties = $detailProperties
+                Detail = $stageError
+            }
         }
 
         if ($null -ne $stageError) {
