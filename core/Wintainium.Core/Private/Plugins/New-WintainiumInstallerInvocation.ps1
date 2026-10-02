@@ -15,14 +15,26 @@ function New-WintainiumInstallerInvocation {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationArtifactMissing'; Message = 'Installer invocation requires the completed artifact handoff.' } }
     }
 
+    $getValue = {
+        param([object]$Object, [string]$Name)
+        if ($null -eq $Object) { return $null }
+        if ($Object -is [System.Collections.IDictionary]) {
+            if ($Object.Contains($Name)) { return $Object[$Name] }
+            return $null
+        }
+        $property = $Object.PSObject.Properties[$Name]
+        if ($null -ne $property) { return $property.Value }
+        return $null
+    }
+
     $plugin = $Selection.InstallerPlugin
-    $pluginId = if ($plugin.PSObject.Properties.Name -contains 'PluginId') { [string]$plugin.PluginId } else { $null }
+    $pluginId = [string](& $getValue $plugin 'PluginId')
     if ([string]::IsNullOrWhiteSpace($pluginId)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationPluginIdMissing'; Message = 'The selected installer plugin must declare a plugin identifier.' } }
     }
 
-    $entryPoint = if ($plugin.PSObject.Properties.Name -contains 'EntryPoint') { [string]$plugin.EntryPoint } else { $null }
-    $descriptorPath = if ($plugin.PSObject.Properties.Name -contains 'DescriptorPath') { [string]$plugin.DescriptorPath } else { $null }
+    $entryPoint = [string](& $getValue $plugin 'EntryPoint')
+    $descriptorPath = [string](& $getValue $plugin 'DescriptorPath')
     if ([string]::IsNullOrWhiteSpace($entryPoint)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationEntryPointMissing'; Message = 'The selected installer plugin does not declare an entryPoint.' } }
     }
@@ -41,13 +53,13 @@ function New-WintainiumInstallerInvocation {
     }
 
     $artifact = $Request.Artifact
-    $artifactPath = if ($artifact.PSObject.Properties.Name -contains 'Path') { [string]$artifact.Path } else { $null }
+    $artifactPath = [string](& $getValue $artifact 'Path')
     if ([string]::IsNullOrWhiteSpace($artifactPath) -or -not [System.IO.Path]::IsPathFullyQualified($artifactPath) -or -not (Test-Path -LiteralPath $artifactPath -PathType Leaf)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationArtifactPathInvalid'; Message = 'Installer invocation requires an absolute path to the completed artifact.' } }
     }
 
-    $installer = if ($Request.PSObject.Properties.Name -contains 'Installer') { $Request.Installer } else { $null }
-    $requestPluginId = if ($null -ne $installer -and $installer.PSObject.Properties.Name -contains 'pluginId') { [string]$installer.pluginId } else { $null }
+    $installer = & $getValue $Request 'Installer'
+    $requestPluginId = [string](& $getValue $installer 'pluginId')
     if ([string]::IsNullOrWhiteSpace($requestPluginId) -or -not $requestPluginId.Equals($pluginId, [System.StringComparison]::OrdinalIgnoreCase)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationPluginMismatch'; Message = 'The selected installer plugin does not match the installer declared by the request.' } }
     }
@@ -69,24 +81,28 @@ function New-WintainiumInstallerInvocation {
     }
 
     $descriptor = $descriptorResult.Descriptor
-    if (-not ([string]$descriptor.pluginId).Equals($pluginId, [System.StringComparison]::OrdinalIgnoreCase) -or
-        [string]$descriptor.pluginType -ne 'Installer') {
+    $descriptorPluginId = [string](& $getValue $descriptor 'pluginId')
+    $descriptorPluginType = [string](& $getValue $descriptor 'pluginType')
+    $descriptorEntryPoint = [string](& $getValue $descriptor 'entryPoint')
+    if (-not $descriptorPluginId.Equals($pluginId, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $descriptorPluginType -ne 'Installer') {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin does not match its descriptor identity.' } }
     }
-    if (-not ([string]$descriptor.entryPoint).Equals($entryPoint, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if (-not $descriptorEntryPoint.Equals($entryPoint, [System.StringComparison]::OrdinalIgnoreCase)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject][ordered]@{ Code = 'InstallerInvocationDescriptorMismatch'; Message = 'The selected installer plugin entryPoint does not match its descriptor.' } }
     }
 
-    $artifactFormat = if ($Selection.PSObject.Properties.Name -contains 'ArtifactFormat') { [string]$Selection.ArtifactFormat } else { $null }
+    $artifactFormat = [string](& $getValue $Selection 'ArtifactFormat')
     if ([string]::IsNullOrWhiteSpace($artifactFormat)) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationArtifactFormatMissing'; Message = 'Installer invocation requires the artifact format selected by the installer-selection boundary.' } }
     }
 
-    $settings = if ($null -ne $installer -and $installer.PSObject.Properties.Name -contains 'settings') { $installer.settings } else { $null }
-    $installationMode = if ($Selection.PSObject.Properties.Name -contains 'InstallationMode' -and -not [string]::IsNullOrWhiteSpace([string]$Selection.InstallationMode)) {
-        ([string]$Selection.InstallationMode).Trim().ToLowerInvariant()
+    $settings = & $getValue $installer 'settings'
+    $installationMode = [string](& $getValue $Selection 'InstallationMode')
+    if ([string]::IsNullOrWhiteSpace($installationMode)) {
+        $installationMode = 'process'
     } else {
-        'process'
+        $installationMode = $installationMode.Trim().ToLowerInvariant()
     }
     if ($null -eq $settings -or ($settings -isnot [System.Collections.IDictionary] -and $settings -isnot [pscustomobject])) {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationSettingsInvalid'; Message = 'Installer invocation requires structured installer settings.' } }
