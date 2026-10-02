@@ -51,10 +51,10 @@ internal static class WintainiumApplicationCollectionQuery
     private static int UpdateStatusSortKey(WintainiumUpdateStatus status) =>
         status switch
         {
-            WintainiumUpdateStatus.UpToDate => 0,
+            WintainiumUpdateStatus.Unknown => 0,
             WintainiumUpdateStatus.UpdateAvailable => 1,
-            WintainiumUpdateStatus.NotInstalled => 2,
-            WintainiumUpdateStatus.Unknown => 3,
+            WintainiumUpdateStatus.UpToDate => 2,
+            WintainiumUpdateStatus.NotInstalled => 3,
             _ => 4
         };
 
