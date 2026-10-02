@@ -39,21 +39,14 @@ function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
         [Parameter(Mandatory)][hashtable]$ReleaseCache
     )
 
-    if ($ArtifactUri.Host -notin @('github.com','www.github.com')) {
-        return $null
-    }
-
+    if ($ArtifactUri.Host -notin @('github.com','www.github.com')) { return $null }
     $segments = @($ArtifactUri.AbsolutePath.Trim('/').Split('/') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    if ($segments.Count -lt 6 -or $segments[2] -ne 'releases' -or $segments[3] -ne 'download') {
-        return $null
-    }
-
+    if ($segments.Count -lt 6 -or $segments[2] -ne 'releases' -or $segments[3] -ne 'download') { return $null }
     $owner = [Uri]::UnescapeDataString($segments[0])
     $repository = [Uri]::UnescapeDataString($segments[1])
     $tag = [Uri]::UnescapeDataString($segments[4])
     $assetPath = ($segments[5..($segments.Count - 1)] -join '/')
-
-    if ($owner -notmatch '^[A-Za-z0-9_.-]+
+    if ($owner -notmatch '^[A-Za-z0-9_.-]+ {
     param(
         [Parameter(Mandatory)][string]$Heading,
         [Parameter(Mandatory)][string]$Body,
@@ -98,15 +91,7 @@ function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
         # merely because the same release also contains an ARM64 link).
         $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
         $verificationEvidence = Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $uri -ReleaseCache $githubReleaseCache
-        $hashes = if ($null -ne $verificationEvidence) {
-            @([pscustomobject][ordered]@{
-                Algorithm = $verificationEvidence.Algorithm
-                Value = $verificationEvidence.Value
-            })
-        }
-        else {
-            @()
-        }
+        $hashes = if ($null -ne $verificationEvidence) { @([pscustomobject][ordered]@{ Algorithm=$verificationEvidence.Algorithm; Value=$verificationEvidence.Value }) } else { @() }
         $artifacts.Add([pscustomobject][ordered]@{
             Uri=$uri.AbsoluteUri
             FileName=$fileName
@@ -453,8 +438,7 @@ function Invoke-WintainiumProviderIconDiscovery {
 }
 
 Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
- -or
-        $repository -notmatch '^[A-Za-z0-9_.-]+
+ -or $repository -notmatch '^[A-Za-z0-9_.-]+ {
     param(
         [Parameter(Mandatory)][string]$Heading,
         [Parameter(Mandatory)][string]$Body,
@@ -843,54 +827,22 @@ function Invoke-WintainiumProviderIconDiscovery {
 }
 
 Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
- -or
-        [string]::IsNullOrWhiteSpace($tag) -or
-        [string]::IsNullOrWhiteSpace($assetPath)) {
-        return $null
-    }
-
-    $encodedOwner = [Uri]::EscapeDataString($owner)
-    $encodedRepository = [Uri]::EscapeDataString($repository)
-    $encodedTag = [Uri]::EscapeDataString($tag)
-    $apiUri = "https://api.github.com/repos/$encodedOwner/$encodedRepository/releases/tags/$encodedTag"
-
-    if ($ReleaseCache.ContainsKey($apiUri)) {
-        $release = $ReleaseCache[$apiUri]
-    }
+ -or [string]::IsNullOrWhiteSpace($tag) -or [string]::IsNullOrWhiteSpace($assetPath)) { return $null }
+    $apiUri = "https://api.github.com/repos/$([Uri]::EscapeDataString($owner))/$([Uri]::EscapeDataString($repository))/releases/tags/$([Uri]::EscapeDataString($tag))"
+    if ($ReleaseCache.ContainsKey($apiUri)) { $release = $ReleaseCache[$apiUri] }
     else {
         try {
-            $release = Invoke-RestMethod -Method Get -Uri $apiUri -Headers @{
-                Accept = 'application/vnd.github+json'
-                'User-Agent' = 'Wintainium/0.1'
-            } -ErrorAction Stop
-        }
-        catch {
-            $release = [pscustomobject]@{ Assets = @() }
-        }
-
+            $release = Invoke-RestMethod -Method Get -Uri $apiUri -Headers @{ Accept='application/vnd.github+json'; 'User-Agent'='Wintainium/0.1' } -ErrorAction Stop
+        } catch { $release = [pscustomobject]@{ Assets = @() } }
         $ReleaseCache[$apiUri] = $release
     }
-
-    if ($null -eq $release -or -not $release.PSObject.Properties['assets']) {
-        return $null
-    }
-
+    if ($null -eq $release -or -not $release.PSObject.Properties['assets']) { return $null }
     foreach ($asset in @($release.assets)) {
-        if ($null -eq $asset -or
-            -not $asset.PSObject.Properties['browser_download_url'] -or
-            -not $asset.PSObject.Properties['digest']) {
-            continue
-        }
-
-        if (-not [string]::Equals(
-            [string]$asset.browser_download_url,
-            $ArtifactUri.AbsoluteUri,
-            [StringComparison]::OrdinalIgnoreCase)) {
-            continue
-        }
-
+        if ($null -eq $asset -or -not $asset.PSObject.Properties['browser_download_url']) { continue }
+        if ([string]$asset.browser_download_url -ne $ArtifactUri.AbsoluteUri) { continue }
+        if (-not $asset.PSObject.Properties['digest']) { continue }
         $digest = [string]$asset.digest
-        if ($digest -match '(?i)^sha256:([0-9a-f]{64})
+        if ($digest -match '(?i)^sha256:([0-9a-f]{64}) {
     param(
         [Parameter(Mandatory)][string]$Heading,
         [Parameter(Mandatory)][string]$Body,
@@ -1280,14 +1232,9 @@ function Invoke-WintainiumProviderIconDiscovery {
 
 Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
 ) {
-            return [pscustomobject][ordered]@{
-                Algorithm = 'SHA256'
-                Value = $matches[1].ToUpperInvariant()
-                Source = 'GitHubReleaseAssetDigest'
-            }
+            return [pscustomobject][ordered]@{ Algorithm='SHA256'; Value=$matches[1].ToUpperInvariant(); Source='GitHubReleaseAssetDigest' }
         }
     }
-
     return $null
 }
 
