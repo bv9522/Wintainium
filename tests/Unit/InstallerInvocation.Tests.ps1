@@ -137,6 +137,30 @@ Describe 'Wintainium installer invocation preparation' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
         $result.Error.Code | Should -Be 'InstallerInvocationSettingsInvalid'
     }
+    It 'accepts a JSON-imported installer hashtable from the application manifest' {
+        $request = [pscustomobject][ordered]@{
+            OperationId = 'installer-operation'
+            DownloadOperationId = 'download-operation'
+            Installer = @{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '1'
+                settings = @{
+                    silent = $true
+                }
+            }
+            Artifact = $script:request.Artifact
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.IsValid | Should -Be $true
+        $result.Error | Should -Be $null
+        $result.Invocation.PluginId | Should -Be 'Wintainium.installer.exe'
+        $result.Invocation.Settings.silent | Should -Be $true
+    }
+
     It 'rejects a selection whose plugin differs from the request installer' {
         $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.other'; EntryPoint = 'Installer.psm1'; DescriptorPath = $script:descriptorPath }
         $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; ArtifactFormat = 'exe'; Error = $null }
