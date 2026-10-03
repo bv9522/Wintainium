@@ -118,8 +118,6 @@ Describe 'Wintainium application update lifecycle composition' {
             Should -Invoke Invoke-WintainiumReconciliationOperation -Times 0 -Exactly
         }
     }
-}
-
 
     It 'normalizes a download result without status as a failed stage instead of throwing' {
         InModuleScope Wintainium.Core {
@@ -207,3 +205,4 @@ Describe 'Wintainium application update lifecycle composition' {
             Should -Invoke Invoke-WintainiumDownload -Times 1 -Exactly
         }
     }
+}
