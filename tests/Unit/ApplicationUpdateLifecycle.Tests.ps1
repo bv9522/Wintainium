@@ -39,7 +39,7 @@ Describe 'Wintainium application update lifecycle composition' {
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             if (-not $result.IsSuccessful) {
                 $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
@@ -89,7 +89,7 @@ Describe 'Wintainium application update lifecycle composition' {
             Mock Invoke-WintainiumInstallerOperation { throw 'should not execute' }
             Mock Invoke-WintainiumReconciliationOperation { throw 'should not execute' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             if (-not $result.IsSuccessful) {
                 $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
@@ -197,7 +197,7 @@ Describe 'Wintainium application update lifecycle composition' {
                 $malformedDownload
             }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath $request.ManifestPath -StateRoot '/tmp/state' -MachineArchitecture $request.MachineArchitecture -DownloadRoot $request.DownloadRoot
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath $request.ManifestPath -StateRoot '/tmp/state' -MachineArchitecture $request.MachineArchitecture -DownloadRoot $request.DownloadRoot
 
             $result.IsSuccessful | Should -BeFalse
             $result.Error.Code | Should -Be 'OrchestrationStageResultUnsuccessful'
