@@ -59,6 +59,8 @@ Describe 'Wintainium application install decision' {
     }
 }
 
+
+Describe 'Wintainium initial install release and artifact selection' {
     It 'filters disallowed channels and deprecated releases before selecting the highest stable release' {
         InModuleScope Wintainium.Core {
             $manifest = [pscustomobject]@{
@@ -210,6 +212,8 @@ Describe 'Wintainium application install decision' {
         }
     }
 
+
+}
 
 Describe 'Wintainium public application install command' {
     It 'is exported from the Core module' {
