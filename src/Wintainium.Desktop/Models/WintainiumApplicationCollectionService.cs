@@ -17,11 +17,6 @@ internal sealed class WintainiumApplicationCollectionService
         _updateDecision = updateDecision ?? throw new ArgumentNullException(nameof(updateDecision));
     }
 
-internal sealed record WintainiumApplicationRefreshResult(
-    WintainiumApplicationModel Application,
-    IReadOnlyList<WintainiumOperationDiagnostic> Errors,
-    IReadOnlyList<WintainiumOperationDiagnostic> Warnings);
-
     /// <summary>
     /// Loads the tracked application collection without performing per-application
     /// reconciliation or live release discovery. This is intentionally fast so the
