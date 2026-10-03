@@ -16,13 +16,13 @@ Describe 'Wintainium GUI-facing public boundary' {
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
+            'Invoke-WintainiumApplicationInstall'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationReconciliation'
             'Invoke-WintainiumApplicationUpdate'
-            'Invoke-WintainiumApplicationInstall'
-            'Set-WintainiumApplicationReconciliationSettings'
-            'Set-WintainiumApplicationIconOverride'
             'Remove-WintainiumApplication'
+            'Set-WintainiumApplicationIconOverride'
+            'Set-WintainiumApplicationReconciliationSettings'
             'Test-WintainiumApplicationDefinition'
         )
     }
