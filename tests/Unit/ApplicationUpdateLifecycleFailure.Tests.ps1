@@ -37,7 +37,7 @@ Describe 'Wintainium application update lifecycle failure boundaries' {
             Mock Invoke-WintainiumInstallerOperation { throw 'installer must not execute after verification failure' }
             Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute after verification failure' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
