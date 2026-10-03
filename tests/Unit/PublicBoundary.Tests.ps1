@@ -16,6 +16,9 @@ Describe 'Wintainium public Core boundary' {
             'Get-WintainiumManifest'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationUpdate'
+            'Invoke-WintainiumApplicationInstall'
+            'Set-WintainiumApplicationIconOverride'
+            'Remove-WintainiumApplication'
             'Test-WintainiumApplicationDefinition'
         ) | Sort-Object
 
