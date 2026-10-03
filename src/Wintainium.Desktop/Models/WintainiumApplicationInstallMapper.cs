@@ -19,6 +19,7 @@ internal static class WintainiumApplicationInstallMapper
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
             LogEvents: Diagnostics(result, "LogEvents"),
+            TroubleshootingDiagnostics: Diagnostics(result, "TroubleshootingDiagnostics"),
             Error: Diagnostic(result, "Error"),
             OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
     }
