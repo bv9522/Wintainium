@@ -86,6 +86,57 @@ WinUI.
 - avoid implying that the source page itself must contain all verification
   evidence
 
+### Phase 14.5 — First-Install Capability
+
+**Current engineering sub-phase — 14.5A in progress.**
+
+Extend Wintainium from update execution to first-install execution by integrating
+with the existing lifecycle engine rather than creating a second installer
+architecture.
+
+#### 14.5A — Core Install Operation
+- expose `Invoke-WintainiumApplicationInstall`
+- reuse the existing lifecycle execution stages
+- establish a structured first-install result contract
+- preserve Core-owned cancellation, diagnostics, installer invocation, and authoritative reconciliation
+
+#### 14.5B — Initial Release & Artifact Selection
+- deterministic selection of an installable release
+- architecture/platform compatibility
+- artifact eligibility and installer compatibility
+- ambiguous or indeterminate selection handling
+
+#### 14.5C — Installation Orchestration
+- download
+- verification
+- installer selection
+- elevation/native installer execution
+- authoritative reconciliation
+- failure and cancellation semantics
+
+#### 14.5D — Real-World Installation Validation
+- real uninstalled application installation
+- UAC/elevation
+- authoritative post-install state
+- subsequent update detection
+
+#### 14.5E — Desktop Integration
+- Install action
+- lifecycle presentation
+- refresh after reconciliation
+- action availability based on Core state
+
+#### 14.5F — 14.5 Lock
+- Core regression
+- real installation proof
+- architecture audit
+- transition back to Phase 14 GUI productization
+
+### 14.5 exit criteria
+- a first-install operation exists as a public Core boundary
+- install and update share the same download, verification, installer, and reconciliation execution path
+- no parallel installer engine or GUI-owned lifecycle logic is introduced
+
 ### 14F — Update Experience
 
 - present Core lifecycle activity before/after native installer execution
