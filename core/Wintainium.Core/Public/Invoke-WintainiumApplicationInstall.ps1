@@ -68,5 +68,5 @@ function Invoke-WintainiumApplicationInstall {
     }
 
     $lifecycleResult = Invoke-WintainiumApplicationLifecycle @lifecycleParameters
-    ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycleResult
+    ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycleResult
 }
