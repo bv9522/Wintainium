@@ -6,10 +6,18 @@ function New-WintainiumDownloadRequest {
     )
 
     if ($null -eq $UpdateDecision) { throw [System.ArgumentNullException]::new('UpdateDecision') }
-    foreach ($requiredProperty in @('Status', 'IsUpdateAvailable', 'SelectedRelease', 'SelectedArtifact')) {
-        if (-not $UpdateDecision.PSObject.Properties[$requiredProperty]) { throw [System.ArgumentException]::new("UpdateDecision is missing required property '$requiredProperty'.") }
+    foreach ($requiredProperty in @('Status', 'SelectedRelease', 'SelectedArtifact')) {
+        if (-not $UpdateDecision.PSObject.Properties[$requiredProperty]) { throw [System.ArgumentException]::new("Lifecycle decision is missing required property '$requiredProperty'.") }
     }
-    if ([string]$UpdateDecision.Status -ne 'UpdateAvailable' -or -not [bool]$UpdateDecision.IsUpdateAvailable) { throw [System.ArgumentException]::new('Only an UpdateAvailable decision can be converted into a download request.') }
+
+    $isUpdateAvailable = $UpdateDecision.PSObject.Properties['IsUpdateAvailable'] -and [bool]$UpdateDecision.IsUpdateAvailable
+    $isInstallAvailable = $UpdateDecision.PSObject.Properties['IsInstallAvailable'] -and [bool]$UpdateDecision.IsInstallAvailable
+    $isDownloadableDecision = ([string]$UpdateDecision.Status -eq 'UpdateAvailable' -and $isUpdateAvailable) -or
+        ([string]$UpdateDecision.Status -eq 'InstallAvailable' -and $isInstallAvailable)
+
+    if (-not $isDownloadableDecision) {
+        throw [System.ArgumentException]::new('Only an UpdateAvailable or InstallAvailable decision can be converted into a download request.')
+    }
     if ($null -eq $UpdateDecision.SelectedRelease) { throw [System.ArgumentException]::new('An UpdateAvailable decision must contain a selected release.') }
     if ($null -eq $UpdateDecision.SelectedArtifact) { throw [System.ArgumentException]::new('An UpdateAvailable decision must contain a selected artifact.') }
 
@@ -24,6 +32,7 @@ function New-WintainiumDownloadRequest {
     [pscustomobject][ordered]@{
         OperationId = $resolvedOperationId
         UpdateDecision = $UpdateDecision
+        Decision = $UpdateDecision
         SelectedRelease = $UpdateDecision.SelectedRelease
         SelectedArtifact = $UpdateDecision.SelectedArtifact
     }
