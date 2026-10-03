@@ -367,7 +367,7 @@ public sealed partial class MainWindow : Window
         try
         {
             var result = await _services.ApplicationCollection.RefreshApplicationAsync(
-                application, cancellationToken).ConfigureAwait(false);
+                application, cancellationToken);
 
             if (!cancellationToken.IsCancellationRequested)
                 SetApplicationCollectionItem(result.Application);
