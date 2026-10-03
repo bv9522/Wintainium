@@ -30,7 +30,7 @@ Describe 'Wintainium GitHub provider icon discovery' {
             }
         } -ModuleName Wintainium.provider.github-releases
 
-        $result = Invoke-WintainiumProviderIconDiscovery -Request $script:request
+        $result = Wintainium.provider.github-releases\Invoke-WintainiumProviderIconDiscovery -Request $script:request
 
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'IconResolved'
@@ -49,7 +49,7 @@ Describe 'Wintainium GitHub provider icon discovery' {
             }
         } -ModuleName Wintainium.provider.github-releases
 
-        $result = Invoke-WintainiumProviderIconDiscovery -Request $script:request
+        $result = Wintainium.provider.github-releases\Invoke-WintainiumProviderIconDiscovery -Request $script:request
 
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'NoTrustedIcon'
@@ -61,7 +61,7 @@ Describe 'Wintainium GitHub provider icon discovery' {
             [pscustomobject]@{ homepage = $null }
         } -ModuleName Wintainium.provider.github-releases
 
-        $result = Invoke-WintainiumProviderIconDiscovery -Request $script:request
+        $result = Wintainium.provider.github-releases\Invoke-WintainiumProviderIconDiscovery -Request $script:request
 
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'NoTrustedIcon'
@@ -84,7 +84,7 @@ Describe 'Wintainium official download page provider icon discovery' {
             Source = [pscustomobject]@{ Homepage = 'https://example.com/downloads' }
         }
 
-        $result = Invoke-WintainiumProviderIconDiscovery -Request $request
+        $result = Wintainium.provider.official-download-page\Invoke-WintainiumProviderIconDiscovery -Request $request
 
         $result.IsSuccessful | Should -Be $true
         $result.Status | Should -Be 'IconResolved'
