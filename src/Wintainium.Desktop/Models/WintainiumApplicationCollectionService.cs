@@ -17,80 +17,92 @@ internal sealed class WintainiumApplicationCollectionService
         _updateDecision = updateDecision ?? throw new ArgumentNullException(nameof(updateDecision));
     }
 
-    public async Task<WintainiumApplicationCollectionResult> LoadAsync(string manifestRoot, bool recurse = true, string? schemaPath = null, CancellationToken cancellationToken = default)
+internal sealed record WintainiumApplicationRefreshResult(
+    WintainiumApplicationModel Application,
+    IReadOnlyList<WintainiumOperationDiagnostic> Errors,
+    IReadOnlyList<WintainiumOperationDiagnostic> Warnings);
+
+    /// <summary>
+    /// Loads the tracked application collection without performing per-application
+    /// reconciliation or live release discovery. This is intentionally fast so the
+    /// Dashboard can present the collection before network and reconciliation work runs.
+    /// </summary>
+    public async Task<WintainiumApplicationCollectionResult> LoadAsync(
+        string manifestRoot,
+        bool recurse = true,
+        string? schemaPath = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(manifestRoot))
             throw new ArgumentException("The manifest collection path is required.", nameof(manifestRoot));
 
-        var invocation = await _coreClient.GetManifestsAsync(manifestRoot, recurse, schemaPath, cancellationToken).ConfigureAwait(false);
-        var result = WintainiumCoreInvocationGuard.RequireSingleResult(invocation, "Get-WintainiumManifest", cancellationToken);
-        var collection = WintainiumApplicationModelMapper.MapManifestResult(result);
-        var applications = new List<WintainiumApplicationModel>();
-        var errors = collection.Errors.ToList();
-        var warnings = collection.Warnings.ToList();
+        var invocation = await _coreClient.GetManifestsAsync(
+            manifestRoot, recurse, schemaPath, cancellationToken).ConfigureAwait(false);
 
-        foreach (var application in collection.Applications)
+        var result = WintainiumCoreInvocationGuard.RequireSingleResult(
+            invocation, "Get-WintainiumManifest", cancellationToken);
+
+        return WintainiumApplicationModelMapper.MapManifestResult(result);
+    }
+
+    /// <summary>
+    /// Refreshes one application. Multiple callers may run independently; the
+    /// desktop PowerShell host continues to serialize individual Core invocations.
+    /// </summary>
+    public async Task<WintainiumApplicationRefreshResult> RefreshApplicationAsync(
+        WintainiumApplicationModel application,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        if (string.IsNullOrWhiteSpace(application.ManifestPath))
+            throw new ArgumentException("The application manifest path is required.", nameof(application));
+
+        var errors = new List<WintainiumOperationDiagnostic>();
+        var warnings = new List<WintainiumOperationDiagnostic>();
+        var withState = application;
+
+        try
         {
-            var withState = application;
-            try
-            {
-                // Refresh authoritative installed evidence before presenting the collection.
-                var refreshResult = await _installedState.RefreshAsync(
-                    application.ManifestPath!,
-                    WintainiumDesktopPaths.InstalledStateRoot,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            var refreshResult = await _installedState.RefreshAsync(
+                application.ManifestPath, WintainiumDesktopPaths.InstalledStateRoot,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                if (refreshResult.IsSuccessful)
-                    withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, refreshResult.State);
+            if (refreshResult.IsSuccessful)
+                withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, refreshResult.State);
 
-                errors.AddRange(refreshResult.Errors);
-                warnings.AddRange(refreshResult.Warnings);
+            errors.AddRange(refreshResult.Errors);
+            warnings.AddRange(refreshResult.Warnings);
 
-                // Read the persisted authoritative state after reconciliation.
-                var installedStateResult = await _installedState.GetAsync(
-                    WintainiumDesktopPaths.InstalledStateRoot,
-                    application.ApplicationId,
-                    cancellationToken).ConfigureAwait(false);
+            var installedStateResult = await _installedState.GetAsync(
+                WintainiumDesktopPaths.InstalledStateRoot, application.ApplicationId,
+                cancellationToken).ConfigureAwait(false);
 
-                if (installedStateResult.IsSuccessful)
-                    withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, installedStateResult.State);
+            if (installedStateResult.IsSuccessful)
+                withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, installedStateResult.State);
 
-                errors.AddRange(installedStateResult.Errors);
-                warnings.AddRange(installedStateResult.Warnings);
+            errors.AddRange(installedStateResult.Errors);
+            warnings.AddRange(installedStateResult.Warnings);
 
-                var decisionResult = await _updateDecision.EvaluateAsync(
-                    application.ManifestPath!,
-                    GetMachineArchitecture(),
-                    cancellationToken).ConfigureAwait(false);
+            var decisionResult = await _updateDecision.EvaluateAsync(
+                application.ManifestPath, GetMachineArchitecture(),
+                cancellationToken).ConfigureAwait(false);
 
-                withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, decisionResult.InstalledState);
-                withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(withState, decisionResult);
-                errors.AddRange(decisionResult.Errors);
-                warnings.AddRange(decisionResult.Warnings);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                errors.Add(new WintainiumOperationDiagnostic("ApplicationCollectionRefreshFailed", application.ManifestPath, ex.Message));
-            }
-
-            applications.Add(withState);
+            withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, decisionResult.InstalledState);
+            withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(withState, decisionResult);
+            errors.AddRange(decisionResult.Errors);
+            warnings.AddRange(decisionResult.Warnings);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errors.Add(new WintainiumOperationDiagnostic("ApplicationRefreshFailed", application.ManifestPath, ex.Message));
         }
 
-        var isSuccessful = collection.IsSuccessful && errors.Count == 0;
-        var operationState = isSuccessful ? collection.OperationState : WintainiumOperationState.Failed;
-
-        return collection with
-        {
-            IsSuccessful = isSuccessful,
-            Applications = applications,
-            Errors = errors,
-            Warnings = warnings,
-            OperationState = operationState
-        };
+        return new WintainiumApplicationRefreshResult(withState, errors, warnings);
     }
 
     private static string GetMachineArchitecture() =>
