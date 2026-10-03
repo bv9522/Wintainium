@@ -76,7 +76,13 @@ function Invoke-WintainiumInstallerProcess {
         }
         catch {
             $win32Exception = $_.Exception
-            if ($win32Exception -is [System.ComponentModel.Win32Exception] -and $win32Exception.NativeErrorCode -eq 740) {
+            while ($null -ne $win32Exception -and $win32Exception -isnot [System.ComponentModel.Win32Exception] -and $null -ne $win32Exception.InnerException) {
+                $win32Exception = $win32Exception.InnerException
+            }
+
+            $nativeErrorCode = if ($win32Exception -is [System.ComponentModel.Win32Exception]) { $win32Exception.NativeErrorCode } else { $null }
+
+            if ($nativeErrorCode -eq 740) {
                 if ($null -ne $EnvironmentVariables -and $EnvironmentVariables.Count -gt 0) {
                     return [pscustomobject][ordered]@{
                         Status='Failed'
@@ -105,7 +111,13 @@ function Invoke-WintainiumInstallerProcess {
                 }
                 catch {
                     $elevatedException = $_.Exception
-                    if ($elevatedException -is [System.ComponentModel.Win32Exception] -and $elevatedException.NativeErrorCode -eq 1223) {
+                    while ($null -ne $elevatedException -and $elevatedException -isnot [System.ComponentModel.Win32Exception] -and $null -ne $elevatedException.InnerException) {
+                        $elevatedException = $elevatedException.InnerException
+                    }
+
+                    $elevatedNativeErrorCode = if ($elevatedException -is [System.ComponentModel.Win32Exception]) { $elevatedException.NativeErrorCode } else { $null }
+
+                    if ($elevatedNativeErrorCode -eq 1223) {
                         return [pscustomobject][ordered]@{
                             Status='Failed'
                             FailureKind='ElevationDenied'
