@@ -1,59 +1,108 @@
 # Wintainium
 
 Wintainium is an open, modular Windows software manager inspired by Obtainium.
-It helps users install and update applications from official upstream sources
-such as GitHub Releases and vendor download pages.
+It discovers applications from upstream sources, determines whether updates are
+needed, acquires and verifies artifacts, installs them through pluggable
+installers, and reconciles authoritative installed state.
 
-The PowerShell engine is the primary product. A future C# GUI will call the
-engine rather than contain its own package-management logic.
+Wintainium is now a **PowerShell Core engine with a WinUI 3 desktop client**.
+The desktop presents the engine; it does not become a second lifecycle engine.
 
-## Status
+## Current status
 
-Phases 1–13.5 are implemented through the current production installer/reconciliation architecture. Phase 13.5 is in final real-application validation; Phase 14 GUI productization is in progress.
+**Phase 14 — GUI Productization is in progress.**
 
-The current public PowerShell surface consists of six commands:
-`Get-WintainiumManifest`, `Get-WintainiumApplicationInstalledState`,
-`Test-WintainiumApplicationDefinition`, `Get-WintainiumApplicationRelease`,
-`Invoke-WintainiumApplicationUpdate`, and
-`Invoke-WintainiumApplicationOnboarding`.
+The Core lifecycle is production-proven through a real 7-Zip update:
+manifest validation → release discovery → update decision → download →
+verification → installer selection → native installer execution/elevation →
+post-install reconciliation → authoritative installed-state refresh.
 
-The public update command is a presentation-neutral boundary over the complete
-Core-owned lifecycle. Callers supply documented application inputs; Core owns
-orchestration, provider interaction, download and verification, installer
-execution, reconciliation, cancellation, and managed installed-state
-persistence.
+Phase 13.5 production packaging is complete. The desktop client now provides
+the Dashboard/application collection, Add Software onboarding, application
+Details, release/update presentation, operation diagnostics, automatic/custom
+application icons, and Remove Software from the Wintainium collection.
+
+The current Phase 14 work is productization rather than proving the underlying
+lifecycle. Remaining work is concentrated on onboarding polish, the update
+experience, settings productization, visual refinement, accessibility and
+interaction auditing, and final integration/lock.
+
+## Architecture
+
+The governing boundaries are:
+
+> **Manifest describes. Provider discovers. Core decides. Download obtains.
+> Verification establishes trust. Installer applies. Orchestration coordinates.
+> UX presents.**
+
+And:
+
+> **The interface presents the engine; it does not become the engine.**
+
+PowerShell Core remains authoritative for lifecycle, policy, provider,
+installer, verification, reconciliation, cancellation, and managed installed
+state. WinUI consumes documented structured results through the C# adapter and
+presentation/application services.
+
+The architecture deliberately does not pretend that a native installer has a
+Wintainium-owned progress bar. Wintainium reports its own lifecycle activity
+before and after native installer execution and reconciles authoritative state
+afterward.
+
+## Production capabilities
+
+- GitHub Releases source provider
+- Official download-page source provider
+- EXE, MSI, portable ZIP, and MSIX installer plugins
+- Windows installed-application reconciliation
+- Mandatory artifact verification
+- Authoritative managed installed-state persistence
+- Source URL application onboarding
+- Structured update status and end-to-end update execution
+- User-selectable application icon overrides while preserving automatic icon discovery
+- Removal of an application from the Wintainium collection without conflating it with uninstalling Windows software
+- WinUI 3 Dashboard and Application Details presentation
 
 ## Repository map
 
-- `docs/` — design, CLI, user, and contributor documentation.
-- `core/` — PowerShell engine module.
-- `plugins/` — independently loadable source and installer plugins.
-- `manifests/` — application definitions in JSON.
-- `schemas/` — authoritative JSON Schemas.
-- `tests/` — automated tests.
+- `core/` — PowerShell engine and public contracts
+- `src/Wintainium.Desktop/` — WinUI 3 desktop client
+- `plugins/` — provider, installer, and reconciliation plugins
+- `manifests/` — application definitions
+- `schemas/` — authoritative JSON Schemas
+- `tests/` — automated regression coverage
+- `docs/` — user, architecture, contract, and development documentation
 
-## User documentation
+## Documentation
 
-- [`docs/GettingStarted.md`](docs/GettingStarted.md) — first-use walkthrough.
-- [`docs/CLI.md`](docs/CLI.md) — current public command reference.
-- [`docs/ManifestAuthoring.md`](docs/ManifestAuthoring.md) — manifest fields,
-  policies, examples, and validation guidance.
-- [`docs/Diagnostics.md`](docs/Diagnostics.md) — structured errors, operation
-  correlation, and troubleshooting guidance.
-- [`docs/InstallerContract.md`](docs/InstallerContract.md) — production installer
-  capabilities, selection boundaries, invocation rules, and security limits.
-- [`docs/PublicApplicationUpdateResult.md`](docs/PublicApplicationUpdateResult.md) —
-  public update result contract.
+- [Getting Started](docs/GettingStarted.md)
+- [CLI Reference](docs/CLI.md)
+- [Manifest Authoring](docs/ManifestAuthoring.md)
+- [Architecture](ARCHITECTURE.md)
+- [Project Charter](PROJECT.md)
+- [Roadmap](ROADMAP.md)
+- [Development Guidelines](docs/DEVELOPMENT.md)
+- [Application Onboarding Contract](docs/ApplicationOnboardingContract.md)
+- [Public PowerShell Contract](docs/PublicPowerShellContract.md)
+- [Release Packaging](docs/ReleasePackaging.md)
 
-## Developer and architecture documentation
+## Desktop development
 
-See [PROJECT.md](PROJECT.md), [ROADMAP.md](ROADMAP.md), and
-[ARCHITECTURE.md](ARCHITECTURE.md) for the current direction. Contributor and
-contract documentation lives under `docs/`.
+The production desktop project is under `src/Wintainium.Desktop`.
 
-The production plugin set currently includes GitHub Releases and official
-download-page providers, four installer implementations (EXE, MSI, portable
-ZIP, and MSIX), and the Windows installed-application reconciliation plugin.
-Installer selection, artifact selection, verification, reconciliation, and
-lifecycle policy remain Core-owned boundaries; the desktop client presents
-those results rather than implementing them.
+Release build:
+
+```powershell
+dotnet build .\src\Wintainium.Desktop\Wintainium.Desktop.csproj -c Release
+```
+
+The desktop targets .NET 10 / WinUI 3 and hosts Wintainium.Core in-process
+through Microsoft.PowerShell.SDK. The GUI must not call private Core functions,
+providers, installers, or orchestration stages directly.
+
+## Current direction
+
+Phase 14 is the final major productization phase before durable application
+lifecycle work. The roadmap then moves through persistent application lifecycle,
+plugin ecosystem/extensibility, reliability/security/recovery, and release
+engineering toward Wintainium 1.0.
