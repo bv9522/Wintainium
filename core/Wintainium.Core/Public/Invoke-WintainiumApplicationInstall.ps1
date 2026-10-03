@@ -41,6 +41,18 @@ PSCustomObject. The command returns the same presentation-neutral lifecycle
 result shape used by the update execution boundary: OperationId,
 IsSuccessful, WasCancelled, Status, ApplicationId, Stages, Errors, Warnings,
 LogEvents, and Error.
+
+.EXAMPLE
+Invoke-WintainiumApplicationInstall -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads'
+
+Executes the first-install lifecycle using the default plugin and schema
+locations and the default installer timeout.
+
+.EXAMPLE
+Invoke-WintainiumApplicationInstall -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' -InstallerTimeoutMilliseconds 120000 -CancellationToken $cancellationToken
+
+Executes the first-install lifecycle with an explicit installer timeout and
+cancellation token.
 #>
 function Invoke-WintainiumApplicationInstall {
     [CmdletBinding()]
