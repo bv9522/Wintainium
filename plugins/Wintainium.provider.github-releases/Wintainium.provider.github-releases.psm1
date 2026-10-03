@@ -384,4 +384,82 @@ function Invoke-WintainiumProviderSourceResolution {
     New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $true -Status 'Resolved' -Source $source
 }
 
+function New-GitHubIconDiscoveryResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [string]$IconUri = $null,
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @(),
+        [object[]]$LogEvents = @()
+    )
+
+    [pscustomobject][ordered]@{
+        OperationId=$OperationId
+        IsSuccessful=$IsSuccessful
+        Status=$Status
+        IconUri=$IconUri
+        Errors=@($Errors)
+        Warnings=@($Warnings)
+        LogEvents=@($LogEvents)
+    }
+}
+
+function Invoke-WintainiumProviderIconDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $settings=$Request.Source.ProviderSettings
+    $repository=if ($settings -is [System.Collections.IDictionary]) { [string]$settings.repository } else { [string]$settings.repository }
+
+    if ([string]::IsNullOrWhiteSpace($repository)) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try {
+        $repositoryResponse=Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repository" -Headers @{
+            Accept='application/vnd.github+json'
+            'User-Agent'='Wintainium/0.1'
+        } -ErrorAction Stop
+    }
+    catch {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    $homepageValue=if ($null -ne $repositoryResponse.PSObject.Properties['homepage']) { [string]$repositoryResponse.homepage } else { '' }
+    if ([string]::IsNullOrWhiteSpace($homepageValue)) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try { $homepage=[Uri]$homepageValue } catch {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+    if (-not $homepage.IsAbsoluteUri -or $homepage.Scheme -notin @('http','https')) {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try {
+        $response=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop
+    }
+    catch {
+        return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    foreach ($link in @($response.Links)) {
+        if ($null -eq $link) { continue }
+        $rel=[string]$link.rel
+        $href=[string]$link.href
+        if ([string]::IsNullOrWhiteSpace($href)) { continue }
+        if ($rel -notmatch '(?i)(^|\s)(icon|shortcut|apple-touch-icon)(\s|$)') { continue }
+        try { $iconUri=[Uri]::new($homepage,$href) } catch { continue }
+        if ($iconUri.Scheme -in @('http','https') -and $iconUri.Host -eq $homepage.Host) {
+            return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'IconResolved' -IconUri $iconUri.AbsoluteUri
+        }
+    }
+
+    New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+}
+
 Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery
