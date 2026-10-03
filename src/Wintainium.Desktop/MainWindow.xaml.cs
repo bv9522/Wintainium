@@ -14,6 +14,7 @@ public sealed partial class MainWindow : Window
     private readonly Dictionary<string, ApplicationDetailsWindow> _applicationDetailsWindows = new(StringComparer.OrdinalIgnoreCase);
     private SettingsWindow? _settingsWindow;
     private bool _collectionLoadInProgress;
+    private CancellationTokenSource? _collectionRefreshCancellation;
 
     public MainWindow()
     {
@@ -295,30 +296,44 @@ public sealed partial class MainWindow : Window
     private async Task RefreshApplicationCollectionAsync()
     {
         if (_collectionLoadInProgress)
-        {
             return;
-        }
+
+        _collectionRefreshCancellation?.Cancel();
+        _collectionRefreshCancellation?.Dispose();
+        _collectionRefreshCancellation = new CancellationTokenSource();
+        var cancellationToken = _collectionRefreshCancellation.Token;
 
         var selectedApplicationId = GetSelectedApplicationId();
         _collectionLoadInProgress = true;
         UpdateCollectionVisibility();
+
         try
         {
             Directory.CreateDirectory(WintainiumDesktopPaths.ManifestRoot);
 
+            // Stage 1: load only the manifest-backed collection and present it immediately.
             var result = await _services.ApplicationCollection.LoadAsync(
                 WintainiumDesktopPaths.ManifestRoot,
-                cancellationToken: CancellationToken.None);
+                cancellationToken: cancellationToken);
 
             SetApplicationCollection(result.Applications);
             RestoreSelectedApplication(selectedApplicationId);
 
+            _collectionLoadInProgress = false;
+            UpdateCollectionVisibility();
+
             if (!result.IsSuccessful && result.Errors.Count > 0)
             {
-                await ShowOperationFailureAsync(
-                    "Software collection could not be loaded",
-                    result.Errors);
+                await ShowOperationFailureAsync("Software collection could not be loaded", result.Errors);
+                return;
             }
+
+            // Stage 2: independently refresh every application. A slow provider
+            // cannot block the Dashboard or another application's refresh.
+            _ = RefreshApplicationStatesAsync(result.Applications, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
         catch (Exception exception)
         {
@@ -329,6 +344,47 @@ public sealed partial class MainWindow : Window
             _collectionLoadInProgress = false;
             UpdateCollectionVisibility();
         }
+    }
+
+    private async Task RefreshApplicationStatesAsync(
+        IReadOnlyList<WintainiumApplicationModel> applications,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.WhenAll(applications.Select(
+                application => RefreshSingleApplicationAsync(application, cancellationToken))).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task RefreshSingleApplicationAsync(
+        WintainiumApplicationModel application,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _services.ApplicationCollection.RefreshApplicationAsync(
+                application, cancellationToken).ConfigureAwait(false);
+
+            if (!cancellationToken.IsCancellationRequested)
+                SetApplicationCollectionItem(result.Application);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            // Keep the manifest-backed card visible if a background refresh fails.
+        }
+    }
+
+    private void SetApplicationCollectionItem(WintainiumApplicationModel application)
+    {
+        _applicationCollection.UpdateApplication(application);
+        UpdateCollectionVisibility();
     }
 
     private async void AddSoftwareButton_Click(object sender, RoutedEventArgs e)
