@@ -43,6 +43,8 @@ projection containing:
 - `Error`
 - `TroubleshootingDiagnostics` — failure-only execution breadcrumbs for diagnosing lifecycle failures; empty on successful or cancelled operations.
 
+The public result also includes `TroubleshootingDiagnostics`, an empty array for successful or cancelled operations and a failure-only collection of concise execution breadcrumbs when the lifecycle fails. These diagnostics are intended for troubleshooting and do not alter lifecycle decisions or verification behavior.
+
 The public result is not a pass-through of private lifecycle state.
 
 ## Install result
