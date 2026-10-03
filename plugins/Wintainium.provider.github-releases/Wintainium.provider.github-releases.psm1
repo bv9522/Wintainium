@@ -186,7 +186,7 @@ function ConvertFrom-GitHubRelease {
 
     [pscustomobject][ordered]@{
         ReleaseId = [string]$Release.id
-        Version = [string]$Release.tag_name
+        Version = ConvertTo-GitHubReleaseVersion -TagName ([string]$Release.tag_name)
         Channel = if ([bool]$Release.prerelease) { 'prerelease' } else { 'stable' }
         PublishedAt = $publishedAt
         Artifacts = @($artifacts)
