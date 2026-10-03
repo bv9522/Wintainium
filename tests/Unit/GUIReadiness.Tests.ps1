@@ -128,10 +128,10 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'keeps the desktop host install allowlist aligned with the public Core contract' {
-        $host = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Engine\WintainiumPowerShellHost.cs') -Raw
+        $desktopHost = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Engine\WintainiumPowerShellHost.cs') -Raw
         $contract = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\docs\PublicPowerShellContract.md') -Raw
 
-        $host | Should -Match 'Invoke-WintainiumApplicationInstall'
+        $desktopHost | Should -Match 'Invoke-WintainiumApplicationInstall'
         $contract | Should -Match 'Invoke-WintainiumApplicationInstall'
     }
 
@@ -142,8 +142,8 @@ Describe 'Wintainium GUI-facing public boundary' {
         $guard | Should -Match 'PowerShell error diagnostics'
     }
     It 'loads the Dashboard collection before starting independent application refreshes' {
-        $collectionService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopModelsWintainiumApplicationCollectionService.cs') -Raw
-        $mainWindow = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopMainWindow.xaml.cs') -Raw
+        $collectionService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumApplicationCollectionService.cs') -Raw
+        $mainWindow = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\MainWindow.xaml.cs') -Raw
 
         $collectionService | Should -Match 'RefreshApplicationAsync'
         $mainWindow | Should -Match 'RefreshApplicationStatesAsync'
