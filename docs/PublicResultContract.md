@@ -21,8 +21,7 @@ Collection-valued properties remain arrays, including when empty.
 
 The current exported surface includes manifest discovery, installed-state
 observation/reconciliation, reconciliation configuration, application
-validation, release discovery, update-status observation, end-to-end update
-execution, onboarding, icon override management, and application removal.
+validation, release discovery, update-status observation, end-to-end update and first-install execution, onboarding, icon override management, and application removal.
 
 The exact export list is authoritative in `core/Wintainium.Core/Wintainium.Core.psd1`
 and `Wintainium.Core.psm1`.
@@ -44,6 +43,10 @@ projection containing:
 - `Error`
 
 The public result is not a pass-through of private lifecycle state.
+
+## Install result
+
+`Invoke-WintainiumApplicationInstall` returns the same presentation-neutral lifecycle projection used by the update execution boundary. Its lifecycle stages are shared with update execution; the decision stage establishes whether a deterministic installable release exists for an application whose authoritative state is `NotInstalled`.
 
 ## Update-status result
 
