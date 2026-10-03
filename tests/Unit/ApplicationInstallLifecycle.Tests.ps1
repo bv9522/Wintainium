@@ -100,7 +100,7 @@ Describe 'Wintainium public application install command' {
                 $MachineArchitecture -eq 'x64' -and
                 $DownloadRoot -eq 'C:downloads'
             }
-            Should -Invoke ConvertTo-WintainiumPublicApplicationUpdateResult -Times 1 -Exactly
+            Should -Invoke ConvertTo-WintainiumPublicApplicationLifecycleResult -Times 1 -Exactly
         }
     }
 }
