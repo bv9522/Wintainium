@@ -141,4 +141,15 @@ Describe 'Wintainium GUI-facing public boundary' {
         $guard | Should -Match 'invocation.Errors'
         $guard | Should -Match 'PowerShell error diagnostics'
     }
+    It 'loads the Dashboard collection before starting independent application refreshes' {
+        $collectionService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopModelsWintainiumApplicationCollectionService.cs') -Raw
+        $mainWindow = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopMainWindow.xaml.cs') -Raw
+
+        $collectionService | Should -Match 'RefreshApplicationAsync'
+        $mainWindow | Should -Match 'RefreshApplicationStatesAsync'
+        $mainWindow | Should -Match 'Task\.WhenAll'
+        $mainWindow | Should -Match 'SetApplicationCollection\(result\.Applications\)'
+        $mainWindow | Should -Match 'RefreshApplicationAsync'
+    }
+
 }
