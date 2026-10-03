@@ -104,3 +104,58 @@ Describe 'Wintainium public application install command' {
         }
     }
 }
+
+
+Describe 'Wintainium shared lifecycle install execution' {
+    It 'uses the existing download, verification, installer, and reconciliation stages for a first install' {
+        InModuleScope Wintainium.Core {
+            $operationId = [guid]::NewGuid().ToString()
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Source=[pscustomobject]@{pluginId='provider';requiredContractVersion='1';settings=@{}}
+                Installer=[pscustomobject]@{pluginId='installer';requiredContractVersion='1';settings=@{}}
+                Reconciliation=[pscustomobject]@{pluginId='reconciliation';requiredContractVersion='1';settings=@{}}
+                Release=[pscustomobject]@{channel='stable'}
+                Artifact=[pscustomobject]@{formats=@('exe');architectures=@('x64');allowUnknownArchitecture=$false}
+            }
+            $provider = [pscustomobject]@{PluginId='provider';PluginType='Provider'}
+            $installer = [pscustomobject]@{PluginId='installer';PluginType='Installer'}
+            $reconciliationPlugin = [pscustomobject]@{PluginId='reconciliation';PluginType='Reconciliation'}
+            $release = [pscustomobject]@{OperationId=$operationId;IsSuccessful=$true;Status='DiscoveryCompleted';Releases=@([pscustomobject]@{ReleaseId='r1';Version='1.0.0';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://example.test/app.exe';Format='exe';Architecture='x64'})});Errors=@();Warnings=@();LogEvents=@()}
+            $decision = [pscustomobject]@{OperationId=$operationId;Status='InstallAvailable';IsInstallAvailable=$true;SelectedRelease=$release.Releases[0];SelectedArtifact=$release.Releases[0].Artifacts[0]}
+            $download = [pscustomobject]@{OperationId=$operationId;Status='Downloaded';Uri='https://example.test/app.exe';FileName='app.exe';DestinationPath='C:downloadsapp.exe';BytesWritten=10}
+            $verification = [pscustomobject]@{OperationId=$operationId;Status='Verified';Algorithm='SHA256';ExpectedHash=('a'*64);ActualHash=('a'*64);DestinationPath='C:downloadsapp.exe'}
+            $selection = [pscustomobject]@{IsSelected=$true;InstallerPlugin=$installer;ArtifactFormat='exe'}
+            $installation = [pscustomobject]@{OperationId=$operationId;Status='Completed';ExitCode=0}
+            $reconciliationResult = [pscustomobject]@{OperationId=$operationId;IsSuccessful=$true;Status='Reconciled';Evidence=[pscustomobject]@{ApplicationId='example.app';InstallationState='Installed';Version='1.0.0';VersionSource='Fixture';Architecture='x64';Channel='stable';InstallationLocation='C:Program FilesExample';EvidenceSource='Fixture'};Errors=@();Warnings=@();LogEvents=@()}
+
+            Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{IsValid=$true;Request=[pscustomobject]@{OperationId=$operationId;ManifestPath='C:example.json';MachineArchitecture='x64';DownloadRoot='C:downloads'};Errors=@()} }
+            Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{OperationId=$operationId;IsValid=$true;Manifest=$manifest;ProviderPlugin=$provider;InstallerPlugin=$installer;ReconciliationPlugin=$reconciliationPlugin;Errors=@();Warnings=@();LogEvents=@()} }
+            Mock Invoke-WintainiumProviderOperation { $release }
+            Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ApplicationId='example.app';InstallationState='NotInstalled'} }
+            Mock Get-WintainiumApplicationInstallDecision { $decision }
+            Mock New-WintainiumDownloadRequest { [pscustomobject]@{OperationId=$operationId;SelectedRelease=$decision.SelectedRelease;SelectedArtifact=$decision.SelectedArtifact} }
+            Mock Invoke-WintainiumDownload { $download }
+            Mock Invoke-WintainiumArtifactVerification { $verification }
+            Mock Select-WintainiumInstaller { $selection }
+            Mock New-WintainiumInstallerRequest { [pscustomobject]@{IsValid=$true;Request=[pscustomobject]@{OperationId=$operationId;DownloadOperationId=$operationId;Manifest=$manifest;Installer=$manifest.Installer;Artifact=[pscustomobject]@{Path='C:downloadsapp.exe';Uri='https://example.test/app.exe';FileName='app.exe'}};Errors=@()} }
+            Mock New-WintainiumInstallerInvocation { [pscustomobject]@{IsValid=$true;Invocation=[pscustomobject]@{OperationId=$operationId;PluginId='installer';ArtifactPath='C:downloadsapp.exe';ArtifactFormat='exe';Settings=@{}};Error=$null} }
+            Mock Invoke-WintainiumInstallerOperation { $installation }
+            Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
+            Mock Invoke-WintainiumDownloadArtifactCleanup { [pscustomobject]@{IsSuccessful=$true;Status='Cleaned'} }
+
+            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath 'C:example.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads' -OperationKind Install
+
+            $result.IsSuccessful | Should -BeTrue
+            $result.State.Status | Should -Be 'Completed'
+            @($result.StageResults).Count | Should -Be 8
+            $result.StageResults[-1].Execution.Result.Evidence.InstallationState | Should -Be 'Installed'
+            Should -Invoke Get-WintainiumApplicationInstallDecision -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumDownload -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumArtifactVerification -Times 1 -Exactly
+            Should -Invoke Select-WintainiumInstaller -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumInstallerOperation -Times 1 -Exactly
+            Should -Invoke Invoke-WintainiumReconciliationOperation -Times 1 -Exactly
+        }
+    }
+}
