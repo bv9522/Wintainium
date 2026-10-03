@@ -32,6 +32,20 @@ internal sealed class WintainiumApplicationCollectionViewModel : INotifyProperty
         RefreshVisibleApplications();
     }
 
+    public void UpdateApplication(WintainiumApplicationModel application)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        var index = _allApplications.FindIndex(existing =>
+            string.Equals(existing.ApplicationId, application.ApplicationId, StringComparison.OrdinalIgnoreCase));
+
+        if (index < 0)
+            return;
+
+        _allApplications[index] = application;
+        RefreshVisibleApplications();
+    }
+
     public void SetQuery(WintainiumApplicationQuery query)
     {
         ArgumentNullException.ThrowIfNull(query);
