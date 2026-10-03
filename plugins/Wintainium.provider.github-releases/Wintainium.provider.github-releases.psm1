@@ -412,7 +412,12 @@ function Invoke-WintainiumProviderIconDiscovery {
 
     $operationId=[string]$Request.OperationId
     $settings=$Request.Source.ProviderSettings
-    $repository=if ($settings -is [System.Collections.IDictionary]) { [string]$settings.repository } else { [string]$settings.repository }
+    $repository = if ($settings -is [System.Collections.IDictionary]) {
+        if ($settings.Contains('repository')) { [string]$settings['repository'] } else { '' }
+    }
+    else {
+        if ($null -ne $settings.PSObject.Properties['repository']) { [string]$settings.repository } else { '' }
+    }
 
     if ([string]::IsNullOrWhiteSpace($repository)) {
         return New-GitHubIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
