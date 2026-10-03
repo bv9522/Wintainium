@@ -21,6 +21,7 @@ The authoritative export list is the Core module manifest and
 | `Get-WintainiumApplicationRelease` | Discover normalized upstream releases |
 | `Get-WintainiumApplicationUpdateStatus` | Evaluate and expose structured update status without installing |
 | `Invoke-WintainiumApplicationUpdate` | Execute the complete update lifecycle |
+| `Invoke-WintainiumApplicationInstall` | Execute the complete first-install lifecycle |
 | `Invoke-WintainiumApplicationOnboarding` | Resolve a source URL, normalize an application definition, and persist it |
 | `Set-WintainiumApplicationIconOverride` | Set or clear a user-selected application icon override |
 | `Remove-WintainiumApplication` | Remove a managed application definition from the collection |
@@ -40,18 +41,21 @@ Get-Command -Module Wintainium.Core
 
 ## Core lifecycle
 
-The complete update command owns:
+The update and first-install commands share the same Core execution pipeline.
+The complete lifecycle owns:
 
 ```
 Manifest Validation
     → Release Discovery
-    → Update Decision
+    → Lifecycle Decision
     → Download
     → Verification
     → Installer Selection
     → Installation
     → Reconciliation
 ```
+
+For an update, the lifecycle decision determines whether a newer release is available. For a first install, it determines whether an installable release is available.
 
 The caller supplies application-management inputs. Core owns lifecycle
 composition, provider interaction, artifact acquisition, verification,
