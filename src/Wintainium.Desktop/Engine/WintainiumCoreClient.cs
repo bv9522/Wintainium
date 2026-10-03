@@ -224,6 +224,35 @@ internal sealed class WintainiumCoreClient
     }
 
 
+    public Task<WintainiumPowerShellInvocationResult> InstallApplicationAsync(
+        string manifestPath,
+        string stateRoot,
+        string machineArchitecture,
+        string downloadRoot,
+        string? pluginRoot = null,
+        string? schemaPath = null,
+        int installerTimeoutMilliseconds = 600_000,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["StateRoot"] = stateRoot,
+            ["MachineArchitecture"] = machineArchitecture,
+            ["DownloadRoot"] = downloadRoot,
+            ["InstallerTimeoutMilliseconds"] = installerTimeoutMilliseconds,
+            ["CancellationToken"] = cancellationToken
+        };
+
+        AddOptional(parameters, "PluginRoot", pluginRoot);
+        AddOptional(parameters, "SchemaPath", schemaPath);
+
+        return _host.InvokeAsync(
+            "Invoke-WintainiumApplicationInstall",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> RemoveApplicationAsync(
         string manifestPath,
         string manifestRoot,
