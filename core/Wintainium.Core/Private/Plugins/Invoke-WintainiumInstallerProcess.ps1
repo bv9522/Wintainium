@@ -69,13 +69,92 @@ function Invoke-WintainiumInstallerProcess {
         }
         $process.StartInfo = $startInfo
 
-        try { [void]$process.Start() }
+        $started = $false
+        try {
+            [void]$process.Start()
+            $started = $true
+        }
         catch {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessStart'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency); ErrorMessage=$_.Exception.Message }
+            $win32Exception = $_.Exception
+            if ($win32Exception -is [System.ComponentModel.Win32Exception] -and $win32Exception.NativeErrorCode -eq 740) {
+                if ($null -ne $EnvironmentVariables -and $EnvironmentVariables.Count -gt 0) {
+                    return [pscustomobject][ordered]@{
+                        Status='Failed'
+                        FailureKind='ElevationEnvironmentUnsupported'
+                        ExitCode=$null
+                        StandardOutput=''
+                        StandardError=''
+                        DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
+                        ErrorMessage='The installer requires elevation, but elevated shell execution cannot preserve custom environment variables.'
+                    }
+                }
+
+                $process.Dispose()
+                $process = [System.Diagnostics.Process]::new()
+                $elevatedStartInfo = [System.Diagnostics.ProcessStartInfo]::new()
+                $elevatedStartInfo.FileName = $resolvedFilePath
+                $elevatedStartInfo.UseShellExecute = $true
+                $elevatedStartInfo.Verb = 'runas'
+                if ($null -ne $resolvedWorkingDirectory) { $elevatedStartInfo.WorkingDirectory = $resolvedWorkingDirectory }
+                foreach ($argument in @($ArgumentList)) { [void]$elevatedStartInfo.ArgumentList.Add([string]$argument) }
+                $process.StartInfo = $elevatedStartInfo
+
+                try {
+                    [void]$process.Start()
+                    $started = $true
+                }
+                catch {
+                    $elevatedException = $_.Exception
+                    if ($elevatedException -is [System.ComponentModel.Win32Exception] -and $elevatedException.NativeErrorCode -eq 1223) {
+                        return [pscustomobject][ordered]@{
+                            Status='Failed'
+                            FailureKind='ElevationDenied'
+                            ExitCode=$null
+                            StandardOutput=''
+                            StandardError=''
+                            DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
+                            ErrorMessage='The installer requires elevation, and the Windows elevation prompt was cancelled or denied.'
+                        }
+                    }
+
+                    return [pscustomobject][ordered]@{
+                        Status='Failed'
+                        FailureKind='ProcessStart'
+                        ExitCode=$null
+                        StandardOutput=''
+                        StandardError=''
+                        DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
+                        ErrorMessage=$elevatedException.Message
+                    }
+                }
+            }
+            else {
+                return [pscustomobject][ordered]@{
+                    Status='Failed'
+                    FailureKind='ProcessStart'
+                    ExitCode=$null
+                    StandardOutput=''
+                    StandardError=''
+                    DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
+                    ErrorMessage=$win32Exception.Message
+                }
+            }
         }
 
-        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-        $stderrTask = $process.StandardError.ReadToEndAsync()
+        if (-not $started) {
+            return [pscustomobject][ordered]@{
+                Status='Failed'
+                FailureKind='ProcessStart'
+                ExitCode=$null
+                StandardOutput=''
+                StandardError=''
+                DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
+                ErrorMessage='The installer process did not start.'
+            }
+        }
+
+        $stdoutTask = if ($process.StartInfo.UseShellExecute) { $null } else { $process.StandardOutput.ReadToEndAsync() }
+        $stderrTask = if ($process.StartInfo.UseShellExecute) { $null } else { $process.StandardError.ReadToEndAsync() }
         $timedOut = $false
         $cancelled = $false
         $timeoutTask = [System.Threading.Tasks.Task]::Delay($TimeoutMilliseconds)
@@ -85,8 +164,6 @@ function Invoke-WintainiumInstallerProcess {
                 $cancelTask = [System.Threading.Tasks.Task]::Delay([System.Threading.Timeout]::Infinite, $CancellationToken)
                 $completedTask = [System.Threading.Tasks.Task]::WhenAny($processExitTask, $timeoutTask, $cancelTask).GetAwaiter().GetResult()
                 if ($completedTask -eq $processExitTask) {
-                    # Normal process completion wins over a simultaneously completing
-                    # timeout/cancellation task.
                 } elseif ($completedTask -eq $timeoutTask) {
                     $timedOut = $true
                 } elseif ($completedTask -eq $cancelTask) {
@@ -94,17 +171,11 @@ function Invoke-WintainiumInstallerProcess {
                 }
             } else {
                 $completedTask = [System.Threading.Tasks.Task]::WhenAny($processExitTask, $timeoutTask).GetAwaiter().GetResult()
-                if ($completedTask -eq $processExitTask) {
-                    # Normal process completion wins over a simultaneously completing
-                    # timeout task.
-                } else {
+                if ($completedTask -ne $processExitTask) {
                     $timedOut = $true
                 }
             }
 
-            # WaitForExitAsync is the authoritative completion signal. HasExited can
-            # lag that signal on some runtimes, so use the task itself to close the
-            # cancellation/timeout race deterministically.
             if ($processExitTask.IsCompleted) {
                 $timedOut = $false
                 $cancelled = $false
@@ -116,8 +187,8 @@ function Invoke-WintainiumInstallerProcess {
         }
 
         $process.WaitForExit()
-        $stdout = $stdoutTask.GetAwaiter().GetResult()
-        $stderr = $stderrTask.GetAwaiter().GetResult()
+        $stdout = if ($null -ne $stdoutTask) { $stdoutTask.GetAwaiter().GetResult() } else { '' }
+        $stderr = if ($null -ne $stderrTask) { $stderrTask.GetAwaiter().GetResult() } else { '' }
         $duration = [int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
 
         if ($cancelled) {
