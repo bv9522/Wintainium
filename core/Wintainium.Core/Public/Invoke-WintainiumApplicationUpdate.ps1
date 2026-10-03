@@ -81,6 +81,6 @@ function Invoke-WintainiumApplicationUpdate {
         CancellationToken = $CancellationToken
     }
 
-    $lifecycleResult = Invoke-WintainiumApplicationLifecycle @lifecycleParameters
+    $lifecycleResult = Invoke-WintainiumApplicationUpdateLifecycle @lifecycleParameters
     ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycleResult
 }
