@@ -87,7 +87,7 @@ Describe 'Wintainium public application install command' {
             }
 
             Mock Invoke-WintainiumApplicationLifecycle { $lifecycle }
-            Mock ConvertTo-WintainiumPublicApplicationUpdateResult { $public }
+            Mock ConvertTo-WintainiumPublicApplicationLifecycleResult { $public }
 
             $result = Invoke-WintainiumApplicationInstall -ManifestPath 'C:example.wintainium.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads'
 
