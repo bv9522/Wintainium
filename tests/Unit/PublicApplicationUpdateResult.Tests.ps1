@@ -240,3 +240,4 @@ Describe 'Wintainium public application update result' {
             @($result.Errors).Code | Should -Contain 'OrchestrationStageStructuredFailure'
         }
     }
+}
