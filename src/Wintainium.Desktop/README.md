@@ -1,208 +1,126 @@
 # Wintainium Desktop
 
-This project is the Phase 11 C#/.NET WinUI 3 presentation client over the
-existing Wintainium.Core PowerShell engine.
+This project is the production Phase 14 WinUI 3 desktop client over the
+Wintainium.Core PowerShell engine.
 
 ## Boundary
 
-The desktop client must consume documented public Core contracts and structured
-results rather than reimplementing engine policy.
+The dependency direction is:
 
-The intended dependency direction is:
+```
+Wintainium Desktop
+        ↓
+C# application/engine adapter
+        ↓
+Wintainium.Core public PowerShell API
+```
 
-Wintainium Desktop -> C# engine adapter -> Wintainium.Core public PowerShell API
+The desktop must not call private Core functions, providers, installers,
+reconciliation implementations, or orchestration stages directly.
 
-The desktop project must not call private Core functions, providers, installers,
-stage executors, or other internal orchestration components.
+Core owns lifecycle and policy. The desktop owns presentation, interaction,
+window lifetime, and mapping structured Core results into user-facing models.
 
-## Phase 11C application shell
+## Current Phase 14 product surface
 
-The 11C shell establishes the agreed desktop interaction model without yet
-connecting UI actions to the Core engine:
+The Dashboard is the application's main collection surface.
 
-- One primary Wintainium window with standard Windows window behavior.
-- The software collection is the landing view.
-- Main-window Sort & Filter action.
-- Main-window Add Software action in the lower-right corner.
-- Source URL is the primary Add Software input.
-- Separate Settings window with General, Appearance, Updates, Sources, and
-  Advanced categories.
-- Application details remain reserved for the downstream 11F batch, with Do Not Update policy and editable user Notes reserved as application-level presentation/data requirements.
-- Windows 11, Y2K, and Frutiger Aero are planned visual styles under Appearance.
-- System, Light, and Dark are planned theme choices.
-- Wintainium's own release history belongs in the Settings Updates category.
-- No engine integration, update logic, provider discovery, or application state
-  inference is introduced by this shell.
-- Sort & Filter retains the five agreed sort choices (Name A–Z, Name Z–A, Update status,
-  Installed status, and Source) and five agreed filters (All software, Update available,
-  Up to date, Installed, and Not installed).
-- Settings is a functional secondary shell with the five agreed categories; category
-  content remains intentionally placeholder-only until its supporting contracts exist.
-- The GUI must preserve Core's distinct Unknown installed-state semantics and must not
-  infer Unknown as Not Installed.
+- List/Grid presentation
+- Sort and Filter presentation
+- Add Software in the Dashboard
+- application identity and installation/update state
+- application icons
+- right-click Remove Software action
+- left-click opens Application Details
 
-The shell intentionally uses placeholder collection/settings content. Later
-Phase 11 batches will replace those placeholders with real presentation models
-and Core-backed behavior.
+The Dashboard context menu intentionally contains **Remove Software** only.
+Do not add Change Icon or Update entries merely to open Details; those actions
+are already available from the Details hub reached by left-click.
 
-## Phase 11D engine integration boundary
+### Add Software
 
-11D establishes the C#-to-PowerShell boundary without wiring business operations
-into the WinUI controls.
+Add Software accepts a source URL and calls
+`Invoke-WintainiumApplicationOnboarding` through the Core adapter.
 
-- WintainiumPowerShellHost owns in-process Microsoft.PowerShell.SDK hosting,
-  runspace creation, scoped hosted execution policy, Core module import, serialized
-  invocation, and cancellation-triggered pipeline stopping.
-- WintainiumPowerShellHost permits only the documented public Core command names;
-  the generic hosting primitive cannot be used by the desktop layer to invoke arbitrary
-  private Core functions.
-- The adapter passes documented command parameters through to Core and does not
-  construct private lifecycle, stage, provider, installer, download, or
-  reconciliation objects.
-- WintainiumCoreClient exposes only the documented public Core commands:
-  Get-WintainiumManifest, Test-WintainiumApplicationDefinition,
-  Get-WintainiumApplicationRelease, Invoke-WintainiumApplicationUpdate,
-  and Invoke-WintainiumApplicationOnboarding.
-- WintainiumPowerShellInvocationResult is the adapter-local transport boundary;
-  PowerShell SDK types remain below the application-facing adapter seam.
-- Core import failures are surfaced as adapter construction failures rather than
-  being silently converted to successful invocation results.
-- Cancellation is represented by an explicit pipeline-stopped outcome; a race
-  where a token is cancelled after a normally completed invocation must not
-  retroactively turn that successful invocation into a cancelled result.
-- The WinUI shell does not yet invoke the adapter. Application models and UI
-  behavior will be connected in later Phase 11 batches.
-- The PowerShell SDK is hosted in-process; terminal output is never used as an API.\n
-## Scope discipline
+Core owns:
 
-11C establishes the product shell and interaction locations. It does not
-finalize every visual detail or implement speculative downstream functionality.
+- source URI validation
+- provider discovery and source resolution
+- ambiguity/unsupported/authentication/interactive handling
+- default lifecycle-policy resolution
+- application normalization
+- manifest persistence
 
-11D establishes the engine integration seam. It does not migrate engine policy
-to C#, expose private Core functions, or prematurely build application models,
-progress UI, settings persistence, or update workflows into the shell.
+The desktop presents the structured result and provides appropriate recovery
+actions. It does not construct provider, installer, reconciliation, or lifecycle
+policy objects.
 
+### Application Details
 
-## Phase 11E application model foundation
+Details is the per-application action and information hub.
 
-11E introduces the first presentation/application model without moving engine
-decisions into C#.
+It currently presents:
 
-- `WintainiumApplicationModel` represents one tracked application for the desktop
-  presentation layer.
-- Manifest identity and descriptive metadata are mapped from the documented
-  `Get-WintainiumManifest` result.
-- Installation state is represented explicitly as `Installed`, `NotInstalled`,
-  or `Unknown`; the initial manifest-only model remains `Unknown` until a
-  Core-backed installed-state observation is available.
-- Update status is explicitly `Unknown` until Core supplies an authoritative
-  update decision.
-- Installed version and last-updated information remain absent until their
-  authoritative sources are connected.
-- The mapper does not compare versions, infer installation state, or decide
-  whether an update is available.
-- The model contains no PowerShell SDK types; PowerShell objects remain confined
-  to the adapter-to-mapper boundary.
-- The existing EngineProbe now exercises the model mapper and verifies that the
-  initial installation and update states remain `Unknown`.
+- application information
+- installation state and installed version
+- update status
+- source/provider information
+- update policy placeholder
+- operation status
+- lifecycle stages
+- errors and warnings
+- release information
+- notes
+- Check for Updates
+- Run Updates
+- automatic icon presentation
+- user-selected icon override
+- Reset to Automatic icon behavior
 
-This is the model foundation for the application collection. Collection loading,
-installed-state acquisition, update-status population, sorting/filtering, and
-interactive list/grid presentation are introduced only as their required
-contracts become available in the remaining 11E work.
+The Do Not Update policy control remains intentionally reserved until durable
+policy/configuration support is implemented.
 
+### Icons
 
-### Phase 11E application collection boundary
+Automatic icon metadata and user-selected icon overrides are separate.
 
-`WintainiumApplicationCollectionService` is the application-layer entry point for loading the tracked software collection. It calls only the documented `Get-WintainiumManifest` Core command and maps its single structured result into `WintainiumApplicationCollectionResult`.
+Selecting a custom icon does not destroy the automatically discovered icon.
+Resetting the override returns presentation to automatic behavior.
 
-The collection result carries the Core operation identifier, success state, application models, and structured errors/warnings without exposing PowerShell SDK types to the UI. Cancellation is propagated as normal .NET cancellation rather than being converted into a synthetic application state.
+### Removal
 
-The application model intentionally remains partial at this stage. Manifest discovery supplies identity and descriptive metadata plus the declared provider identifier. Installed state, installed version, last-updated timestamp, icon, and update status remain unset/Unknown until authoritative Core-backed sources are available. In particular, the desktop layer does not call the private installed-state helper and does not infer `NotInstalled` from missing state.
+Remove Software removes the application's managed definition from the
+Wintainium collection. It does not uninstall the Windows application.
 
-The manifest schema currently provides a provider `pluginId`, not a human-friendly source name, so the presentation model records it as `SourceProviderId` rather than presenting the technical identifier as a display name.
+The Core `Remove-WintainiumApplication` boundary owns safe collection-root
+validation and manifest removal.
 
-Sorting and filtering are now represented by the presentation-only collection query boundary. The collection view model owns the current query and List/Grid presentation mode. The main window binds both ListView and GridView to the same presentation collection and uses a dedicated header button to toggle between the two modes. No application update decision is made by the collection layer.
+## Update experience
 
-### Phase 11E application collection query
+The desktop must not invent quantitative installer progress.
 
-The collection query boundary keeps list presentation concerns separate from Core and from the loaded application models.
+For native installers, Wintainium presents lifecycle/activity before and after
+the installer boundary, communicates elevation where appropriate, and refreshes
+authoritative installed state after completion. The native installer owns its
+own installer UI.
 
-- `WintainiumApplicationQuery` carries the agreed Sort & Filter selections.
-- `WintainiumApplicationCollectionQuery` applies those selections without changing application facts or making update decisions.
-- The five sort choices are Name A–Z, Name Z–A, Update status, Installed status, and Source.
-- The five filters are All software, Update available, Up to date, Installed, and Not installed.
-- Filters for Installed/Not Installed and Update Available/Up to Date match only their explicit known states; `Unknown` is never treated as either known alternative.
-- Sorting uses deterministic application-name and application-ID tie-breakers so presentation order is stable.
-- The initial Unknown states remain visible to the presentation layer rather than being converted into a user-facing inference.
-- The desktop EngineProbe covers all five sort choices and all five filters, including explicit checks that Unknown is not reclassified by filtering and remains first in the current status-sort presentation ordering.
+## Architecture rules
 
-### Phase 11E window lifetime hardening
+- Do not move lifecycle/policy/provider/installer/reconciliation logic into C#.
+- Do not infer installed or update state from missing data.
+- Do not parse console output as an API.
+- Preserve Core-owned OperationId and cancellation semantics.
+- Treat structured result codes and documented fields as the integration
+  contract.
+- Keep PowerShell SDK types below the adapter boundary.
 
-The desktop shell now tracks every active WinUI window by `WindowId`, including the main window and the secondary Settings window. A tracked window is removed from the registry when its `Closed` event fires. This keeps the main and secondary window lifetimes explicit rather than relying on an incidental managed reference. The Settings window remains a secondary window and closing it must not terminate the Wintainium process while the main window remains open.
+## Development
 
+Preferred Release build:
 
-## Phase 11F application details and release information
+```powershell
+dotnet build .\src\Wintainium.Desktop\Wintainium.Desktop.csproj -c Release
+```
 
-11F establishes the application-details presentation boundary over the 11E application model.
-
-- Application details can be opened from both collection presentation modes.
-- Details present manifest-backed identity, publisher, homepage, source provider, and the current installation facts without manufacturing missing state.
-- The application model preserves the originating manifest path so the details surface can request release discovery through the documented `Get-WintainiumApplicationRelease` command.
-- Release discovery is exposed as source release information only; the desktop client does not calculate update availability from the returned releases.
-- Release models preserve release identity, version, channel, publication time, artifact metadata, and hashes at the application-facing boundary.
-- The Do Not Update control is intentionally reserved and disabled until an authoritative application-policy/configuration contract exists.
-- Notes provide explicit Save and Don't Save behavior for the current application session; durable note persistence remains downstream.
-- Installed-state acquisition, version comparison, update decisions, update execution, policy enforcement, and durable metadata remain Core/configuration responsibilities rather than presentation logic.
-## Phase 12A integration wiring foundation
-
-Phase 12A centralizes the desktop/Core service graph without changing the Phase
-11 contracts or introducing a second state authority.
-
-- `WintainiumDesktopServices` is the desktop composition root. It owns one
-  in-process `WintainiumPowerShellHost`, one `WintainiumCoreClient`, and the
-  application-layer collection, validation, and release services.
-- `App` owns the service graph for the lifetime of the main desktop session and
-  disposes it when the main window closes.
-- `MainWindow` no longer constructs a PowerShell host or release service.
-  Details windows receive the already-composed release service.
-- `WintainiumApplicationValidationService` is the application-layer entry point
-  for the documented `Test-WintainiumApplicationDefinition` command and projects
-  its structured validation result into desktop models.
-- The documented Core commands remain the only engine entry points. Phase
-  12A does not add a URL-discovery API, durable collection storage, update
-  execution, or any GUI-side business policy.
-- The desktop EngineProbe now exercises the validation service against a known
-  missing manifest and verifies that Core's structured invalid result is
-  preserved as a failed validation operation.
-
-This is wiring only. Collection onboarding, authoritative state composition,
-release-refresh behavior, update execution, and durable persistence remain
-downstream Phase 12 work.
-
-
-### Phase 12A service-boundary hardening
-
-The Phase 12A integration boundary now also enforces shared invocation semantics:
-
-- Core-facing application services use one `WintainiumCoreInvocationGuard` for cancellation and the documented single-structured-result contract.
-- `WintainiumPowerShellHost` serializes invocation and disposal through the same gate, preventing the runspace from being disposed while an invocation is still active.
-- Host disposal is idempotent and terminal; new invocations are rejected after disposal.
-- No new Core command, discovery mechanism, persistence mechanism, provider coupling, installer coupling, or GUI business logic was introduced.
-
-
-## Phase 12.9 desktop integration
-
-Phase 12.9 connects the shell's collection and Add Software actions to the documented public Core boundaries.
-
-- The desktop uses `%LOCALAPPDATA%\\Wintainium\\Applications` as its fixed application-definition collection root. Core remains authoritative for manifest persistence and collection semantics.
-- The main window loads the collection when first displayed and refreshes it after successful onboarding.
-- Add Software accepts an official source URL and calls `WintainiumApplicationOnboardingService`, which reaches `Invoke-WintainiumApplicationOnboarding` through the C# Core adapter.
-- Core owns source resolution, default lifecycle policy, normalization, and persistence. The desktop does not construct installer, reconciliation, release, or artifact policy.
-- Structured Core diagnostics are presented directly; the desktop never parses console output or substitutes GUI-side business rules.
-
-The repository currently contains source-resolution providers but no production installer/reconciliation plugins. Therefore Core may correctly return `ApplicationPolicyUnavailable` during onboarding until those lifecycle capabilities are available. The desktop surfaces that result rather than inventing a fallback policy.
-
-**Manifest describes. Provider discovers. Core decides. Persistence stores. UX presents.**
-
-The interface presents the engine; it does not become the engine.
+The desktop targets .NET 10 / WinUI 3 and hosts Wintainium.Core in-process
+through Microsoft.PowerShell.SDK.
