@@ -145,10 +145,13 @@ Describe 'Wintainium GUI-facing public boundary' {
         $collectionService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumApplicationCollectionService.cs') -Raw
         $mainWindow = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\MainWindow.xaml.cs') -Raw
 
-        $collectionService | Should -Match 'RefreshApplicationAsync'
+        $collectionService | Should -Match 'HydratePersistedApplicationStateAsync'
+        $collectionService | Should -Match 'GetAsync'
+        $mainWindow | Should -Match 'HydratePersistedApplicationStatesAsync'
         $mainWindow | Should -Match 'RefreshApplicationStatesAsync'
         $mainWindow | Should -Match 'Task\.WhenAll'
         $mainWindow | Should -Match 'SetApplicationCollection\(result\.Applications\)'
+        $mainWindow | Should -Match 'HydratePersistedApplicationStatesAsync'
         $mainWindow | Should -Match 'RefreshApplicationAsync'
     }
 
