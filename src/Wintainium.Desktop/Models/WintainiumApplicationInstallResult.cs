@@ -10,6 +10,7 @@ internal sealed record WintainiumApplicationInstallResult(
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
     IReadOnlyList<WintainiumOperationDiagnostic> LogEvents,
+    IReadOnlyList<WintainiumOperationDiagnostic> TroubleshootingDiagnostics,
     WintainiumOperationDiagnostic? Error,
     WintainiumOperationState OperationState);
 
