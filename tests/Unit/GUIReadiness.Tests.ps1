@@ -106,9 +106,9 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'wires first-install through the desktop Core client and service boundary' {
-        $coreClient = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopEngineWintainiumCoreClient.cs') -Raw
-        $installService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopModelsWintainiumApplicationInstallService.cs') -Raw
-        $desktopServices = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopWintainiumDesktopServices.cs') -Raw
+        $coreClient = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Engine\WintainiumCoreClient.cs') -Raw
+        $installService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumApplicationInstallService.cs') -Raw
+        $desktopServices = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\WintainiumDesktopServices.cs') -Raw
 
         $coreClient | Should -Match 'Invoke-WintainiumApplicationInstall'
         $installService | Should -Match 'WintainiumApplicationInstallResult'
@@ -116,8 +116,8 @@ Describe 'Wintainium GUI-facing public boundary' {
     }
 
     It 'keeps install action state-aware in Application Details' {
-        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopApplicationDetailsWindow.xaml.cs') -Raw
-        $detailsXaml = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopApplicationDetailsWindow.xaml') -Raw
+        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\ApplicationDetailsWindow.xaml.cs') -Raw
+        $detailsXaml = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\ApplicationDetailsWindow.xaml') -Raw
 
         $detailsXaml | Should -Match 'x:Name="InstallButton"'
         $details | Should -Match 'WintainiumInstallationState.NotInstalled'
