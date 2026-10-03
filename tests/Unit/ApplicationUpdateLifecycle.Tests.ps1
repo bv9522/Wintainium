@@ -137,7 +137,7 @@ Describe 'Wintainium application update lifecycle composition' {
                     }
                 )
             }
-            $stage = [pscustomobject]@{ Name='Download'; Sequence=4 }
+            $stage = [pscustomobject]@{ Name='Download'; Sequence=1 }
             $request = [pscustomobject]@{
                 OperationId=$operationId
                 ManifestPath='/tmp/example.json'
