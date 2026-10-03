@@ -9,7 +9,6 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
     $operationId = if ($null -ne $LifecycleResult.PSObject.Properties['OperationId']) { [string]$LifecycleResult.OperationId } else { $null }
     $isSuccessful = if ($null -ne $LifecycleResult.PSObject.Properties['IsSuccessful']) { [bool]$LifecycleResult.IsSuccessful } else { $false }
     $wasCancelled = if ($null -ne $LifecycleResult.PSObject.Properties['WasCancelled']) { [bool]$LifecycleResult.WasCancelled } else { $false }
-
     $status = if ($wasCancelled) { 'Cancelled' } elseif ($isSuccessful) { 'Completed' } else { 'Failed' }
 
     $applicationId = $null
@@ -20,11 +19,9 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
 
     foreach ($item in @($LifecycleResult.StageResults)) {
         if ($null -eq $item) { continue }
-
         $execution = if ($null -ne $item.PSObject.Properties['Execution']) { $item.Execution } else { $null }
         $stage = if ($null -ne $item.PSObject.Properties['Stage']) { $item.Stage } else { $null }
         $result = if ($null -ne $execution -and $execution.PSObject.Properties['Result']) { $execution.Result } else { $null }
-
         if ($null -eq $stage) { $stage = $item }
 
         $sequence = if ($null -ne $stage.PSObject.Properties['Sequence']) { [int]$stage.Sequence } elseif ($null -ne $item.PSObject.Properties['StageSequence']) { [int]$item.StageSequence } else { 0 }
@@ -55,8 +52,8 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             $code = if ($_.PSObject.Properties['Code']) { [string]$_.Code } else { $null }
             -not ([string]::Equals($code, 'OrchestrationStageExecutionFailed', [System.StringComparison]::OrdinalIgnoreCase) -or ([string]::Equals($code, 'OrchestrationStageStructuredFailure', [System.StringComparison]::OrdinalIgnoreCase) -and [string]::Equals($message, 'The stage returned a structured unsuccessful result.', [System.StringComparison]::OrdinalIgnoreCase)))
         } | Select-Object -First 1
-
         if ($null -eq $stageError -and $stageErrorCandidates.Count -gt 0) { $stageError = $stageErrorCandidates[0] }
+
         if ($null -ne $stageError -and -not $stageError.PSObject.Properties['Code'] -and -not $stageError.PSObject.Properties['Message']) {
             $detailProperties = @($stageError.PSObject.Properties.Name)
             $stageError = [pscustomobject][ordered]@{
@@ -68,6 +65,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                 Detail = $stageError
             }
         }
+
         if ($null -ne $stageError) {
             $messageProperty = $stageError.PSObject.Properties['Message']
             $errorMessageProperty = $stageError.PSObject.Properties['ErrorMessage']
@@ -105,7 +103,14 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                 }
             }
         }
+
         if ($null -ne $stageError) { $errors.Add($stageError) }
+        if ($stageStatus -in @('DecisionIndeterminate','NoInstallableRelease','ProviderDiscoveryUnsuccessful') -and (-not [string]::IsNullOrWhiteSpace($reasonCode) -or -not [string]::IsNullOrWhiteSpace($reason))) {
+            $warnings.Add([pscustomobject][ordered]@{
+                Code = if (-not [string]::IsNullOrWhiteSpace($reasonCode)) { $reasonCode } else { 'LifecycleDecisionDiagnostic' }
+                Message = if (-not [string]::IsNullOrWhiteSpace($reason)) { "$name`: $reason" } else { "$name reported status '$stageStatus'." }
+            })
+        }
     }
 
     if ($null -ne $LifecycleResult.PSObject.Properties['Error'] -and $null -ne $LifecycleResult.Error) { $errors.Add($LifecycleResult.Error) }
