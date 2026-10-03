@@ -126,4 +126,19 @@ Describe 'Wintainium GUI-facing public boundary' {
         $details | Should -Match 'RunUpdateButton.Visibility'
         $details | Should -Match 'WintainiumApplicationInstallService'
     }
+
+    It 'keeps the desktop host install allowlist aligned with the public Core contract' {
+        $host = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Engine\WintainiumPowerShellHost.cs') -Raw
+        $contract = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\docs\PublicPowerShellContract.md') -Raw
+
+        $host | Should -Match 'Invoke-WintainiumApplicationInstall'
+        $contract | Should -Match 'Invoke-WintainiumApplicationInstall'
+    }
+
+    It 'preserves PowerShell invocation diagnostics when no structured result is returned' {
+        $guard = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumCoreInvocationGuard.cs') -Raw
+
+        $guard | Should -Match 'invocation.Errors'
+        $guard | Should -Match 'PowerShell error diagnostics'
+    }
 }
