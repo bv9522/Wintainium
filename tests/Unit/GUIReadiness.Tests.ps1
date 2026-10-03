@@ -104,4 +104,26 @@ Describe 'Wintainium GUI-facing public boundary' {
         $contract | Should -Match 'must not parse terminal formatting'
         $contract | Should -Match 'Unknown.*not.*NotInstalled'
     }
+
+    It 'wires first-install through the desktop Core client and service boundary' {
+        $coreClient = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopEngineWintainiumCoreClient.cs') -Raw
+        $installService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopModelsWintainiumApplicationInstallService.cs') -Raw
+        $desktopServices = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopWintainiumDesktopServices.cs') -Raw
+
+        $coreClient | Should -Match 'Invoke-WintainiumApplicationInstall'
+        $installService | Should -Match 'WintainiumApplicationInstallResult'
+        $desktopServices | Should -Match 'ApplicationInstall = new WintainiumApplicationInstallService'
+    }
+
+    It 'keeps install action state-aware in Application Details' {
+        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopApplicationDetailsWindow.xaml.cs') -Raw
+        $detailsXaml = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '....srcWintainium.DesktopApplicationDetailsWindow.xaml') -Raw
+
+        $detailsXaml | Should -Match 'x:Name="InstallButton"'
+        $details | Should -Match 'WintainiumInstallationState.NotInstalled'
+        $details | Should -Match 'InstallButton.Visibility'
+        $details | Should -Match 'CheckForUpdatesButton.Visibility'
+        $details | Should -Match 'RunUpdateButton.Visibility'
+        $details | Should -Match 'WintainiumApplicationInstallService'
+    }
 }
