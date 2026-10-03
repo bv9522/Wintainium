@@ -19,8 +19,14 @@ internal static class WintainiumCoreInvocationGuard
 
         if (invocation.Output.Count != 1)
         {
+            var diagnostics = invocation.Errors.Count == 0
+                ? "No PowerShell error diagnostics were returned."
+                : string.Join(
+                    Environment.NewLine,
+                    invocation.Errors.Select(static error => error.ToString()));
+
             throw new InvalidOperationException(
-                $"{commandName} returned {invocation.Output.Count} structured results; exactly one was expected.");
+                $"{commandName} returned {invocation.Output.Count} structured results; exactly one was expected.{Environment.NewLine}{diagnostics}");
         }
 
         return PSObject.AsPSObject(invocation.Output[0]);
