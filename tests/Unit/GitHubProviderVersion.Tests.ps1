@@ -4,7 +4,7 @@ BeforeAll {
     Import-Module $script:pluginPath -Force
 }
 
-Describe 'Wintainium GitHub release provider version normalization' {
+Describe 'Wintainian GitHub release provider version normalization' {
     It 'normalizes prefixed GitHub release tags without discarding prerelease semantics' {
         Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
             @(
@@ -44,5 +44,59 @@ Describe 'Wintainium GitHub release provider version normalization' {
         })
 
         $result.Releases[0].Version | Should -Be 'release-latest-final'
+    }
+}
+
+Describe 'Wintainian GitHub release provider verification metadata' {
+    It 'preserves a GitHub SHA256 asset digest as Wintainium hash metadata' {
+        $expectedDigest = 'efb652bf04168f5d4893f28b7cefaaf5ef385d9251544540ac774e3bf54793a3'
+        Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
+            @([pscustomobject]@{
+                id=401
+                tag_name='Audacity-4.0.1'
+                prerelease=$false
+                assets=@([pscustomobject]@{
+                    browser_download_url='https://example.test/audacity-win-4.0.1-x86_64.msi'
+                    name='audacity-win-4.0.1-x86_64.msi'
+                    size=47500000
+                    digest="sha256:$expectedDigest"
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-000000000103'
+            Settings=@{ repository='audacity/audacity'; maxPages=1 }
+        })
+
+        $artifact = $result.Releases[0].Artifacts[0]
+        $result.IsSuccessful | Should -BeTrue
+        $artifact.Hashes.Count | Should -Be 1
+        $artifact.Hashes[0].Algorithm | Should -Be 'SHA256'
+        $artifact.Hashes[0].Value | Should -Be $expectedDigest.ToUpperInvariant()
+    }
+
+    It 'does not treat a malformed GitHub digest as verification evidence' {
+        Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
+            @([pscustomobject]@{
+                id=402
+                tag_name='Audacity-4.0.0'
+                prerelease=$false
+                assets=@([pscustomobject]@{
+                    browser_download_url='https://example.test/audacity-win-4.0.0-x86_64.msi'
+                    name='audacity-win-4.0.0-x86_64.msi'
+                    size=47500000
+                    digest='sha1:not-a-sha256-digest'
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-000000000104'
+            Settings=@{ repository='audacity/audacity'; maxPages=1 }
+        })
+
+        $artifact = $result.Releases[0].Artifacts[0]
+        $artifact.Hashes.Count | Should -Be 0
     }
 }
