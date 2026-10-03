@@ -1,4 +1,5 @@
-BeforeAll {
+Describe 'Wintainium application icon definition persistence' {
+    BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     Import-Module $script:modulePath -Force
@@ -53,6 +54,7 @@ BeforeAll {
             $result.ApplicationDefinition.PSObject.Properties.Name | Should -Not -Contain 'homepage'
             $result.ApplicationDefinition.PSObject.Properties.Name | Should -Not -Contain 'publisher'
         }
+    }
     }
 }
 
