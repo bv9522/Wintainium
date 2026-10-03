@@ -42,6 +42,7 @@ implement.
 - Phase 13: GUI productization foundation complete/superseded.
 - Phase 13.5: production installers/package formats complete and locked.
 - **Phase 14: GUI Productization is current and in progress.**
+- **Phase 14.5: First-Install Capability is the current engineering sub-phase.**
 
 The real 7-Zip update is the reference end-to-end validation of the architecture:
 Wintainium discovers the release, makes the update decision, downloads and
@@ -112,6 +113,7 @@ The current module manifest exports these functions:
 - `Get-WintainiumApplicationRelease`
 - `Get-WintainiumApplicationUpdateStatus`
 - `Invoke-WintainiumApplicationUpdate`
+- `Invoke-WintainiumApplicationInstall`
 - `Invoke-WintainiumApplicationOnboarding`
 - `Set-WintainiumApplicationIconOverride`
 - `Remove-WintainiumApplication`
