@@ -25,7 +25,7 @@ Architecture of the machine on which the application installation will execute.
 Absolute root directory used for downloaded installation artifacts.
 
 .PARAMETER PluginRoot
-Root directory containing Wintanium plugins.
+Root directory containing Wintainium plugins.
 
 .PARAMETER SchemaPath
 Path to the application manifest JSON schema.
@@ -67,6 +67,6 @@ function Invoke-WintainiumApplicationInstall {
         CancellationToken = $CancellationToken
     }
 
-    $lifecycleResult = Invoke-WintainiumApplicationUpdateLifecycle @lifecycleParameters
+    $lifecycleResult = Invoke-WintainiumApplicationLifecycle @lifecycleParameters
     ConvertTo-WintainiumPublicApplicationUpdateResult -LifecycleResult $lifecycleResult
 }
