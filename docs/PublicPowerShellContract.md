@@ -6,7 +6,7 @@
 
 Wintainium.Core exposes structured public operations for manifest management,
 installed-state observation/reconciliation, release discovery, update status,
-end-to-end updates, source onboarding, icon overrides, and collection removal.
+end-to-end updates and first-install execution, source onboarding, icon overrides, and collection removal.
 
 The public PowerShell layer is the engine boundary. Presentation clients consume
 its documented semantic results; they do not call private Core functions or
@@ -24,6 +24,7 @@ construct lifecycle internals.
 | `Get-WintainiumApplicationRelease` | Provider-backed release discovery |
 | `Get-WintainiumApplicationUpdateStatus` | Read Core-owned update decision/status without executing an update |
 | `Invoke-WintainiumApplicationUpdate` | Execute the complete Core-owned update lifecycle |
+| `Invoke-WintainiumApplicationInstall` | Execute the complete Core-owned first-install lifecycle |
 | `Invoke-WintainiumApplicationOnboarding` | Resolve a source URL, normalize an application definition, and persist it |
 | `Set-WintainiumApplicationIconOverride` | Set/clear a user-selected icon override |
 | `Remove-WintainiumApplication` | Remove a managed application definition from its collection |
@@ -50,7 +51,7 @@ Core owns lifecycle policy and traversal:
 ```
 Manifest Validation
 → Release Discovery
-→ Update Decision
+→ Lifecycle Decision
 → Download
 → Verification
 → Installer Selection
@@ -71,7 +72,12 @@ projects the Core update decision.
 It does **not** download, verify, install, or reconcile.
 
 `Invoke-WintainiumApplicationUpdate` is the execution boundary for the
-complete lifecycle.
+complete update lifecycle.
+
+`Invoke-WintainiumApplicationInstall` is the execution boundary for the
+complete first-install lifecycle. It uses the same shared execution stages and
+installer/reconciliation boundaries, with an installation decision appropriate
+for an application that is not installed.
 
 ## Onboarding boundary
 
