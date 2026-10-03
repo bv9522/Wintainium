@@ -59,6 +59,158 @@ Describe 'Wintainium application install decision' {
     }
 }
 
+    It 'filters disallowed channels and deprecated releases before selecting the highest stable release' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='stable-old'; Version='1.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/old.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='stable-new'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/new.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='stable-deprecated'; Version='3.0.0'; Channel='stable'; Deprecated=$true; Artifacts=@([pscustomobject]@{Uri='https://example.test/deprecated.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='pre-release'; Version='4.0.0'; Channel='prerelease'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/pre.exe';Format='exe';Architecture='x64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'InstallAvailable'
+            $result.SelectedRelease.ReleaseId | Should -Be 'stable-new'
+            @($result.ReleaseEligibility.EligibleReleases).Count | Should -Be 2
+            ($result.ReleaseEligibility.Observations | Where-Object { $_.Release.ReleaseId -eq 'stable-deprecated' }).ReasonCode | Should -Be 'DeprecatedRelease'
+            ($result.ReleaseEligibility.Observations | Where-Object { $_.Release.ReleaseId -eq 'pre-release' }).ReasonCode | Should -Be 'ChannelNotPermitted'
+        }
+    }
+
+    It 'allows prerelease releases when the manifest channel policy is any' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='any' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='stable'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/stable.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='preview'; Version='2.1.0'; Channel='prerelease'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/preview.exe';Format='exe';Architecture='x64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'InstallAvailable'
+            $result.SelectedRelease.ReleaseId | Should -Be 'preview'
+            $result.TargetResolution.IsDeterministic | Should -BeTrue
+        }
+    }
+
+    It 'returns no installable release when every release lacks a selectable artifact' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='wrong-format'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/app.msi';Format='msi';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='wrong-architecture'; Version='3.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/app.exe';Format='exe';Architecture='arm64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'NoInstallableRelease'
+            $result.ReasonCode | Should -Be 'NoSelectableArtifact'
+            $result.IsInstallAvailable | Should -BeFalse
+            @($result.ReleaseEligibility.EligibleReleases).Count | Should -Be 0
+            ($result.ReleaseEligibility.Observations | Where-Object { $_.Release.ReleaseId -eq 'wrong-format' }).ReasonCode | Should -Be 'NoSelectableArtifact'
+            ($result.ReleaseEligibility.Observations | Where-Object { $_.Release.ReleaseId -eq 'wrong-architecture' }).ReasonCode | Should -Be 'NoSelectableArtifact'
+        }
+    }
+
+    It 'does not guess when selectable release versions cannot be ranked' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='opaque'; Version='latest'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/latest.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='semantic'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/2.exe';Format='exe';Architecture='x64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'DecisionIndeterminate'
+            $result.ReasonCode | Should -Be 'VersionRankingUnknown'
+            $result.IsInstallAvailable | Should -BeFalse
+            $result.IsDeterministic | Should -BeFalse
+            $result.SelectedRelease | Should -BeNullOrEmpty
+            $result.SelectedArtifact | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'returns an indeterminate decision for an invalid release channel policy' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='nightly' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{ IsSuccessful=$true; Releases=@() }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'DecisionIndeterminate'
+            $result.ReasonCode | Should -Be 'InvalidReleasePolicy'
+            $result.IsDeterministic | Should -BeFalse
+        }
+    }
+
+    It 'does not offer installation when provider discovery is unsuccessful' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{ IsSuccessful=$false; Releases=@(); Errors=@([pscustomobject]@{Code='ProviderFailed'}) }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'ProviderDiscoveryUnsuccessful'
+            $result.ReasonCode | Should -Be 'ProviderDiscoveryUnsuccessful'
+            $result.IsInstallAvailable | Should -BeFalse
+            $result.IsDeterministic | Should -BeFalse
+        }
+    }
+
+
 Describe 'Wintainium public application install command' {
     It 'is exported from the Core module' {
         (Get-Command Invoke-WintainiumApplicationInstall -Module Wintainium.Core).CommandType | Should -Be 'Function'
