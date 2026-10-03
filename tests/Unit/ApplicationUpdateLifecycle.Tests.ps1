@@ -177,7 +177,11 @@ Describe 'Wintainium application update lifecycle composition' {
                     State=$state
                     StageResults=@([pscustomobject]@{
                         StageName='Download'
-                        Execution=$execution
+                        Execution=[pscustomobject]@{
+                            IsSuccessful=$execution.IsSuccessful
+                            WasCancelled=$false
+                            Result=$execution
+                        }
                     })
                     Error=[pscustomobject]@{
                         Code='OrchestrationStageResultUnsuccessful'
