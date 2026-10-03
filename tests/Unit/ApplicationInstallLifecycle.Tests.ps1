@@ -262,6 +262,99 @@ Describe 'Wintainium public application install command' {
 }
 
 
+
+Describe 'Wintainium install failure troubleshooting diagnostics' {
+    It 'projects a failure-only breadcrumb across discovery, decision, download, and verification' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject]@{
+                OperationId='install-diagnostic-operation'
+                IsSuccessful=$false
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        StageName='ReleaseDiscovery'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                ProviderId='Wintainium.provider.example'
+                                Releases=@([pscustomobject]@{ReleaseId='release-1';Version='4.0.1'})
+                            }
+                        }
+                    }
+                    [pscustomobject]@{
+                        StageName='UpdateDecision'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                Status='InstallAvailable'
+                                SelectedRelease=[pscustomobject]@{Version='4.0.1'}
+                                SelectedArtifact=[pscustomobject]@{
+                                    FileName='example-4.0.1.msi'
+                                    Format='msi'
+                                    Architecture='x64'
+                                    Hashes=@()
+                                }
+                            }
+                        }
+                    }
+                    [pscustomobject]@{
+                        StageName='Download'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                Status='Downloaded'
+                                FileName='example-4.0.1.msi'
+                                DestinationPath='C:\downloads\example-4.0.1.msi'
+                                BytesWritten=12345
+                            }
+                        }
+                    }
+                    [pscustomobject]@{
+                        StageName='Verification'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$false
+                                Status='Failed'
+                                FailureKind='VerificationMetadataMissing'
+                                ExpectedHash=$null
+                                ActualHash=$null
+                            }
+                        }
+                    }
+                )
+                Error=[pscustomobject]@{Code='OrchestrationStageExecutionFailed';Message='The selected artifact contains no SHA256 verification evidence.'}
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            @($result.TroubleshootingDiagnostics).Count | Should -Be 4
+            $result.TroubleshootingDiagnostics[0].Message | Should -Match "provider 'Wintainium.provider.example' reported 1 release"
+            $result.TroubleshootingDiagnostics[1].Message | Should -Match "release 4.0.1"
+            $result.TroubleshootingDiagnostics[1].Message | Should -Match "artifact 'example-4.0.1.msi'"
+            $result.TroubleshootingDiagnostics[1].Message | Should -Match 'verification hashes: 0'
+            $result.TroubleshootingDiagnostics[2].Message | Should -Match "file 'example-4.0.1.msi'"
+            $result.TroubleshootingDiagnostics[3].Message | Should -Match 'failure VerificationMetadataMissing'
+            $result.TroubleshootingDiagnostics[3].Message | Should -Match 'expected SHA256 not available'
+        }
+    }
+
+    It 'does not expose troubleshooting diagnostics for a successful operation' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject]@{
+                OperationId='successful-install'
+                IsSuccessful=$true
+                WasCancelled=$false
+                StageResults=@()
+                Error=$null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            @($result.TroubleshootingDiagnostics).Count | Should -Be 0
+        }
+    }
+}
+
 Describe 'Wintainium shared lifecycle install execution' {
     It 'uses the existing download, verification, installer, and reconciliation stages for a first install' {
         InModuleScope Wintainium.Core {
