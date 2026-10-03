@@ -59,7 +59,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
                 }
             }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath 'C:\Wintainium\example.json' -StateRoot 'C:\Wintainium\state' -MachineArchitecture x64 -DownloadRoot 'C:\Wintainium\downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath 'C:\Wintainium\example.json' -StateRoot 'C:\Wintainium\state' -MachineArchitecture x64 -DownloadRoot 'C:\Wintainium\downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
@@ -89,7 +89,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             Mock Invoke-WintainiumInstallerOperation { throw 'installer must not execute after download failure' }
             Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute after download failure' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
@@ -132,7 +132,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute after installation failure' }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { throw 'authoritative state must not execute after installation failure' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
@@ -173,7 +173,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
             }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { throw 'authoritative state must not execute after reconciliation failure' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
@@ -194,7 +194,7 @@ Describe 'Wintainium application update lifecycle failure matrix' {
                 Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$script:operationId; ManifestPath='/tmp/example.json'; MachineArchitecture='x64'; DownloadRoot='/tmp/downloads' }; Errors=@() } }
                 Mock Test-WintainiumApplicationDefinition { throw 'manifest validation must not execute after cancellation' }
 
-                $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads' -CancellationToken $source.Token
+                $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads' -CancellationToken $source.Token
 
                 $result.IsSuccessful | Should -BeFalse
                 $result.WasCancelled | Should -BeTrue
