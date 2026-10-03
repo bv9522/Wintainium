@@ -86,14 +86,14 @@ Describe 'Wintainium public application install command' {
                 Error=$null
             }
 
-            Mock Invoke-WintainiumApplicationUpdateLifecycle { $lifecycle }
+            Mock Invoke-WintainiumApplicationLifecycle { $lifecycle }
             Mock ConvertTo-WintainiumPublicApplicationUpdateResult { $public }
 
             $result = Invoke-WintainiumApplicationInstall -ManifestPath 'C:example.wintainium.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads'
 
             $result.OperationId | Should -Be 'install-operation'
             $result.Status | Should -Be 'Completed'
-            Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly -ParameterFilter {
+            Should -Invoke Invoke-WintainiumApplicationLifecycle -Times 1 -Exactly -ParameterFilter {
                 $OperationKind -eq 'Install' -and
                 $ManifestPath -eq 'C:example.wintainium.json' -and
                 $StateRoot -eq 'C:state' -and
@@ -144,7 +144,7 @@ Describe 'Wintainium shared lifecycle install execution' {
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumDownloadArtifactCleanup { [pscustomobject]@{IsSuccessful=$true;Status='Cleaned'} }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath 'C:example.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads' -OperationKind Install
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath 'C:example.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads' -OperationKind Install
 
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
