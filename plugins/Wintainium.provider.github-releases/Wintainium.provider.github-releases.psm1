@@ -93,7 +93,7 @@ function ConvertTo-GitHubReleaseVersion {
     # GitHub tags are provider metadata, not necessarily semantic versions.
     # Normalize a tag only when it contains an unambiguous three-component
     # release version. Preserve the original tag when no such version exists.
-    $pattern = '(?i)^(?:.*?[-\\s])?(?<version>\\d+\\.\\d+\\.\\d+)(?<suffix>[-.](?:alpha|beta|rc)[-.0-9A-Za-z]*)?$'
+    $pattern = '(?i)^(?:.*?[-\s])?(?<version>\\d+\\.\\d+\\.\\d+)(?<suffix>[-.](?:alpha|beta|rc)[-.0-9A-Za-z]*)?$'
     if ($TagName -match $pattern) {
         $version = $matches['version']
         $suffix = [string]$matches['suffix']
