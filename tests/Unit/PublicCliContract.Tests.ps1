@@ -15,9 +15,12 @@ Describe 'Wintainium public CLI contract' {
             'Get-WintainiumApplicationRelease'
             'Get-WintainiumApplicationUpdateStatus'
             'Get-WintainiumManifest'
+            'Invoke-WintainiumApplicationInstall'
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationReconciliation'
             'Invoke-WintainiumApplicationUpdate'
+            'Remove-WintainiumApplication'
+            'Set-WintainiumApplicationIconOverride'
             'Set-WintainiumApplicationReconciliationSettings'
             'Test-WintainiumApplicationDefinition'
         )
@@ -144,6 +147,28 @@ Describe 'Wintainium public CLI contract' {
 
         $helpText | Should -Match 'stable, presentation-neutral public result projection'
         $helpText | Should -Match 'Internal orchestration state and stage-operation objects are not exposed'
+    }
+
+    It 'uses the approved parameter contract on the public application install command' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationInstall -Module Wintainium.Core
+
+        foreach ($parameter in @('ManifestPath', 'StateRoot', 'MachineArchitecture', 'DownloadRoot', 'PluginRoot', 'SchemaPath', 'InstallerTimeoutMilliseconds', 'CancellationToken')) {
+            $command.Parameters.Keys | Should -Contain $parameter
+        }
+
+        $command.Parameters.Keys | Should -Not -Contain 'OperationId'
+        $command.Parameters.Keys | Should -Not -Contain 'HttpClient'
+    }
+
+    It 'provides discoverable help and result contract for the public application install command' {
+        $help = Get-Help -Name Invoke-WintainiumApplicationInstall -Full
+        $help.Synopsis | Should -Match 'complete first-install lifecycle'
+        $help.Examples.Example | Should -Not -BeNullOrEmpty
+
+        $helpText = $help | Out-String
+        foreach ($property in @('OperationId', 'IsSuccessful', 'WasCancelled', 'Status', 'ApplicationId', 'Stages', 'Errors', 'Warnings', 'LogEvents', 'Error')) {
+            $helpText | Should -Match $property
+        }
     }
 
     It 'provides discoverable help for the public manifest command' {
