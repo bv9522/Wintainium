@@ -115,6 +115,75 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
 
     if ($null -ne $LifecycleResult.PSObject.Properties['Error'] -and $null -ne $LifecycleResult.Error) { $errors.Add($LifecycleResult.Error) }
 
+    $troubleshootingDiagnostics = [System.Collections.Generic.List[object]]::new()
+    if (-not $isSuccessful -and -not $wasCancelled) {
+        foreach ($item in @($LifecycleResult.StageResults)) {
+            if ($null -eq $item) { continue }
+            $execution = if ($null -ne $item.PSObject.Properties['Execution']) { $item.Execution } else { $null }
+            $stage = if ($null -ne $item.PSObject.Properties['Stage']) { $item.Stage } else { $item }
+            $result = if ($null -ne $execution -and $execution.PSObject.Properties['Result']) { $execution.Result } else { $null }
+            if ($null -eq $result) { continue }
+            $stageName = if ($stage.PSObject.Properties['Name']) { [string]$stage.Name } elseif ($item.PSObject.Properties['StageName']) { [string]$item.StageName } else { 'Unknown' }
+            switch ($stageName) {
+                'ReleaseDiscovery' {
+                    $providerId = if ($result.PSObject.Properties['ProviderId']) { [string]$result.ProviderId } else { $null }
+                    $releaseCount = if ($result.PSObject.Properties['Releases']) { @($result.Releases).Count } else { 0 }
+                    $message = if ([string]::IsNullOrWhiteSpace($providerId)) { "Release Discovery: $releaseCount release(s) reported." } else { "Release Discovery: provider '$providerId' reported $releaseCount release(s)." }
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.ReleaseDiscovery'; Message=$message })
+                }
+                'UpdateDecision' {
+                    $selectedRelease = if ($result.PSObject.Properties['SelectedRelease']) { $result.SelectedRelease } else { $null }
+                    $selectedArtifact = if ($result.PSObject.Properties['SelectedArtifact']) { $result.SelectedArtifact } else { $null }
+                    $version = if ($null -ne $selectedRelease -and $selectedRelease.PSObject.Properties['Version']) { [string]$selectedRelease.Version } else { $null }
+                    $fileName = if ($null -ne $selectedArtifact -and $selectedArtifact.PSObject.Properties['FileName']) { [string]$selectedArtifact.FileName } else { $null }
+                    $format = if ($null -ne $selectedArtifact -and $selectedArtifact.PSObject.Properties['Format']) { [string]$selectedArtifact.Format } else { $null }
+                    $architecture = if ($null -ne $selectedArtifact -and $selectedArtifact.PSObject.Properties['Architecture']) { [string]$selectedArtifact.Architecture } else { $null }
+                    $hashCount = if ($null -ne $selectedArtifact -and $selectedArtifact.PSObject.Properties['Hashes'] -and $null -ne $selectedArtifact.Hashes) { @($selectedArtifact.Hashes).Count } else { 0 }
+                    $hashAlgorithms = if ($hashCount -gt 0) { @($selectedArtifact.Hashes | ForEach-Object { if ($_.PSObject.Properties['Algorithm']) { [string]$_.Algorithm } }) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique } else { @() }
+                    $parts = [System.Collections.Generic.List[string]]::new()
+                    if (-not [string]::IsNullOrWhiteSpace($version)) { $parts.Add("release $version") }
+                    if (-not [string]::IsNullOrWhiteSpace($fileName)) { $parts.Add("artifact '$fileName'") }
+                    if (-not [string]::IsNullOrWhiteSpace($format)) { $parts.Add("format $format") }
+                    if (-not [string]::IsNullOrWhiteSpace($architecture)) { $parts.Add("architecture $architecture") }
+                    $parts.Add($(if ($hashCount -eq 0) { 'verification hashes: 0' } else { "verification hashes: $hashCount ($($hashAlgorithms -join ', '))" }))
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.InstallDecision'; Message="Install Decision: $($parts -join '; ')." })
+                }
+                'Download' {
+                    $status = if ($result.PSObject.Properties['Status']) { [string]$result.Status } else { 'Unknown' }
+                    $fileName = if ($result.PSObject.Properties['FileName']) { [string]$result.FileName } else { $null }
+                    $destination = if ($result.PSObject.Properties['DestinationPath']) { [string]$result.DestinationPath } else { $null }
+                    $parts = [System.Collections.Generic.List[string]]::new(); $parts.Add("status $status")
+                    if (-not [string]::IsNullOrWhiteSpace($fileName)) { $parts.Add("file '$fileName'") }
+                    if (-not [string]::IsNullOrWhiteSpace($destination)) { $parts.Add("destination '$destination'") }
+                    if ($result.PSObject.Properties['BytesWritten']) { $parts.Add("bytes $([long]$result.BytesWritten)") }
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.Download'; Message="Download: $($parts -join '; ')." })
+                }
+                'Verification' {
+                    $status = if ($result.PSObject.Properties['Status']) { [string]$result.Status } else { 'Unknown' }
+                    $algorithm = if ($result.PSObject.Properties['Algorithm']) { [string]$result.Algorithm } else { $null }
+                    $expected = if ($result.PSObject.Properties['ExpectedHash']) { [string]$result.ExpectedHash } else { $null }
+                    $actual = if ($result.PSObject.Properties['ActualHash']) { [string]$result.ActualHash } else { $null }
+                    $failureKind = if ($result.PSObject.Properties['FailureKind']) { [string]$result.FailureKind } else { $null }
+                    $parts = [System.Collections.Generic.List[string]]::new(); $parts.Add("status $status")
+                    if (-not [string]::IsNullOrWhiteSpace($algorithm)) { $parts.Add("algorithm $algorithm") }
+                    if (-not [string]::IsNullOrWhiteSpace($failureKind)) { $parts.Add("failure $failureKind") }
+                    $parts.Add("expected SHA256 $(if ([string]::IsNullOrWhiteSpace($expected)) { 'not available' } else { $expected })")
+                    $parts.Add("actual SHA256 $(if ([string]::IsNullOrWhiteSpace($actual)) { 'not available' } else { $actual })")
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.Verification'; Message="Verification: $($parts -join '; ')." })
+                }
+                'InstallerSelection' {
+                    $pluginId = if ($result.PSObject.Properties['InstallerPlugin'] -and $null -ne $result.InstallerPlugin -and $result.InstallerPlugin.PSObject.Properties['PluginId']) { [string]$result.InstallerPlugin.PluginId } else { $null }
+                    $format = if ($result.PSObject.Properties['ArtifactFormat']) { [string]$result.ArtifactFormat } else { $null }
+                    $parts = [System.Collections.Generic.List[string]]::new()
+                    if (-not [string]::IsNullOrWhiteSpace($pluginId)) { $parts.Add("installer '$pluginId'") }
+                    if (-not [string]::IsNullOrWhiteSpace($format)) { $parts.Add("format $format") }
+                    if ($parts.Count -eq 0) { $parts.Add('no installer selection details were reported') }
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.InstallerSelection'; Message="Installer Selection: $($parts -join '; ')." })
+                }
+            }
+        }
+    }
+
     [pscustomobject][ordered]@{
         OperationId = $operationId
         IsSuccessful = $isSuccessful
@@ -125,6 +194,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         Errors = @($errors.ToArray())
         Warnings = @($warnings.ToArray())
         LogEvents = @($logEvents.ToArray())
+        TroubleshootingDiagnostics = @($troubleshootingDiagnostics.ToArray())
         Error = if ($null -ne $LifecycleResult.PSObject.Properties['Error']) { $LifecycleResult.Error } else { $null }
     }
 }
