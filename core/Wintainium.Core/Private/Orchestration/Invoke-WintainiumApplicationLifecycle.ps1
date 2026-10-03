@@ -69,7 +69,16 @@ function Invoke-WintainiumApplicationLifecycle {
     $lifecycleResult = Invoke-WintainiumOrchestrationLifecycle -Request $request -StagePlan $plan -CancellationContext $cancellationContext -StageFactory $stageFactory
 
     $downloadStage = @($lifecycleResult.StageResults | Where-Object { [string]$_.StageName -eq 'Download' }) | Select-Object -Last 1
-    $downloadResult = if ($null -ne $downloadStage -and $null -ne $downloadStage.Execution) { $downloadStage.Execution.Result } else { $null }
+    $downloadResult = $null
+    if ($null -ne $downloadStage -and $null -ne $downloadStage.PSObject.Properties['Execution']) {
+        $execution = $downloadStage.Execution
+        if ($null -ne $execution -and $null -ne $execution.PSObject.Properties['Result']) {
+            $downloadResult = $execution.Result
+        }
+        elseif ($null -ne $execution) {
+            $downloadResult = $execution
+        }
+    }
     $artifactOutcome = if ([bool]$lifecycleResult.WasCancelled) {
         'Cancelled'
     } elseif ([bool]$lifecycleResult.IsSuccessful) {
