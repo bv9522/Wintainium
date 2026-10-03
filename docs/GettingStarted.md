@@ -1,6 +1,6 @@
 # Wintainium Getting Started
 
-Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, installed-state access, application validation, release discovery, application onboarding, and the complete application update lifecycle.
+Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, installed-state observation/reconciliation, application validation, release discovery, update status, onboarding, icon overrides, collection removal, and the complete application update lifecycle.
 
 ## Prerequisites
 
@@ -31,6 +31,9 @@ The supported user-facing commands are:
 - `Get-WintainiumApplicationRelease`
 - `Invoke-WintainiumApplicationUpdate`
 - `Invoke-WintainiumApplicationOnboarding`
+- `Get-WintainiumApplicationUpdateStatus`
+- `Set-WintainiumApplicationIconOverride`
+- `Remove-WintainiumApplication`
 - `Invoke-WintainiumApplicationUpdate`
 
 These commands return structured objects. They do not print a presentation-specific result that callers must parse.
@@ -128,7 +131,7 @@ The public command does not require callers to construct orchestration plans, ca
 
 ## Structured results and automation
 
-The public commands are designed to be consumed directly by PowerShell scripts and future presentation clients.
+The public commands are designed to be consumed directly by PowerShell scripts and by presentation clients such as the WinUI desktop.
 
 For example:
 
@@ -215,4 +218,4 @@ Use the stage `Status` and structured `Error.Code` values to identify the lifecy
 
 ## Next documentation layers
 
-The detailed public command reference is in `docs/CLI.md`. The update result shape is in `docs/PublicApplicationUpdateResult.md`. Manifest field and policy guidance is in `docs/ManifestAuthoring.md`. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
+The detailed public command reference is in `docs/CLI.md`. The update result shape is in `docs/PublicApplicationUpdateResult.md`. Application onboarding is documented in `docs/ApplicationOnboardingContract.md`. Manifest field and policy guidance is in `docs/ManifestAuthoring.md`. Architecture and contributor documentation explain implementation boundaries and are not substitutes for the public CLI contract.
