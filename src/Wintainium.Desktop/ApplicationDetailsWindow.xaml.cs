@@ -17,6 +17,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private WintainiumApplicationModel _application;
     private readonly WintainiumApplicationReleaseService _releaseService;
     private readonly WintainiumApplicationUpdateService _updateService;
+    private readonly WintainiumApplicationInstallService _installService;
     private readonly WintainiumApplicationUpdateDecisionService _updateDecisionService;
     private readonly WintainiumApplicationInstalledStateService _installedStateService;
     private readonly WintainiumApplicationIconService _iconService;
@@ -29,6 +30,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         WintainiumApplicationModel application,
         WintainiumApplicationReleaseService releaseService,
         WintainiumApplicationUpdateService updateService,
+        WintainiumApplicationInstallService installService,
         WintainiumApplicationUpdateDecisionService updateDecisionService,
         WintainiumApplicationInstalledStateService installedStateService,
         WintainiumApplicationIconService iconService,
@@ -37,6 +39,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
         ArgumentNullException.ThrowIfNull(updateService);
+        ArgumentNullException.ThrowIfNull(installService);
         ArgumentNullException.ThrowIfNull(updateDecisionService);
         ArgumentNullException.ThrowIfNull(installedStateService);
         ArgumentNullException.ThrowIfNull(iconService);
@@ -47,6 +50,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         _application = application;
         _releaseService = releaseService;
         _updateService = updateService;
+        _installService = installService;
         _updateDecisionService = updateDecisionService;
         _installedStateService = installedStateService;
         _iconService = iconService;
@@ -71,6 +75,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         InstallationStateText.Text = _application.InstallationStateText;
         UpdateStatusText.Text = _application.UpdateStatusText;
         SourceText.Text = _application.SourceProviderText;
+        UpdateActionButtons();
 
         if (Uri.TryCreate(_application.Homepage, UriKind.Absolute, out var homepage))
         {
@@ -81,6 +86,21 @@ public sealed partial class ApplicationDetailsWindow : Window
         {
             HomepageButton.IsEnabled = false;
         }
+    }
+
+    private void UpdateActionButtons()
+    {
+        var isRunning = _operationCancellation is not null;
+        var isInstalled = _application.InstallationState == WintainiumInstallationState.Installed;
+        var isNotInstalled = _application.InstallationState == WintainiumInstallationState.NotInstalled;
+
+        InstallButton.Visibility = isNotInstalled ? Visibility.Visible : Visibility.Collapsed;
+        CheckForUpdatesButton.Visibility = isInstalled ? Visibility.Visible : Visibility.Collapsed;
+        RunUpdateButton.Visibility = isInstalled ? Visibility.Visible : Visibility.Collapsed;
+
+        InstallButton.IsEnabled = isNotInstalled && !isRunning;
+        CheckForUpdatesButton.IsEnabled = isInstalled && !isRunning;
+        RunUpdateButton.IsEnabled = isInstalled && !isRunning;
     }
 
     private async void ChooseIconButton_Click(object sender, RoutedEventArgs e)
@@ -225,6 +245,99 @@ public sealed partial class ApplicationDetailsWindow : Window
         }
     }
 
+    private async void InstallButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_application.InstallationState != WintainiumInstallationState.NotInstalled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_application.ManifestPath))
+        {
+            ShowDetailsError("The application's manifest path is not available, so the installation cannot be requested.");
+            return;
+        }
+
+        _operationCancellation?.Dispose();
+        _operationCancellation = new CancellationTokenSource();
+        UpdateActionButtons();
+        CancelOperationButton.IsEnabled = true;
+        OperationStateText.Text = WintainiumOperationState.Running.ToString();
+        OperationIdText.Text = "Operation ID: pending Core result.";
+        OperationProgressRing.IsActive = true;
+        DetailsErrorText.Visibility = Visibility.Collapsed;
+        UpdateResultStatusText.Text = "Running the Core-owned installation lifecycle…";
+        InstalledStateRefreshStatusText.Text = "Waiting for the installation result.";
+
+        try
+        {
+            Directory.CreateDirectory(WintainiumDesktopPaths.InstalledStateRoot);
+            Directory.CreateDirectory(WintainiumDesktopPaths.DownloadRoot);
+
+            var machineArchitecture = RuntimeInformation.OSArchitecture switch
+            {
+                Architecture.X64 => "x64",
+                Architecture.X86 => "x86",
+                Architecture.Arm64 => "arm64",
+                _ => RuntimeInformation.OSArchitecture.ToString()
+            };
+
+            var result = await _installService.ExecuteAsync(
+                _application.ManifestPath,
+                WintainiumDesktopPaths.InstalledStateRoot,
+                machineArchitecture,
+                WintainiumDesktopPaths.DownloadRoot,
+                cancellationToken: _operationCancellation.Token);
+
+            OperationStateText.Text = result.OperationState.ToString();
+            OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
+            ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
+            WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
+
+            var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
+            UpdateResultStatusText.Text = result.OperationState switch
+            {
+                WintainiumOperationState.Completed =>
+                    $"Installation completed. {completedStages} of {result.Stages.Count} lifecycle stage(s) reported successful.",
+                WintainiumOperationState.Cancelled => "Installation was cancelled.",
+                WintainiumOperationState.Failed => "Installation failed.",
+                WintainiumOperationState.Running => "Installation is still running.",
+                _ => $"Installation: {result.Status ?? "Unknown"}."
+            };
+            StageItemsControl.ItemsSource = result.Stages.Select(FormatStage).ToArray();
+            InstalledStateRefreshStatusText.Text = "Refreshing authoritative installed state…";
+
+            if (result.Errors.Count > 0)
+            {
+                ShowDetailsError(string.Join(
+                    Environment.NewLine,
+                    result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
+            }
+
+            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateResultStatusText.Text = "Installation was cancelled.";
+            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed because the installation was cancelled.";
+            OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
+        }
+        catch (Exception exception)
+        {
+            UpdateResultStatusText.Text = "Installation failed before a structured result could be presented.";
+            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed.";
+            ShowDetailsError($"Installation could not be completed.{Environment.NewLine}{exception.Message}");
+        }
+        finally
+        {
+            OperationProgressRing.IsActive = false;
+            CancelOperationButton.IsEnabled = false;
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
+            UpdateActionButtons();
+        }
+    }
+
     private async void CheckForUpdatesButton_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(_application.ManifestPath))
@@ -235,7 +348,7 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
-        CheckForUpdatesButton.IsEnabled = false;
+        UpdateActionButtons();
         CancelOperationButton.IsEnabled = true;
         OperationStateText.Text = WintainiumOperationState.Running.ToString();
         OperationIdText.Text = "Operation ID: pending Core result.";
@@ -338,9 +451,9 @@ public sealed partial class ApplicationDetailsWindow : Window
         {
             OperationProgressRing.IsActive = false;
             CancelOperationButton.IsEnabled = false;
-            CheckForUpdatesButton.IsEnabled = true;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+            UpdateActionButtons();
         }
     }
 
@@ -364,8 +477,7 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
-        CheckForUpdatesButton.IsEnabled = false;
-        RunUpdateButton.IsEnabled = false;
+        UpdateActionButtons();
         CancelOperationButton.IsEnabled = true;
         OperationStateText.Text = WintainiumOperationState.Running.ToString();
         OperationIdText.Text = "Operation ID: pending Core result.";
@@ -438,10 +550,9 @@ public sealed partial class ApplicationDetailsWindow : Window
         {
             OperationProgressRing.IsActive = false;
             CancelOperationButton.IsEnabled = false;
-            CheckForUpdatesButton.IsEnabled = true;
-            RunUpdateButton.IsEnabled = true;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+            UpdateActionButtons();
         }
     }
 
