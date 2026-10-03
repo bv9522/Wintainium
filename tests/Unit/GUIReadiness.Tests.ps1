@@ -19,7 +19,10 @@ Describe 'Wintainium GUI-facing public boundary' {
             'Invoke-WintainiumApplicationOnboarding'
             'Invoke-WintainiumApplicationReconciliation'
             'Invoke-WintainiumApplicationUpdate'
+            'Invoke-WintainiumApplicationInstall'
             'Set-WintainiumApplicationReconciliationSettings'
+            'Set-WintainiumApplicationIconOverride'
+            'Remove-WintainiumApplication'
             'Test-WintainiumApplicationDefinition'
         )
     }
