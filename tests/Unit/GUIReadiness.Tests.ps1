@@ -135,6 +135,20 @@ Describe 'Wintainium GUI-facing public boundary' {
         $contract | Should -Match 'Invoke-WintainiumApplicationInstall'
     }
 
+    It 'exposes install troubleshooting only after a failed operation' {
+        $installResult = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\\..\\src\\Wintainium.Desktop\\Models\\WintainiumApplicationInstallResult.cs') -Raw
+        $installMapper = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\\..\\src\\Wintainium.Desktop\\Models\\WintainiumApplicationInstallMapper.cs') -Raw
+        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\\..\\src\\Wintainium.Desktop\\ApplicationDetailsWindow.xaml.cs') -Raw
+        $detailsXaml = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\\..\\src\\Wintainium.Desktop\\ApplicationDetailsWindow.xaml') -Raw
+
+        $installResult | Should -Match 'TroubleshootingDiagnostics'
+        $installMapper | Should -Match 'TroubleshootingDiagnostics'
+        $details | Should -Match 'TroubleshootingDiagnosticsCard.Visibility'
+        $details | Should -Match 'result.OperationState == WintainiumOperationState.Failed'
+        $detailsXaml | Should -Match 'x:Name="TroubleshootingDiagnosticsCard"'
+        $detailsXaml | Should -Match 'Visibility="Collapsed"'
+    }
+
     It 'preserves PowerShell invocation diagnostics when no structured result is returned' {
         $guard = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumCoreInvocationGuard.cs') -Raw
 
