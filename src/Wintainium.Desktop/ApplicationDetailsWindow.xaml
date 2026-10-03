@@ -23,12 +23,18 @@
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 Spacing="8">
+                        <Button x:Name="InstallButton"
+                                Content="Install"
+                                Click="InstallButton_Click"
+                                Visibility="Collapsed" />
                         <Button x:Name="CheckForUpdatesButton"
                                 Content="Check for Updates"
-                                Click="CheckForUpdatesButton_Click" />
+                                Click="CheckForUpdatesButton_Click"
+                                Visibility="Collapsed" />
                         <Button x:Name="RunUpdateButton"
                                 Content="Run Update"
-                                Click="RunUpdateButton_Click" />
+                                Click="RunUpdateButton_Click"
+                                Visibility="Collapsed" />
                     </StackPanel>
                 </Grid>
 
@@ -167,7 +173,7 @@
                                    Opacity="0.65"
                                    TextWrapping="Wrap" />
                         <TextBlock x:Name="UpdateResultStatusText"
-                                   Text="No update has been run."
+                                   Text="No install or update operation has been run."
                                    TextWrapping="Wrap" />
                         <TextBlock x:Name="InstalledStateRefreshStatusText"
                                    Text="Installed state has not been refreshed."
