@@ -17,6 +17,8 @@ internal sealed record WintainiumApplicationInstallStageModel(
     int Sequence,
     string? Name,
     string? Status,
+    string? ReasonCode,
+    string? Reason,
     bool IsSuccessful,
     bool WasCancelled,
     WintainiumOperationDiagnostic? Error);
