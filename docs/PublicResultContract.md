@@ -41,6 +41,7 @@ projection containing:
 - `Warnings`
 - `LogEvents`
 - `Error`
+- `TroubleshootingDiagnostics` — failure-only execution breadcrumbs for diagnosing lifecycle failures; empty on successful or cancelled operations.
 
 The public result is not a pass-through of private lifecycle state.
 
