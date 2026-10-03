@@ -28,6 +28,8 @@ internal static class WintainiumApplicationInstallMapper
             Sequence: Integer(stage, "Sequence"),
             Name: Nullable(stage, "Name"),
             Status: Nullable(stage, "Status"),
+            ReasonCode: Nullable(stage, "ReasonCode"),
+            Reason: Nullable(stage, "Reason"),
             IsSuccessful: Boolean(stage, "IsSuccessful"),
             WasCancelled: Boolean(stage, "WasCancelled"),
             Error: Diagnostic(stage, "Error"));
