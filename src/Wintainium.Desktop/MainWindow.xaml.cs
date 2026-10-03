@@ -257,6 +257,7 @@ public sealed partial class MainWindow : Window
                 application,
                 _services.ApplicationRelease,
                 _services.ApplicationUpdate,
+                _services.ApplicationInstall,
                 _services.ApplicationUpdateDecision,
                 _services.InstalledApplicationState,
                 _services.ApplicationIcon,
