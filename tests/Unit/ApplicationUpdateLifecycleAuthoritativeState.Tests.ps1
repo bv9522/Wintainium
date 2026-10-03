@@ -86,7 +86,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
             Mock Invoke-WintainiumDownloadArtifactCleanup { [pscustomobject]@{ IsSuccessful=$true; Status='Removed'; Outcome=$Outcome; Removed=$true; Retained=$false; ReasonCode='ArtifactRemovedAfterSuccessfulUpdate' } }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeTrue
             $result.OperationId | Should -Be $global:WintainiumAuthoritativeLifecycleFixture.OperationId
@@ -124,7 +124,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeTrue
             $result.StageResults[-1].Execution.Result.AuthoritativeStateResult.Status | Should -Be 'Preserved'
@@ -158,7 +158,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { $authoritative }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeFalse
             $result.State.Status | Should -Be 'Failed'
@@ -190,7 +190,7 @@ Describe 'Wintainium application lifecycle authoritative state integration' {
             Mock Invoke-WintainiumReconciliationOperation { throw 'reconciliation must not execute for a no-update lifecycle' }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { throw 'authoritative persistence must not execute for a no-update lifecycle' }
 
-            $result = Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeTrue
             $result.StageResults[-1].Execution.Result.Status | Should -Be 'Skipped'
