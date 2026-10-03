@@ -170,7 +170,8 @@ Describe 'Wintainium application update lifecycle composition' {
             Mock Invoke-WintainiumOrchestrationWorkflow {
                 param($OperationState,$StagePlan,$CancellationContext,$StageFactory)
                 $binding = & $StageFactory $stage $state $context
-                $execution = & $binding.StageExecutor -StageInput $binding.StageInput -CancellationToken $context.CancellationToken
+                $stageExecution = @(& $binding.StageExecutor -StageInput $binding.StageInput -CancellationToken $context.CancellationToken)
+                $execution = if ($stageExecution.Count -eq 1) { $stageExecution[0] } else { $stageExecution }
                 [pscustomobject]@{
                     IsSuccessful=$false
                     WasCancelled=$false
