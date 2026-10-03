@@ -27,15 +27,16 @@ The supported user-facing commands are:
 
 - `Get-WintainiumManifest`
 - `Get-WintainiumApplicationInstalledState`
+- `Invoke-WintainiumApplicationReconciliation`
+- `Set-WintainiumApplicationReconciliationSettings`
 - `Test-WintainiumApplicationDefinition`
 - `Get-WintainiumApplicationRelease`
+- `Get-WintainiumApplicationUpdateStatus`
 - `Invoke-WintainiumApplicationUpdate`
 - `Invoke-WintainiumApplicationInstall`
 - `Invoke-WintainiumApplicationOnboarding`
-- `Get-WintainiumApplicationUpdateStatus`
 - `Set-WintainiumApplicationIconOverride`
 - `Remove-WintainiumApplication`
-- `Invoke-WintainiumApplicationUpdate`
 
 These commands return structured objects. They do not print a presentation-specific result that callers must parse.
 
