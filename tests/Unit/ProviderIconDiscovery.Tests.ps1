@@ -61,6 +61,10 @@ Describe 'Wintainium GitHub provider icon discovery' {
             [pscustomobject]@{ homepage = $null }
         } -ModuleName Wintainium.provider.github-releases
 
+        Mock Invoke-WebRequest {
+            throw 'Invoke-WebRequest should not be called when the repository has no official homepage.'
+        } -ModuleName Wintainium.provider.github-releases
+
         $result = Wintainium.provider.github-releases\Invoke-WintainiumProviderIconDiscovery -Request $script:request
 
         $result.IsSuccessful | Should -Be $true
