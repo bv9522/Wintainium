@@ -636,15 +636,43 @@ public sealed partial class ApplicationDetailsWindow : Window
 
     private static string FormatStage(WintainiumApplicationUpdateStageModel stage)
     {
-        var outcome = stage.WasCancelled
+        return FormatStage(
+            stage.Sequence,
+            stage.Name,
+            stage.Status,
+            stage.IsSuccessful,
+            stage.WasCancelled,
+            stage.Error);
+    }
+
+    private static string FormatStage(WintainiumApplicationInstallStageModel stage)
+    {
+        return FormatStage(
+            stage.Sequence,
+            stage.Name,
+            stage.Status,
+            stage.IsSuccessful,
+            stage.WasCancelled,
+            stage.Error);
+    }
+
+    private static string FormatStage(
+        int sequence,
+        string? name,
+        string? status,
+        bool isSuccessful,
+        bool wasCancelled,
+        WintainiumOperationDiagnostic? error)
+    {
+        var outcome = wasCancelled
             ? "Cancelled"
-            : stage.IsSuccessful
+            : isSuccessful
                 ? "Succeeded"
                 : "Failed";
 
-        var status = string.IsNullOrWhiteSpace(stage.Status) ? string.Empty : $" — {stage.Status}";
-        var error = stage.Error is null ? string.Empty : $" — {FormatDiagnostic(stage.Error)}";
-        return $"{stage.Sequence}. {stage.Name ?? "Unnamed stage"}: {outcome}{status}{error}";
+        var statusText = string.IsNullOrWhiteSpace(status) ? string.Empty : $" — {status}";
+        var errorText = error is null ? string.Empty : $" — {FormatDiagnostic(error)}";
+        return $"{sequence}. {name ?? "Unnamed stage"}: {outcome}{statusText}{errorText}";
     }
 
     private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
