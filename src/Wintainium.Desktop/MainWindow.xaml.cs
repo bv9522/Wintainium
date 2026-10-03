@@ -328,7 +328,12 @@ public sealed partial class MainWindow : Window
                 return;
             }
 
-            // Stage 2: independently refresh every application. A slow provider
+            // Stage 2: hydrate the last persisted installed state before live discovery.
+            // The Dashboard is already visible, and this local/Core state read avoids
+            // showing a transient Unknown/Not installed value while reconciliation waits.
+            await HydratePersistedApplicationStatesAsync(result.Applications, cancellationToken);
+
+            // Stage 3: independently refresh every application. A slow provider
             // cannot block the Dashboard or another application's refresh.
             _ = RefreshApplicationStatesAsync(result.Applications, cancellationToken);
         }
@@ -343,6 +348,42 @@ public sealed partial class MainWindow : Window
         {
             _collectionLoadInProgress = false;
             UpdateCollectionVisibility();
+        }
+    }
+
+    private async Task HydratePersistedApplicationStatesAsync(
+        IReadOnlyList<WintainiumApplicationModel> applications,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var hydrated = await Task.WhenAll(applications.Select(async application =>
+            {
+                try
+                {
+                    return await _services.ApplicationCollection.HydratePersistedApplicationStateAsync(
+                        application, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    return application;
+                }
+            })).ConfigureAwait(true);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            foreach (var application in hydrated)
+            {
+                SetApplicationCollectionItem(application);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
     }
 
