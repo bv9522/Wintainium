@@ -1,6 +1,6 @@
 # Wintainium Getting Started
 
-Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, installed-state observation/reconciliation, application validation, release discovery, update status, onboarding, icon overrides, collection removal, and the complete application update lifecycle.
+Wintainium is an engine-first PowerShell project. The supported public surface includes manifest discovery, installed-state observation/reconciliation, application validation, release discovery, update status, onboarding, icon overrides, collection removal, and the complete application update and first-install lifecycles.
 
 ## Prerequisites
 
@@ -30,6 +30,7 @@ The supported user-facing commands are:
 - `Test-WintainiumApplicationDefinition`
 - `Get-WintainiumApplicationRelease`
 - `Invoke-WintainiumApplicationUpdate`
+- `Invoke-WintainiumApplicationInstall`
 - `Invoke-WintainiumApplicationOnboarding`
 - `Get-WintainiumApplicationUpdateStatus`
 - `Set-WintainiumApplicationIconOverride`
@@ -128,6 +129,37 @@ $result.Errors | Select-Object Code, Message
 Cancellation is represented explicitly through `WasCancelled = $true` and `Status = 'Cancelled'`. A normal unsuccessful operation reports `Status = 'Failed'`; successful completion reports `Status = 'Completed'`.
 
 The public command does not require callers to construct orchestration plans, cancellation contexts, stage factories, provider requests, download requests, installer requests, reconciliation requests, or individual stage executors.
+
+## 5. Execute a first installation
+
+For an application whose authoritative installed state is `NotInstalled`, the
+complete first-install lifecycle is available through the public install command:
+
+```powershell
+$result = Invoke-WintainiumApplicationInstall `
+    -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' `
+    -StateRoot 'C:\Wintainium\State' `
+    -MachineArchitecture 'x64' `
+    -DownloadRoot 'C:\Wintainium\Downloads'
+```
+
+The install command uses the same Core lifecycle execution path as updates:
+release discovery, lifecycle decision, download, verification, installer
+selection, native installation, and authoritative reconciliation.
+
+Inspect the public result the same way as an update result:
+
+```powershell
+$result.Status
+$result.IsSuccessful
+$result.ApplicationId
+$result.Stages | Select-Object Sequence, Name, Status
+$result.Errors | Select-Object Code, Message
+```
+
+An install request does not bypass verification or create a second installer
+engine. If authoritative state is already `Installed`, Core reports that no
+initial installation is required.
 
 ## Structured results and automation
 
