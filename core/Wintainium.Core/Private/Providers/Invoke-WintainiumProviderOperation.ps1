@@ -13,7 +13,7 @@ function Invoke-WintainiumProviderOperation {
     $baseResult = {
         param([bool]$IsSuccessful,[string]$Status,[object[]]$Releases=@(),[object[]]$Errors=@(),[object[]]$Warnings=@())
         [pscustomobject][ordered]@{
-            OperationId=$operationId; IsSuccessful=$IsSuccessful; Status=$Status
+            OperationId=$operationId; ProviderId=$Provider.PluginId; IsSuccessful=$IsSuccessful; Status=$Status
             Releases=@($Releases); Errors=@($Errors); Warnings=@($Warnings); LogEvents=$logEvents.ToArray()
         }
     }
