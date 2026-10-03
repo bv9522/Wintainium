@@ -41,6 +41,30 @@ internal sealed class WintainiumApplicationCollectionService
     }
 
     /// <summary>
+    /// Hydrates one application from the last persisted Core installed-state observation.
+    /// This performs no reconciliation or provider discovery, so it is suitable for
+    /// immediate Dashboard hydration before live background refresh begins.
+    /// </summary>
+    public async Task<WintainiumApplicationModel> HydratePersistedApplicationStateAsync(
+        WintainiumApplicationModel application,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        if (string.IsNullOrWhiteSpace(application.ApplicationId))
+            throw new ArgumentException("The application identifier is required.", nameof(application));
+
+        var result = await _installedState.GetAsync(
+            WintainiumDesktopPaths.InstalledStateRoot,
+            application.ApplicationId,
+            cancellationToken).ConfigureAwait(false);
+
+        return result.IsSuccessful
+            ? WintainiumApplicationModelMapper.ApplyInstalledState(application, result.State)
+            : application;
+    }
+
+    /// <summary>
     /// Refreshes one application. Multiple callers may run independently; the
     /// desktop PowerShell host continues to serialize individual Core invocations.
     /// </summary>
