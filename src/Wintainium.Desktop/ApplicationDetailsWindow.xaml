@@ -210,6 +210,25 @@
                     </StackPanel>
                 </Border>
 
+                <Border x:Name="TroubleshootingDiagnosticsCard"
+                        Padding="18"
+                        Visibility="Collapsed">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Troubleshooting"
+                                   Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Detailed execution breadcrumbs are shown only when an installation fails."
+                                   Opacity="0.65"
+                                   TextWrapping="Wrap" />
+                        <ItemsControl x:Name="TroubleshootingDiagnosticsItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <Border Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Release Information"
