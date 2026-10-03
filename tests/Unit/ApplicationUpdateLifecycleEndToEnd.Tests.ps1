@@ -41,7 +41,7 @@ Describe 'Wintainium application update lifecycle end-to-end regression' {
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Invoke-WintainiumAuthoritativeStateReconciliation { [pscustomobject]@{ OperationId=$OperationId; IsSuccessful=$true; Status='Persisted'; State=$persistedState; Persisted=$true; ReasonCode='AuthoritativeEvidencePersisted'; Errors=@() } }
 
-            $result=Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result=Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $result.IsSuccessful | Should -BeTrue
             $result.OperationId | Should -Be $operationId
@@ -126,7 +126,7 @@ Describe 'Wintainium application update lifecycle end-to-end regression' {
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
             Mock Set-WintainiumInstalledApplicationState { throw 'state persistence must not occur for Unknown evidence' }
 
-            $output=Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $output=Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
 
             $output.IsSuccessful | Should -BeTrue
             $output.OperationId | Should -Be $operationId
