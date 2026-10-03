@@ -2,74 +2,87 @@
 
 ## Mission
 
-Wintainium is an open, modular Windows software manager that uses official
-developer sources instead of depending primarily on centralized repositories.
+Wintainium is an open, modular Windows software manager that uses upstream
+sources rather than depending primarily on a centralized package repository.
 
-## Principles
+It is designed around a general lifecycle architecture:
 
-1. Keep the architecture modular; application-specific behavior belongs in
-   manifests or plugins, not the core.
-2. Prefer official sources: GitHub Releases, vendor sites, feeds, and vendor
-   APIs. Package-manager integrations are optional.
-3. Keep the engine usable without a GUI.
-4. Favor readable, maintainable PowerShell over clever shortcuts.
-5. Fail safely: validate practical downloads, avoid overwriting user data
-   without explicit policy, and log important operations.
+**discover → decide → acquire → verify → install → reconcile → present**
 
-## Initial technology choices
+## Core principles
 
-- Engine: PowerShell
-- Configuration and manifests: JSON
-- Future GUI: C#/.NET, separate from the engine
-- Version control: Git
+1. **Manifests describe intent.** Application-specific configuration belongs in
+   manifests, not hard-coded Core branches.
+2. **Providers discover.** Providers translate upstream source mechanisms into
+   normalized release/artifact observations.
+3. **Core decides.** Update policy, artifact selection, installer selection,
+   lifecycle sequencing, cancellation, and authoritative managed state remain
+   Core responsibilities.
+4. **Verification is mandatory.** Download success is not trust.
+5. **Reconciliation establishes reality.** Post-install state is based on
+   application-scoped evidence, not GUI assumptions.
+6. **Presentation stays outside Core.** CLI and WinUI clients consume structured
+   results without reproducing business rules.
+7. **Fail safely.** Path boundaries, installer invocation, archive handling,
+   verification, elevation, cancellation, and state persistence have explicit
+   contracts.
+8. **Prefer maintainable boundaries.** Do not add abstractions or speculative
+   persistence merely because a future feature might need them.
 
-## Foundation-phase non-goals
+## Current architecture
 
-The original foundation phase deliberately excluded update-checking,
-installation, network source integrations, and GUI implementation. Those
-constraints applied to the early architecture work and are no longer a
-statement of the project's current capability boundary.
+Wintainium consists of:
 
-The implemented engine now includes provider-backed release discovery,
-download, verification, installation, Windows installed-application
-reconciliation, authoritative installed-state handling, and complete lifecycle
-orchestration. Production installer capabilities currently include EXE, MSI,
-portable ZIP, and MSIX. The public PowerShell surface now exposes six stable commands, including the
-installed-state, onboarding, and end-to-end update operations and their
-presentation-neutral structured result contracts.
+- **PowerShell Core** — authoritative engine and public operation boundary.
+- **Provider plugins** — upstream source and release discovery.
+- **Installer plugins** — EXE, MSI, portable ZIP, and MSIX application of
+  selected artifacts.
+- **Reconciliation plugin(s)** — authoritative Windows installed-application
+  observations.
+- **C#/.NET WinUI 3 desktop client** — presentation/application layer over Core.
+- **JSON manifests and schemas** — application definitions and validation.
 
-## Current product boundary
+The desktop uses in-process Microsoft.PowerShell.SDK hosting, but PowerShell
+SDK types stop at the adapter boundary. WinUI does not construct lifecycle
+plans, provider requests, download requests, installer requests, reconciliation
+requests, or private Core objects.
 
-The PowerShell engine remains the primary product and is intended to be usable
-without a GUI. Public commands return structured results suitable for an
-interactive CLI presentation layer or a future C#/.NET client. Presentation
-formatting and UI concerns remain outside Core.
+## Current product state
 
-The Phase 11 desktop client is the implemented C#/.NET WinUI 3 presentation client over that boundary. It hosts the documented PowerShell Core commands in-process through Microsoft.PowerShell.SDK, maps structured results into desktop presentation models, and keeps engine decisions, provider/installer behavior, lifecycle execution, verification, reconciliation, and cancellation semantics in Core.
+The Core lifecycle has been exercised against a real 7-Zip update, including
+native installer elevation and authoritative post-install reconciliation.
 
+Phase 13.5 production installers/package formats are complete.
 
-## Production plugin boundary
+Phase 14 GUI productization is in progress. The desktop currently includes:
 
-The current production architecture separates discovery, decision, acquisition,
-verification, installation, reconciliation, and presentation:
+- Dashboard application collection with list/grid presentation
+- Sort/filter presentation
+- Add Software source-URL onboarding
+- structured onboarding success/failure/recovery presentation
+- Application Details with operation status, lifecycle, errors/warnings,
+  release information, and notes
+- Check for Updates and Run Updates actions
+- automatic application icon discovery plus user-selected icon override
+- Remove Software from the Wintainium collection
+- authoritative collection refresh after relevant operations
 
-- Providers discover upstream releases and artifact candidates.
-- Core decides release/update eligibility, artifact selection, and installer
-  selection.
-- Download obtains the selected artifact.
-- Verification establishes artifact trust before installation.
-- Installer plugins apply artifacts through a structured invocation boundary.
-- The Windows reconciliation plugin observes installed-application evidence.
-- Core remains authoritative for managed installed state.
-- The WinUI desktop client presents Core-owned results and does not become a
-  second engine.
+The Dashboard context menu intentionally exposes **Remove Software** only.
+Opening Details by left-click already provides the application's full action hub;
+redundant context-menu entries that merely opened Details are not part of the
+current UX.
 
-The production installer set is EXE, MSI, portable ZIP, and MSIX. The default
-installer mechanism preference is Core policy and can be constrained by a
-manifest; it is not an application-universal hard-coded ranking.
+## Product boundary
 
-Plugin descriptor validation protects contract integrity but is not a sandbox.
-Production plugin modules are trusted executable code and run in-process.
-Structured process arguments, path containment, archive traversal checks, and
-fixed MSIX invocation reduce concrete command-boundary risks without claiming
-isolation from malicious plugin code.
+Wintainium is no longer in a foundation/prototype stage. The engine, provider
+boundary, acquisition, verification, installer boundary, reconciliation,
+public update operation, onboarding boundary, and desktop integration exist.
+
+Remaining work is primarily durability and productization:
+
+- finish Phase 14 GUI polish and integration
+- add persistent application lifecycle in Phase 15
+- expand plugin ecosystem and extensibility in Phase 16
+- harden reliability, security, recovery, and interrupted-operation behavior in
+  Phase 17
+- complete release engineering and 1.0 validation in Phase 18
