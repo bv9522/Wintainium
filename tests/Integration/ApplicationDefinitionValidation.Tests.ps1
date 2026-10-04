@@ -1,5 +1,6 @@
 BeforeAll {
-    $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $script:testRoot = Split-Path -Path $PSScriptRoot -Parent
+    $script:testRoot = Split-Path -Path $script:testRoot -Parent
     $script:modulePath = Join-Path -Path $script:testRoot -ChildPath 'core/Wintainium.Core/Wintainium.Core.psd1'
     $script:manifestRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Manifests'
     $script:pluginRoot = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins'
@@ -19,6 +20,20 @@ Describe 'Application definition validation workflow' {
         $result.ProviderPlugin.PluginId | Should -Be 'Wintainium.provider.github-releases'
         $result.InstallerPlugin.PluginId | Should -Be 'Wintainium.installer.portable-zip'
         $result.LogEvents.Count | Should -Be 2
+    }
+
+    It 'resolves declared installer fallbacks into the lifecycle plugin collection' {
+        $result = Test-WintainiumApplicationDefinition `
+            -ManifestPath (Join-Path -Path $script:manifestRoot -ChildPath 'valid-installer-fallbacks.json') `
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
+
+        $result.IsValid | Should -Be $true
+        @($result.InstallerPlugins).Count | Should -Be 2
+        @($result.InstallerPlugins.PluginId) | Should -Contain 'Wintainium.installer.portable-zip'
+        @($result.InstallerPlugins.PluginId) | Should -Contain 'Wintainium.installer.msi'
+        @($result.InstallerPluginCandidates | Where-Object IsFallback).Count | Should -Be 1
+        @($result.Warnings).Count | Should -Be 0
     }
 
     It 'reports a missing provider without contacting an external service' {
