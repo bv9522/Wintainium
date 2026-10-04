@@ -20,9 +20,12 @@ function Get-WintainiumDefaultApplicationPolicy {
     # architecture/eligibility is evaluated later and outranks format choice.
     # The order below is only the default mechanism preference; an authored
     # manifest may explicitly choose another installer and format.
-    $preferredFormats = @('msi','exe','msix','zip')`n`n    # Prefer MSI when available, but fall back to EXE and then the remaining`n    # supported formats. This prevents a modern release that moved from EXE to`n    # MSI from forcing Core to select an older release merely because the older`n    # release still has an EXE artifact.
+    # Release version is always ranked before artifact format. This list is only
+    # the deterministic tie-break order for artifacts belonging to the same
+    # release. Preserve the established EXE -> MSI -> MSIX -> ZIP preference.
+    $preferredFormats = @('exe','msi','msix','zip')
 
-    $installerCandidates = @()
+    $installerCandidates = [System.Collections.Generic.List[object]]::new()
     foreach ($format in $preferredFormats) {
         $matches = @(
             foreach ($installer in @($installers | Sort-Object DescriptorPath)) {
@@ -30,16 +33,19 @@ function Get-WintainiumDefaultApplicationPolicy {
                     if ($_ -is [string]) { $_.Trim().ToLowerInvariant() }
                 })
                 if ($supportedFormats -contains $format) {
-                    [pscustomobject]@{
-                        Installer = $installer
-                        Format = $format
-                    }
+                    $installer
                 }
             }
         )
-        if ($matches.Count -gt 0) {
-            $installerCandidates = $matches
-            break
+        if ($matches.Count -gt 1) {
+            $errors.Add([pscustomobject][ordered]@{
+                Code='ApplicationPolicyAmbiguous'
+                Path='$.Policy.Installer'
+                Message="Multiple registered installer plugins support the default artifact format '$format'; Core will not silently choose between them."
+            })
+        }
+        elseif ($matches.Count -eq 1) {
+            $installerCandidates.Add([pscustomobject]@{ Installer=$matches[0]; Format=$format })
         }
     }
 
@@ -55,13 +61,6 @@ function Get-WintainiumDefaultApplicationPolicy {
             Code='ApplicationPolicyUnavailable'
             Path='$.Policy.Installer'
             Message='No registered installer plugin advertises a supported default application artifact format.'
-        })
-    }
-    elseif (@($installerCandidates).Count -gt 1) {
-        $errors.Add([pscustomobject][ordered]@{
-            Code='ApplicationPolicyAmbiguous'
-            Path='$.Policy.Installer'
-            Message="Multiple registered installer plugins support the default artifact format '$($installerCandidates[0].Format)'; Core will not silently choose between them."
         })
     }
 
@@ -97,7 +96,14 @@ function Get-WintainiumDefaultApplicationPolicy {
     }
 
     $installer = $installerCandidates[0].Installer
-    $selectedFormat = $installerCandidates[0].Format
+    $selectedFormats = @($installerCandidates | ForEach-Object Format)
+    $installerFallbacks = @($installerCandidates | Select-Object -Skip 1 | ForEach-Object {
+        [pscustomobject][ordered]@{
+            PluginId=[string]$_.Installer.PluginId
+            RequiredContractVersion='1'
+            Settings=@{}
+        }
+    })
     $reconciler = $reconcilers[0]
 
     $reconciliationRequiresConfiguration = (
@@ -146,6 +152,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                     PluginId=[string]$installer.PluginId
                     RequiredContractVersion='1'
                     Settings=@{}
+                    Fallbacks=$installerFallbacks
                 }
                 Reconciliation=[pscustomobject][ordered]@{
                     PluginId=[string]$reconciler.PluginId
@@ -154,7 +161,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                 }
                 Release=[pscustomobject][ordered]@{ Channel='stable' }
                 Artifact=[pscustomobject][ordered]@{
-                    Formats=@($selectedFormat)
+                    Formats=$selectedFormats
                     Architectures=@('x64','x86','arm64','neutral')
                     AllowUnknownArchitecture=$false
                 }
