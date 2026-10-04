@@ -12,11 +12,7 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
     It 'preserves a supplied operation correlation identifier' {
         $operationId = '11111111-1111-1111-1111-111111111111'
 
-        $result = Test-WintainiumApplicationDefinition \
-            -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') \
-            -PluginRoot $script:pluginRoot \
-            -SchemaPath $script:schemaPath \
-            -OperationId $operationId
+        $result = Test-WintainiumApplicationDefinition -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') -PluginRoot $script:pluginRoot -SchemaPath $script:schemaPath -OperationId $operationId
 
         $result.IsValid | Should -Be $true
         $result.OperationId | Should -Be $operationId
