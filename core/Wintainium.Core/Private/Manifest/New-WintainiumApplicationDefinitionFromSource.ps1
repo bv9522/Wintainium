@@ -102,12 +102,12 @@ function New-WintainiumApplicationDefinitionFromSource {
         installer=[ordered]@{
             pluginId=[string]$Policy.Installer.PluginId
             requiredContractVersion=[string]$Policy.Installer.RequiredContractVersion
-            settings=if ($Policy.Installer.PSObject.Properties['Settings'] -and $null -ne $Policy.Installer.Settings) {$Policy.Installer.Settings} else @{}
+            settings=if ($Policy.Installer.PSObject.Properties['Settings'] -and $null -ne $Policy.Installer.Settings) {$Policy.Installer.Settings} else { @{} }
             fallbacks=@($Policy.Installer.Fallbacks | ForEach-Object {
                 [ordered]@{
                     pluginId=[string]$_.PluginId
                     requiredContractVersion=[string]$_.RequiredContractVersion
-                    settings=if ($_.PSObject.Properties['Settings'] -and $null -ne $_.Settings) {$_.Settings} else @{}
+                    settings=if ($_.PSObject.Properties['Settings'] -and $null -ne $_.Settings) {$_.Settings} else { @{} }
                 }
             })
         }
