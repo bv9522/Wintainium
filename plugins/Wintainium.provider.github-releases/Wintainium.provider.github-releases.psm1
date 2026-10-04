@@ -72,8 +72,10 @@ function ConvertTo-GitHubArtifactArchitecture {
 
     $name = $FileName.ToLowerInvariant()
 
+    # ARM64 is not a supported Wintainium artifact architecture on the current x64 Windows target.
+    # Treat ARM64/aarch64 assets as unknown so Core's default allowUnknownArchitecture=false policy excludes them.
     if ($name -match '(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)') {
-        return 'arm64'
+        return 'unknown'
     }
 
     if ($name -match '(^|[^a-z0-9])(x86[_-]64|x64|amd64)([^a-z0-9]|$)') {
