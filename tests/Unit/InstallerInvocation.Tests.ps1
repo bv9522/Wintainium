@@ -132,9 +132,15 @@ Describe 'Wintainium installer invocation preparation' {
         $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
         $result.Error.Code | Should -Be 'InstallerInvocationArtifactPathInvalid'
     }
-    It 'rejects unstructured installer settings' {
-        $request = [pscustomobject][ordered]@{ OperationId = 'installer-operation'; DownloadOperationId = 'download-operation'; Installer = [pscustomobject][ordered]@{ pluginId = 'Wintainium.installer.exe'; requiredContractVersion = '1'; settings = 'silent' }; Artifact = $script:request.Artifact }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $script:selection; Request = $request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
+    It 'rejects unstructured selected installer settings' {
+        $selection = [pscustomobject][ordered]@{
+            IsSelected = $true
+            InstallerPlugin = $script:plugin
+            InstallerSettings = 'silent'
+            ArtifactFormat = 'exe'
+            Error = $null
+        }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $script:request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
         $result.Error.Code | Should -Be 'InstallerInvocationSettingsInvalid'
     }
     It 'accepts a JSON-imported installer hashtable from the application manifest' {
