@@ -1,6 +1,6 @@
 # Wintainium Manifest Authoring
 
-A Wintainium application manifest is a JSON declaration of how an application is identified, where its releases are discovered, which installer capability handles the artifact, and which release/artifact policies Core should apply, and which release/artifact policies Core should apply.
+A Wintainium application manifest is a JSON declaration of how an application is identified, where its releases are discovered, which installer capabilities can handle the artifact, and which release/artifact policies Core should apply.
 
 The authoritative machine-readable definition is `schemas/application-manifest.schema.json` (JSON Schema Draft 2020-12). This guide explains the fields at a human level; the schema remains the final validation authority.
 
@@ -23,7 +23,7 @@ Every manifest must contain:
 
 | Field | Purpose |
 |---|---|
-| `manifestVersion` | Manifest format version. The current schema requires `"1.0"`. |
+| `manifestVersion` | Manifest format version. The current schema requires `"1.1"`. |
 | `id` | Stable application identifier. Use lowercase identifiers matching the schema pattern. |
 | `name` | Human-readable application name. |
 | `source` | Provider plugin reference used to discover releases. |
@@ -61,7 +61,7 @@ The `installer` object identifies the installer capability:
 }
 ```
 
-The installer reference declares capability and configuration. It does not cause installation during manifest import or validation. When present, pluginId is an explicit installer selection; Core does not silently substitute a different installer.
+The installer reference declares an ordered set of installer candidates. The primary \`pluginId\` is tried first for the selected artifact format, followed by optional \`fallbacks\` in order. These fallbacks are explicit manifest declarations; Core never substitutes an undeclared installer.
 
 ## Release policy
 
@@ -194,28 +194,30 @@ Manifest authoring should therefore express policy and capability references, no
 
 Artifact selection and installer selection are separate Core-owned decisions.
 
-Core first evaluates artifact eligibility and selects an artifact using
-architecture and manifest format policy. Exact machine architecture has
-priority over neutral artifacts, and unknown architecture is accepted only when
-the manifest explicitly allows it. The manifest's format order is considered
-within the eligible architecture set.
+Core ranks releases by version first. The newest eligible release wins
+regardless of whether that release is published as EXE, MSI, MSIX, or ZIP. Only
+after a release has won the version comparison does Core select an artifact
+within that release.
 
-The selected artifact is then checked against the installer capability. If the
-manifest explicitly names an installer plugin, that exact plugin must be
-registered, Contract 1 compatible, and capable of handling the selected format.
-Core does not silently switch installers.
+Within the selected release, artifact architecture and manifest format policy
+determine the artifact. Exact machine architecture has priority over neutral
+artifacts, and unknown architecture is accepted only when the manifest
+explicitly allows it. When multiple formats are otherwise eligible for the
+same release and architecture, the manifest's format order is the tie-breaker.
 
-If the manifest leaves installer selection to the Core default application
-policy, Core currently prefers compatible mechanisms in this order:
+The default onboarding format order is:
 
 1. exe
 2. msi
 3. msix
 4. zip
 
-This is a policy default, not a universal ranking that overrides application
-requirements. Manifest-declared artifact formats can narrow the eligible set,
-and explicit installer selection remains authoritative.
+The default onboarding policy records an installer candidate for each available
+format in that same order. The primary installer is followed by explicit
+manifest \`fallbacks\`. This means an older EXE never beats a newer MSI merely
+because EXE is preferred; EXE only beats MSI when both are candidates for the
+same release. Authored manifests can still narrow the formats or explicitly
+declare a different ordered installer set.
 
 The production Contract 1 installer plugins are:
 
