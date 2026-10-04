@@ -26,6 +26,7 @@ function Get-WintainiumDefaultApplicationPolicy {
     $preferredFormats = @('exe','msi','msix','zip')
 
     $installerCandidates = [System.Collections.Generic.List[object]]::new()
+    $selectedInstallerIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($format in $preferredFormats) {
         $matches = @(
             foreach ($installer in @($installers | Sort-Object DescriptorPath)) {
@@ -45,7 +46,10 @@ function Get-WintainiumDefaultApplicationPolicy {
             })
         }
         elseif ($matches.Count -eq 1) {
-            $installerCandidates.Add([pscustomobject]@{ Installer=$matches[0]; Format=$format })
+            $installer = $matches[0]
+            if ($selectedInstallerIds.Add([string]$installer.PluginId)) {
+                $installerCandidates.Add([pscustomobject]@{ Installer=$installer; Format=$format })
+            }
         }
     }
 
