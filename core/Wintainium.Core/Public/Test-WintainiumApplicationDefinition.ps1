@@ -86,7 +86,12 @@ function Test-WintainiumApplicationDefinition {
 
             $fallbackOrder = 1
             $fallbacks = @()
-            if ($manifest.installer.PSObject.Properties['fallbacks'] -and $null -ne $manifest.installer.fallbacks) {
+            if ($manifest.installer -is [System.Collections.IDictionary]) {
+                if ($manifest.installer.Contains('fallbacks') -and $null -ne $manifest.installer['fallbacks']) {
+                    $fallbacks = @($manifest.installer['fallbacks'])
+                }
+            }
+            elseif ($manifest.installer.PSObject.Properties['fallbacks'] -and $null -ne $manifest.installer.fallbacks) {
                 $fallbacks = @($manifest.installer.fallbacks)
             }
 
