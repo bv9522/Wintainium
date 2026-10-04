@@ -60,6 +60,91 @@ Describe 'Wintainium application install decision' {
 }
 
 
+    It 'prefers a newer MSI release over an older EXE release' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='audacity.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe','msi','msix','zip'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='audacity.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='old-exe'; Version='3.3.3'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/audacity-3.3.3.exe';Format='exe';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='new-msi'; Version='4.0.1'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/audacity-4.0.1.msi';Format='msi';Architecture='x64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'InstallAvailable'
+            $result.SelectedRelease.ReleaseId | Should -Be 'new-msi'
+            $result.SelectedRelease.Version | Should -Be '4.0.1'
+            $result.SelectedArtifact.Format | Should -Be 'msi'
+        }
+    }
+
+    It 'prefers a newer EXE release over an older MSI release' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe','msi','msix','zip'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{ ReleaseId='old-msi'; Version='1.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/app-1.0.0.msi';Format='msi';Architecture='x64'}) },
+                    [pscustomobject]@{ ReleaseId='new-exe'; Version='2.0.0'; Channel='stable'; Deprecated=$false; Artifacts=@([pscustomobject]@{Uri='https://example.test/app-2.0.0.exe';Format='exe';Architecture='x64'}) }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.SelectedRelease.ReleaseId | Should -Be 'new-exe'
+            $result.SelectedArtifact.Format | Should -Be 'exe'
+        }
+    }
+
+    It 'uses EXE before MSI when both formats belong to the same release version' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe','msi','msix','zip'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Releases=@(
+                    [pscustomobject]@{
+                        ReleaseId='same-release'
+                        Version='2.0.0'
+                        Channel='stable'
+                        Deprecated=$false
+                        Artifacts=@(
+                            [pscustomobject]@{Uri='https://example.test/app-2.0.0.msi';Format='msi';Architecture='x64'}
+                            [pscustomobject]@{Uri='https://example.test/app-2.0.0.exe';Format='exe';Architecture='x64'}
+                        )
+                    }
+                )
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.SelectedRelease.ReleaseId | Should -Be 'same-release'
+            $result.SelectedArtifact.Format | Should -Be 'exe'
+        }
+    }
+
 Describe 'Wintainium initial install release and artifact selection' {
     It 'filters disallowed channels and deprecated releases before selecting the highest stable release' {
         InModuleScope Wintainium.Core {
