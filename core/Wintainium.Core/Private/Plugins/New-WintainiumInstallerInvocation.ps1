@@ -58,12 +58,6 @@ function New-WintainiumInstallerInvocation {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationArtifactPathInvalid'; Message = 'Installer invocation requires an absolute path to the completed artifact.' } }
     }
 
-    $installer = & $getValue $Request 'Installer'
-    $requestPluginId = [string](& $getValue $installer 'pluginId')
-    if ([string]::IsNullOrWhiteSpace($requestPluginId) -or -not $requestPluginId.Equals($pluginId, [System.StringComparison]::OrdinalIgnoreCase)) {
-        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationPluginMismatch'; Message = 'The selected installer plugin does not match the installer declared by the request.' } }
-    }
-
     $pluginRoot = Split-Path -Path $descriptorPath -Parent
     $entryPointPath = Join-Path -Path $pluginRoot -ChildPath $entryPoint
     $resolvedEntryPoint = [System.IO.Path]::GetFullPath($entryPointPath)
@@ -97,7 +91,7 @@ function New-WintainiumInstallerInvocation {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationArtifactFormatMissing'; Message = 'Installer invocation requires the artifact format selected by the installer-selection boundary.' } }
     }
 
-    $settings = & $getValue $installer 'settings'
+    $settings = & $getValue $Selection 'InstallerSettings'
     $installationMode = [string](& $getValue $Selection 'InstallationMode')
     if ([string]::IsNullOrWhiteSpace($installationMode)) {
         $installationMode = 'process'
@@ -105,7 +99,7 @@ function New-WintainiumInstallerInvocation {
         $installationMode = $installationMode.Trim().ToLowerInvariant()
     }
     if ($null -eq $settings -or ($settings -isnot [System.Collections.IDictionary] -and $settings -isnot [pscustomobject])) {
-        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationSettingsInvalid'; Message = 'Installer invocation requires structured installer settings.' } }
+        return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationSettingsInvalid'; Message = 'Installer selection requires structured installer settings.' } }
     }
 
     [pscustomobject][ordered]@{
