@@ -85,7 +85,12 @@ function Test-WintainiumApplicationDefinition {
                 })
 
             $fallbackOrder = 1
-            foreach ($fallback in @($manifest.installer.fallbacks)) {
+            $fallbacks = @()
+            if ($manifest.installer.PSObject.Properties['fallbacks'] -and $null -ne $manifest.installer.fallbacks) {
+                $fallbacks = @($manifest.installer.fallbacks)
+            }
+
+            foreach ($fallback in $fallbacks) {
                 if ($null -ne $fallback) {
                     $installerCandidates.Add([pscustomobject][ordered]@{
                             PluginId = [string]$fallback.pluginId
