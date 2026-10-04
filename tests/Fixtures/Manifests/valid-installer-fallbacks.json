@@ -4,7 +4,7 @@
   "name": "Installer Fallback Test",
   "homepage": "https://example.com/",
   "source": {
-    "pluginId": "Wintainium.provider.valid-fixture",
+    "pluginId": "Wintainium.provider.github-releases",
     "requiredContractVersion": "1",
     "settings": {}
   },
