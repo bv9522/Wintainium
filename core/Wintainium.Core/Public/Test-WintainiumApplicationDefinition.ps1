@@ -18,6 +18,9 @@ function Test-WintainiumApplicationDefinition {
     .PARAMETER SchemaPath
     Path to the application-manifest JSON schema used for validation.
 
+    .PARAMETER OperationId
+    Optional lifecycle correlation identifier. When supplied, it is preserved in the result and log events.
+
     .OUTPUTS
     PSCustomObject. The result contains OperationId, IsValid, Manifest, ProviderPlugin,
     InstallerPlugin, InstallerPlugins, InstallerPluginCandidates, Errors, Warnings, and LogEvents.
@@ -30,10 +33,31 @@ function Test-WintainiumApplicationDefinition {
 
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
 
-        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
+        [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
+
+        [string]$OperationId
     )
 
-    $operationId = [guid]::NewGuid().Guid
+    $resolvedOperationId = [guid]::Empty
+    if ([string]::IsNullOrWhiteSpace($OperationId)) {
+        $resolvedOperationId = [guid]::NewGuid()
+    }
+    elseif (-not [guid]::TryParse($OperationId, [ref]$resolvedOperationId)) {
+        return [pscustomobject][ordered]@{
+            OperationId = $OperationId
+            IsValid = $false
+            Manifest = $null
+            ProviderPlugin = $null
+            InstallerPlugin = $null
+            InstallerPlugins = @()
+            InstallerPluginCandidates = @()
+            ReconciliationPlugin = $null
+            Errors = @([pscustomobject][ordered]@{ Code = 'OperationIdInvalid'; Path = '$.OperationId'; Message = 'OperationId must be a valid GUID.' })
+            Warnings = @()
+            LogEvents = @()
+        }
+    }
+    $operationId = $resolvedOperationId.ToString()
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
     $logEvents = [System.Collections.Generic.List[object]]::new()
@@ -42,6 +66,7 @@ function Test-WintainiumApplicationDefinition {
     $manifest = $null
     $provider = $null
     $installer = $null
+    $reconciliation = $null
 
     $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'ValidationStarted' -Message 'Application definition validation started.' -Context @{ ManifestPath = $ManifestPath }))
 
@@ -177,6 +202,14 @@ function Test-WintainiumApplicationDefinition {
                     Message = "No resolved installer candidate supports any of the manifest's declared artifact formats."
                 })
         }
+
+        $reconciliationResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType 'Reconciliation' -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
+        if ($reconciliationResolution.IsResolved) {
+            $reconciliation = $reconciliationResolution.Plugin
+        }
+        else {
+            $errors.Add($reconciliationResolution.Error)
+        }
     }
 
     $severity = if ($errors.Count -eq 0) { 'Information' } else { 'Error' }
@@ -192,6 +225,7 @@ function Test-WintainiumApplicationDefinition {
         InstallerPlugin = $installer
         InstallerPlugins = $installerPlugins.ToArray()
         InstallerPluginCandidates = $installerPluginCandidates.ToArray()
+        ReconciliationPlugin = $reconciliation
         Errors = $errors.ToArray()
         Warnings = $warnings.ToArray()
         LogEvents = $logEvents.ToArray()
