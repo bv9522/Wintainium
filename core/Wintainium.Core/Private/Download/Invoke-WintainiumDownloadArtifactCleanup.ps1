@@ -11,35 +11,41 @@ function Invoke-WintainiumDownloadArtifactCleanup {
 
         [Parameter(Mandatory)]
         [ValidateSet('Completed','Failed','Cancelled')]
-        [string]$Outcome
+        [string]$Outcome,
+
+        [ValidateRange(1,365)]
+        [int]$RetentionDays = 7,
+
+        [ValidateRange(1,100)]
+        [int]$MaxRetainedOperations = 20
     )
 
-    if ($null -eq $DownloadResult -or -not $DownloadResult.PSObject.Properties['DestinationPath']) {
-        return [pscustomobject][ordered]@{
+    $emptyResult = {
+        param([string]$Status,[string]$ReasonCode,[bool]$Removed,[bool]$Retained,[string]$DestinationPath,[string]$ArtifactDirectory)
+        [pscustomobject][ordered]@{
             IsSuccessful = $true
-            Status = 'NoArtifact'
+            Status = $Status
             Outcome = $Outcome
-            Removed = $false
-            Retained = $false
-            DestinationPath = $null
-            ArtifactDirectory = $null
-            ReasonCode = 'NoDownloadArtifact'
+            Removed = $Removed
+            Retained = $Retained
+            DestinationPath = $DestinationPath
+            ArtifactDirectory = $ArtifactDirectory
+            MetadataPath = $null
+            MetadataWritten = $false
+            DirectoryRemoved = $false
+            PurgedOperations = @()
+            PurgedLegacyArtifacts = @()
+            ReasonCode = $ReasonCode
             Error = $null
         }
     }
 
+    if ($null -eq $DownloadResult -or -not $DownloadResult.PSObject.Properties['DestinationPath']) {
+        return & $emptyResult 'NoArtifact' 'NoDownloadArtifact' $false $false $null $null
+    }
+
     if ([string]::IsNullOrWhiteSpace([string]$DownloadResult.DestinationPath)) {
-        return [pscustomobject][ordered]@{
-            IsSuccessful = $true
-            Status = 'NoArtifact'
-            Outcome = $Outcome
-            Removed = $false
-            Retained = $false
-            DestinationPath = $null
-            ArtifactDirectory = $null
-            ReasonCode = 'NoDownloadArtifactPath'
-            Error = $null
-        }
+        return & $emptyResult 'NoArtifact' 'NoDownloadArtifactPath' $false $false $null $null
     }
 
     $destination = [System.IO.Path]::GetFullPath([string]$DownloadResult.DestinationPath)
@@ -47,16 +53,124 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     $rootWithSeparator = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 
     if (-not $destination.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
-        return [pscustomobject][ordered]@{
-            IsSuccessful = $true
-            Status = 'NotManaged'
-            Outcome = $Outcome
-            Removed = $false
-            Retained = $false
-            DestinationPath = $destination
-            ArtifactDirectory = $null
-            ReasonCode = 'ArtifactOutsideDownloadRoot'
-            Error = $null
+        return & $emptyResult 'NotManaged' 'ArtifactOutsideDownloadRoot' $false $false $destination $null
+    }
+
+    if (-not (Test-Path -LiteralPath $root -PathType Container)) {
+        try {
+            New-Item -ItemType Directory -Path $root -Force -ErrorAction Stop | Out-Null
+        }
+        catch {
+            return [pscustomobject][ordered]@{
+                IsSuccessful = $false
+                Status = 'CleanupMaintenanceFailed'
+                Outcome = $Outcome
+                Removed = $false
+                Retained = $false
+                DestinationPath = $destination
+                ArtifactDirectory = $null
+                MetadataPath = $null
+                MetadataWritten = $false
+                DirectoryRemoved = $false
+                PurgedOperations = @()
+                PurgedLegacyArtifacts = @()
+                ReasonCode = 'DownloadRootUnavailable'
+                Error = [pscustomobject][ordered]@{ Code='DownloadRootUnavailable'; Message=$_.Exception.Message }
+            }
+        }
+    }
+
+    $operationsRoot = Join-Path $root 'operations'
+    $purgedOperations = [System.Collections.Generic.List[string]]::new()
+    $purgedLegacyArtifacts = [System.Collections.Generic.List[string]]::new()
+
+    # The root is Core-owned download storage. Files directly under the root are
+    # artifacts from the legacy pre-operation-directory layout. Only recognized
+    # downloadable artifact extensions are removed; subdirectories are untouched.
+    $legacyExtensions = @('.exe','.msi','.msix','.zip','.7z','.cab')
+    try {
+        foreach ($legacyArtifact in @(Get-ChildItem -LiteralPath $root -File -Force -ErrorAction Stop)) {
+            if ($legacyExtensions -contains $legacyArtifact.Extension.ToLowerInvariant()) {
+                try {
+                    Remove-Item -LiteralPath $legacyArtifact.FullName -Force -ErrorAction Stop
+                    $purgedLegacyArtifacts.Add($legacyArtifact.FullName)
+                }
+                catch {
+                    # Legacy cleanup is maintenance only. A locked artifact is left
+                    # in place and never changes the operation outcome.
+                }
+            }
+        }
+    }
+    catch {
+        # Maintenance failure is intentionally non-authoritative.
+    }
+
+    # Failed/cancelled artifacts are useful for troubleshooting, but retention is
+    # temporary and bounded so repeated failures cannot consume the user's disk.
+    if (Test-Path -LiteralPath $operationsRoot -PathType Container) {
+        $nowUtc = [DateTime]::UtcNow
+        $cutoffUtc = $nowUtc.AddDays(-$RetentionDays)
+        $operationDirectories = @()
+        try {
+            $operationDirectories = @(Get-ChildItem -LiteralPath $operationsRoot -Directory -Force -ErrorAction Stop)
+        }
+        catch {
+            $operationDirectories = @()
+        }
+
+        $retainedOperations = foreach ($operationDirectory in $operationDirectories) {
+            $metadataPath = Join-Path $operationDirectory.FullName '.wintainium-artifact.json'
+            $retainedAtUtc = $operationDirectory.LastWriteTimeUtc
+            if (Test-Path -LiteralPath $metadataPath -PathType Leaf) {
+                try {
+                    $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+                    if ($metadata.RetainedAtUtc) {
+                        $parsed = [DateTime]::MinValue
+                        if ([DateTime]::TryParse([string]$metadata.RetainedAtUtc, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$parsed)) {
+                            $retainedAtUtc = $parsed.ToUniversalTime()
+                        }
+                    }
+                }
+                catch {
+                    # Fall back to directory timestamp when diagnostic metadata is
+                    # missing or malformed.
+                }
+            }
+
+            [pscustomobject]@{
+                Directory = $operationDirectory
+                RetainedAtUtc = $retainedAtUtc
+            }
+        }
+
+        foreach ($retained in @($retainedOperations | Where-Object { $_.RetainedAtUtc -lt $cutoffUtc })) {
+            try {
+                Remove-Item -LiteralPath $retained.Directory.FullName -Recurse -Force -ErrorAction Stop
+                $purgedOperations.Add($retained.Directory.FullName)
+            }
+            catch {
+                # A locked or otherwise unavailable operation directory is retained
+                # until a later maintenance pass.
+            }
+        }
+
+        $remaining = @(
+            $retainedOperations |
+                Where-Object { $purgedOperations -notcontains $_.Directory.FullName } |
+                Sort-Object RetainedAtUtc -Descending
+        )
+        if ($remaining.Count -gt $MaxRetainedOperations) {
+            foreach ($retained in @($remaining | Select-Object -Skip $MaxRetainedOperations)) {
+                try {
+                    Remove-Item -LiteralPath $retained.Directory.FullName -Recurse -Force -ErrorAction Stop
+                    $purgedOperations.Add($retained.Directory.FullName)
+                }
+                catch {
+                    # Retention bounds are best-effort maintenance and do not alter
+                    # the authoritative operation result.
+                }
+            }
         }
     }
 
@@ -95,8 +209,8 @@ function Invoke-WintainiumDownloadArtifactCleanup {
                 $metadataWritten = $true
             }
             catch {
-                # Retention itself remains authoritative. Metadata is diagnostic enrichment
-                # and must never delete or invalidate the retained artifact.
+                # Retention itself remains authoritative. Metadata is diagnostic
+                # enrichment and must never delete or invalidate the artifact.
             }
         }
 
@@ -110,6 +224,9 @@ function Invoke-WintainiumDownloadArtifactCleanup {
             ArtifactDirectory = $artifactDirectory
             MetadataPath = $metadataPath
             MetadataWritten = $metadataWritten
+            DirectoryRemoved = $false
+            PurgedOperations = @($purgedOperations)
+            PurgedLegacyArtifacts = @($purgedLegacyArtifacts)
             ReasonCode = if ($artifactExists) { 'ArtifactRetainedForTroubleshooting' } else { 'NoCompletedArtifactToRetain' }
             Error = $null
         }
@@ -124,6 +241,11 @@ function Invoke-WintainiumDownloadArtifactCleanup {
             Retained = $false
             DestinationPath = $destination
             ArtifactDirectory = $artifactDirectory
+            MetadataPath = $null
+            MetadataWritten = $false
+            DirectoryRemoved = $false
+            PurgedOperations = @($purgedOperations)
+            PurgedLegacyArtifacts = @($purgedLegacyArtifacts)
             ReasonCode = 'ArtifactAlreadyAbsent'
             Error = $null
         }
@@ -141,6 +263,11 @@ function Invoke-WintainiumDownloadArtifactCleanup {
             Retained = $true
             DestinationPath = $destination
             ArtifactDirectory = $artifactDirectory
+            MetadataPath = $null
+            MetadataWritten = $false
+            DirectoryRemoved = $false
+            PurgedOperations = @($purgedOperations)
+            PurgedLegacyArtifacts = @($purgedLegacyArtifacts)
             ReasonCode = 'ArtifactCleanupFailed'
             Error = [pscustomobject][ordered]@{
                 Code = 'ArtifactCleanupFailed'
@@ -158,9 +285,9 @@ function Invoke-WintainiumDownloadArtifactCleanup {
             }
         }
         catch {
-            # The artifact itself is gone. A non-empty or locked operation directory is
-            # harmless and is intentionally not allowed to turn a successful update into
-            # a failed update.
+            # The artifact itself is gone. A non-empty or locked operation directory
+            # is harmless and is intentionally not allowed to turn a successful
+            # operation into a failed operation.
         }
     }
 
@@ -172,7 +299,11 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         Retained = $false
         DestinationPath = $destination
         ArtifactDirectory = $artifactDirectory
+        MetadataPath = $null
+        MetadataWritten = $false
         DirectoryRemoved = $directoryRemoved
+        PurgedOperations = @($purgedOperations)
+        PurgedLegacyArtifacts = @($purgedLegacyArtifacts)
         ReasonCode = 'ArtifactRemovedAfterSuccessfulUpdate'
         Error = $null
     }
