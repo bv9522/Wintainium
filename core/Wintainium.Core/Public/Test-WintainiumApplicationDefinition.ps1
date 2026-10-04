@@ -63,11 +63,35 @@ function Test-WintainiumApplicationDefinition {
         $providerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.source.pluginId -PluginType 'Provider' -RequiredContractVersion $manifest.source.requiredContractVersion
         if ($providerResolution.IsResolved) { $provider=$providerResolution.Plugin } else { $errors.Add($providerResolution.Error) }
         $installerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.installer.pluginId -PluginType 'Installer' -RequiredContractVersion $manifest.installer.requiredContractVersion
-        if ($installerResolution.IsResolved) { $installer=$installerResolution.Plugin; $compatibility=Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer; if (-not $compatibility.IsCompatible) { $errors.Add($compatibility.Error) } } else { $errors.Add($installerResolution.Error) }
+        if ($installerResolution.IsResolved) {
+            $installer=$installerResolution.Plugin
+            $compatibility=Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer
+            if (-not $compatibility.IsCompatible) { $errors.Add($compatibility.Error) }
+
+            foreach ($fallback in @($manifest.installer.fallbacks)) {
+                $fallbackResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $fallback.pluginId -PluginType 'Installer' -RequiredContractVersion $fallback.requiredContractVersion
+                if (-not $fallbackResolution.IsResolved) {
+                    $errors.Add($fallbackResolution.Error)
+                    continue
+                }
+                $fallbackCompatibility = Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $fallbackResolution.Plugin
+                if (-not $fallbackCompatibility.IsCompatible) { $errors.Add($fallbackCompatibility.Error) }
+            }
+        } else {
+            $errors.Add($installerResolution.Error)
+        }
         $reconciliationResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.reconciliation.pluginId -PluginType 'Reconciliation' -RequiredContractVersion $manifest.reconciliation.requiredContractVersion
         if ($reconciliationResolution.IsResolved) { $reconciliation=$reconciliationResolution.Plugin } else { $errors.Add($reconciliationResolution.Error) }
     }
     $severity=if($errors.Count -eq 0){'Information'}else{'Error'}; $eventName=if($errors.Count -eq 0){'ValidationSucceeded'}else{'ValidationFailed'}; $message=if($errors.Count -eq 0){'Application definition is valid.'}else{'Application definition is invalid.'}
     $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $resolvedOperationId -Component 'Core' -EventName $eventName -Message $message -Context @{ ErrorCount=$errors.Count; WarningCount=$warnings.Count }))
-    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; IsValid=$errors.Count -eq 0; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; ReconciliationPlugin=$reconciliation; Errors=$errors.ToArray(); Warnings=$warnings.ToArray(); LogEvents=$logEvents.ToArray() }
+    $installerPlugins = @()
+    if ($null -ne $installer) {
+        $installerPlugins = @($installer)
+        foreach ($fallback in @($manifest.installer.fallbacks)) {
+            $fallbackResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $fallback.pluginId -PluginType 'Installer' -RequiredContractVersion $fallback.requiredContractVersion
+            if ($fallbackResolution.IsResolved) { $installerPlugins += $fallbackResolution.Plugin }
+        }
+    }
+    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; IsValid=$errors.Count -eq 0; Manifest=$manifest; ProviderPlugin=$provider; InstallerPlugin=$installer; InstallerPlugins=$installerPlugins; ReconciliationPlugin=$reconciliation; Errors=$errors.ToArray(); Warnings=$warnings.ToArray(); LogEvents=$logEvents.ToArray() }
 }
