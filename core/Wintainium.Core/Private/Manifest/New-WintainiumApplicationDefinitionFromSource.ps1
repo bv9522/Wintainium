@@ -103,13 +103,17 @@ function New-WintainiumApplicationDefinitionFromSource {
             pluginId=[string]$Policy.Installer.PluginId
             requiredContractVersion=[string]$Policy.Installer.RequiredContractVersion
             settings=if ($Policy.Installer.PSObject.Properties['Settings'] -and $null -ne $Policy.Installer.Settings) {$Policy.Installer.Settings} else { @{} }
-            fallbacks=@($Policy.Installer.Fallbacks | ForEach-Object {
-                [ordered]@{
-                    pluginId=[string]$_.PluginId
-                    requiredContractVersion=[string]$_.RequiredContractVersion
-                    settings=if ($_.PSObject.Properties['Settings'] -and $null -ne $_.Settings) {$_.Settings} else { @{} }
+            fallbacks=@(
+                if ($Policy.Installer.PSObject.Properties['Fallbacks'] -and $null -ne $Policy.Installer.Fallbacks) {
+                    $Policy.Installer.Fallbacks | ForEach-Object {
+                        [ordered]@{
+                            pluginId=[string]$_.PluginId
+                            requiredContractVersion=[string]$_.RequiredContractVersion
+                            settings=if ($_.PSObject.Properties['Settings'] -and $null -ne $_.Settings) {$_.Settings} else { @{} }
+                        }
+                    }
                 }
-            })
+            )
         }
         reconciliation=[ordered]@{
             pluginId=[string]$Policy.Reconciliation.PluginId
