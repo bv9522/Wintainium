@@ -48,6 +48,31 @@ Describe 'Wintainian GitHub release provider version normalization' {
 }
 
 Describe 'Wintainian GitHub release provider artifact architecture mapping' {
+    It 'does not classify ARM64 GitHub assets as a selectable architecture' {
+        Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
+            @([pscustomobject]@{
+                id=406
+                tag_name='Example-1.0.0'
+                prerelease=$false
+                assets=@([pscustomobject]@{
+                    browser_download_url='https://example.test/example-win-arm64.msi'
+                    name='example-win-arm64.msi'
+                    size=100
+                    digest='sha256:' + ('b' * 64)
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-000000000106'
+            Settings=@{ repository='example/project'; maxPages=1 }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Releases[0].Artifacts[0].Architecture | Should -Be 'unknown'
+        $result.Releases[0].Artifacts[0].Format | Should -Be 'msi'
+    }
+
     It 'maps x86_64 GitHub asset names to the x64 architecture' {
         Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
             @([pscustomobject]@{
