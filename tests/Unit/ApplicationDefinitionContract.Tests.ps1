@@ -76,6 +76,44 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.InstallerPlugins.Count | Should -Be 1
     }
 
+    It 'rejects manifests that request the unsupported ARM64 artifact architecture' {
+        $manifest = Join-Path -Path $TestDrive -ChildPath 'arm64-artifact.json'
+        @'
+{
+  "manifestVersion": "1.1",
+  "id": "org.example.arm64-artifact",
+  "name": "ARM64 Artifact Example",
+  "source": {
+    "pluginId": "Wintainium.provider.example",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "installer": {
+    "pluginId": "Wintainium.installer.example",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.example",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["msi"],
+    "architectures": ["arm64"]
+  }
+}
+'@ | Set-Content -LiteralPath $manifest -Encoding utf8
+
+        $result = Test-WintainiumApplicationDefinition -ManifestPath $manifest -PluginRoot $script:pluginRoot -SchemaPath $script:schemaPath
+
+        $result.IsValid | Should -Be $false
+        $result.Errors.Count | Should -BeGreaterThan 0
+    }
+
     It 'returns structured plugin resolution failures without throwing' {
         $manifest = Join-Path -Path $TestDrive -ChildPath 'missing-plugin.json'
         @'
