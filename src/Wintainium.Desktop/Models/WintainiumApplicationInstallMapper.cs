@@ -9,7 +9,7 @@ internal static class WintainiumApplicationInstallMapper
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return new WintainiumApplicationInstallResult(
+        var mapped = new WintainiumApplicationInstallResult(
             OperationId: Nullable(result, "OperationId"),
             IsSuccessful: Boolean(result, "IsSuccessful"),
             WasCancelled: Boolean(result, "WasCancelled"),
@@ -22,6 +22,9 @@ internal static class WintainiumApplicationInstallMapper
             TroubleshootingDiagnostics: Diagnostics(result, "TroubleshootingDiagnostics"),
             Error: Diagnostic(result, "Error"),
             OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
+
+        WintainiumDesktopDiagnosticsStore.SetInstallResult(mapped);
+        return mapped;
     }
 
     private static WintainiumApplicationInstallStageModel MapStage(PSObject stage)
