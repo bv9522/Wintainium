@@ -19,6 +19,7 @@ internal static class WintainiumApplicationUpdateMapper
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
             LogEvents: Diagnostics(result, "LogEvents"),
+            TroubleshootingDiagnostics: Diagnostics(result, "TroubleshootingDiagnostics"),
             Error: Diagnostic(result, "Error"),
             OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
     }
@@ -28,6 +29,8 @@ internal static class WintainiumApplicationUpdateMapper
             Sequence: Integer(stage, "Sequence"),
             Name: Nullable(stage, "Name"),
             Status: Nullable(stage, "Status"),
+            ReasonCode: Nullable(stage, "ReasonCode"),
+            Reason: Nullable(stage, "Reason"),
             IsSuccessful: Boolean(stage, "IsSuccessful"),
             WasCancelled: Boolean(stage, "WasCancelled"),
             Error: Diagnostic(stage, "Error"));
