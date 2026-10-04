@@ -60,6 +60,7 @@ Describe 'Wintainium application install decision' {
 }
 
 
+Describe 'Wintainium release-first artifact selection' {
     It 'prefers a newer MSI release over an older EXE release' {
         InModuleScope Wintainium.Core {
             $manifest = [pscustomobject]@{
@@ -143,7 +144,8 @@ Describe 'Wintainium application install decision' {
             $result.SelectedRelease.ReleaseId | Should -Be 'same-release'
             $result.SelectedArtifact.Format | Should -Be 'exe'
         }
-    }
+    }}
+
 
 Describe 'Wintainium initial install release and artifact selection' {
     It 'filters disallowed channels and deprecated releases before selecting the highest stable release' {
