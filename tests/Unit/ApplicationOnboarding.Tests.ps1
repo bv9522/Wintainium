@@ -214,7 +214,7 @@ Describe 'Wintainium application onboarding' {
         $result.SourceResolution.Source.ProviderSettings.repository | Should -Be 'PCSX2/pcsx2'
     }
 
-    It 'prefers MSI before EXE when both installer formats are available' {
+    It 'preserves EXE before MSI as the same-release installer preference' {
         $registry = [pscustomobject]@{
             Plugins = @(
                 [pscustomobject]@{
@@ -247,7 +247,8 @@ Describe 'Wintainium application onboarding' {
         }
 
         $result.IsSuccessful | Should -Be $true
-        $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.msi'
-        @($result.Policy.Artifact.Formats) | Should -Be @('msi')
+        $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.exe'
+        @($result.Policy.Installer.Fallbacks.PluginId) | Should -Be @('Wintainium.installer.msi')
+        @($result.Policy.Artifact.Formats) | Should -Be @('exe','msi')
     }
 }
