@@ -42,7 +42,7 @@ function Test-WintainiumApplicationDefinition {
     $resolvedOperationId = [guid]::Empty
     if ([string]::IsNullOrWhiteSpace($OperationId)) { $resolvedOperationId = [guid]::NewGuid() }
     elseif (-not [guid]::TryParse($OperationId, [ref]$resolvedOperationId)) {
-        return [pscustomobject][ordered]@{ OperationId=$OperationId; IsValid=$false; Manifest=$null; ProviderPlugin=$null; InstallerPlugin=$null; ReconciliationPlugin=$null; Errors=@([pscustomobject][ordered]@{ Code='OperationIdInvalid'; Path='$.OperationId'; Message='OperationId must be a valid GUID.' }); Warnings=@(); LogEvents=@() }
+        return [pscustomobject][ordered]@{ OperationId=$OperationId; IsValid=$false; Manifest=$null; ProviderPlugin=$null; InstallerPlugin=$null; InstallerPlugins=@(); ReconciliationPlugin=$null; Errors=@([pscustomobject][ordered]@{ Code='OperationIdInvalid'; Path='$.OperationId'; Message='OperationId must be a valid GUID.' }); Warnings=@(); LogEvents=@() }
     }
     $resolvedOperationId = $resolvedOperationId.ToString()
 
