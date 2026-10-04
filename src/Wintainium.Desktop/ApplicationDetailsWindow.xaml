@@ -60,7 +60,7 @@
                                 Width="32"
                                 Height="32"
                                 Margin="0"
-                                                                CornerRadius="8"
+                                CornerRadius="8"
                                 Background="{ThemeResource AccentFillColorSecondaryBrush}"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center">
@@ -172,6 +172,7 @@
                                    Text="Not started." />
                         <TextBlock x:Name="OperationIdText"
                                    Opacity="0.65"
+                                   Visibility="Collapsed"
                                    TextWrapping="Wrap" />
                         <TextBlock x:Name="UpdateResultStatusText"
                                    Text="No install or update operation has been run."
@@ -180,7 +181,8 @@
                                    Text="Installed state has not been refreshed."
                                    TextWrapping="Wrap"
                                    Opacity="0.72" />
-                        <TextBlock Text="Lifecycle stages"
+                        <TextBlock x:Name="LifecycleHeaderText"
+                                   Text="Lifecycle stages"
                                    FontWeight="SemiBold" />
                         <ItemsControl x:Name="StageItemsControl">
                             <ItemsControl.ItemTemplate>
@@ -189,24 +191,36 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Errors"
-                                   FontWeight="SemiBold" />
-                        <ItemsControl x:Name="ErrorItemsControl">
+                        <TextBlock x:Name="ErrorsHeaderText"
+                                   Text="Errors"
+                                   FontWeight="SemiBold"
+                                   Visibility="Collapsed" />
+                        <ItemsControl x:Name="ErrorItemsControl"
+                                      Loaded="DiagnosticItemsControl_Loaded">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" TextWrapping="Wrap" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Warnings"
-                                   FontWeight="SemiBold" />
-                        <ItemsControl x:Name="WarningItemsControl">
+                        <TextBlock x:Name="WarningsHeaderText"
+                                   Text="Warnings"
+                                   FontWeight="SemiBold"
+                                   Visibility="Collapsed" />
+                        <ItemsControl x:Name="WarningItemsControl"
+                                      Loaded="DiagnosticItemsControl_Loaded">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" TextWrapping="Wrap" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="CopyDiagnosticsButton"
+                                    Content="Copy Diagnostics"
+                                    Click="CopyDiagnosticsButton_Click"
+                                    IsEnabled="False" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -216,10 +230,11 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Troubleshooting"
                                    Style="{StaticResource SubtitleTextBlockStyle}" />
-                        <TextBlock Text="Detailed execution breadcrumbs are shown only when an installation fails."
+                        <TextBlock Text="Detailed execution diagnostics are shown when useful for troubleshooting."
                                    Opacity="0.65"
                                    TextWrapping="Wrap" />
-                        <ItemsControl x:Name="TroubleshootingDiagnosticsItemsControl">
+                        <ItemsControl x:Name="TroubleshootingDiagnosticsItemsControl"
+                                      Loaded="DiagnosticItemsControl_Loaded">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" TextWrapping="Wrap" />
