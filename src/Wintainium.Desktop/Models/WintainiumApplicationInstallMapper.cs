@@ -24,16 +24,31 @@ internal static class WintainiumApplicationInstallMapper
             OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
     }
 
-    private static WintainiumApplicationInstallStageModel MapStage(PSObject stage) =>
-        new(
+    private static WintainiumApplicationInstallStageModel MapStage(PSObject stage)
+    {
+        var isSuccessful = Boolean(stage, "IsSuccessful");
+        return new(
             Sequence: Integer(stage, "Sequence"),
             Name: Nullable(stage, "Name"),
-            Status: Nullable(stage, "Status"),
+            Status: PresentationStatus(stage, isSuccessful),
             ReasonCode: Nullable(stage, "ReasonCode"),
             Reason: Nullable(stage, "Reason"),
-            IsSuccessful: Boolean(stage, "IsSuccessful"),
+            IsSuccessful: isSuccessful,
             WasCancelled: Boolean(stage, "WasCancelled"),
             Error: Diagnostic(stage, "Error"));
+    }
+
+    private static string? PresentationStatus(PSObject stage, bool isSuccessful)
+    {
+        var status = Nullable(stage, "Status");
+        if (isSuccessful)
+            return null;
+
+        var reason = Nullable(stage, "Reason");
+        return string.IsNullOrWhiteSpace(reason) || string.Equals(reason, status, StringComparison.OrdinalIgnoreCase)
+            ? status
+            : string.IsNullOrWhiteSpace(status) ? reason : $"{status} — {reason}";
+    }
 
     private static WintainiumOperationDiagnostic? Diagnostic(PSObject source, string name)
     {
