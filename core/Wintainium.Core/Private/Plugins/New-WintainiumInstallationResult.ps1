@@ -65,6 +65,10 @@ function New-WintainiumInstallationResult {
     $pluginModulePath = if ($Invocation.PSObject.Properties.Name -contains 'PluginModulePath') { [string]$Invocation.PluginModulePath } else { $null }
     $artifactPath = if ($Invocation.PSObject.Properties.Name -contains 'ArtifactPath') { [string]$Invocation.ArtifactPath } else { $null }
     $artifactFormat = if ($Invocation.PSObject.Properties.Name -contains 'ArtifactFormat') { [string]$Invocation.ArtifactFormat } else { $null }
+    $installationMode = if ($Invocation.PSObject.Properties.Name -contains 'InstallationMode') { [string]$Invocation.InstallationMode } else { $null }
+    $settingsSummary = if ($Invocation.PSObject.Properties.Name -contains 'Settings' -and $null -ne $Invocation.Settings) {
+        try { $Invocation.Settings | ConvertTo-Json -Compress -Depth 10 } catch { [string]$Invocation.Settings }
+    } else { $null }
 
     if ($status -eq 'Completed' -and $exitCode -is [int] -and $exitCode -eq 0) {
         return [pscustomobject][ordered]@{
@@ -90,8 +94,10 @@ function New-WintainiumInstallationResult {
         "OperationId: $(if ([string]::IsNullOrWhiteSpace([string]$operationId)) { 'unknown' } else { $operationId })"
         "DownloadOperationId: $(if ([string]::IsNullOrWhiteSpace([string]$downloadOperationId)) { 'unknown' } else { $downloadOperationId })"
         "PluginModulePath: $(if ([string]::IsNullOrWhiteSpace($pluginModulePath)) { 'unknown' } else { $pluginModulePath })"
+        "InstallationMode: $(if ([string]::IsNullOrWhiteSpace($installationMode)) { 'unknown' } else { $installationMode })"
         "ArtifactFormat: $(if ([string]::IsNullOrWhiteSpace($artifactFormat)) { 'unknown' } else { $artifactFormat })"
         "ArtifactPath: $(if ([string]::IsNullOrWhiteSpace($artifactPath)) { 'unknown' } else { $artifactPath })"
+        "InstallerSettings: $(if ([string]::IsNullOrWhiteSpace($settingsSummary)) { 'none' } else { $settingsSummary })"
         "ExitCode: $(if ($null -eq $exitCode) { 'null' } else { $exitCode })"
         "DurationMilliseconds: $duration"
         "ErrorMessage: $(if ([string]::IsNullOrWhiteSpace([string]$errorMessage)) { 'none' } else { [string]$errorMessage })"
@@ -121,8 +127,10 @@ function New-WintainiumInstallationResult {
             StandardOutput=$standardOutput
             PluginId=$pluginId
             PluginModulePath=$pluginModulePath
+            InstallationMode=$installationMode
             ArtifactFormat=$artifactFormat
             ArtifactPath=$artifactPath
+            InstallerSettings=$settingsSummary
             OperationId=$operationId
             DownloadOperationId=$downloadOperationId
         }
