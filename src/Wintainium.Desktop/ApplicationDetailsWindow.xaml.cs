@@ -22,9 +22,12 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly WintainiumApplicationInstalledStateService _installedStateService;
     private readonly WintainiumApplicationIconService _iconService;
     private readonly Func<Task>? _onAuthoritativeStateChanged;
+    private readonly Func<string, Task>? _onApplicationOperationStarted;
+    private readonly Func<string, Task>? _onApplicationOperationCompleted;
     private WintainiumApplicationUpdateResult? _lastUpdateResult;
     private string _savedNotes = string.Empty;
     private CancellationTokenSource? _operationCancellation;
+    private bool _applicationOperationRegistered;
 
     internal ApplicationDetailsWindow(
         WintainiumApplicationModel application,
@@ -34,7 +37,9 @@ public sealed partial class ApplicationDetailsWindow : Window
         WintainiumApplicationUpdateDecisionService updateDecisionService,
         WintainiumApplicationInstalledStateService installedStateService,
         WintainiumApplicationIconService iconService,
-        Func<Task>? onAuthoritativeStateChanged = null)
+        Func<Task>? onAuthoritativeStateChanged = null,
+        Func<string, Task>? onApplicationOperationStarted = null,
+        Func<string, Task>? onApplicationOperationCompleted = null)
     {
         ArgumentNullException.ThrowIfNull(application);
         ArgumentNullException.ThrowIfNull(releaseService);
@@ -55,6 +60,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         _installedStateService = installedStateService;
         _iconService = iconService;
         _onAuthoritativeStateChanged = onAuthoritativeStateChanged;
+        _onApplicationOperationStarted = onApplicationOperationStarted;
+        _onApplicationOperationCompleted = onApplicationOperationCompleted;
 
         Title = $"{application.DisplayName} — Application Details";
         AppWindow.Resize(new SizeInt32(820, 760));
@@ -260,6 +267,11 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
+        if (_onApplicationOperationStarted is not null)
+        {
+            await _onApplicationOperationStarted(_application.ApplicationId);
+            _applicationOperationRegistered = true;
+        }
         UpdateActionButtons();
         CancelOperationButton.IsEnabled = true;
         OperationStateText.Text = WintainiumOperationState.Running.ToString();
@@ -340,6 +352,12 @@ public sealed partial class ApplicationDetailsWindow : Window
             CancelOperationButton.IsEnabled = false;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+            if (_applicationOperationRegistered)
+            {
+                _applicationOperationRegistered = false;
+                if (_onApplicationOperationCompleted is not null)
+                    await _onApplicationOperationCompleted(_application.ApplicationId);
+            }
             UpdateActionButtons();
         }
     }
@@ -354,6 +372,11 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
+        if (_onApplicationOperationStarted is not null)
+        {
+            await _onApplicationOperationStarted(_application.ApplicationId);
+            _applicationOperationRegistered = true;
+        }
         UpdateActionButtons();
         CancelOperationButton.IsEnabled = true;
         OperationStateText.Text = WintainiumOperationState.Running.ToString();
@@ -459,6 +482,12 @@ public sealed partial class ApplicationDetailsWindow : Window
             CancelOperationButton.IsEnabled = false;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+            if (_applicationOperationRegistered)
+            {
+                _applicationOperationRegistered = false;
+                if (_onApplicationOperationCompleted is not null)
+                    await _onApplicationOperationCompleted(_application.ApplicationId);
+            }
             UpdateActionButtons();
         }
     }
@@ -483,6 +512,11 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
+        if (_onApplicationOperationStarted is not null)
+        {
+            await _onApplicationOperationStarted(_application.ApplicationId);
+            _applicationOperationRegistered = true;
+        }
         UpdateActionButtons();
         CancelOperationButton.IsEnabled = true;
         OperationStateText.Text = WintainiumOperationState.Running.ToString();
@@ -558,6 +592,12 @@ public sealed partial class ApplicationDetailsWindow : Window
             CancelOperationButton.IsEnabled = false;
             _operationCancellation?.Dispose();
             _operationCancellation = null;
+            if (_applicationOperationRegistered)
+            {
+                _applicationOperationRegistered = false;
+                if (_onApplicationOperationCompleted is not null)
+                    await _onApplicationOperationCompleted(_application.ApplicationId);
+            }
             UpdateActionButtons();
         }
     }
