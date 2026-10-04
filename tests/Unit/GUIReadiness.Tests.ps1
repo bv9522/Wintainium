@@ -125,6 +125,8 @@ Describe 'Wintainium GUI-facing public boundary' {
         $details | Should -Match 'CheckForUpdatesButton.Visibility'
         $details | Should -Match 'RunUpdateButton.Visibility'
         $details | Should -Match 'WintainiumApplicationInstallService'
+        $details | Should -Match 'onApplicationOperationStarted'
+        $details | Should -Match 'onApplicationOperationCompleted'
     }
 
     It 'keeps the desktop host install allowlist aligned with the public Core contract' {
@@ -167,6 +169,11 @@ Describe 'Wintainium GUI-facing public boundary' {
         $mainWindow | Should -Match 'SetApplicationCollection\(result\.Applications\)'
         $mainWindow | Should -Match 'HydratePersistedApplicationStatesAsync'
         $mainWindow | Should -Match 'RefreshApplicationAsync'
+        $mainWindow | Should -Match 'activeApplicationOperations'
+        $mainWindow | Should -Match 'applicationRefreshGenerations'
+        $mainWindow | Should -Match 'BeginApplicationOperationAsync'
+        $mainWindow | Should -Match 'CompleteApplicationOperationAsync'
+        $mainWindow | Should -Match 'IsApplicationRefreshCurrent'
     }
 
 }
