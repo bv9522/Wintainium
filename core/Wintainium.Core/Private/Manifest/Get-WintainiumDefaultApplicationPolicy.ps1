@@ -168,7 +168,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                 Release=[pscustomobject][ordered]@{ Channel='stable' }
                 Artifact=[pscustomobject][ordered]@{
                     Formats=$selectedFormats
-                    Architectures=@('x64','x86','arm64','neutral')
+                    Architectures=@('x64','x86','neutral')
                     AllowUnknownArchitecture=$false
                 }
             }
