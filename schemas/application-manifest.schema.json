@@ -162,6 +162,13 @@
         },
         "settings": {
           "type": "object"
+        },
+        "fallbacks": {
+          "type": "array",
+          "uniqueItems": false,
+          "items": {
+            "$ref": "#/$defs/installerPluginReference"
+          }
         }
       }
     },
