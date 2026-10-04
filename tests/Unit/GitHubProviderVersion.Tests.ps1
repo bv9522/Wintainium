@@ -47,6 +47,33 @@ Describe 'Wintainian GitHub release provider version normalization' {
     }
 }
 
+Describe 'Wintainian GitHub release provider artifact architecture mapping' {
+    It 'maps x86_64 GitHub asset names to the x64 architecture' {
+        Mock Invoke-RestMethod -ModuleName Wintainium.provider.github-releases {
+            @([pscustomobject]@{
+                id=405
+                tag_name='Audacity-4.0.1'
+                prerelease=$false
+                assets=@([pscustomobject]@{
+                    browser_download_url='https://example.test/audacity-win-4.0.1-x86_64.msi'
+                    name='audacity-win-4.0.1-x86_64.msi'
+                    size=47500000
+                    digest='sha256:' + ('a' * 64)
+                })
+            })
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-000000000105'
+            Settings=@{ repository='audacity/audacity'; maxPages=1 }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Releases[0].Artifacts[0].Architecture | Should -Be 'x64'
+        $result.Releases[0].Artifacts[0].Format | Should -Be 'msi'
+    }
+}
+
 Describe 'Wintainian GitHub release provider verification metadata' {
     It 'preserves a GitHub SHA256 asset digest as Wintainium hash metadata' {
         $expectedDigest = 'efb652bf04168f5d4893f28b7cefaaf5ef385d9251544540ac774e3bf54793a3'
