@@ -9,7 +9,7 @@
     "settings": {}
   },
   "installer": {
-    "pluginId": "Wintainium.installer.valid-fixture",
+    "pluginId": "Wintainium.installer.portable-zip",
     "requiredContractVersion": "1",
     "settings": {},
     "fallbacks": [
@@ -29,7 +29,7 @@
     "channel": "stable"
   },
   "artifact": {
-    "formats": ["exe", "msi"],
+    "formats": ["zip", "msi"],
     "architectures": ["x64"]
   }
 }
