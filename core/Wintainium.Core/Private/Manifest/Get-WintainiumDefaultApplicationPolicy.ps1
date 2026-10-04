@@ -179,6 +179,7 @@ function Get-WintainiumDefaultApplicationPolicy {
                 PluginId=[string]$installer.PluginId
                 RequiredContractVersion='1'
                 Settings=@{}
+                Fallbacks=$installerFallbacks
             }
             Reconciliation=[pscustomobject][ordered]@{
                 PluginId=[string]$reconciler.PluginId
@@ -187,7 +188,7 @@ function Get-WintainiumDefaultApplicationPolicy {
             }
             Release=[pscustomobject][ordered]@{ Channel='stable' }
             Artifact=[pscustomobject][ordered]@{
-                Formats=@($selectedFormat)
+                Formats=$selectedFormats
                 Architectures=@('x64','x86','arm64','neutral')
                 AllowUnknownArchitecture=$false
             }
