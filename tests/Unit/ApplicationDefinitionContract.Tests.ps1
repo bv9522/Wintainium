@@ -9,6 +9,21 @@ BeforeAll {
 }
 
 Describe 'Test-WintainiumApplicationDefinition public contract' {
+    It 'preserves a supplied operation correlation identifier' {
+        $operationId = '11111111-1111-1111-1111-111111111111'
+
+        $result = Test-WintainiumApplicationDefinition \
+            -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') \
+            -PluginRoot $script:pluginRoot \
+            -SchemaPath $script:schemaPath \
+            -OperationId $operationId
+
+        $result.IsValid | Should -Be $true
+        $result.OperationId | Should -Be $operationId
+        @($result.LogEvents).OperationId | Should -Be $operationId
+        $result.ReconciliationPlugin.PluginId | Should -Be 'Wintainium.reconciliation.valid-fixture'
+    }
+
     It 'returns the complete stable result shape for a valid application definition' {
         $result = Test-WintainiumApplicationDefinition `
             -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') `
