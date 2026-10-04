@@ -29,7 +29,7 @@
     "channel": "stable"
   },
   "artifact": {
-    "formats": ["zip", "msi"],
+    "formats": ["msi"],
     "architectures": ["x64"]
   }
 }
