@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Wintainium.Desktop.Models;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace Wintainium.Desktop;
@@ -68,9 +70,6 @@ public sealed partial class ApplicationDetailsWindow
 
     private bool HasDiagnosticContent()
     {
-        if (_lastUpdateResult is not null)
-            return true;
-
         return OperationStateText.Text != "Not started." ||
                ErrorItemsControl.Items.Count > 0 ||
                WarningItemsControl.Items.Count > 0 ||
@@ -96,19 +95,23 @@ public sealed partial class ApplicationDetailsWindow
         AppendItems(builder, "Warnings", WarningItemsControl.Items);
         AppendItems(builder, "Troubleshooting", TroubleshootingDiagnosticsItemsControl.Items);
 
-        if (_lastUpdateResult is not null)
-        {
-            AppendDiagnostics(builder, "Update Log Events", _lastUpdateResult.LogEvents);
-        }
+        var updateLogs = WintainiumDesktopDiagnosticsStore.LastUpdateResult?.LogEvents;
+        if (updateLogs is not null)
+            AppendDiagnostics(builder, "Update Log Events", updateLogs);
+
+        var installLogs = WintainiumDesktopDiagnosticsStore.LastInstallResult?.LogEvents;
+        if (installLogs is not null)
+            AppendDiagnostics(builder, "Install Log Events", installLogs);
 
         builder.AppendLine();
         builder.AppendLine($"Installed State: {InstalledStateRefreshStatusText.Text}");
         return builder.ToString().TrimEnd();
     }
 
-    private static void AppendItems(StringBuilder builder, string title, IEnumerable<object> items)
+    private static void AppendItems(StringBuilder builder, string title, IEnumerable items)
     {
-        var values = items.Select(static item => item?.ToString())
+        var values = items.Cast<object?>()
+            .Select(static item => item?.ToString())
             .Where(static value => !string.IsNullOrWhiteSpace(value))
             .ToArray();
 
