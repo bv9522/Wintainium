@@ -81,6 +81,9 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     }
 
     $operationsRoot = Join-Path $root 'operations'
+    # Reserve one retention slot for the current failed/cancelled operation so
+    # the bound remains true immediately after this cleanup pass.
+    $operationRetentionLimit = if ($Outcome -ne 'Completed') { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
     $purgedOperations = [System.Collections.Generic.List[string]]::new()
     $purgedLegacyArtifacts = [System.Collections.Generic.List[string]]::new()
 
@@ -160,8 +163,8 @@ function Invoke-WintainiumDownloadArtifactCleanup {
                 Where-Object { $purgedOperations -notcontains $_.Directory.FullName } |
                 Sort-Object RetainedAtUtc -Descending
         )
-        if ($remaining.Count -gt $MaxRetainedOperations) {
-            foreach ($retained in @($remaining | Select-Object -Skip $MaxRetainedOperations)) {
+        if ($remaining.Count -gt $operationRetentionLimit) {
+            foreach ($retained in @($remaining | Select-Object -Skip $operationRetentionLimit)) {
                 try {
                     Remove-Item -LiteralPath $retained.Directory.FullName -Recurse -Force -ErrorAction Stop
                     $purgedOperations.Add($retained.Directory.FullName)
