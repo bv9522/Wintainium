@@ -10,7 +10,7 @@ Installer selection is a deterministic Core decision. Installer plugins do not s
 
 `Select-WintainiumInstaller -Manifest <ApplicationDefinition> -Artifact <SelectedArtifact> -Plugins <PluginRegistry>` accepts:
 
-- a validated application manifest containing the required installer plugin reference;
+- a validated application manifest containing the primary installer plugin reference and optional ordered fallback references;
 - the selected Phase 4 artifact, including its explicit `format`; and
 - the validated installer plugin registry.
 
@@ -20,11 +20,12 @@ The selected artifact's format is authoritative for this boundary. Core does not
 
 Core selects an installer only when all of the following are true:
 
-1. The manifest declares an installer plugin identifier and required contract version.
-2. A registered installer plugin matches the manifest-declared plugin identifier.
-3. The registered plugin declares the required contract version.
-4. The selected artifact explicitly declares a format.
-5. The installer descriptor declares that format in `capabilities.supportedFormats`.
+1. The manifest declares a primary installer plugin identifier and required contract version.
+2. The manifest may declare ordered fallback installer references.
+3. Core resolves the candidates in manifest order.
+4. A candidate is eligible only when its required contract version is registered and its descriptor declares the selected artifact format in `capabilities.supportedFormats`.
+5. The selected artifact explicitly declares a format.
+6. Core selects the first eligible declared candidate.
 
 Format comparison is case-insensitive and whitespace around the explicit format is normalized for comparison.
 
