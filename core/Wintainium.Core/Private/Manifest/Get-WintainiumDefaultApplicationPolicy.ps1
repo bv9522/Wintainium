@@ -20,7 +20,7 @@ function Get-WintainiumDefaultApplicationPolicy {
     # architecture/eligibility is evaluated later and outranks format choice.
     # The order below is only the default mechanism preference; an authored
     # manifest may explicitly choose another installer and format.
-    $preferredFormats = @('exe','msi','msix','zip')
+    $preferredFormats = @('msi','exe','msix','zip')`n`n    # Prefer MSI when available, but fall back to EXE and then the remaining`n    # supported formats. This prevents a modern release that moved from EXE to`n    # MSI from forcing Core to select an older release merely because the older`n    # release still has an EXE artifact.
 
     $installerCandidates = @()
     foreach ($format in $preferredFormats) {
