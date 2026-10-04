@@ -77,6 +77,7 @@ function Select-WintainiumInstaller {
             return [pscustomobject][ordered]@{
                 IsSelected = $true
                 InstallerPlugin = $resolution.Plugin
+                InstallerSettings = & $getValue $candidate 'settings'
                 ArtifactFormat = $artifactFormat
                 InstallationMode = $installationMode
                 Error = $null
