@@ -21,8 +21,8 @@ Optional lifecycle correlation identifier. When supplied, it is preserved.
 
 .OUTPUTS
 PSCustomObject. The result contains OperationId, IsValid, Manifest,
-ProviderPlugin, InstallerPlugin, ReconciliationPlugin, Errors, Warnings,
-and LogEvents.
+ProviderPlugin, InstallerPlugin, InstallerPlugins, ReconciliationPlugin,
+Errors, Warnings, and LogEvents.
 
 .EXAMPLE
 Test-WintainiumApplicationDefinition -ManifestPath 'C:\Wintainium\manifests\example.wintainium.json'
