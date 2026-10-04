@@ -64,6 +64,18 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
         $result.LogEvents.Count | Should -BeGreaterThan 0
     }
 
+    It 'accepts manifests without optional installer fallbacks' {
+        $result = Test-WintainiumApplicationDefinition `
+            -ManifestPath (Join-Path -Path $script:fixtureRoot -ChildPath 'valid-portable-zip.json') `
+            -PluginRoot $script:pluginRoot `
+            -SchemaPath $script:schemaPath
+
+        $result.IsValid | Should -Be $true
+        $result.Errors.Count | Should -Be 0
+        $result.InstallerPlugin | Should -Not -BeNullOrEmpty
+        $result.InstallerPlugins.Count | Should -Be 1
+    }
+
     It 'returns structured plugin resolution failures without throwing' {
         $manifest = Join-Path -Path $TestDrive -ChildPath 'missing-plugin.json'
         @'
