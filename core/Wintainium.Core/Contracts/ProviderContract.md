@@ -151,7 +151,7 @@ A normalized artifact candidate may contain:
 - `Uri` — untrusted artifact location data.
 - `FileName` — upstream filename when known.
 - `Format` — normalized artifact format when known, such as `exe`, `msi`, or `zip`.
-- `Architecture` — normalized architecture when known, such as `x86`, `x64`, `arm64`, `any`, or `unknown`.
+- `Architecture` — normalized supported architecture when known, such as `x86`, `x64`, `neutral`, or `unknown`.
 - `Size` — optional upstream-reported size.
 - `Hashes` — optional upstream-declared cryptographic hash metadata.
 - `Signature` — optional upstream-declared signature metadata.
