@@ -105,7 +105,7 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": {
-            "enum": ["x64", "x86", "neutral"]
+            "enum": ["x64", "x86", "arm64", "neutral"]
           }
         },
         "allowUnknownArchitecture": {
