@@ -40,9 +40,13 @@ function Select-WintainiumInstaller {
     }
 
     $candidates = [System.Collections.Generic.List[object]]::new()
-    $candidates.Add($installer)
+    if ($null -ne $installer) {
+        $candidates.Add($installer)
+    }
     foreach ($fallback in @(& $getValue $installer 'fallbacks')) {
-        $candidates.Add($fallback)
+        if ($null -ne $fallback) {
+            $candidates.Add($fallback)
+        }
     }
 
     $selectionErrors = [System.Collections.Generic.List[object]]::new()
