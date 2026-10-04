@@ -84,6 +84,17 @@ function Select-WintainiumInstaller {
         }
     }
 
+    if ($selectionErrors.Count -gt 0 -and $candidates.Count -gt 0 -and $selectionErrors.Count -eq $candidates.Count) {
+        $primaryError = $selectionErrors[0]
+        return [pscustomobject][ordered]@{
+            IsSelected = $false
+            InstallerPlugin = $null
+            ArtifactFormat = $artifactFormat
+            InstallationMode = $null
+            Error = $primaryError
+        }
+    }
+
     $message = "No declared installer candidate supports artifact format '$artifactFormat'."
     if ($selectionErrors.Count -gt 0) {
         $message = "$message One or more declared installer candidates could not be resolved."
