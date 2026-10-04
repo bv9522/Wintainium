@@ -161,11 +161,25 @@ Describe 'Wintainium installer invocation preparation' {
         $result.Invocation.Settings.silent | Should -Be $true
     }
 
-    It 'rejects a selection whose plugin differs from the request installer' {
-        $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.other'; EntryPoint = 'Installer.psm1'; DescriptorPath = $script:descriptorPath }
-        $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; ArtifactFormat = 'exe'; Error = $null }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $script:request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
-        $result.Error.Code | Should -Be 'InstallerInvocationPluginMismatch'
+    It 'uses the selected installer plugin and settings when they differ from the manifest primary installer' {
+        $plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.msi'; EntryPoint = 'Installer.psm1'; DescriptorPath = $script:descriptorPath }
+        $descriptor = @{
+            pluginId = 'Wintainium.installer.msi'
+            pluginType = 'Installer'
+            contractVersions = @('1')
+            entryPoint = 'Installer.psm1'
+            capabilities = @{ supportedFormats = @('msi') }
+        } | ConvertTo-Json -Depth 10
+        Set-Content -LiteralPath $script:descriptorPath -Value $descriptor -Encoding utf8
+        $msiArtifactPath = Join-Path $script:pluginRoot 'artifact.msi'
+        Set-Content -LiteralPath $msiArtifactPath -Value 'test msi artifact' -Encoding utf8
+        $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $plugin; InstallerSettings = [ordered]@{ silent = $false; selectedBy = 'fallback' }; ArtifactFormat = 'msi'; Error = $null }
+        $request = [pscustomobject][ordered]@{ OperationId = 'installer-operation'; DownloadOperationId = 'download-operation'; Installer = $script:request.Installer; Artifact = [pscustomobject][ordered]@{ Path = $msiArtifactPath } }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
+        $result.IsValid | Should -Be $true
+        $result.Invocation.PluginId | Should -Be 'Wintainium.installer.msi'
+        $result.Invocation.ArtifactFormat | Should -Be 'msi'
+        $result.Invocation.Settings.selectedBy | Should -Be 'fallback'
     }
     It 'rejects a selection without an artifact format' {
         $selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $script:plugin; ArtifactFormat = ''; Error = $null }
