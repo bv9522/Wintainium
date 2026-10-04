@@ -61,7 +61,7 @@ The `installer` object identifies the installer capability:
 }
 ```
 
-The installer reference declares an ordered set of installer candidates. The primary \`pluginId\` is tried first for the selected artifact format, followed by optional \`fallbacks\` in order. These fallbacks are explicit manifest declarations; Core never substitutes an undeclared installer.
+The installer reference declares an ordered set of installer candidates. The primary `pluginId` is tried first for the selected artifact format, followed by optional `fallbacks` in order. These fallbacks are explicit manifest declarations; Core never substitutes an undeclared installer.
 
 ## Release policy
 
