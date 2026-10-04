@@ -1,0 +1,35 @@
+{
+  "manifestVersion": "1.1",
+  "id": "com.example.installer-fallbacks",
+  "name": "Installer Fallback Test",
+  "homepage": "https://example.com/",
+  "source": {
+    "pluginId": "Wintainium.provider.valid-fixture",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "installer": {
+    "pluginId": "Wintainium.installer.valid-fixture",
+    "requiredContractVersion": "1",
+    "settings": {},
+    "fallbacks": [
+      {
+        "pluginId": "Wintainium.installer.msi",
+        "requiredContractVersion": "1",
+        "settings": {}
+      }
+    ]
+  },
+  "reconciliation": {
+    "pluginId": "Wintainium.reconciliation.valid-fixture",
+    "requiredContractVersion": "1",
+    "settings": {}
+  },
+  "release": {
+    "channel": "stable"
+  },
+  "artifact": {
+    "formats": ["exe", "msi"],
+    "architectures": ["x64"]
+  }
+}
