@@ -40,6 +40,18 @@ function New-WintainiumApplicationDefinitionFromSource {
             }
         }
 
+        if ($Policy.PSObject.Properties['Installer'] -and $null -ne $Policy.Installer -and $Policy.Installer.PSObject.Properties['Fallbacks']) {
+            $fallbackIndex = 0
+            foreach ($fallback in @($Policy.Installer.Fallbacks)) {
+                foreach ($property in @('PluginId','RequiredContractVersion')) {
+                    if (-not $fallback.PSObject.Properties[$property] -or [string]::IsNullOrWhiteSpace([string]$fallback.$property)) {
+                        $errors.Add([pscustomobject][ordered]@{ Code='ApplicationPolicyIncomplete'; Path="$.Policy.Installer.Fallbacks[$fallbackIndex].$property"; Message="Installer fallback policy must provide '$property'." })
+                    }
+                }
+                $fallbackIndex++
+            }
+        }
+
         if ($Policy.PSObject.Properties['Release'] -and $null -ne $Policy.Release) {
             if (-not $Policy.Release.PSObject.Properties['Channel'] -or [string]$Policy.Release.Channel -notin @('stable','prerelease','any')) {
                 $errors.Add([pscustomobject][ordered]@{ Code='ApplicationPolicyInvalid'; Path='$.Policy.Release.Channel'; Message="Release channel must be 'stable', 'prerelease', or 'any'." })
