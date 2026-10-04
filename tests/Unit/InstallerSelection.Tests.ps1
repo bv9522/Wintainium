@@ -123,6 +123,43 @@ Describe 'Wintainium installer selection' {
         $result.IsSelected | Should -Be $false
         $result.Error.Code | Should -Be 'PluginNotResolved'
     }
+    It 'uses the first declared installer fallback that supports the selected artifact format' {
+        $manifest = [ordered]@{
+            installer = [ordered]@{
+                pluginId = 'Wintainium.installer.exe'
+                requiredContractVersion = '1'
+                settings = [ordered]@{}
+                fallbacks = @(
+                    [ordered]@{
+                        pluginId = 'Wintainium.installer.msi'
+                        requiredContractVersion = '1'
+                        settings = [ordered]@{}
+                    }
+                )
+            }
+            artifact = [ordered]@{
+                formats = @('exe','msi')
+                architectures = @('x64')
+            }
+        }
+        $msiPlugin = [pscustomobject]@{
+            PluginId = 'Wintainium.installer.msi'
+            PluginType = 'Installer'
+            ContractVersions = @('1')
+            Capabilities = [ordered]@{ supportedFormats = @('msi'); installationMode = 'process' }
+            DescriptorPath = 'C:\plugins\msi\plugin.json'
+        }
+        $artifact = [ordered]@{ format = 'msi' }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $manifest; Artifact = $artifact; Plugins = @($script:exePlugin, $msiPlugin) } {
+            Select-WintainiumInstaller -Manifest $Manifest -Artifact $Artifact -Plugins $Plugins
+        }
+
+        $result.IsSelected | Should -Be $true
+        $result.InstallerPlugin.PluginId | Should -Be 'Wintainium.installer.msi'
+        $result.ArtifactFormat | Should -Be 'msi'
+    }
+
     It 'does not silently switch installers when an EXE manifest receives a different artifact format' {
         $artifact = [ordered]@{ format = 'msi' }
         $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $script:manifest; Artifact = $artifact; Plugins = @($script:exePlugin, $script:zipPlugin) } {
