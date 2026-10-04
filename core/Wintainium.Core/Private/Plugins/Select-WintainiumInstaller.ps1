@@ -95,11 +95,4 @@ function Select-WintainiumInstaller {
             CandidateErrors = $selectionErrors.ToArray()
         }
     }
-    [pscustomobject][ordered]@{
-        IsSelected = $true
-        InstallerPlugin = $resolution.Plugin
-        ArtifactFormat = $artifactFormat
-        InstallationMode = $installationMode
-        Error = $null
-    }
 }
