@@ -1,5 +1,5 @@
 {
-  "pluginId": "Wintainium.provider.valid-fixture",
+  "pluginId": "Wintainium.provider.github-releases",
   "pluginType": "Provider",
   "contractVersions": ["1"],
   "entryPoint": "Wintainium.provider.valid-fixture.psm1",
