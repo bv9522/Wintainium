@@ -213,4 +213,41 @@ Describe 'Wintainium application onboarding' {
         $result.OperationId | Should -Be $operationId
         $result.SourceResolution.Source.ProviderSettings.repository | Should -Be 'PCSX2/pcsx2'
     }
+
+    It 'prefers MSI before EXE when both installer formats are available' {
+        $registry = [pscustomobject]@{
+            Plugins = @(
+                [pscustomobject]@{
+                    PluginId = 'Wintainium.installer.msi'
+                    PluginType = 'Installer'
+                    ContractVersions = @('1')
+                    Capabilities = [ordered]@{ supportedFormats = @('msi') }
+                    DescriptorPath = 'installer-msi/plugin.json'
+                }
+                [pscustomobject]@{
+                    PluginId = 'Wintainium.installer.exe'
+                    PluginType = 'Installer'
+                    ContractVersions = @('1')
+                    Capabilities = [ordered]@{ supportedFormats = @('exe') }
+                    DescriptorPath = 'installer-exe/plugin.json'
+                }
+                [pscustomobject]@{
+                    PluginId = 'Wintainium.reconciliation.test'
+                    PluginType = 'Reconciliation'
+                    ContractVersions = @('1')
+                    Capabilities = [ordered]@{ applicationState = $true }
+                    DescriptorPath = 'reconciliation/plugin.json'
+                }
+            )
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Registry=$registry } {
+            param($Registry)
+            Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry -ApplicationName 'Audacity'
+        }
+
+        $result.IsSuccessful | Should -Be $true
+        $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.msi'
+        @($result.Policy.Artifact.Formats) | Should -Be @('msi')
+    }
 }
