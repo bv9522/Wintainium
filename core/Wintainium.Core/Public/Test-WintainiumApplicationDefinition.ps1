@@ -62,13 +62,19 @@ function Test-WintainiumApplicationDefinition {
         foreach ($descriptorError in @($registry.DescriptorErrors)) { $warnings.Add([pscustomobject]@{ Code='PluginDescriptorIgnored'; Message='An invalid plugin descriptor was ignored by the registry.'; Detail=$descriptorError }) }
         $providerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.source.pluginId -PluginType 'Provider' -RequiredContractVersion $manifest.source.requiredContractVersion
         if ($providerResolution.IsResolved) { $provider=$providerResolution.Plugin } else { $errors.Add($providerResolution.Error) }
+        $fallbackDefinitions = @()
+        $fallbacksProperty = $manifest.installer.PSObject.Properties['fallbacks']
+        if ($null -ne $fallbacksProperty -and $null -ne $fallbacksProperty.Value) {
+            $fallbackDefinitions = @($fallbacksProperty.Value)
+        }
+
         $installerResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $manifest.installer.pluginId -PluginType 'Installer' -RequiredContractVersion $manifest.installer.requiredContractVersion
         if ($installerResolution.IsResolved) {
             $installer=$installerResolution.Plugin
             $compatibility=Test-WintainiumInstallerCompatibility -Manifest $manifest -InstallerPlugin $installer
             if (-not $compatibility.IsCompatible) { $errors.Add($compatibility.Error) }
 
-            foreach ($fallback in @($manifest.installer.fallbacks)) {
+            foreach ($fallback in $fallbackDefinitions) {
                 $fallbackResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $fallback.pluginId -PluginType 'Installer' -RequiredContractVersion $fallback.requiredContractVersion
                 if (-not $fallbackResolution.IsResolved) {
                     $errors.Add($fallbackResolution.Error)
@@ -88,7 +94,7 @@ function Test-WintainiumApplicationDefinition {
     $installerPlugins = @()
     if ($null -ne $installer) {
         $installerPlugins = @($installer)
-        foreach ($fallback in @($manifest.installer.fallbacks)) {
+        foreach ($fallback in $fallbackDefinitions) {
             $fallbackResolution = Resolve-WintainiumPlugin -Plugins $registry.Plugins -PluginId $fallback.pluginId -PluginType 'Installer' -RequiredContractVersion $fallback.requiredContractVersion
             if ($fallbackResolution.IsResolved) { $installerPlugins += $fallbackResolution.Plugin }
         }
