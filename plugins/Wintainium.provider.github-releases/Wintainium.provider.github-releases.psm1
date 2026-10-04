@@ -76,7 +76,7 @@ function ConvertTo-GitHubArtifactArchitecture {
         return 'arm64'
     }
 
-    if ($name -match '(^|[^a-z0-9])(x64|amd64)([^a-z0-9]|$)') {
+    if ($name -match '(^|[^a-z0-9])(x86[_-]64|x64|amd64)([^a-z0-9]|$)') {
         return 'x64'
     }
 
