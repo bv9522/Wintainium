@@ -15,6 +15,8 @@ public sealed partial class MainWindow : Window
     private SettingsWindow? _settingsWindow;
     private bool _collectionLoadInProgress;
     private CancellationTokenSource? _collectionRefreshCancellation;
+    private readonly HashSet<string> _activeApplicationOperations = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, long> _applicationRefreshGenerations = new(StringComparer.OrdinalIgnoreCase);
 
     public MainWindow()
     {
@@ -262,7 +264,9 @@ public sealed partial class MainWindow : Window
                 _services.ApplicationUpdateDecision,
                 _services.InstalledApplicationState,
                 _services.ApplicationIcon,
-                RefreshApplicationCollectionAsync);
+                RefreshApplicationCollectionAsync,
+                BeginApplicationOperationAsync,
+                CompleteApplicationOperationAsync);
             _applicationDetailsWindows[application.ApplicationId] = window;
             window.Closed += (_, _) => _applicationDetailsWindows.Remove(application.ApplicationId);
             App.TrackWindow(window);
@@ -387,6 +391,51 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private Task BeginApplicationOperationAsync(string applicationId)
+    {
+        if (string.IsNullOrWhiteSpace(applicationId))
+            return Task.CompletedTask;
+
+        _activeApplicationOperations.Add(applicationId);
+        IncrementApplicationRefreshGeneration(applicationId);
+        return Task.CompletedTask;
+    }
+
+    private async Task CompleteApplicationOperationAsync(string applicationId)
+    {
+        if (string.IsNullOrWhiteSpace(applicationId))
+            return;
+
+        _activeApplicationOperations.Remove(applicationId);
+        IncrementApplicationRefreshGeneration(applicationId);
+
+        var application = _applicationCollection.Applications.FirstOrDefault(
+            candidate => string.Equals(candidate.ApplicationId, applicationId, StringComparison.OrdinalIgnoreCase));
+
+        if (application is null)
+            return;
+
+        await RefreshSingleApplicationAsync(
+            application,
+            _collectionRefreshCancellation?.Token ?? CancellationToken.None,
+            allowDuringOperation: true);
+    }
+
+    private void IncrementApplicationRefreshGeneration(string applicationId)
+    {
+        _applicationRefreshGenerations.TryGetValue(applicationId, out var generation);
+        _applicationRefreshGenerations[applicationId] = generation + 1;
+    }
+
+    private bool IsApplicationRefreshCurrent(string applicationId, long generation, bool allowDuringOperation = false)
+    {
+        if (!allowDuringOperation && _activeApplicationOperations.Contains(applicationId))
+            return false;
+
+        return _applicationRefreshGenerations.TryGetValue(applicationId, out var currentGeneration)
+            && currentGeneration == generation;
+    }
+
     private async Task RefreshApplicationStatesAsync(
         IReadOnlyList<WintainiumApplicationModel> applications,
         CancellationToken cancellationToken)
@@ -403,15 +452,24 @@ public sealed partial class MainWindow : Window
 
     private async Task RefreshSingleApplicationAsync(
         WintainiumApplicationModel application,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool allowDuringOperation = false)
     {
         try
         {
+            _applicationRefreshGenerations.TryGetValue(application.ApplicationId, out var generation);
+
+            if (!IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
+                return;
+
             var result = await _services.ApplicationCollection.RefreshApplicationAsync(
                 application, cancellationToken);
 
-            if (!cancellationToken.IsCancellationRequested)
+            if (!cancellationToken.IsCancellationRequested &&
+                IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
+            {
                 SetApplicationCollectionItem(result.Application);
+            }
         }
         catch (OperationCanceledException)
         {
