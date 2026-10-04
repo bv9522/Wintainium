@@ -48,9 +48,11 @@ plugin identities are rejected.
 Installer selection is Core-owned.
 
 1. Manifest validation resolves the declared installer capability.
-2. Core selects an eligible artifact using machine architecture and manifest
-   format policy.
-3. Core resolves the declared or policy-selected installer plugin.
+2. Core ranks eligible releases by version, then selects an eligible artifact
+   within the winning release using machine architecture and manifest format
+   policy.
+3. Core resolves the ordered installer candidates declared by the manifest and
+   selects the first candidate capable of the selected artifact format.
 4. Core validates Contract 1 compatibility and supported artifact format.
 5. Core prepares a structured installer invocation.
 6. The installer plugin applies the artifact.
