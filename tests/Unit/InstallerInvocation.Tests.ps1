@@ -10,7 +10,7 @@ BeforeAll {
     $script:descriptorPath = Join-Path $script:pluginRoot 'plugin.json'
     Set-Content -LiteralPath $script:descriptorPath -Value '{}' -Encoding utf8
     $script:plugin = [pscustomobject]@{ PluginId = 'Wintainium.installer.exe'; PluginType = 'Installer'; ContractVersions = @('1'); EntryPoint = 'Installer.psm1'; Capabilities = [ordered]@{ supportedFormats = @('exe') }; DescriptorPath = $script:descriptorPath }
-    $script:selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $script:plugin; ArtifactFormat = 'exe'; Error = $null }
+    $script:selection = [pscustomobject][ordered]@{ IsSelected = $true; InstallerPlugin = $script:plugin; InstallerSettings = [ordered]@{ silent = $true }; ArtifactFormat = 'exe'; Error = $null }
     $script:request = [pscustomobject][ordered]@{ OperationId = 'installer-operation'; DownloadOperationId = 'download-operation'; Installer = [pscustomobject][ordered]@{ pluginId = 'Wintainium.installer.exe'; requiredContractVersion = '1'; settings = [ordered]@{ silent = $true } }; Artifact = [pscustomobject][ordered]@{ Uri = 'https://example.invalid/artifact.exe'; FileName = 'artifact.exe'; Path = (Join-Path $script:pluginRoot 'artifact.exe') } }
 }
 AfterAll { Remove-Item -LiteralPath $script:tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
