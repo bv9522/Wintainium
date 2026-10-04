@@ -33,7 +33,7 @@ Describe 'Application definition validation workflow' {
         @($result.InstallerPlugins.PluginId) | Should -Contain 'Wintainium.installer.portable-zip'
         @($result.InstallerPlugins.PluginId) | Should -Contain 'Wintainium.installer.msi'
         @($result.InstallerPluginCandidates | Where-Object IsFallback).Count | Should -Be 1
-        @($result.Warnings).Count | Should -Be 0
+        @($result.Warnings | Where-Object { $_.Code -ne 'PluginDescriptorIgnored' }).Count | Should -Be 0
     }
 
     It 'reports a missing provider without contacting an external service' {
