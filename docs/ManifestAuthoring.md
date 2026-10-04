@@ -87,7 +87,7 @@ The `artifact` object declares formats and architectures that the application ca
 
 ```json
 "artifact": {
-  "formats": ["msi", "exe"],
+  "formats": ["exe", "msi"],
   "architectures": ["x64"]
 }
 ```
@@ -102,7 +102,7 @@ The following is an illustrative manifest shape, not a claim that the example pl
 
 ```json
 {
-  "manifestVersion": "1.0",
+  "manifestVersion": "1.1",
   "id": "example.vendor-application",
   "name": "Example Application",
   "description": "An illustrative Wintainium application definition.",
@@ -116,13 +116,20 @@ The following is an illustrative manifest shape, not a claim that the example pl
   "installer": {
     "pluginId": "Wintainium.installer.example",
     "requiredContractVersion": "1",
-    "settings": {}
+    "settings": {},
+    "fallbacks": [
+      {
+        "pluginId": "Wintainium.installer.other",
+        "requiredContractVersion": "1",
+        "settings": {}
+      }
+    ]
   },
   "release": {
     "channel": "stable"
   },
   "artifact": {
-    "formats": ["msi"],
+    "formats": ["exe", "msi"]
     "architectures": ["x64"]
   }
 }
