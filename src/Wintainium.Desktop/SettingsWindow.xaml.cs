@@ -290,7 +290,7 @@ public sealed partial class SettingsWindow : Window
 
         _categoryContent.Children.Add(theme);
         _categoryContent.Children.Add(visualStyle);
-        AddPlaceholder("These preferences are currently session-scoped. Durable desktop configuration will be added only after its persistence boundary is defined.");
+        AddPlaceholder("Appearance preferences are stored with Wintainium desktop settings. The visual system will be expanded here after the Appearance design is finalized.");
     }
 
     private void AddPlaceholder(string text)
