@@ -68,7 +68,7 @@ public partial class App : Application
         {
             var y2k = new ResourceDictionary
             {
-                Source = new Uri("ms-appx:///Wintainium.Desktop/Themes/Y2K.xaml")
+                Source = new Uri("ms-appx:///Themes/Y2K.xaml")
             };
             resources.Add(y2k);
             _visualStyleResources = y2k;
