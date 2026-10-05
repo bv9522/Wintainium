@@ -4,7 +4,7 @@
 
     <!--
         Wintainium Y2K visual language
-        ------------------------------
+        Visual resource layer
         Resource-only theme layer. Do not add window/layout-specific resources here.
         Windows 11 keeps the native application presentation; this dictionary is only
         attached when the Y2K visual style is selected.
