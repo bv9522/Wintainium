@@ -4,5 +4,24 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+
+        <!--
+            MainWindow is constructed before the selected visual-style dictionary
+            can be attached to its root. These neutral fallback resources keep
+            StaticResource lookups valid during construction. The active Y2K
+            dictionary overrides them at the window root.
+        -->
+        <CornerRadius x:Key="WintainiumY2KCardCornerRadius">12</CornerRadius>
+        <CornerRadius x:Key="WintainiumY2KControlCornerRadius">8</CornerRadius>
+        <SolidColorBrush x:Key="WintainiumY2KGridLineBrush" Color="#808080" />
+
+        <Style x:Key="WintainiumY2KButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="14,8" />
+        </Style>
+
+        <Style x:Key="WintainiumY2KAccentButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource WintainiumY2KButtonStyle}">
+        </Style>
     </Application.Resources>
 </Application>
