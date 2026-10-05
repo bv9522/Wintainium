@@ -10,6 +10,7 @@ public partial class App : Application
     private Window? _window;
     private WintainiumDesktopServices? _services;
     private readonly UISettings _uiSettings;
+    private static ResourceDictionary? _visualStyleResources;
 
     internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
 
@@ -22,6 +23,7 @@ public partial class App : Application
     {
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
         InitializeComponent();
+        ApplyVisualStylePreference();
 
         _uiSettings = new UISettings();
         _uiSettings.ColorValuesChanged += SystemColors_Changed;
@@ -50,6 +52,27 @@ public partial class App : Application
         ActiveWindows[windowId] = window;
         window.Closed += (_, _) => ActiveWindows.Remove(windowId);
         ApplyThemeToWindow(window);
+    }
+
+    internal static void ApplyVisualStylePreference()
+    {
+        var resources = Current.Resources.MergedDictionaries;
+
+        if (_visualStyleResources is not null)
+        {
+            resources.Remove(_visualStyleResources);
+            _visualStyleResources = null;
+        }
+
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        {
+            var y2k = new ResourceDictionary
+            {
+                Source = new Uri("ms-appx:///Wintainium.Desktop/Themes/Y2K.xaml")
+            };
+            resources.Add(y2k);
+            _visualStyleResources = y2k;
+        }
     }
 
     internal static void ApplyThemePreference()
