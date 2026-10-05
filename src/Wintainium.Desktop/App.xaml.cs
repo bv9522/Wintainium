@@ -73,6 +73,34 @@ public partial class App : Application
             resources.Add(y2k);
             _visualStyleResources = y2k;
         }
+
+        RefreshVisualStyleOnActiveWindows();
+    }
+
+    private static void RefreshVisualStyleOnActiveWindows()
+    {
+        foreach (var window in ActiveWindows.Values.ToArray())
+        {
+            if (window.Content is not FrameworkElement content)
+            {
+                continue;
+            }
+
+            // WinUI does not reliably re-evaluate every existing ThemeResource
+            // consumer when a merged dictionary is replaced. Resetting the
+            // element theme to Default and restoring the user's effective theme
+            // forces the visual tree to refresh its ThemeResource lookups without
+            // recreating the window or its content.
+            var effectiveTheme = Settings.Current.Theme switch
+            {
+                WintainiumThemePreference.Light => ElementTheme.Light,
+                WintainiumThemePreference.Dark => ElementTheme.Dark,
+                _ => GetSystemElementTheme()
+            };
+
+            content.RequestedTheme = ElementTheme.Default;
+            content.RequestedTheme = effectiveTheme;
+        }
     }
 
     internal static void ApplyThemePreference()
