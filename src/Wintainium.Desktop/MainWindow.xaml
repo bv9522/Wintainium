@@ -16,7 +16,7 @@
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                     <GradientStop Color="Transparent" Offset="0" />
                     <GradientStop Color="Transparent" Offset="0.62" />
-                    <GradientStop Color="{Binding Source={StaticResource WintainiumY2KElectricBlueBrush}, Path=Color}" Offset="0.92" />
+                    <GradientStop Color="#009DFF" Offset="0.92" />
                     <GradientStop Color="Transparent" Offset="1" />
                 </LinearGradientBrush>
             </Grid.Background>
