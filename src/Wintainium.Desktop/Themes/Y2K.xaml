@@ -74,6 +74,25 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
-    <CornerRadius x:Key="WintainiumY2KCardCornerRadius">16</CornerRadius>
-    <CornerRadius x:Key="WintainiumY2KControlCornerRadius">12</CornerRadius>
+    <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
+    <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
+    <Style x:Key="WintainiumY2KButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KControlCornerRadius}" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="WintainiumY2KAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource WintainiumY2KButtonStyle}">
+        <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WintainiumY2KElectricBlueBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style x:Key="WintainiumY2KCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KCardCornerRadius}" />
+    </Style>
 </ResourceDictionary>
