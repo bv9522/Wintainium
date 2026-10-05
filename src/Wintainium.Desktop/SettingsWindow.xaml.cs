@@ -287,12 +287,13 @@ public sealed partial class SettingsWindow : Window
             if (visualStyle.SelectedIndex >= 0)
             {
                 _settings.SetVisualStyle((WintainiumVisualStyle)visualStyle.SelectedIndex);
+                App.ApplyVisualStylePreference();
             }
         };
 
         _categoryContent.Children.Add(theme);
         _categoryContent.Children.Add(visualStyle);
-        AddPlaceholder("Theme selection is active and applies immediately. Visual style customization will be implemented separately.");
+        AddPlaceholder("Theme and visual style are active and apply immediately. Y2K is the first visual style foundation; additional style layers will be implemented separately.");
     }
 
     private void AddPlaceholder(string text)
