@@ -12,14 +12,12 @@
         </Grid.RowDefinitions>
 
         <Grid Padding="28,24,28,16">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="Transparent" Offset="0" />
-                    <GradientStop Color="Transparent" Offset="0.62" />
-                    <GradientStop Color="#009DFF" Offset="0.92" />
-                    <GradientStop Color="Transparent" Offset="1" />
-                </LinearGradientBrush>
-            </Grid.Background>
+            <Border
+                IsHitTestVisible="False"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Stretch"
+                BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
+                BorderThickness="0,0,0,1" />
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -64,13 +62,15 @@
                 Margin="0,0,8,0"
                 Content="Grid"
                 Click="ViewModeButton_Click"
-                ToolTipService.ToolTip="Switch to grid view" />
+                ToolTipService.ToolTip="Switch to grid view"
+                Style="{ThemeResource WintainiumY2KButtonStyle}" />
 
             <Button
                 Grid.Row="0"
                 Grid.Column="3"
                 Content="Settings"
-                Click="SettingsButton_Click" />
+                Click="SettingsButton_Click"
+                Style="{ThemeResource WintainiumY2KButtonStyle}" />
         </Grid>
 
         <Grid Grid.Row="1" Margin="28,0,28,16">
@@ -135,7 +135,7 @@
                 Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
+                        <Border Margin="0,2" Padding="12" CornerRadius="{ThemeResource WintainiumY2KCardCornerRadius}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
                         <Grid MinHeight="64">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="52" />
