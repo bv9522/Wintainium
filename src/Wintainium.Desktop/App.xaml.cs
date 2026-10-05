@@ -10,7 +10,7 @@ public partial class App : Application
     private Window? _window;
     private WintainiumDesktopServices? _services;
     private readonly UISettings _uiSettings;
-    private static ResourceDictionary? _visualStyleResources;
+    private static readonly Dictionary<WindowId, ResourceDictionary> WindowVisualStyleResources = new();
 
     internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
 
@@ -50,57 +50,55 @@ public partial class App : Application
 
         var windowId = window.AppWindow.Id;
         ActiveWindows[windowId] = window;
-        window.Closed += (_, _) => ActiveWindows.Remove(windowId);
+        window.Closed += (_, _) =>
+        {
+            ActiveWindows.Remove(windowId);
+            WindowVisualStyleResources.Remove(windowId);
+        };
         ApplyThemeToWindow(window);
+        ApplyVisualStyleToWindow(window);
     }
 
     internal static void ApplyVisualStylePreference()
     {
-        var resources = Current.Resources.MergedDictionaries;
-
-        if (_visualStyleResources is not null)
-        {
-            resources.Remove(_visualStyleResources);
-            _visualStyleResources = null;
-        }
-
-        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
-        {
-            var y2k = new ResourceDictionary
-            {
-                Source = new Uri("ms-appx:///Themes/Y2K.xaml")
-            };
-            resources.Add(y2k);
-            _visualStyleResources = y2k;
-        }
-
-        RefreshVisualStyleOnActiveWindows();
-    }
-
-    private static void RefreshVisualStyleOnActiveWindows()
-    {
+        // Keep the visual-style dictionary at each window's root. WinUI reliably
+        // invalidates ThemeResource consumers in a FrameworkElement subtree when
+        // that subtree's own resource dictionary changes, whereas replacing an
+        // Application-level merged dictionary does not reliably refresh an
+        // already-materialized visual tree.
         foreach (var window in ActiveWindows.Values.ToArray())
         {
-            if (window.Content is not FrameworkElement content)
-            {
-                continue;
-            }
-
-            // WinUI does not reliably re-evaluate every existing ThemeResource
-            // consumer when a merged dictionary is replaced. Resetting the
-            // element theme to Default and restoring the user's effective theme
-            // forces the visual tree to refresh its ThemeResource lookups without
-            // recreating the window or its content.
-            var effectiveTheme = Settings.Current.Theme switch
-            {
-                WintainiumThemePreference.Light => ElementTheme.Light,
-                WintainiumThemePreference.Dark => ElementTheme.Dark,
-                _ => GetSystemElementTheme()
-            };
-
-            content.RequestedTheme = ElementTheme.Default;
-            content.RequestedTheme = effectiveTheme;
+            ApplyVisualStyleToWindow(window);
         }
+    }
+
+    private static void ApplyVisualStyleToWindow(Window window)
+    {
+        if (window.Content is not FrameworkElement content)
+        {
+            return;
+        }
+
+        var windowId = window.AppWindow.Id;
+
+        if (WindowVisualStyleResources.TryGetValue(windowId, out var existing))
+        {
+            content.Resources.MergedDictionaries.Remove(existing);
+            WindowVisualStyleResources.Remove(windowId);
+        }
+
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        var visualStyle = new ResourceDictionary
+        {
+            Source = new Uri("ms-appx:///Themes/Y2K.xaml")
+        };
+
+        content.Resources.MergedDictionaries.Add(visualStyle);
+        WindowVisualStyleResources[windowId] = visualStyle;
     }
 
     internal static void ApplyThemePreference()
