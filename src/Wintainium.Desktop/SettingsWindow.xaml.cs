@@ -277,6 +277,7 @@ public sealed partial class SettingsWindow : Window
             if (theme.SelectedIndex >= 0)
             {
                 _settings.SetTheme((WintainiumThemePreference)theme.SelectedIndex);
+                App.ApplyThemePreference();
             }
         };
 
@@ -290,7 +291,7 @@ public sealed partial class SettingsWindow : Window
 
         _categoryContent.Children.Add(theme);
         _categoryContent.Children.Add(visualStyle);
-        AddPlaceholder("Appearance preferences are stored with Wintainium desktop settings. The visual system will be expanded here after the Appearance design is finalized.");
+        AddPlaceholder("Theme selection is active and applies immediately. Visual style customization will be implemented separately.");
     }
 
     private void AddPlaceholder(string text)
