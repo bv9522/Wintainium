@@ -60,6 +60,19 @@ public partial class App : Application
         }
     }
 
+    internal static void ApplyThemeToElement(FrameworkElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
+        var preference = Settings.Current.Theme;
+        element.RequestedTheme = preference switch
+        {
+            WintainiumThemePreference.Light => ElementTheme.Light,
+            WintainiumThemePreference.Dark => ElementTheme.Dark,
+            _ => GetSystemElementTheme()
+        };
+    }
+
     internal static void ApplyThemeToWindow(Window window)
     {
         if (window.Content is not FrameworkElement content)
