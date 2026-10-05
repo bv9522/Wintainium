@@ -17,9 +17,6 @@ public sealed partial class ApplicationDetailsWindow
             itemsControl.SizeChanged += DiagnosticItemsControl_SizeChanged;
             UpdateDiagnosticSectionVisibility(itemsControl);
         }
-
-        UpdateResultStatusText.TextChanged -= UpdateResultStatusText_TextChanged;
-        UpdateResultStatusText.TextChanged += UpdateResultStatusText_TextChanged;
     }
 
     private void DiagnosticItemsControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -42,7 +39,7 @@ public sealed partial class ApplicationDetailsWindow
         CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
     }
 
-    private void UpdateResultStatusText_TextChanged(object sender, TextChangedEventArgs e)
+    private void UpdateResultDiagnosticsPresentation()
     {
         if (_lastUpdateResult is null)
             return;
