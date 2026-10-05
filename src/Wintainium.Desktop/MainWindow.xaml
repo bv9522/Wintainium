@@ -55,15 +55,13 @@
                 Margin="0,0,8,0"
                 Content="Grid"
                 Click="ViewModeButton_Click"
-                ToolTipService.ToolTip="Switch to grid view"
-                Style="{ThemeResource WintainiumY2KButtonStyle}" />
+                ToolTipService.ToolTip="Switch to grid view" />
 
             <Button
                 Grid.Row="0"
                 Grid.Column="3"
                 Content="Settings"
-                Click="SettingsButton_Click"
-                Style="{ThemeResource WintainiumY2KButtonStyle}" />
+                Click="SettingsButton_Click" />
         </Grid>
 
         <Grid Grid.Row="1" Margin="28,0,28,16">
@@ -128,7 +126,7 @@
                 Padding="4">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,2" Padding="12" CornerRadius="{ThemeResource WintainiumY2KCardCornerRadius}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
+                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
                         <Grid MinHeight="64">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="52" />
@@ -202,7 +200,7 @@
             </Grid.ColumnDefinitions>
             <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" Style="{ThemeResource WintainiumY2KButtonStyle}" />
+                <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" />
                 <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" />
             </StackPanel>
         </Grid>
