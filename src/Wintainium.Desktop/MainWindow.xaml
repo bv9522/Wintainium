@@ -12,12 +12,6 @@
         </Grid.RowDefinitions>
 
         <Grid Padding="28,24,28,16">
-            <Border
-                IsHitTestVisible="False"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Stretch"
-                BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
-                BorderThickness="0,0,0,1" />
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -28,6 +22,12 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            <Border
+                IsHitTestVisible="False"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Stretch"
+                BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
+                BorderThickness="0,0,0,1" />
 
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
