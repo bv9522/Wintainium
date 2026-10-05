@@ -5,14 +5,6 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Border
-            IsHitTestVisible="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
-            BorderThickness="0,0,0,1"
-            Opacity="0.45"
-            Margin="0,0,0,96" />
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -221,5 +213,14 @@
                 <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" Style="{ThemeResource WintainiumY2KAccentButtonStyle}" />
             </StackPanel>
         </Grid>
+        <Border
+            Grid.RowSpan="3"
+            IsHitTestVisible="False"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
+            BorderThickness="0,0,0,1"
+            Opacity="0.45"
+            Margin="0,0,0,96" />
     </Grid>
 </Window>
