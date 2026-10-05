@@ -60,7 +60,7 @@ public partial class App : Application
         }
     }
 
-    private static void ApplyThemeToWindow(Window window)
+    internal static void ApplyThemeToWindow(Window window)
     {
         if (window.Content is not FrameworkElement content)
         {
