@@ -49,7 +49,8 @@ public sealed partial class SettingsWindow : Window
             Spacing = 16
         };
 
-        var panel = (StackPanel)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
+        var scrollViewer = (ScrollViewer)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
+        var panel = (StackPanel)scrollViewer.Content;
         panel.Children.Add(_categoryContent);
 
         _categoryList.SelectionChanged += CategoryList_SelectionChanged;
@@ -313,7 +314,8 @@ public sealed partial class SettingsWindow : Window
         var root = (Grid)Content;
         var body = (Grid)root.Children[1];
         var categoryList = (ListView)body.Children[0];
-        var panel = (StackPanel)((Border)body.Children[1]).Child;
+        var scrollViewer = (ScrollViewer)((Border)body.Children[1]).Child;
+        var panel = (StackPanel)scrollViewer.Content;
 
         return (
             categoryList,
