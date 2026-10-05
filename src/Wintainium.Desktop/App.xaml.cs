@@ -61,15 +61,39 @@ public partial class App : Application
 
     internal static void ApplyVisualStylePreference()
     {
-        // Keep the visual-style dictionary at each window's root. WinUI reliably
-        // invalidates ThemeResource consumers in a FrameworkElement subtree when
-        // that subtree's own resource dictionary changes, whereas replacing an
-        // Application-level merged dictionary does not reliably refresh an
-        // already-materialized visual tree.
         foreach (var window in ActiveWindows.Values.ToArray())
         {
             ApplyVisualStyleToWindow(window);
+            RefreshThemeResources(window);
         }
+    }
+
+    private static void RefreshThemeResources(Window window)
+    {
+        if (window.Content is not FrameworkElement content)
+        {
+            return;
+        }
+
+        var effectiveTheme = Settings.Current.Theme switch
+        {
+            WintainiumThemePreference.Light => ElementTheme.Light,
+            WintainiumThemePreference.Dark => ElementTheme.Dark,
+            _ => GetSystemElementTheme()
+        };
+
+        // ThemeResource is explicitly re-evaluated by WinUI when a FrameworkElement
+        // undergoes a real theme transition. Re-applying the same theme is not
+        // sufficient, so briefly move to the opposite theme and immediately return
+        // to the user's effective theme. The final visual state is unchanged while
+        // the existing visual tree is forced to resolve the newly selected style
+        // resources.
+        var alternateTheme = effectiveTheme == ElementTheme.Light
+            ? ElementTheme.Dark
+            : ElementTheme.Light;
+
+        content.RequestedTheme = alternateTheme;
+        content.RequestedTheme = effectiveTheme;
     }
 
     private static void ApplyVisualStyleToWindow(Window window)
