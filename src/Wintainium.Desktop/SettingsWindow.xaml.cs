@@ -139,11 +139,10 @@ public sealed partial class SettingsWindow : Window
             "Automatically check for updates",
             "Periodically check your managed software for available updates.",
             _settings.Current.AutomaticallyCheckForUpdates,
-            value =>
-            {
-                _settings.SetAutomaticallyCheckForUpdates(value);
-                UpdateFrequencyState(automaticChecking, value);
-            });
+            value => _settings.SetAutomaticallyCheckForUpdates(value));
+
+        automaticChecking.Toggled += (_, _) =>
+            UpdateFrequencyState(automaticChecking, automaticChecking.IsOn);
 
         var frequency = new ComboBox
         {
