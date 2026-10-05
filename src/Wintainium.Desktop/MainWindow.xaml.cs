@@ -196,6 +196,7 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close
         };
+        App.ApplyThemeToElement(confirmation);
 
         if (await confirmation.ShowAsync() != ContentDialogResult.Primary)
         {
@@ -549,6 +550,7 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
+        App.ApplyThemeToElement(dialog);
 
         var onboardingComplete = false;
         var sourceUri = string.Empty;
@@ -720,6 +722,7 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Close
         };
+        App.ApplyThemeToElement(dialog);
 
         await dialog.ShowAsync();
     }
@@ -738,6 +741,7 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Close
         };
+        App.ApplyThemeToElement(dialog);
 
         await dialog.ShowAsync();
     }
@@ -800,6 +804,7 @@ public sealed partial class MainWindow : Window
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
+        App.ApplyThemeToElement(dialog);
 
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
         {
