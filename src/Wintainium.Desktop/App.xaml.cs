@@ -23,7 +23,6 @@ public partial class App : Application
     {
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
         InitializeComponent();
-        ApplyVisualStylePreference();
 
         _uiSettings = new UISettings();
         _uiSettings.ColorValuesChanged += SystemColors_Changed;
@@ -35,6 +34,7 @@ public partial class App : Application
         {
             _window = new MainWindow();
             TrackWindow(_window);
+            ApplyVisualStylePreference();
             _window.Closed += MainWindow_Closed;
             _window.Activate();
         }
