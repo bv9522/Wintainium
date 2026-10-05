@@ -50,6 +50,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ArgumentNullException.ThrowIfNull(iconService);
 
         InitializeComponent();
+        App.ApplyThemeToWindow(this);
         Closed += ApplicationDetailsWindow_Closed;
 
         _application = application;
