@@ -22,7 +22,7 @@ public sealed partial class SettingsWindow : Window
     {
         "General Wintainium behavior and preferences.",
         "Theme and visual style preferences.",
-        "Wintainium application version history and update information.",
+        "Global software update behavior.",
         "Configuration related to tracked software sources.",
         "Less-common and advanced application configuration."
     };
@@ -46,7 +46,7 @@ public sealed partial class SettingsWindow : Window
 
         _categoryContent = new StackPanel
         {
-            Spacing = 12
+            Spacing = 16
         };
 
         var panel = (StackPanel)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
@@ -76,7 +76,7 @@ public sealed partial class SettingsWindow : Window
         switch (index)
         {
             case 0:
-                AddPlaceholder("General preferences will be added when their application contract is defined.");
+                AddGeneralControls();
                 break;
 
             case 1:
@@ -84,7 +84,7 @@ public sealed partial class SettingsWindow : Window
                 break;
 
             case 2:
-                AddPlaceholder("This section is for Wintainium itself: current version, release history, and future self-update controls.");
+                AddUpdateControls();
                 break;
 
             case 3:
@@ -95,6 +95,163 @@ public sealed partial class SettingsWindow : Window
                 AddPlaceholder("Advanced technical settings will be added only when their underlying application contracts exist.");
                 break;
         }
+    }
+
+    private void AddGeneralControls()
+    {
+        AddSectionHeader("Startup");
+        AddToggle(
+            "Launch Wintainium when I sign in",
+            "Start Wintainium automatically when you sign in to Windows.",
+            _settings.Current.LaunchAtSignIn,
+            value => _settings.SetLaunchAtSignIn(value));
+
+        AddSectionHeader("Application Behavior");
+        AddToggle(
+            "Confirm before installing or updating software",
+            "Ask for confirmation before Wintainium begins an install or update operation.",
+            _settings.Current.ConfirmBeforeInstallOrUpdate,
+            value => _settings.SetConfirmBeforeInstallOrUpdate(value));
+        AddToggle(
+            "Confirm before removing software",
+            "Ask for confirmation before Wintainium removes software from your collection.",
+            _settings.Current.ConfirmBeforeRemove,
+            value => _settings.SetConfirmBeforeRemove(value));
+        AddToggle(
+            "Close Wintainium after an operation completes",
+            "Close Wintainium when an install, update, or removal operation reaches its final state.",
+            _settings.Current.CloseAfterOperation,
+            value => _settings.SetCloseAfterOperation(value));
+
+        AddSectionHeader("Notifications");
+        AddToggle(
+            "Show operation notifications",
+            "Show user-facing notifications when Wintainium operations complete or fail.",
+            _settings.Current.ShowOperationNotifications,
+            value => _settings.SetShowOperationNotifications(value));
+    }
+
+    private void AddUpdateControls()
+    {
+        AddSectionHeader("Update Checking");
+        var automaticChecking = AddToggle(
+            "Automatically check for updates",
+            "Periodically check your managed software for available updates.",
+            _settings.Current.AutomaticallyCheckForUpdates,
+            value =>
+            {
+                _settings.SetAutomaticallyCheckForUpdates(value);
+                UpdateFrequencyState(automaticChecking, value);
+            });
+
+        var frequency = new ComboBox
+        {
+            Header = "Check frequency",
+            Width = 360,
+            ItemsSource = new[] { "Every day", "Every week", "Every two weeks", "Every month" },
+            SelectedIndex = (int)_settings.Current.UpdateCheckFrequency,
+            IsEnabled = _settings.Current.AutomaticallyCheckForUpdates
+        };
+        frequency.SelectionChanged += (_, _) =>
+        {
+            if (frequency.SelectedIndex >= 0)
+            {
+                _settings.SetUpdateCheckFrequency(
+                    (WintainiumUpdateCheckFrequency)frequency.SelectedIndex);
+            }
+        };
+        _categoryContent.Children.Add(frequency);
+
+        AddSectionHeader("Automatic Updates");
+        AddToggle(
+            "Automatically install available updates",
+            "Install available updates without waiting for you to start each operation. Application-specific policy will take precedence when that policy is introduced.",
+            _settings.Current.AutomaticallyInstallUpdates,
+            value => _settings.SetAutomaticallyInstallUpdates(value));
+
+        AddSectionHeader("Notifications");
+        AddToggle(
+            "Notify me when updates are available",
+            "Notify you when Wintainium discovers an available software update.",
+            _settings.Current.NotifyWhenUpdatesAvailable,
+            value => _settings.SetNotifyWhenUpdatesAvailable(value));
+        AddToggle(
+            "Notify me when updates are installed",
+            "Notify you when an automatic or user-started update completes successfully.",
+            _settings.Current.NotifyWhenUpdatesInstalled,
+            value => _settings.SetNotifyWhenUpdatesInstalled(value));
+        AddToggle(
+            "Notify me when an update fails",
+            "Notify you when an update operation cannot be completed.",
+            _settings.Current.NotifyWhenUpdateFails,
+            value => _settings.SetNotifyWhenUpdateFails(value));
+    }
+
+    private ToggleSwitch AddToggle(
+        string header,
+        string description,
+        bool isOn,
+        Action<bool> onChanged)
+    {
+        var toggle = new ToggleSwitch
+        {
+            Header = header,
+            IsOn = isOn,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
+        var descriptionText = new TextBlock
+        {
+            Text = description,
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.68,
+            Margin = new Thickness(0, 2, 0, 0)
+        };
+
+        var panel = new StackPanel
+        {
+            Spacing = 2,
+            Children =
+            {
+                toggle,
+                descriptionText
+            }
+        };
+
+        toggle.Toggled += (_, _) => onChanged(toggle.IsOn);
+        _categoryContent.Children.Add(panel);
+
+        return toggle;
+    }
+
+    private void UpdateFrequencyState(ToggleSwitch automaticChecking, bool isEnabled)
+    {
+        if (_categoryContent.Children.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var child in _categoryContent.Children)
+        {
+            if (child is ComboBox comboBox && comboBox.Header is string header &&
+                string.Equals(header, "Check frequency", StringComparison.Ordinal))
+            {
+                comboBox.IsEnabled = isEnabled;
+                return;
+            }
+        }
+    }
+
+    private void AddSectionHeader(string text)
+    {
+        _categoryContent.Children.Add(
+            new TextBlock
+            {
+                Text = text,
+                FontSize = 16,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(0, 8, 0, 0)
+            });
     }
 
     private void AddAppearanceControls()
