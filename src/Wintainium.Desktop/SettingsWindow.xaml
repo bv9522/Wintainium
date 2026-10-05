@@ -33,16 +33,18 @@
                 Grid.Column="1"
                 Margin="24,0,0,0"
                 Padding="24">
-                <StackPanel Spacing="12">
-                    <TextBlock
-                        Text="General"
-                        FontSize="20"
-                        FontWeight="SemiBold" />
-                    <TextBlock
-                        Text="General Wintainium behavior and preferences."
-                        TextWrapping="Wrap"
-                        Opacity="0.72" />
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            Text="General"
+                            FontSize="20"
+                            FontWeight="SemiBold" />
+                        <TextBlock
+                            Text="General Wintainium behavior and preferences."
+                            TextWrapping="Wrap"
+                            Opacity="0.72" />
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
