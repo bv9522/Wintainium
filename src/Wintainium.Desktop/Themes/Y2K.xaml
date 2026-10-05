@@ -4,65 +4,33 @@
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FFFFFF" Offset="0" /><GradientStop Color="#DDE5EC" Offset="0.48" /><GradientStop Color="#EEF2F6" Offset="1" /></LinearGradientBrush>
-            <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#FFFFFF" Offset="0" />
-                <GradientStop Color="#DDE5EC" Offset="0.48" />
-                <GradientStop Color="#EEF2F6" Offset="1" />
-            </LinearGradientBrush>
-            <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#FFFFFF" Offset="0" />
-                <GradientStop Color="#E7EDF3" Offset="1" />
-            </LinearGradientBrush>
-            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#AFC0CF" />
-            <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#D9E5EF" />
-            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#087FE5" />
-            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#C8E5FF" />
-            <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#E8F4FF" />
-            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#EEF3F7" />
-            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#E2E9EF" />
-            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#9EAFBE" />
-            <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#C1CFDA" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#102235" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#38536B" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#62788B" />
+            <SolidColorBrush x:Key="WintainiumY2KPageBackgroundBrush" Color="#E8EEF3" />
+            <SolidColorBrush x:Key="WintainiumY2KCardBackgroundBrush" Color="#F5F8FA" />
+            <SolidColorBrush x:Key="WintainiumY2KControlBackgroundBrush" Color="#EEF3F7" />
             <SolidColorBrush x:Key="WintainiumY2KChromeBrush" Color="#DCE4EA" />
             <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#009DFF" />
             <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="WintainiumY2KMatrixGreenBrush" Color="#32FF8A" />
             <SolidColorBrush x:Key="WintainiumY2KOrangeBrush" Color="#FF8A2B" />
             <SolidColorBrush x:Key="WintainiumY2KGridLineBrush" Color="#5E9BC4" Opacity="0.16" />
+            <SolidColorBrush x:Key="WintainiumY2KBorderBrush" Color="#AFC0CF" />
+            <SolidColorBrush x:Key="WintainiumY2KPrimaryTextBrush" Color="#102235" />
+            <SolidColorBrush x:Key="WintainiumY2KSecondaryTextBrush" Color="#38536B" />
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
-            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#111D2B" Offset="0" /><GradientStop Color="#07111C" Offset="0.55" /><GradientStop Color="#160F2D" Offset="1" /></LinearGradientBrush>
-            <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#111D2B" Offset="0" />
-                <GradientStop Color="#07111C" Offset="0.55" />
-                <GradientStop Color="#160F2D" Offset="1" />
-            </LinearGradientBrush>
-            <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#1A2A3A" Offset="0" />
-                <GradientStop Color="#0E1A27" Offset="1" />
-            </LinearGradientBrush>
-            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#3A6B8E" />
-            <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#183248" />
-            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#009DFF" />
-            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#103A5D" />
-            <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#0D253A" />
-            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#132433" />
-            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#1A2E40" />
-            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#3A6B8E" />
-            <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#294B64" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#F1F7FC" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#B7D1E4" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#7FA2BA" />
+            <SolidColorBrush x:Key="WintainiumY2KPageBackgroundBrush" Color="#0B1622" />
+            <SolidColorBrush x:Key="WintainiumY2KCardBackgroundBrush" Color="#142536" />
+            <SolidColorBrush x:Key="WintainiumY2KControlBackgroundBrush" Color="#132433" />
             <SolidColorBrush x:Key="WintainiumY2KChromeBrush" Color="#718493" />
             <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#00B7FF" />
             <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#8C6CFF" />
             <SolidColorBrush x:Key="WintainiumY2KMatrixGreenBrush" Color="#39FF9A" />
             <SolidColorBrush x:Key="WintainiumY2KOrangeBrush" Color="#FF8B36" />
             <SolidColorBrush x:Key="WintainiumY2KGridLineBrush" Color="#31B6FF" Opacity="0.20" />
+            <SolidColorBrush x:Key="WintainiumY2KBorderBrush" Color="#3A6B8E" />
+            <SolidColorBrush x:Key="WintainiumY2KPrimaryTextBrush" Color="#F1F7FC" />
+            <SolidColorBrush x:Key="WintainiumY2KSecondaryTextBrush" Color="#B7D1E4" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
