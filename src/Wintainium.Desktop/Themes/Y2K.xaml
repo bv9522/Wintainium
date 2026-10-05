@@ -4,7 +4,7 @@
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#F2F5F8" />
+            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FFFFFF" Offset="0" /><GradientStop Color="#DDE5EC" Offset="0.48" /><GradientStop Color="#EEF2F6" Offset="1" /></LinearGradientBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#FFFFFF" Offset="0" />
                 <GradientStop Color="#DDE5EC" Offset="0.48" />
@@ -35,7 +35,7 @@
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
-            <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#07111C" />
+            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#111D2B" Offset="0" /><GradientStop Color="#07111C" Offset="0.55" /><GradientStop Color="#160F2D" Offset="1" /></LinearGradientBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#111D2B" Offset="0" />
                 <GradientStop Color="#07111C" Offset="0.55" />
