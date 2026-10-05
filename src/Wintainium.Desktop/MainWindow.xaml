@@ -22,17 +22,10 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Border
-                IsHitTestVisible="False"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Stretch"
-                BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
-                BorderThickness="0,0,0,1" />
-
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
                     Text="My Software"
-                    Style="{StaticResource TitleTextBlockStyle}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                    Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock
                         Text="Software tracked by Wintainium"
                     Style="{StaticResource BodyTextBlockStyle}"
@@ -53,7 +46,7 @@
                 Grid.Column="1"
                 Margin="12,0,8,0"
                 Content="&#xE16E;  Sort &amp; Filter"
-                Click="SortAndFilterButton_Click" Style="{ThemeResource WintainiumY2KButtonStyle}" />
+                Click="SortAndFilterButton_Click" />
 
             <Button
                 x:Name="ViewModeButton"
@@ -84,7 +77,7 @@
                 HorizontalAlignment="Stretch">
                 <GridView.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="240" Padding="16" CornerRadius="{ThemeResource WintainiumY2KCardCornerRadius}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
+                        <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped">
                             <StackPanel Spacing="10">
                                 <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
                                     <Grid>
@@ -210,17 +203,8 @@
             <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" Style="{ThemeResource WintainiumY2KButtonStyle}" />
-                <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" Style="{ThemeResource WintainiumY2KAccentButtonStyle}" />
+                <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" />
             </StackPanel>
         </Grid>
-        <Border
-            Grid.RowSpan="3"
-            IsHitTestVisible="False"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            BorderBrush="{ThemeResource WintainiumY2KGridLineBrush}"
-            BorderThickness="0,0,0,1"
-            Opacity="0.45"
-            Margin="0,0,0,96" />
     </Grid>
 </Window>
