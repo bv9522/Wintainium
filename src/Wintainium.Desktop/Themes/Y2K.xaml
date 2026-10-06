@@ -202,6 +202,21 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
+    <!-- Light visual structure: shared cards and text-entry surfaces inherit the Y2K shell. -->
+    <Style TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KCardCornerRadius}" />
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KControlCornerRadius}" />
+    </Style>
+
     <!-- Stable aliases used by future Y2K-specific styles/templates. -->
     <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
     <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
