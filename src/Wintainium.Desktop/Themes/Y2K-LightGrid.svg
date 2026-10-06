@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#B8C4CD"/><stop offset=".28" stop-color="#AAB8C2"/>
+    <stop offset=".68" stop-color="#95A6B1"/><stop offset="1" stop-color="#AEBBC4"/>
+  </linearGradient>
+  <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#EAF4FA" stop-opacity=".18"/>
+    <stop offset=".48" stop-color="#FFFFFF" stop-opacity="0"/>
+    <stop offset="1" stop-color="#49677D" stop-opacity=".10"/>
+  </linearGradient>
+</defs>
+<rect width="160" height="160" fill="url(#bg)"/>
+<rect width="160" height="160" fill="url(#sheen)"/>
+<g stroke="#3B789E" stroke-opacity=".13" stroke-width="1">
+  <path d="M0 0V160M40 0V160M80 0V160M120 0V160M160 0V160"/>
+  <path d="M0 0H160M0 40H160M0 80H160M0 120H160M0 160H160"/>
+</g>
+<g stroke="#009DFF" stroke-opacity=".20" stroke-width="1">
+  <path d="M0 0H40M0 0V40M80 40H120M80 40V80M120 120H160M120 120V160"/>
+</g>
+<g fill="#18C96B" fill-opacity=".16">
+  <rect x="39" y="39" width="2" height="2"/><rect x="119" y="79" width="2" height="2"/>
+  <rect x="79" y="119" width="2" height="2"/>
+</g>
+</svg>
