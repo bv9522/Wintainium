@@ -93,7 +93,18 @@ public partial class App : Application
             : ElementTheme.Light;
 
         content.RequestedTheme = alternateTheme;
-        content.RequestedTheme = effectiveTheme;
+
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        {
+            // The Y2K dictionary is attached at runtime. Defer the return to the
+            // effective theme so WinUI completes a real theme-resource pass after
+            // the new dictionary is part of the live resource tree.
+            content.DispatcherQueue.TryEnqueue(() => content.RequestedTheme = effectiveTheme);
+        }
+        else
+        {
+            content.RequestedTheme = effectiveTheme;
+        }
     }
 
     private static void ApplyVisualStyleToWindow(Window window)
