@@ -3,13 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#AEBBC4" Offset="0" />
-                <GradientStop Color="#8998A2" Offset="0.22" />
-                <GradientStop Color="#C2CDD3" Offset="0.46" />
-                <GradientStop Color="#7E8E98" Offset="0.68" />
-                <GradientStop Color="#B3C0C8" Offset="1" />
-            </LinearGradientBrush>
+            <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" ImageSource="ms-appx:///Themes/Y2K-LightChrome.svg" Stretch="UniformToFill" />
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#D7E2E8" Offset="0" />
                 <GradientStop Color="#9EAFB9" Offset="0.5" />
@@ -51,9 +45,9 @@
             <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#DFE8EF" />
             <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#8097A6" />
             <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#C0CED8" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#102235" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#1F744D" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#3F795F" />
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#087A42" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#0A9F55" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#1B7F50" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#D7E0E5" Offset="0" /><GradientStop Color="#7D8E98" Offset="0.45" /><GradientStop Color="#B8C5CC" Offset="1" />
             </LinearGradientBrush>
