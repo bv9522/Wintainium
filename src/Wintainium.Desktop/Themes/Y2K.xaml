@@ -1,9 +1,14 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:media="using:Microsoft.UI.Xaml.Media.Imaging">
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" ImageSource="ms-appx:///Themes/Y2K-LightChrome.svg" Stretch="UniformToFill" />
+            <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" Stretch="UniformToFill">
+                <ImageBrush.ImageSource>
+                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-LightChrome.svg" />
+                </ImageBrush.ImageSource>
+            </ImageBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#D7E2E8" Offset="0" />
                 <GradientStop Color="#9EAFB9" Offset="0.5" />
