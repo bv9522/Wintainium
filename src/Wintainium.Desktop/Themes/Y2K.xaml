@@ -11,15 +11,10 @@
     -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <!-- Pearlescent silver / cool-white page surface -->
-            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush"
-                                 StartPoint="0,0"
-                                 EndPoint="1,1">
-                <GradientStop Color="#B8C4CD" Offset="0" />
-                <GradientStop Color="#AAB8C2" Offset="0.28" />
-                <GradientStop Color="#95A6B1" Offset="0.68" />
-                <GradientStop Color="#AEBBC4" Offset="1" />
-            </LinearGradientBrush>
+            <!-- Pearlescent silver surface with a restrained digital grid. -->
+            <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush"
+                        ImageSource="ms-appx:///Themes/Y2K-LightGrid.svg"
+                        Stretch="UniformToFill" />
 
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush"
                                  StartPoint="0,0"
@@ -87,10 +82,10 @@
             <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#96AAB9" />
             <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#C0CED8" />
 
-            <!-- Typography -->
+            <!-- Typography: navy primary text with restrained robotic-green secondary information. -->
             <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#102235" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#38536B" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#62788B" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#246A4B" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#4B8067" />
 
             <!-- Y2K signature palette -->
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush"
@@ -202,7 +197,7 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
-    <!-- Light visual structure: shared cards and text-entry surfaces inherit the Y2K shell. -->
+    <!-- Shared Y2K surfaces. These remain resource-level and do not modify window markup. -->
     <Style TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
