@@ -10,7 +10,7 @@ public partial class App : Application
     private Window? _window;
     private WintainiumDesktopServices? _services;
     private readonly UISettings _uiSettings;
-    private static readonly Dictionary<WindowId, ResourceDictionary> WindowVisualStyleResources = new();
+    private static readonly Dictionary<WindowId, (ResourceDictionary VisualStyle, ResourceDictionary ActiveTheme)> WindowVisualStyleResources = new();
 
     internal static Dictionary<WindowId, Window> ActiveWindows { get; } = new();
 
@@ -118,7 +118,8 @@ public partial class App : Application
 
         if (WindowVisualStyleResources.TryGetValue(windowId, out var existing))
         {
-            content.Resources.MergedDictionaries.Remove(existing);
+            content.Resources.MergedDictionaries.Remove(existing.ActiveTheme);
+            content.Resources.MergedDictionaries.Remove(existing.VisualStyle);
             WindowVisualStyleResources.Remove(windowId);
         }
 
@@ -133,7 +134,28 @@ public partial class App : Application
         };
 
         content.Resources.MergedDictionaries.Add(visualStyle);
-        WindowVisualStyleResources[windowId] = visualStyle;
+
+        // WinUI's built-in ThemeResource lookup does not reliably re-resolve
+        // ThemeDictionaries that are introduced by a runtime merge. Flatten the
+        // selected Y2K theme dictionary into a normal runtime dictionary so the
+        // Y2K resources become an explicit, highest-precedence window resource.
+        var themeKey = Settings.Current.Theme switch
+        {
+            WintainiumThemePreference.Dark => "Dark",
+            _ => "Light"
+        };
+
+        var activeTheme = new ResourceDictionary();
+        if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme))
+        {
+            foreach (var key in selectedTheme.Keys)
+            {
+                activeTheme[key] = selectedTheme[key];
+            }
+        }
+
+        content.Resources.MergedDictionaries.Add(activeTheme);
+        WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
     }
 
     internal static void ApplyThemePreference()
