@@ -45,6 +45,37 @@
             <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#C5E5FF" />
             <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#E8F5FF" />
 
+            <!-- Y2K control chrome: restrained silver face with electric-blue interaction cues -->
+            <LinearGradientBrush x:Key="ButtonBackground"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#C5D0D8" Offset="0" />
+                <GradientStop Color="#AAB8C1" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ButtonBackgroundPointerOver"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#D0E1EB" Offset="0" />
+                <GradientStop Color="#B2C8D6" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ButtonBackgroundPressed"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientStop Color="#9AAAB5" Offset="0" />
+                <GradientStop Color="#879AA7" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#8097A6" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#168ED0" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#0066A3" />
+            <SolidColorBrush x:Key="ButtonForeground" Color="#102235" />
+            <SolidColorBrush x:Key="AccentButtonBackground" Color="#087FE5" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#1697F0" />
+            <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#0066A3" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#0066A3" />
+            <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#005889" />
+            <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#004B76" />
+
             <!-- Native control surfaces -->
             <LinearGradientBrush x:Key="ControlFillColorDefaultBrush"
                                  StartPoint="0,0"
