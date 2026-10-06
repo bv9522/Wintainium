@@ -146,11 +146,12 @@ public partial class App : Application
         };
 
         var activeTheme = new ResourceDictionary();
-        if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme))
+        if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme)
+            && selectedTheme is ResourceDictionary selectedThemeDictionary)
         {
-            foreach (var key in selectedTheme.Keys)
+            foreach (var key in selectedThemeDictionary.Keys)
             {
-                activeTheme[key] = selectedTheme[key];
+                activeTheme[key] = selectedThemeDictionary[key];
             }
         }
 
