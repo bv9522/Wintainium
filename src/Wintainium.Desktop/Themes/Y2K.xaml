@@ -15,27 +15,27 @@
             <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush"
                                  StartPoint="0,0"
                                  EndPoint="1,1">
-                <GradientStop Color="#E7EDF2" Offset="0" />
-                <GradientStop Color="#D8E1E8" Offset="0.28" />
-                <GradientStop Color="#C3D0DA" Offset="0.68" />
-                <GradientStop Color="#DDE5EB" Offset="1" />
+                <GradientStop Color="#B8C4CD" Offset="0" />
+                <GradientStop Color="#AAB8C2" Offset="0.28" />
+                <GradientStop Color="#95A6B1" Offset="0.68" />
+                <GradientStop Color="#AEBBC4" Offset="1" />
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush"
                                  StartPoint="0,0"
                                  EndPoint="1,1">
-                <GradientStop Color="#E6EEF4" Offset="0" />
-                <GradientStop Color="#D2E4EF" Offset="0.42" />
-                <GradientStop Color="#C4D2DC" Offset="1" />
+                <GradientStop Color="#AFC4D0" Offset="0" />
+                <GradientStop Color="#9FB8C7" Offset="0.42" />
+                <GradientStop Color="#91A2AD" Offset="1" />
             </LinearGradientBrush>
 
             <!-- Frosted / metallic card surfaces -->
             <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush"
                                  StartPoint="0,0"
                                  EndPoint="0,1">
-                <GradientStop Color="#E9EFF3" Offset="0" />
-                <GradientStop Color="#DDE5EA" Offset="0.38" />
-                <GradientStop Color="#CBD6DE" Offset="1" />
+                <GradientStop Color="#BFCBD3" Offset="0" />
+                <GradientStop Color="#AEBBC4" Offset="0.38" />
+                <GradientStop Color="#9AAAB5" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#A9BBC9" />
             <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#D8E4ED" />
@@ -49,8 +49,8 @@
             <LinearGradientBrush x:Key="ControlFillColorDefaultBrush"
                                  StartPoint="0,0"
                                  EndPoint="0,1">
-                <GradientStop Color="#E5EBEF" Offset="0" />
-                <GradientStop Color="#D4DEE5" Offset="1" />
+                <GradientStop Color="#B9C6CE" Offset="0" />
+                <GradientStop Color="#A5B3BC" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#DFE8EF" />
             <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#96AAB9" />
@@ -65,14 +65,14 @@
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush"
                                  StartPoint="0,0"
                                  EndPoint="0,1">
-                <GradientStop Color="#DCE3E8" Offset="0" />
-                <GradientStop Color="#C7D1D8" Offset="0.34" />
-                <GradientStop Color="#A8B7C1" Offset="0.58" />
-                <GradientStop Color="#E3E9ED" Offset="1" />
+                <GradientStop Color="#A8B5BE" Offset="0" />
+                <GradientStop Color="#929FA8" Offset="0.34" />
+                <GradientStop Color="#788891" Offset="0.58" />
+                <GradientStop Color="#B1BEC6" Offset="1" />
             </LinearGradientBrush>
-            <SolidColorBrush x:Key="WintainiumY2KChromeHighlightBrush" Color="#EAF0F4" />
+            <SolidColorBrush x:Key="WintainiumY2KChromeHighlightBrush" Color="#B9C6CE" />
             <SolidColorBrush x:Key="WintainiumY2KChromeEdgeBrush" Color="#8FA4B3" />
-            <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#007FCC" />
+            <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#0066A3" />
             <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="WintainiumY2KMatrixGreenBrush" Color="#18C96B" />
             <SolidColorBrush x:Key="WintainiumY2KOrangeBrush" Color="#E86F1D" />
