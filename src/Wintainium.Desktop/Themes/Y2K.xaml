@@ -14,11 +14,10 @@
                 <GradientStop Color="#9EAFB9" Offset="0.5" />
                 <GradientStop Color="#7F909A" Offset="1" />
             </LinearGradientBrush>
-            <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#C5D0D7" Offset="0" />
-                <GradientStop Color="#A5B3BC" Offset="0.5" />
-                <GradientStop Color="#8798A3" Offset="1" />
-            </LinearGradientBrush>
+            <ImageBrush x:Key="CardBackgroundFillColorDefaultBrush"
+                        ImageSource="ms-appx:///Themes/Y2K-LightChrome.svg"
+                        Stretch="UniformToFill"
+                        Opacity="0.34" />
             <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#607887" />
             <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#D8E4ED" />
             <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#087FE5" />
