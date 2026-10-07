@@ -59,14 +59,17 @@ public partial class App : Application
         ApplyVisualStyleToWindow(window);
         RefreshThemeResources(window);
 
-        void ApplyVisualStyleAfterLoaded(object sender, RoutedEventArgs args)
+        if (window.Content is FrameworkElement content)
         {
-            window.Content.Loaded -= ApplyVisualStyleAfterLoaded;
-            ApplyVisualStyleToWindow(window);
-            RefreshThemeResources(window);
-        }
+            void ApplyVisualStyleAfterLoaded(object sender, RoutedEventArgs args)
+            {
+                content.Loaded -= ApplyVisualStyleAfterLoaded;
+                ApplyVisualStyleToWindow(window);
+                RefreshThemeResources(window);
+            }
 
-        window.Content.Loaded += ApplyVisualStyleAfterLoaded;
+            content.Loaded += ApplyVisualStyleAfterLoaded;
+        }
     }
 
     internal static void ApplyVisualStylePreference()
