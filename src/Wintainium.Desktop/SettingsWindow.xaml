@@ -5,8 +5,7 @@
 
     <Grid
         Padding="28"
-        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-        TextBlock.FontFamily="{ThemeResource WintainiumY2KDisplayFontFamily}">
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
