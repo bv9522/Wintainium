@@ -5,8 +5,7 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 
     <Grid
-        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-        TextBlock.FontFamily="{ThemeResource WintainiumY2KDisplayFontFamily}">
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
