@@ -8,11 +8,25 @@
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Padding="28,24,28,16">
+        <Grid x:Name="AppTitleBar"
+              Grid.Row="0"
+              Height="32"
+              Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <TextBlock
+                Text="Wintainium"
+                FontFamily="{ThemeResource WintainiumY2KDisplayFontFamily}"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                FontSize="14"
+                VerticalAlignment="Center"
+                Margin="16,0,0,0" />
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="28,24,28,16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -65,7 +79,7 @@
                 Click="SettingsButton_Click" />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="28,0,28,16">
+        <Grid Grid.Row="2" Margin="28,0,28,16">
             <GridView
                 x:Name="ApplicationGridView"
                 Visibility="Collapsed"
@@ -194,7 +208,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2" Padding="28,12,28,24">
+        <Grid Grid.Row="3" Padding="28,12,28,24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
