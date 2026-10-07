@@ -191,6 +191,39 @@ public partial class App : Application
             WintainiumThemePreference.Dark => ElementTheme.Dark,
             _ => GetSystemElementTheme()
         };
+
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        // ContentDialogs and other transient elements are not tracked as windows,
+        // so they do not receive the window-level Y2K resource dictionaries.
+        // Give them the same resource treatment locally.
+        var visualStyle = new ResourceDictionary
+        {
+            Source = new Uri("ms-appx:///Themes/Y2K.xaml")
+        };
+
+        element.Resources.MergedDictionaries.Add(visualStyle);
+
+        var themeKey = Settings.Current.Theme switch
+        {
+            WintainiumThemePreference.Dark => "Dark",
+            _ => "Light"
+        };
+
+        if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme)
+            && selectedTheme is ResourceDictionary selectedThemeDictionary)
+        {
+            var activeTheme = new ResourceDictionary();
+            foreach (var key in selectedThemeDictionary.Keys)
+            {
+                activeTheme[key] = selectedThemeDictionary[key];
+            }
+
+            element.Resources.MergedDictionaries.Add(activeTheme);
+        }
     }
 
     internal static void ApplyThemeToWindow(Window window)
