@@ -26,10 +26,10 @@
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
                     Text="My Software"
-                    Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
+                    Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock
                         Text="Software tracked by Wintainium"
-                    Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
+                    Style="{StaticResource BodyTextBlockStyle}"
                     Opacity="0.72" />
             </StackPanel>
 
@@ -178,7 +178,7 @@
                 Spacing="10"
                 MaxWidth="520">
                 <TextBlock Text="Your software collection"
-                           Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}"
+                           Style="{StaticResource SubtitleTextBlockStyle}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Applications you add to Wintainium will appear here."
                            Style="{StaticResource BodyTextBlockStyle}"
