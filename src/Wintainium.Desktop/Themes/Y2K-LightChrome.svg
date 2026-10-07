@@ -59,4 +59,50 @@
 
 <path d="M680 0 C620 120 690 190 790 210 S930 260 900 380" fill="none" stroke="url(#blue)" stroke-width="16"/>
 <path d="M680 0 C620 120 690 190 790 210 S930 260 900 380" fill="none" stroke="#8BDFFF" stroke-opacity=".28" stroke-width="3"/>
+
+
+<!-- Wintainium identity mark: engineered chrome W with an integrated downward acquisition/update arrow. -->
+<defs>
+  <linearGradient id="wChrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/>
+    <stop offset=".12" stop-color="#C9D5DA"/>
+    <stop offset=".30" stop-color="#52646D"/>
+    <stop offset=".46" stop-color="#EAF1F4"/>
+    <stop offset=".62" stop-color="#71828B"/>
+    <stop offset=".80" stop-color="#DCE5E9"/>
+    <stop offset="1" stop-color="#53656E"/>
+  </linearGradient>
+  <linearGradient id="wBlue" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#9BE4FF" stop-opacity=".95"/>
+    <stop offset=".5" stop-color="#008FD5" stop-opacity=".80"/>
+    <stop offset="1" stop-color="#0066A3" stop-opacity=".35"/>
+  </linearGradient>
+  <filter id="wShadow" x="-30%" y="-30%" width="160%" height="180%">
+    <feGaussianBlur stdDeviation="12"/>
+  </filter>
+  <filter id="wGlow" x="-30%" y="-30%" width="160%" height="180%">
+    <feGaussianBlur stdDeviation="5"/>
+  </filter>
+</defs>
+<g aria-label="Wintainium W identity" transform="translate(0,15)" opacity=".92">
+  <!-- Deep machined shadow gives the mark weight without turning the background into a logo poster. -->
+  <path d="M520 245 L650 640 L800 395 L950 640 L1080 245 L1000 245 L920 505 L800 315 L680 505 L600 245 Z"
+        fill="#26353D" opacity=".38" filter="url(#wShadow)" transform="translate(0,18)"/>
+
+  <!-- Broad engineered W: the center junction drops into the arrow shaft rather than being a pasted icon. -->
+  <path d="M520 245 L650 640 L800 395 L950 640 L1080 245 L1000 245 L920 505 L800 315 L680 505 L600 245 Z"
+        fill="url(#wChrome)" stroke="#465963" stroke-width="5" stroke-linejoin="round"/>
+
+  <!-- Machined center channel / acquisition arrow. -->
+  <path d="M770 350 L800 395 L830 350 L830 455 L875 455 L800 535 L725 455 L770 455 Z"
+        fill="#425761" opacity=".92"/>
+  <path d="M774 355 L800 394 L826 355 L826 448 L864 448 L800 515 L736 448 L774 448 Z"
+        fill="url(#wBlue)" opacity=".92"/>
+
+  <!-- Controlled chrome reflections make the W belong to the liquid-metal environment. -->
+  <path d="M556 264 L650 552" fill="none" stroke="#FFFFFF" stroke-opacity=".72" stroke-width="9" stroke-linecap="round"/>
+  <path d="M1044 264 L950 552" fill="none" stroke="#FFFFFF" stroke-opacity=".48" stroke-width="8" stroke-linecap="round"/>
+  <path d="M696 540 L800 380 L904 540" fill="none" stroke="#FFFFFF" stroke-opacity=".30" stroke-width="7" stroke-linecap="round"/>
+  <path d="M770 350 L800 395 L830 350 L830 455" fill="none" stroke="#A9ECFF" stroke-opacity=".72" stroke-width="3" filter="url(#wGlow)"/>
+</g>
 </svg>
