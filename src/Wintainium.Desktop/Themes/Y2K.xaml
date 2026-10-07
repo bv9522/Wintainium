@@ -144,6 +144,15 @@
             <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderDisabledForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="ControlHeaderForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="ControlHeaderDisabledForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="ContentDialogTitleForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
+
             <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
             <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#765CFF" />
             <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#765CFF" />
