@@ -22,8 +22,6 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Title = "Wintainium";
-        ApplyWindowChromeForCurrentVisualStyle();
-
         _services = ((App)Application.Current).Services;
 
         _applicationCollection = new WintainiumApplicationCollectionViewModel();
@@ -46,11 +44,6 @@ public sealed partial class MainWindow : Window
             AppTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
             ExtendsContentIntoTitleBar = false;
-
-            if (AppWindowTitleBar.IsCustomizationSupported())
-            {
-                AppWindow.TitleBar.ResetToDefault();
-            }
 
             return;
         }
@@ -317,6 +310,8 @@ public sealed partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        ApplyWindowChromeForCurrentVisualStyle();
+
         if (sender is FrameworkElement content)
         {
             content.Loaded -= MainWindow_Loaded;
