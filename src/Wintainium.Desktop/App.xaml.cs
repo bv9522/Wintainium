@@ -138,9 +138,9 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
-            if (window is MainWindow mainWindow)
+            if (window is MainWindow nonY2KMainWindow)
             {
-                mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+                nonY2KMainWindow.ApplyWindowChromeForCurrentVisualStyle();
             }
 
             return;
