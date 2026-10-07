@@ -57,6 +57,7 @@ public partial class App : Application
         };
         ApplyThemeToWindow(window);
         ApplyVisualStyleToWindow(window);
+        RefreshThemeResources(window);
     }
 
     internal static void ApplyVisualStylePreference()
