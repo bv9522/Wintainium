@@ -28,7 +28,7 @@
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Application Icon" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Application Icon" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" />
                         <Border Grid.Row="0" Grid.Column="1" Width="32" Height="32" Margin="0" CornerRadius="8" Background="{ThemeResource AccentFillColorSecondaryBrush}" HorizontalAlignment="Left" VerticalAlignment="Center">
                             <Grid>
                                 <TextBlock x:Name="ApplicationIconGlyph" Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
