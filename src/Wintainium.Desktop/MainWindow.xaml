@@ -17,13 +17,6 @@
               Grid.Row="0"
               Height="32"
               Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-            <TextBlock
-                Text="Wintainium"
-                FontFamily="{ThemeResource WintainiumY2KDisplayFontFamily}"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                FontSize="14"
-                VerticalAlignment="Center"
-                Margin="16,0,0,0" />
         </Grid>
 
         <Grid Grid.Row="1" Padding="28,24,28,16">
