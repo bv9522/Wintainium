@@ -1,5 +1,3 @@
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -61,28 +59,9 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
-        if (!AppWindowTitleBar.IsCustomizationSupported())
-        {
-            return;
-        }
-
-        var titleBar = AppWindow.TitleBar;
-        var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
-
-        // The actual title-bar surface is our Y2K page background, so the native
-        // caption buttons are transparent and reveal the same liquid-chrome
-        // background beneath them.
-        titleBar.ButtonBackgroundColor = Colors.Transparent;
-        titleBar.ButtonHoverBackgroundColor = Colors.Transparent;
-        titleBar.ButtonPressedBackgroundColor = Colors.Transparent;
-        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-
-        titleBar.ForegroundColor = violet;
-        titleBar.InactiveForegroundColor = violet;
-        titleBar.ButtonForegroundColor = violet;
-        titleBar.ButtonHoverForegroundColor = violet;
-        titleBar.ButtonPressedForegroundColor = violet;
-        titleBar.ButtonInactiveForegroundColor = violet;
+        // Keep the native caption buttons. The custom title-bar surface is supplied
+        // by AppTitleBar; avoid native AppWindow.TitleBar color customization here
+        // because it can fail during early WinUI window initialization.
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
