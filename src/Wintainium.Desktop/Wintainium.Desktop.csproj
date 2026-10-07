@@ -17,7 +17,7 @@
   <ItemGroup>
     <Content Include="Themes\Y2K-LightChrome.svg" />
     <Content Include="Themes\Y2K-DarkGrid.svg" />
-    <Content Include="KytoonOne-Regular.ttf" />
+    <Content Include="Cyberwave2000-Regular.otf" />
   </ItemGroup>
 
   <ItemGroup>
