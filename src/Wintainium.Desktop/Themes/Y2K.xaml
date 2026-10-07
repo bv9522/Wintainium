@@ -69,14 +69,6 @@
             <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderDisabledForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ControlHeaderForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ControlHeaderDisabledForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ContentDialogTitleForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#D7E0E5" Offset="0" /><GradientStop Color="#7D8E98" Offset="0.45" /><GradientStop Color="#B8C5CC" Offset="1" />
             </LinearGradientBrush>
