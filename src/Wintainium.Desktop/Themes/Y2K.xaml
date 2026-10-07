@@ -78,7 +78,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#C83D4D" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#607887" />
-            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Kytoon One</FontFamily>
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Dirigible One</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
