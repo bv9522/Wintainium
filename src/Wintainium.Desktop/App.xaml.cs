@@ -141,6 +141,10 @@ public partial class App : Application
             return;
         }
 
+        // TEMPORARY DIAGNOSTIC: bypass runtime Y2K resource attachment to determine
+        // whether the Y2K ResourceDictionary is responsible for the startup crash.
+        return;
+
         var visualStyle = new ResourceDictionary
         {
             Source = new Uri("ms-appx:///Themes/Y2K.xaml")
