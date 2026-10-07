@@ -78,7 +78,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#C83D4D" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#607887" />
-            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Segoe UI</FontFamily>
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
@@ -130,7 +130,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#FF5D73" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#4A7695" />
-            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Consolas</FontFamily>
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
