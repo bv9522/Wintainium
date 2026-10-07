@@ -39,7 +39,7 @@ public sealed partial class SettingsWindow : Window
 
         _settings = settings;
         InitializeComponent();
-        App.ApplyThemeToWindow(this);
+        App.TrackWindow(this);
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
 
