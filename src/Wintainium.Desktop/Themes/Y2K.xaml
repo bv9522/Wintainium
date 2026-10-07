@@ -9,6 +9,11 @@
                     <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-LightChrome.svg" />
                 </ImageBrush.ImageSource>
             </ImageBrush>
+            <ImageBrush x:Key="ContentDialogBackground" Stretch="UniformToFill">
+                <ImageBrush.ImageSource>
+                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-LightChrome.svg" />
+                </ImageBrush.ImageSource>
+            </ImageBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#D7E2E8" Offset="0" />
                 <GradientStop Color="#9EAFB9" Offset="0.5" />
@@ -73,6 +78,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#C83D4D" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#607887" />
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Geltek</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
@@ -119,6 +125,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#FF5D73" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#4A7695" />
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Consolas</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
@@ -136,10 +143,11 @@
         <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KControlCornerRadius}" />
     </Style>
     <Style TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
     <Style TargetType="ComboBox">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
@@ -152,7 +160,7 @@
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
     <Style TargetType="Button">
-        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
     </Style>
     <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
     <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
