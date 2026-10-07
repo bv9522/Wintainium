@@ -192,9 +192,15 @@
     <Style TargetType="ListView">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
     </Style>
+    <Style TargetType="GridView">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
+    </Style>
     <Style TargetType="ListViewItem">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style TargetType="GridViewItem">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
     </Style>
     <Style TargetType="MenuFlyoutItem">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
