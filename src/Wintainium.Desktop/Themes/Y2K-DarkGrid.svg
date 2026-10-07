@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#030B13"/><stop offset=".42" stop-color="#071725"/>
+    <stop offset=".72" stop-color="#06111D"/><stop offset="1" stop-color="#100B24"/>
+  </linearGradient>
+  <radialGradient id="halo" cx=".55" cy=".42" r=".7">
+    <stop offset="0" stop-color="#0B3550" stop-opacity=".48"/>
+    <stop offset=".52" stop-color="#061624" stop-opacity=".08"/>
+    <stop offset="1" stop-color="#02070D" stop-opacity=".32"/>
+  </radialGradient>
+  <linearGradient id="grid" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#20BFFF" stop-opacity=".34"/>
+    <stop offset="1" stop-color="#0073A8" stop-opacity=".12"/>
+  </linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<rect width="1600" height="900" fill="url(#halo)"/>
+<g stroke="url(#grid)" fill="none">
+  <path d="M0 770 L800 430 L1600 770" stroke-width="2" opacity=".48"/>
+  <path d="M0 820 L800 465 L1600 820" stroke-width="1" opacity=".38"/>
+  <path d="M0 870 L800 500 L1600 870" stroke-width="1" opacity=".30"/>
+  <path d="M150 900 L800 500 L1450 900" stroke-width="1" opacity=".28"/>
+  <path d="M380 900 L800 500 L1220 900" stroke-width="1" opacity=".24"/>
+  <path d="M610 900 L800 500 L990 900" stroke-width="1" opacity=".22"/>
+  <path d="M0 700 H1600 M0 620 H1600 M0 535 H1600 M0 445 H1600 M0 350 H1600 M0 250 H1600" stroke-width="1" opacity=".20"/>
+</g>
+<g stroke="#00B7FF" stroke-width="2" opacity=".20">
+  <path d="M800 500 V0"/>
+  <path d="M0 900 L800 500 L1600 900"/>
+</g>
+<g fill="#39FF9A">
+  <circle cx="800" cy="500" r="3" opacity=".65"/>
+  <circle cx="390" cy="620" r="2" opacity=".42"/>
+  <circle cx="1210" cy="620" r="2" opacity=".42"/>
+  <circle cx="610" cy="700" r="2" opacity=".30"/>
+  <circle cx="990" cy="700" r="2" opacity=".30"/>
+</g>
+</svg>
