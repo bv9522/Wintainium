@@ -138,11 +138,6 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
-            if (window is MainWindow nonY2KMainWindow)
-            {
-                nonY2KMainWindow.ApplyWindowChromeForCurrentVisualStyle();
-            }
-
             return;
         }
 
@@ -176,10 +171,6 @@ public partial class App : Application
         content.Resources.MergedDictionaries.Add(activeTheme);
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
 
-        if (window is MainWindow mainWindow)
-        {
-            mainWindow.ApplyWindowChromeForCurrentVisualStyle();
-        }
     }
 
     internal static void ApplyThemePreference()
