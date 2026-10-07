@@ -17,7 +17,9 @@
   <ItemGroup>
     <Content Include="Themes\Y2K-LightChrome.svg" />
     <Content Include="Themes\Y2K-DarkGrid.svg" />
-    <Content Include="Cyberwave2000-Regular.otf" />
+    <Content Include="Cyberwave2000-Regular.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
