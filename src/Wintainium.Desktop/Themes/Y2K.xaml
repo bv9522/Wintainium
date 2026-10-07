@@ -69,6 +69,29 @@
             <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonPressedForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonPointerOverForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonDisabledForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextBoxForegroundHeaderThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForegroundDisabled" Color="#765CFF" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#D7E0E5" Offset="0" /><GradientStop Color="#7D8E98" Offset="0.45" /><GradientStop Color="#B8C5CC" Offset="1" />
             </LinearGradientBrush>
@@ -121,6 +144,29 @@
             <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonPressedForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonPointerOverForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonDisabledForegroundThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextBoxForegroundHeaderThemeBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForeground" Color="#765CFF" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForegroundDisabled" Color="#765CFF" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#C7D4DC" Offset="0" /><GradientStop Color="#718493" Offset="0.38" /><GradientStop Color="#405363" Offset="0.6" /><GradientStop Color="#AFC0CB" Offset="1" />
             </LinearGradientBrush>
