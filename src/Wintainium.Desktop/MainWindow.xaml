@@ -181,7 +181,7 @@
                            Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Applications you add to Wintainium will appear here."
-                           Style="{StaticResource BodyTextBlockStyle}"
+                           Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
                            TextAlignment="Center"
                            Opacity="0.72"
                            TextWrapping="Wrap" />
