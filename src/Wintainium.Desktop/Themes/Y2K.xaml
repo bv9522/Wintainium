@@ -69,17 +69,6 @@
             <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseDisabledBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltLowBrush" Color="#765CFF" />
 
             <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
             <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#765CFF" />
@@ -164,17 +153,6 @@
             <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
             <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundBaseDisabledBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumHighBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltMediumLowBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="SystemControlForegroundAltLowBrush" Color="#765CFF" />
 
 
             <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
