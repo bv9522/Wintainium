@@ -78,7 +78,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#C83D4D" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#607887" />
-            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Geltek</FontFamily>
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Kytoon One</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
@@ -156,7 +156,6 @@
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="Consolas" />
     </Style>
     <Style TargetType="ContentDialog">
         <Setter Property="Background" Value="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
