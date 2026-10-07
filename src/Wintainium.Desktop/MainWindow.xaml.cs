@@ -43,7 +43,7 @@ public sealed partial class MainWindow : Window
 
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
-        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             AppTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
