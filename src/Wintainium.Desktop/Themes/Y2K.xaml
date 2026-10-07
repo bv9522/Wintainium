@@ -88,6 +88,11 @@
                     <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkGrid.svg" />
                 </ImageBrush.ImageSource>
             </ImageBrush>
+            <ImageBrush x:Key="ContentDialogBackground" Stretch="UniformToFill">
+                <ImageBrush.ImageSource>
+                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkGrid.svg" />
+                </ImageBrush.ImageSource>
+            </ImageBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A3044" Offset="0" /><GradientStop Color="#0C1E2E" Offset="0.5" /><GradientStop Color="#1B1235" Offset="1" />
             </LinearGradientBrush>
