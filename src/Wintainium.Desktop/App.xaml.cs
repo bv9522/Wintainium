@@ -58,6 +58,15 @@ public partial class App : Application
         ApplyThemeToWindow(window);
         ApplyVisualStyleToWindow(window);
         RefreshThemeResources(window);
+
+        void ApplyVisualStyleAfterLoaded(object sender, RoutedEventArgs args)
+        {
+            window.Content.Loaded -= ApplyVisualStyleAfterLoaded;
+            ApplyVisualStyleToWindow(window);
+            RefreshThemeResources(window);
+        }
+
+        window.Content.Loaded += ApplyVisualStyleAfterLoaded;
     }
 
     internal static void ApplyVisualStylePreference()
