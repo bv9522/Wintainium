@@ -4,7 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        TextBlock.FontFamily="{ThemeResource WintainiumY2KDisplayFontFamily}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -25,10 +27,10 @@
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
                     Text="My Software"
-                    Style="{StaticResource TitleTextBlockStyle}" />
+                    Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
                 <TextBlock
                         Text="Software tracked by Wintainium"
-                    Style="{StaticResource BodyTextBlockStyle}"
+                    Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
                     Opacity="0.72" />
             </StackPanel>
 
@@ -177,7 +179,7 @@
                 Spacing="10"
                 MaxWidth="520">
                 <TextBlock Text="Your software collection"
-                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Applications you add to Wintainium will appear here."
                            Style="{StaticResource BodyTextBlockStyle}"
