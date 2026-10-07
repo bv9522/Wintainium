@@ -152,6 +152,18 @@
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
+    <Style x:Key="WintainiumY2KTitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="WintainiumY2KBodyTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="WintainiumY2KSubtitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+    </Style>
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
