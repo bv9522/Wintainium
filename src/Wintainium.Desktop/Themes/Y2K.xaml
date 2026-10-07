@@ -15,9 +15,10 @@
                 <GradientStop Color="#7F909A" Offset="1" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#C5D0D7" Offset="0" />
-                <GradientStop Color="#A5B3BC" Offset="0.5" />
-                <GradientStop Color="#8798A3" Offset="1" />
+                <GradientStop Color="#D9E2E7" Offset="0" />
+                <GradientStop Color="#B5C3CB" Offset="0.34" />
+                <GradientStop Color="#94A5AF" Offset="0.7" />
+                <GradientStop Color="#738691" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#607887" />
             <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#D8E4ED" />
@@ -45,14 +46,16 @@
             <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#005889" />
             <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#004B76" />
             <LinearGradientBrush x:Key="ControlFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#B9C6CE" Offset="0" /><GradientStop Color="#A5B3BC" Offset="1" />
+                <GradientStop Color="#D6E0E5" Offset="0" />
+                <GradientStop Color="#B7C5CD" Offset="0.45" />
+                <GradientStop Color="#98AAB4" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#DFE8EF" />
             <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#8097A6" />
             <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#C0CED8" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#087A42" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#0A9F55" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#1B7F50" />
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#102235" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#36566B" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#4B6B7E" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#D7E0E5" Offset="0" /><GradientStop Color="#7D8E98" Offset="0.45" /><GradientStop Color="#B8C5CC" Offset="1" />
             </LinearGradientBrush>
@@ -72,16 +75,18 @@
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-            <LinearGradientBrush x:Key="ApplicationPageBackgroundThemeBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#111D2B" Offset="0" /><GradientStop Color="#09131F" Offset="0.35" /><GradientStop Color="#07111C" Offset="0.62" /><GradientStop Color="#160F2D" Offset="1" />
-            </LinearGradientBrush>
+            <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" Stretch="UniformToFill">
+                <ImageBrush.ImageSource>
+                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkGrid.svg" />
+                </ImageBrush.ImageSource>
+            </ImageBrush>
             <LinearGradientBrush x:Key="WintainiumY2KPageGlowBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#1A3044" Offset="0" /><GradientStop Color="#0C1E2E" Offset="0.5" /><GradientStop Color="#1B1235" Offset="1" />
             </LinearGradientBrush>
             <LinearGradientBrush x:Key="CardBackgroundFillColorDefaultBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#1C3042" Offset="0" /><GradientStop Color="#132433" Offset="0.4" /><GradientStop Color="#0D1926" Offset="1" />
             </LinearGradientBrush>
-            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#3B6F93" />
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#4A7695" />
             <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#183248" />
             <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#009DFF" />
             <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#103A5D" />
@@ -90,9 +95,9 @@
                 <GradientStop Color="#1A2D3F" Offset="0" /><GradientStop Color="#112130" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#1A3043" />
-            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#3B6F93" />
+            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#4A7695" />
             <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#294D67" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#F1F7FC" />
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#EAF5FC" />
             <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#B7D1E4" />
             <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#7FA2BA" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
@@ -128,6 +133,18 @@
     </Style>
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style TargetType="ComboBox">
+        <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontFamily" Value="Consolas" />
+    </Style>
+    <Style TargetType="ContentDialog">
+        <Setter Property="Background" Value="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
     <Style TargetType="Button">
