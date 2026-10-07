@@ -14,8 +14,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="4">
-                        <TextBlock x:Name="ApplicationNameText" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock Text="Application Details" FontSize="20" FontWeight="SemiBold" Opacity="0.72" />
+                        <TextBlock x:Name="ApplicationNameText" Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="Application Details" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" FontSize="20" FontWeight="SemiBold" Opacity="0.72" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="0,0,20,0" Orientation="Horizontal" Spacing="8">
                         <Button x:Name="InstallButton" Content="Install" Click="InstallButton_Click" Visibility="Collapsed" />
