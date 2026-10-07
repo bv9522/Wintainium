@@ -17,6 +17,22 @@
             <CornerRadius x:Key="WintainiumY2KCardCornerRadius">12</CornerRadius>
             <CornerRadius x:Key="WintainiumY2KControlCornerRadius">8</CornerRadius>
             <SolidColorBrush x:Key="WintainiumY2KGridLineBrush" Color="#808080" />
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000</FontFamily>
+
+            <!--
+                These typography styles are construction-time fallbacks for windows
+                created before the selected visual-style dictionary is attached.
+                The Y2K theme supplies the same keys with its full visual treatment.
+            -->
+            <Style x:Key="WintainiumY2KTitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource WintainiumY2KDisplayFontFamily}" />
+            </Style>
+            <Style x:Key="WintainiumY2KBodyTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource WintainiumY2KDisplayFontFamily}" />
+            </Style>
+            <Style x:Key="WintainiumY2KSubtitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource WintainiumY2KDisplayFontFamily}" />
+            </Style>
 
             <Style x:Key="WintainiumY2KButtonStyle" TargetType="Button">
                 <Setter Property="Padding" Value="14,8" />
