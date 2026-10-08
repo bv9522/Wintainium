@@ -218,24 +218,26 @@ public partial class App : Application
         };
 
         titleText.Text = title;
-        titleText.FontFamily = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
-        titleText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        titleText.FontFamily = GetY2KDisplayFont();
+        titleText.Foreground = GetY2KTextBrush();
         titleBar.Visibility = Visibility.Visible;
         window.ExtendsContentIntoTitleBar = true;
         window.SetTitleBar(titleBar);
 
         var nativeTitleBar = window.AppWindow.TitleBar;
-        var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
-        var violetHover = ColorHelper.FromArgb(48, 0x76, 0x5C, 0xFF);
-        var violetPressed = ColorHelper.FromArgb(80, 0x76, 0x5C, 0xFF);
+        var textColor = Settings.Current.Theme == WintainiumThemePreference.Dark
+            ? ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A)
+            : ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
+        var textHover = ColorHelper.FromArgb(48, textColor.R, textColor.G, textColor.B);
+        var textPressed = ColorHelper.FromArgb(80, textColor.R, textColor.G, textColor.B);
         nativeTitleBar.ButtonBackgroundColor = Colors.Transparent;
-        nativeTitleBar.ButtonForegroundColor = violet;
-        nativeTitleBar.ButtonHoverBackgroundColor = violetHover;
-        nativeTitleBar.ButtonHoverForegroundColor = violet;
-        nativeTitleBar.ButtonPressedBackgroundColor = violetPressed;
-        nativeTitleBar.ButtonPressedForegroundColor = violet;
+        nativeTitleBar.ButtonForegroundColor = textColor;
+        nativeTitleBar.ButtonHoverBackgroundColor = textHover;
+        nativeTitleBar.ButtonHoverForegroundColor = textColor;
+        nativeTitleBar.ButtonPressedBackgroundColor = textPressed;
+        nativeTitleBar.ButtonPressedForegroundColor = textColor;
         nativeTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-        nativeTitleBar.ButtonInactiveForegroundColor = violet;
+        nativeTitleBar.ButtonInactiveForegroundColor = textColor;
     }
 
     internal static void ApplyThemePreference()
@@ -322,22 +324,22 @@ public partial class App : Application
             dialog.CloseButtonStyle = y2kButtonStyle;
         }
 
-        var violet = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
-        var cyberwave = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
-        ApplyY2KContentDialogTypography(dialog, violet, cyberwave, dialog.CloseButtonStyle);
+        var textBrush = GetY2KTextBrush();
+        var displayFont = GetY2KDisplayFont();
+        ApplyY2KContentDialogTypography(dialog, textBrush, displayFont, dialog.CloseButtonStyle);
     }
 
     private static void ApplyY2KContentDialogTypography(
         FrameworkElement element,
-        Brush violet,
-        FontFamily cyberwave,
+        Brush textBrush,
+        FontFamily displayFont,
         Style? buttonStyle)
     {
         switch (element)
         {
             case TextBlock textBlock:
-                textBlock.Foreground = violet;
-                textBlock.FontFamily = cyberwave;
+                textBlock.Foreground = textBrush;
+                textBlock.FontFamily = displayFont;
                 break;
             case Button button:
                 if (buttonStyle is not null)
@@ -345,12 +347,12 @@ public partial class App : Application
                     button.Style = buttonStyle;
                 }
 
-                button.Foreground = violet;
-                button.FontFamily = cyberwave;
+                button.Foreground = textBrush;
+                button.FontFamily = displayFont;
                 break;
             case Control control:
-                control.Foreground = violet;
-                control.FontFamily = cyberwave;
+                control.Foreground = textBrush;
+                control.FontFamily = displayFont;
                 break;
         }
 
@@ -398,22 +400,20 @@ public partial class App : Application
             return;
         }
 
-        if (Application.Current.Resources.TryGetValue("WintainiumY2KTextBrush", out var resource)
-            && resource is Brush brush)
-        {
-            ApplyY2KTextColor(root, brush);
-        }
+        ApplyY2KTextColor(root, GetY2KTextBrush(), GetY2KDisplayFont());
     }
 
-    private static void ApplyY2KTextColor(FrameworkElement element, Brush brush)
+    private static void ApplyY2KTextColor(FrameworkElement element, Brush brush, FontFamily font)
     {
         switch (element)
         {
             case TextBlock textBlock:
                 textBlock.Foreground = brush;
+                textBlock.FontFamily = font;
                 break;
             case Control control:
                 control.Foreground = brush;
+                control.FontFamily = font;
                 break;
         }
 
@@ -422,9 +422,32 @@ public partial class App : Application
         {
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyY2KTextColor(child, brush);
+                ApplyY2KTextColor(child, brush, font);
             }
         }
+    }
+
+    private static Brush GetY2KTextBrush()
+    {
+        if (Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            return new SolidColorBrush(ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A));
+        }
+
+        if (Application.Current.Resources.TryGetValue("WintainiumY2KTextBrush", out var resource)
+            && resource is Brush brush)
+        {
+            return brush;
+        }
+
+        return new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+    }
+
+    private static FontFamily GetY2KDisplayFont()
+    {
+        return Settings.Current.Theme == WintainiumThemePreference.Dark
+            ? new FontFamily("Consolas")
+            : new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
     }
 
     internal static void ApplyThemeToWindow(Window window)
