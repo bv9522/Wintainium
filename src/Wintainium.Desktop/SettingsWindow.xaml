@@ -5,28 +5,6 @@
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Grid.Resources>
-            <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
-                <Setter Property="Foreground" Value="#765CFF" />
-            </Style>
-            <Style TargetType="ToggleSwitch">
-                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
-                <Setter Property="Foreground" Value="#765CFF" />
-            </Style>
-            <Style TargetType="ComboBox">
-                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
-                <Setter Property="Foreground" Value="#765CFF" />
-            </Style>
-            <Style TargetType="ListView">
-                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
-                <Setter Property="Foreground" Value="#765CFF" />
-            </Style>
-            <Style TargetType="ListViewItem">
-                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
-                <Setter Property="Foreground" Value="#765CFF" />
-            </Style>
-        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
             <RowDefinition Height="*" />
@@ -65,19 +43,19 @@
 
                 <ListView x:Name="CategoryList" SelectedIndex="0">
                     <ListViewItem>
-                        <TextBlock Text="General" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                        <TextBlock Text="General" />
                     </ListViewItem>
                     <ListViewItem>
-                        <TextBlock Text="Appearance" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                        <TextBlock Text="Appearance" />
                     </ListViewItem>
                     <ListViewItem>
-                        <TextBlock Text="Updates" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                        <TextBlock Text="Updates" />
                     </ListViewItem>
                     <ListViewItem>
-                        <TextBlock Text="Sources" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                        <TextBlock Text="Sources" />
                     </ListViewItem>
                     <ListViewItem>
-                        <TextBlock Text="Advanced" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                        <TextBlock Text="Advanced" />
                     </ListViewItem>
                 </ListView>
 
