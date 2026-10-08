@@ -338,8 +338,7 @@ public sealed partial class SettingsWindow : Window
     {
         var textBlock = new TextBlock
         {
-            Text = text,
-            FontFamily = App.GetY2KDisplayFont()
+            Text = text
         };
 
         ApplyY2KTypography(textBlock);
@@ -350,6 +349,15 @@ public sealed partial class SettingsWindow : Window
     {
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
+            textBlock.ClearValue(TextBlock.ForegroundProperty);
+            if (textBlock.FontFamily?.Source is string fontSource &&
+                (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
+                 fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
+                 fontSource.Contains("Cyberwave 2000", StringComparison.OrdinalIgnoreCase)))
+            {
+                textBlock.ClearValue(TextBlock.FontFamilyProperty);
+            }
+
             return;
         }
 
