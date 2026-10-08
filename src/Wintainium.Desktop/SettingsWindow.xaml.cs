@@ -56,7 +56,7 @@ public sealed partial class SettingsWindow : Window
         var panel = (StackPanel)scrollViewer.Content;
         panel.Children.Add(_categoryContent);
 
-        Loaded += (_, _) => QueueY2KSettingsTextColorPass();
+        ((FrameworkElement)Content).Loaded += (_, _) => QueueY2KSettingsTextColorPass();
 
         _categoryList.SelectionChanged += CategoryList_SelectionChanged;
         _categoryList.SelectedIndex = 0;
