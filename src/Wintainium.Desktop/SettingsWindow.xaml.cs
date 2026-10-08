@@ -101,6 +101,8 @@ public sealed partial class SettingsWindow : Window
                 AddPlaceholder("Advanced technical settings will be added only when their underlying application contracts exist.");
                 break;
         }
+
+        ApplyY2KSectionHeaderColors();
     }
 
     private void AddGeneralControls()
@@ -258,6 +260,22 @@ public sealed partial class SettingsWindow : Window
             ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
     }
 
+    private void ApplyY2KSectionHeaderColors()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        foreach (var child in _categoryContent.Children)
+        {
+            if (child is TextBlock header)
+            {
+                ApplyY2KTypography(header);
+            }
+        }
+    }
+
     private void AddSectionHeader(string text)
     {
         var header = new TextBlock
@@ -270,7 +288,6 @@ public sealed partial class SettingsWindow : Window
 
         ApplyY2KTypography(header);
         _categoryContent.Children.Add(header);
-        ApplyY2KTypography(header);
     }
 
     private void AddAppearanceControls()
