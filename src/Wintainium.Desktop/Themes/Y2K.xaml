@@ -185,9 +185,6 @@
             <LinearGradientBrush x:Key="WintainiumY2KTitleBarBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#203544" Offset="0" /><GradientStop Color="#152936" Offset="0.28" /><GradientStop Color="#0B1822" Offset="0.55" /><GradientStop Color="#182F3D" Offset="0.78" /><GradientStop Color="#071018" Offset="1" />
             </LinearGradientBrush>
-            <LinearGradientBrush x:Key="WintainiumY2KTitleBarBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#F4F7F9" Offset="0" /><GradientStop Color="#C7D2D9" Offset="0.22" /><GradientStop Color="#71828C" Offset="0.48" /><GradientStop Color="#D9E2E7" Offset="0.70" /><GradientStop Color="#8A9AA4" Offset="1" />
-            </LinearGradientBrush>
             <SolidColorBrush x:Key="WintainiumY2KChromeEdgeBrush" Color="#49677D" />
             <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#00B7FF" />
             <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#39FF9A" />
