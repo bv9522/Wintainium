@@ -850,19 +850,20 @@ public sealed partial class MainWindow : Window
                 Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF))
             },
             Content = content,
-            PrimaryButtonText = "Apply",
+            SecondaryButtonText = "Apply",
             CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = ContentDialogButton.Secondary
         };
         App.ApplyThemeToElement(dialog);
+
         if (dialog.Resources.TryGetValue("WintainiumY2KButtonStyle", out var buttonStyle)
             && buttonStyle is Style y2kButtonStyle)
         {
-            dialog.PrimaryButtonStyle = y2kButtonStyle;
+            dialog.SecondaryButtonStyle = y2kButtonStyle;
             dialog.CloseButtonStyle = y2kButtonStyle;
         }
 
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await dialog.ShowAsync() != ContentDialogResult.Secondary)
         {
             return;
         }
