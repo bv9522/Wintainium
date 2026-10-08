@@ -593,7 +593,7 @@ public sealed partial class MainWindow : Window
             Content = content,
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = ContentDialogButton.None
         };
         App.ApplyThemeToElement(dialog);
 
