@@ -222,6 +222,12 @@ public partial class App : Application
         titleText.Text = title;
         titleText.FontFamily = GetY2KDisplayFont();
         titleText.Foreground = GetY2KTextBrush();
+        if (WindowVisualStyleResources.TryGetValue(window.AppWindow.Id, out var resources)
+            && resources.ActiveTheme.TryGetValue("WintainiumY2KTitleBarBrush", out var titleBarBrush)
+            && titleBarBrush is Brush titleBarBackground)
+        {
+            titleBar.Background = titleBarBackground;
+        }
         titleBar.Visibility = Visibility.Visible;
         window.ExtendsContentIntoTitleBar = true;
         window.SetTitleBar(titleBar);
@@ -247,6 +253,8 @@ public partial class App : Application
         foreach (var window in ActiveWindows.Values.ToArray())
         {
             ApplyThemeToWindow(window);
+            ApplyVisualStyleToWindow(window);
+            RefreshThemeResources(window);
         }
     }
 
@@ -395,7 +403,7 @@ public partial class App : Application
         }
     }
 
-    private static void ApplyY2KTextColor(FrameworkElement root)
+    internal static void ApplyY2KTextColor(FrameworkElement root)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
@@ -429,7 +437,7 @@ public partial class App : Application
         }
     }
 
-    private static Brush GetY2KTextBrush()
+    internal static Brush GetY2KTextBrush()
     {
         if (Settings.Current.Theme == WintainiumThemePreference.Dark)
         {
@@ -445,7 +453,7 @@ public partial class App : Application
         return new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
     }
 
-    private static FontFamily GetY2KDisplayFont()
+    internal static FontFamily GetY2KDisplayFont()
     {
         return Settings.Current.Theme == WintainiumThemePreference.Dark
             ? new FontFamily("Consolas")
