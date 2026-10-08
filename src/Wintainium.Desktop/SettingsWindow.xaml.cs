@@ -228,9 +228,15 @@ public sealed partial class SettingsWindow : Window
 
         var frequency = new ComboBox
         {
-            Header = "Check frequency",
+            Header = CreateY2KTextBlock("Check frequency"),
             Width = 360,
-            ItemsSource = new[] { "Every day", "Every week", "Every two weeks", "Every month" },
+            ItemsSource = new[]
+            {
+                CreateY2KTextBlock("Every day"),
+                CreateY2KTextBlock("Every week"),
+                CreateY2KTextBlock("Every two weeks"),
+                CreateY2KTextBlock("Every month")
+            },
             SelectedIndex = (int)_settings.Current.UpdateCheckFrequency,
             IsEnabled = _settings.Current.AutomaticallyCheckForUpdates
         };
@@ -278,7 +284,7 @@ public sealed partial class SettingsWindow : Window
     {
         var toggle = new ToggleSwitch
         {
-            Header = header,
+            Header = CreateY2KTextBlock(header),
             IsOn = isOn,
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
@@ -327,6 +333,20 @@ public sealed partial class SettingsWindow : Window
                 return;
             }
         }
+    }
+
+
+    private static TextBlock CreateY2KTextBlock(string text)
+    {
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
+                "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000")
+        };
+
+        ApplyY2KTypography(textBlock);
+        return textBlock;
     }
 
     private static void ApplyY2KTypography(TextBlock textBlock)
@@ -414,9 +434,14 @@ public sealed partial class SettingsWindow : Window
 
         var visualStyle = new ComboBox
         {
-            Header = "Visual style",
+            Header = CreateY2KTextBlock("Visual style"),
             Width = 360,
-            ItemsSource = new[] { "Windows 11", "Y2K", "Frutiger Aero" },
+            ItemsSource = new[]
+            {
+                CreateY2KTextBlock("Windows 11"),
+                CreateY2KTextBlock("Y2K"),
+                CreateY2KTextBlock("Frutiger Aero")
+            },
             SelectedIndex = (int)_settings.Current.VisualStyle
         };
 
