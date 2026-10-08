@@ -98,12 +98,6 @@ public partial class App : Application
             _ => GetSystemElementTheme()
         };
 
-        // ThemeResource is explicitly re-evaluated by WinUI when a FrameworkElement
-        // undergoes a real theme transition. Re-applying the same theme is not
-        // sufficient, so briefly move to the opposite theme and immediately return
-        // to the user's effective theme. The final visual state is unchanged while
-        // the existing visual tree is forced to resolve the newly selected style
-        // resources.
         var alternateTheme = effectiveTheme == ElementTheme.Light
             ? ElementTheme.Dark
             : ElementTheme.Light;
@@ -112,9 +106,6 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
         {
-            // The Y2K dictionary is attached at runtime. Defer the return to the
-            // effective theme so WinUI completes a real theme-resource pass after
-            // the new dictionary is part of the live resource tree.
             content.DispatcherQueue.TryEnqueue(() => content.RequestedTheme = effectiveTheme);
         }
         else
@@ -143,6 +134,11 @@ public partial class App : Application
         {
             ClearY2KTextColor(content);
 
+            if (window is MainWindow)
+            {
+                content.ClearValue(Panel.BackgroundProperty);
+            }
+
             ApplyWindowChromeForCurrentVisualStyle(window);
             return;
         }
@@ -154,10 +150,6 @@ public partial class App : Application
 
         content.Resources.MergedDictionaries.Add(visualStyle);
 
-        // WinUI's built-in ThemeResource lookup does not reliably re-resolve
-        // ThemeDictionaries that are introduced by a runtime merge. Flatten the
-        // selected Y2K theme dictionary into a normal runtime dictionary so the
-        // Y2K resources become an explicit, highest-precedence window resource.
         var themeKey = Settings.Current.Theme switch
         {
             WintainiumThemePreference.Dark => "Dark",
@@ -176,8 +168,15 @@ public partial class App : Application
 
         content.Resources.MergedDictionaries.Add(activeTheme);
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
-        ApplyY2KTextColor(content);
 
+        if (window is MainWindow
+            && activeTheme.TryGetValue("ApplicationPageBackgroundThemeBrush", out var background)
+            && background is Brush backgroundBrush)
+        {
+            content.Background = backgroundBrush;
+        }
+
+        ApplyY2KTextColor(content);
         ApplyWindowChromeForCurrentVisualStyle(window);
     }
 
@@ -265,9 +264,6 @@ public partial class App : Application
             return;
         }
 
-        // ContentDialogs and other transient elements are not tracked as windows,
-        // so they do not receive the window-level Y2K resource dictionaries.
-        // Give them the same resource treatment locally.
         var visualStyle = new ResourceDictionary
         {
             Source = new Uri("ms-appx:///Themes/Y2K.xaml")
