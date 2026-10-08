@@ -7,12 +7,37 @@
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="32" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Padding="28,24,28,16">
+        <Grid
+            x:Name="Y2KTitleBar"
+            Grid.Row="0"
+            Visibility="Collapsed"
+            Height="32"
+            Padding="16,0,0,0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F4F7F9" Offset="0" />
+                    <GradientStop Color="#C7D2D9" Offset="0.22" />
+                    <GradientStop Color="#71828C" Offset="0.48" />
+                    <GradientStop Color="#D9E2E7" Offset="0.70" />
+                    <GradientStop Color="#8A9AA4" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <TextBlock
+                x:Name="Y2KTitleBarText"
+                Text="Wintainium"
+                VerticalAlignment="Center"
+                FontSize="16"
+                FontWeight="SemiBold"
+                Foreground="#765CFF" />
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="28,24,28,16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -65,7 +90,7 @@
                 Click="SettingsButton_Click" />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="28,0,28,16">
+        <Grid Grid.Row="2" Margin="28,0,28,16">
             <GridView
                 x:Name="ApplicationGridView"
                 Visibility="Collapsed"
@@ -194,7 +219,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2" Padding="28,12,28,24">
+        <Grid Grid.Row="3" Padding="28,12,28,24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
