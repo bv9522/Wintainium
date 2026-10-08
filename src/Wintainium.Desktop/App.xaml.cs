@@ -1,6 +1,7 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI.ViewManagement;
 using Wintainium.Desktop.Settings;
