@@ -135,12 +135,6 @@ public partial class App : Application
         {
             ClearY2KTextColor(content);
 
-            if (window is MainWindow
-                && content is Panel clearPanel)
-            {
-                clearPanel.ClearValue(Panel.BackgroundProperty);
-            }
-
             ApplyWindowChromeForCurrentVisualStyle(window);
             return;
         }
@@ -170,14 +164,6 @@ public partial class App : Application
 
         content.Resources.MergedDictionaries.Add(activeTheme);
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
-
-        if (window is MainWindow
-            && content is Panel backgroundPanel
-            && activeTheme.TryGetValue("ApplicationPageBackgroundThemeBrush", out var background)
-            && background is Brush backgroundBrush)
-        {
-            backgroundPanel.Background = backgroundBrush;
-        }
 
         ApplyY2KTextColor(content);
         ApplyWindowChromeForCurrentVisualStyle(window);
