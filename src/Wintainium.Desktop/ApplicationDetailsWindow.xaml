@@ -36,7 +36,7 @@
                             </Grid>
                         </Border>
                         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="8">
-                            <TextBlock x:Name="ApplicationIconStatusText" Text="No Icon" Opacity="0.68" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                            <TextBlock x:Name="ApplicationIconStatusText" Text="No Icon" Opacity="0.68" TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button Content="Choose Image…" Click="ChooseIconButton_Click" />
                                 <Button Content="Use Icon URL…" Click="UseIconUrlButton_Click" />
@@ -49,20 +49,20 @@
                 <Border Padding="18">
                     <StackPanel Spacing="12">
                         <TextBlock Text="Application Information" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock Text="Identity and current application state" Opacity="0.65"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Identity and current application state" Opacity="0.65" />
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Application ID" Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock x:Name="ApplicationIdText" Grid.Row="0" Grid.Column="1" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock Grid.Row="1" Text="Installed version" Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock x:Name="InstalledVersionText" Grid.Row="1" Grid.Column="1"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock Grid.Row="2" Text="Installation state" Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock x:Name="InstallationStateText" Grid.Row="2" Grid.Column="1"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock Grid.Row="3" Text="Update status" Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock x:Name="UpdateStatusText" Grid.Row="3" Grid.Column="1"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock Grid.Row="4" Text="Source provider" Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                            <TextBlock x:Name="SourceText" Grid.Row="4" Grid.Column="1" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                            <TextBlock Grid.Row="0" Text="Application ID" Opacity="0.60" />
+                            <TextBlock x:Name="ApplicationIdText" Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="1" Text="Installed version" Opacity="0.60" />
+                            <TextBlock x:Name="InstalledVersionText" Grid.Row="1" Grid.Column="1" />
+                            <TextBlock Grid.Row="2" Text="Installation state" Opacity="0.60" />
+                            <TextBlock x:Name="InstallationStateText" Grid.Row="2" Grid.Column="1" />
+                            <TextBlock Grid.Row="3" Text="Update status" Opacity="0.60" />
+                            <TextBlock x:Name="UpdateStatusText" Grid.Row="3" Grid.Column="1" />
+                            <TextBlock Grid.Row="4" Text="Source provider" Opacity="0.60" />
+                            <TextBlock x:Name="SourceText" Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" />
                         </Grid>
                         <HyperlinkButton x:Name="HomepageButton" Content="Open source homepage" HorizontalAlignment="Left" />
                     </StackPanel>
@@ -72,29 +72,29 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Update Policy" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
                         <CheckBox x:Name="DoNotUpdateCheckBox" Content="Do Not Update" IsEnabled="False" />
-                        <TextBlock Text="Policy persistence and update-policy enforcement are reserved for the later application-policy/configuration boundary." TextWrapping="Wrap" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Policy persistence and update-policy enforcement are reserved for the later application-policy/configuration boundary." TextWrapping="Wrap" Opacity="0.72" />
                     </StackPanel>
                 </Border>
 
                 <Border Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Operation Status" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock Text="Core operation results and diagnostics" Opacity="0.65"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock x:Name="OperationStateText" Text="Not started."  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock x:Name="OperationIdText" Opacity="0.65" Visibility="Collapsed" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock x:Name="UpdateResultStatusText" Text="No install or update operation has been run." TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock x:Name="InstalledStateRefreshStatusText" Text="Installed state has not been refreshed." TextWrapping="Wrap" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock x:Name="LifecycleHeaderText" Text="Lifecycle stages" FontWeight="SemiBold"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Core operation results and diagnostics" Opacity="0.65" />
+                        <TextBlock x:Name="OperationStateText" Text="Not started." />
+                        <TextBlock x:Name="OperationIdText" Opacity="0.65" Visibility="Collapsed" TextWrapping="Wrap" />
+                        <TextBlock x:Name="UpdateResultStatusText" Text="No install or update operation has been run." TextWrapping="Wrap" />
+                        <TextBlock x:Name="InstalledStateRefreshStatusText" Text="Installed state has not been refreshed." TextWrapping="Wrap" Opacity="0.72" />
+                        <TextBlock x:Name="LifecycleHeaderText" Text="Lifecycle stages" FontWeight="SemiBold" />
                         <ItemsControl x:Name="StageItemsControl">
-                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" /></DataTemplate></ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock x:Name="ErrorsHeaderText" Text="Errors" FontWeight="SemiBold" Visibility="Collapsed"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock x:Name="ErrorsHeaderText" Text="Errors" FontWeight="SemiBold" Visibility="Collapsed" />
                         <ItemsControl x:Name="ErrorItemsControl" Loaded="DiagnosticItemsControl_Loaded">
-                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" /></DataTemplate></ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock x:Name="WarningsHeaderText" Text="Warnings" FontWeight="SemiBold" Visibility="Collapsed"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock x:Name="WarningsHeaderText" Text="Warnings" FontWeight="SemiBold" Visibility="Collapsed" />
                         <ItemsControl x:Name="WarningItemsControl" Loaded="DiagnosticItemsControl_Loaded">
-                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" /></DataTemplate></ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </Border>
@@ -102,9 +102,9 @@
                 <Border x:Name="TroubleshootingDiagnosticsCard" Padding="18" Visibility="Collapsed">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Troubleshooting" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock Text="Detailed execution diagnostics are shown when useful for troubleshooting." Opacity="0.65" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Detailed execution diagnostics are shown when useful for troubleshooting." Opacity="0.65" TextWrapping="Wrap" />
                         <ItemsControl x:Name="TroubleshootingDiagnosticsItemsControl" Loaded="DiagnosticItemsControl_Loaded">
-                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" /></DataTemplate></ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </Border>
@@ -116,18 +116,18 @@
                 <Border Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Release Information" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock Text="Releases reported by the application's declared source" Opacity="0.65" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Releases reported by the application's declared source" Opacity="0.65" TextWrapping="Wrap" />
                         <Button x:Name="CancelOperationButton" Content="Cancel" IsEnabled="False" Click="CancelOperationButton_Click" HorizontalAlignment="Left" />
                         <ProgressRing x:Name="OperationProgressRing" IsActive="False" Width="20" Height="20" />
-                        <TextBlock x:Name="ReleaseStatusText" Text="No release check has been performed."  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock x:Name="ReleaseStatusText" Text="No release check has been performed." />
                         <ListView x:Name="ReleaseListView" MaxHeight="240" SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Padding="0,6" Spacing="3">
-                                        <TextBlock Text="{Binding Version}" FontWeight="SemiBold"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding Channel}" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding PublishedAt, TargetNullValue=Publication date unavailable}" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding ArtifactSummary}" Opacity="0.72" TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="{Binding Version}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Channel}" Opacity="0.72" />
+                                        <TextBlock Text="{Binding PublishedAt, TargetNullValue=Publication date unavailable}" Opacity="0.72" />
+                                        <TextBlock Text="{Binding ArtifactSummary}" Opacity="0.72" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -138,17 +138,17 @@
                 <Border Padding="18">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Notes" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                        <TextBlock Text="Optional notes kept for this application session" Opacity="0.65"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock Text="Optional notes kept for this application session" Opacity="0.65" />
                         <TextBox x:Name="NotesTextBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" PlaceholderText="Add notes about this software." />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <Button Content="Don't Save" Click="DontSaveButton_Click" />
                             <Button Content="Save" Style="{StaticResource AccentButtonStyle}" Click="SaveNotesButton_Click" />
                         </StackPanel>
-                        <TextBlock x:Name="NotesStatusText" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                        <TextBlock x:Name="NotesStatusText" Opacity="0.72" />
                     </StackPanel>
                 </Border>
 
-                <TextBlock x:Name="DetailsErrorText" TextWrapping="Wrap" Visibility="Collapsed"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                <TextBlock x:Name="DetailsErrorText" TextWrapping="Wrap" Visibility="Collapsed" />
             </StackPanel>
         </ScrollViewer>
     </Grid>
