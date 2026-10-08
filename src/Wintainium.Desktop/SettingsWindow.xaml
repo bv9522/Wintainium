@@ -4,8 +4,48 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Grid
-        Padding="28"
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                <Setter Property="Foreground" Value="#765CFF" />
+            </Style>
+            <Style TargetType="ToggleSwitch">
+                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                <Setter Property="Foreground" Value="#765CFF" />
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                <Setter Property="Foreground" Value="#765CFF" />
+            </Style>
+            <Style TargetType="ListView">
+                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                <Setter Property="Foreground" Value="#765CFF" />
+            </Style>
+            <Style TargetType="ListViewItem">
+                <Setter Property="FontFamily" Value="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                <Setter Property="Foreground" Value="#765CFF" />
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="Y2KTitleBar" Grid.Row="0" Visibility="Collapsed" Height="32" Padding="16,0,0,0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F4F7F9" Offset="0" />
+                    <GradientStop Color="#C7D2D9" Offset="0.22" />
+                    <GradientStop Color="#71828C" Offset="0.48" />
+                    <GradientStop Color="#D9E2E7" Offset="0.70" />
+                    <GradientStop Color="#8A9AA4" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <TextBlock x:Name="Y2KTitleBarText" Text="Wintainium Settings" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Foreground="#765CFF" />
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -50,6 +90,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
+        </Grid>
         </Grid>
     </Grid>
 </Window>
