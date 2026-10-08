@@ -397,9 +397,9 @@ public partial class App : Application
                 break;
             case Control control:
                 control.ClearValue(Control.ForegroundProperty);
-                if (control.FontFamily?.Source is string fontSource &&
-                    (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
-                     fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
+                if (control.FontFamily?.Source is string controlFontSource &&
+                    (controlFontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
                 {
                     control.ClearValue(Control.FontFamilyProperty);
                 }
@@ -488,7 +488,7 @@ public partial class App : Application
         var theme = preference switch
         {
             WintainiumThemePreference.Light => ElementTheme.Light,
-            WintainiumThemePreference.Dark => ElementTheme.Dark,
+            WintaniumThemePreference.Dark => ElementTheme.Dark,
             _ => GetSystemElementTheme()
         };
 
