@@ -242,6 +242,16 @@ public partial class App : Application
         }
 
         ApplyY2KTextColor(element);
+
+        if (element is ContentDialog &&
+            element.Resources.TryGetValue("WintainiumY2KButtonStyle", out var buttonStyle) &&
+            buttonStyle is Style y2kButtonStyle)
+        {
+            var dialog = (ContentDialog)element;
+            dialog.PrimaryButtonStyle = y2kButtonStyle;
+            dialog.SecondaryButtonStyle = y2kButtonStyle;
+            dialog.CloseButtonStyle = y2kButtonStyle;
+        }
     }
 
     private static void ClearY2KTextColor(FrameworkElement root)
