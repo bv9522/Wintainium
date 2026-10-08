@@ -185,7 +185,6 @@ public partial class App : Application
         {
             mainWindow.ApplyWindowChromeForCurrentVisualStyle();
         }
-
     }
 
     internal static void ApplyThemePreference()
