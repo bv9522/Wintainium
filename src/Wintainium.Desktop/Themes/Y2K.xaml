@@ -200,6 +200,7 @@
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
+    <SolidColorBrush x:Key="WintainiumY2KTextBrush" Color="#765CFF" />
     <Style TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -210,74 +211,74 @@
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
         <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KControlCornerRadius}" />
     </Style>
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KTitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KBodyTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KSubtitleTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="ContentDialog" BasedOn="{StaticResource DefaultContentDialogStyle}">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ContentDialogBackground}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="Button">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="CheckBox">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="ToggleSwitch">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="HyperlinkButton">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="ListView">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="GridView">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="ListViewItem">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     </Style>
     <Style TargetType="GridViewItem">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style TargetType="MenuFlyoutItem">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
     <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
@@ -287,12 +288,12 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{ThemeResource WintainiumY2KControlCornerRadius}" />
         <Setter Property="Padding" Value="14,8" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource WintainiumY2KButtonStyle}">
         <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource WintainiumY2KElectricBlueBrush}" />
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource WintainiumY2KTextBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KCardStyle" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
