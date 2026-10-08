@@ -56,6 +56,8 @@ public sealed partial class SettingsWindow : Window
         var panel = (StackPanel)scrollViewer.Content;
         panel.Children.Add(_categoryContent);
 
+        Loaded += (_, _) => QueueY2KSettingsTextColorPass();
+
         _categoryList.SelectionChanged += CategoryList_SelectionChanged;
         _categoryList.SelectedIndex = 0;
         UpdateCategoryContent(0);
@@ -103,6 +105,22 @@ public sealed partial class SettingsWindow : Window
         }
 
         ApplyY2KSettingsTextColor();
+        QueueY2KSettingsTextColorPass();
+    }
+
+    private void QueueY2KSettingsTextColorPass()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            ApplyY2KSettingsTextColor();
+
+            DispatcherQueue.TryEnqueue(ApplyY2KSettingsTextColor);
+        });
     }
 
     private void AddGeneralControls()
