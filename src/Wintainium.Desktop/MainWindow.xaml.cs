@@ -1,3 +1,4 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -39,9 +40,35 @@ public sealed partial class MainWindow : Window
 
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
-        // Temporarily leave native window chrome untouched while isolating startup.
-        // The custom Y2K title-bar surface remains in XAML, but SetTitleBar is not
-        // invoked until the startup path is proven stable.
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            Y2KTitleBar.Visibility = Visibility.Collapsed;
+            ExtendsContentIntoTitleBar = false;
+            return;
+        }
+
+        Y2KTitleBar.Visibility = Visibility.Visible;
+        Y2KTitleBarText.FontFamily = new FontFamily(
+            "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
+        Y2KTitleBarText.Foreground = new SolidColorBrush(
+            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(Y2KTitleBar);
+
+        var titleBar = AppWindow.TitleBar;
+        var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
+        var violetHover = ColorHelper.FromArgb(48, 0x76, 0x5C, 0xFF);
+        var violetPressed = ColorHelper.FromArgb(80, 0x76, 0x5C, 0xFF);
+
+        titleBar.ButtonBackgroundColor = Colors.Transparent;
+        titleBar.ButtonForegroundColor = violet;
+        titleBar.ButtonHoverBackgroundColor = violetHover;
+        titleBar.ButtonHoverForegroundColor = violet;
+        titleBar.ButtonPressedBackgroundColor = violetPressed;
+        titleBar.ButtonPressedForegroundColor = violet;
+        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+        titleBar.ButtonInactiveForegroundColor = violet;
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
