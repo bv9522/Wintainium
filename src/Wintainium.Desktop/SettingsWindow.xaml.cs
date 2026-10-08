@@ -44,18 +44,9 @@ public sealed partial class SettingsWindow : Window
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
 
-        (_categoryList, _categoryTitle, _categoryDescription) = FindControls();
-
-        _categoryContent = new StackPanel
-        {
-            Spacing = 16
-        };
+        (_categoryList, _categoryTitle, _categoryDescription, _categoryContent) = FindControls();
 
         ApplyY2KTypography(_categoryTitle);
-
-        var scrollViewer = (ScrollViewer)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
-        var panel = (StackPanel)scrollViewer.Content;
-        panel.Children.Add(_categoryContent);
 
         ((FrameworkElement)Content).Loaded += (_, _) => QueueY2KSettingsTextColorPass();
 
@@ -470,17 +461,22 @@ public sealed partial class SettingsWindow : Window
             });
     }
 
-    private (ListView, TextBlock, TextBlock) FindControls()
+    private (ListView, TextBlock, TextBlock, StackPanel) FindControls()
     {
-        var root = (Grid)Content;
-        var body = (Grid)root.Children[1];
-        var categoryList = (ListView)body.Children[0];
-        var scrollViewer = (ScrollViewer)((Border)body.Children[1]).Child;
-        var panel = (StackPanel)scrollViewer.Content;
+        if (Content is not FrameworkElement root)
+        {
+            throw new InvalidOperationException("Settings content was not initialized.");
+        }
 
-        return (
-            categoryList,
-            (TextBlock)panel.Children[0],
-            (TextBlock)panel.Children[1]);
+        var categoryList = root.FindName("CategoryList") as ListView
+            ?? throw new InvalidOperationException("Settings category list was not initialized.");
+        var categoryTitle = root.FindName("CategoryTitle") as TextBlock
+            ?? throw new InvalidOperationException("Settings category title was not initialized.");
+        var categoryDescription = root.FindName("CategoryDescription") as TextBlock
+            ?? throw new InvalidOperationException("Settings category description was not initialized.");
+        var categoryContent = root.FindName("CategoryContentPanel") as StackPanel
+            ?? throw new InvalidOperationException("Settings category content was not initialized.");
+
+        return (categoryList, categoryTitle, categoryDescription, categoryContent);
     }
 }
