@@ -142,11 +142,7 @@ public partial class App : Application
         {
             ClearY2KTextColor(content);
 
-            if (window is MainWindow mainWindow)
-            {
-                mainWindow.ApplyWindowChromeForCurrentVisualStyle();
-            }
-
+            ApplyWindowChromeForCurrentVisualStyle(window);
             return;
         }
 
@@ -181,10 +177,65 @@ public partial class App : Application
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
         ApplyY2KTextColor(content);
 
-        if (window is MainWindow mainWindowChrome)
+        ApplyWindowChromeForCurrentVisualStyle(window);
+    }
+
+    private static void ApplyWindowChromeForCurrentVisualStyle(Window window)
+    {
+        if (window.Content is not FrameworkElement content)
         {
-            mainWindowChrome.ApplyWindowChromeForCurrentVisualStyle();
+            return;
         }
+
+        if (window is MainWindow mainWindow)
+        {
+            mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+            return;
+        }
+
+        var titleBar = content.FindName("Y2KTitleBar") as Grid;
+        var titleText = content.FindName("Y2KTitleBarText") as TextBlock;
+        if (titleBar is null || titleText is null)
+        {
+            return;
+        }
+
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K ||
+            !AppWindowTitleBar.IsCustomizationSupported())
+        {
+            titleBar.Visibility = Visibility.Collapsed;
+            window.SetTitleBar(null);
+            window.ExtendsContentIntoTitleBar = false;
+            window.AppWindow.TitleBar.ResetToDefault();
+            return;
+        }
+
+        var title = window switch
+        {
+            SettingsWindow => "Wintainium Settings",
+            ApplicationDetailsWindow => window.Title,
+            _ => window.Title
+        };
+
+        titleText.Text = title;
+        titleText.FontFamily = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
+        titleText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        titleBar.Visibility = Visibility.Visible;
+        window.ExtendsContentIntoTitleBar = true;
+        window.SetTitleBar(titleBar);
+
+        var nativeTitleBar = window.AppWindow.TitleBar;
+        var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
+        var violetHover = ColorHelper.FromArgb(48, 0x76, 0x5C, 0xFF);
+        var violetPressed = ColorHelper.FromArgb(80, 0x76, 0x5C, 0xFF);
+        nativeTitleBar.ButtonBackgroundColor = Colors.Transparent;
+        nativeTitleBar.ButtonForegroundColor = violet;
+        nativeTitleBar.ButtonHoverBackgroundColor = violetHover;
+        nativeTitleBar.ButtonHoverForegroundColor = violet;
+        nativeTitleBar.ButtonPressedBackgroundColor = violetPressed;
+        nativeTitleBar.ButtonPressedForegroundColor = violet;
+        nativeTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+        nativeTitleBar.ButtonInactiveForegroundColor = violet;
     }
 
     internal static void ApplyThemePreference()
