@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Windows.UI.ViewManagement;
 using Wintainium.Desktop.Settings;
 
@@ -170,6 +171,7 @@ public partial class App : Application
 
         content.Resources.MergedDictionaries.Add(activeTheme);
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
+        ApplyY2KTextColor(content);
 
     }
 
@@ -224,6 +226,44 @@ public partial class App : Application
             }
 
             element.Resources.MergedDictionaries.Add(activeTheme);
+        }
+
+        ApplyY2KTextColor(element);
+    }
+
+    private static void ApplyY2KTextColor(FrameworkElement root)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        if (Application.Current.Resources.TryGetValue("WintainiumY2KTextBrush", out var resource)
+            && resource is Brush brush)
+        {
+            ApplyY2KTextColor(root, brush);
+        }
+    }
+
+    private static void ApplyY2KTextColor(FrameworkElement element, Brush brush)
+    {
+        switch (element)
+        {
+            case TextBlock textBlock:
+                textBlock.Foreground = brush;
+                break;
+            case Control control:
+                control.Foreground = brush;
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyY2KTextColor(child, brush);
+            }
         }
     }
 
