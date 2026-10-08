@@ -243,14 +243,63 @@ public partial class App : Application
 
         ApplyY2KTextColor(element);
 
-        if (element is ContentDialog &&
-            element.Resources.TryGetValue("WintainiumY2KButtonStyle", out var buttonStyle) &&
-            buttonStyle is Style y2kButtonStyle)
+        if (element is ContentDialog dialog)
         {
-            var dialog = (ContentDialog)element;
+            ApplyY2KContentDialogPresentation(dialog);
+            dialog.Loaded -= Y2KContentDialog_Loaded;
+            dialog.Loaded += Y2KContentDialog_Loaded;
+        }
+    }
+
+    private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        {
+            ApplyY2KContentDialogPresentation(dialog);
+        }
+    }
+
+    private static void ApplyY2KContentDialogPresentation(ContentDialog dialog)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        if (dialog.Resources.TryGetValue("WintainiumY2KButtonStyle", out var buttonStyle)
+            && buttonStyle is Style y2kButtonStyle)
+        {
             dialog.PrimaryButtonStyle = y2kButtonStyle;
             dialog.SecondaryButtonStyle = y2kButtonStyle;
             dialog.CloseButtonStyle = y2kButtonStyle;
+        }
+
+        var violet = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        var cyberwave = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
+        ApplyY2KContentDialogTypography(dialog, violet, cyberwave);
+    }
+
+    private static void ApplyY2KContentDialogTypography(FrameworkElement element, Brush violet, FontFamily cyberwave)
+    {
+        switch (element)
+        {
+            case TextBlock textBlock:
+                textBlock.Foreground = violet;
+                textBlock.FontFamily = cyberwave;
+                break;
+            case Control control:
+                control.Foreground = violet;
+                control.FontFamily = cyberwave;
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyY2KContentDialogTypography(child, violet, cyberwave);
+            }
         }
     }
 
