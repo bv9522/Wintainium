@@ -79,6 +79,7 @@ public partial class App : Application
     {
         foreach (var window in ActiveWindows.Values.ToArray())
         {
+            ApplyThemeToWindow(window);
             ApplyVisualStyleToWindow(window);
             RefreshThemeResources(window);
         }
@@ -387,6 +388,12 @@ public partial class App : Application
         {
             case TextBlock textBlock:
                 textBlock.ClearValue(TextBlock.ForegroundProperty);
+                if (textBlock.FontFamily?.Source is string fontSource &&
+                    (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
+                {
+                    textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                }
                 break;
             case Control control:
                 control.ClearValue(Control.ForegroundProperty);
@@ -419,7 +426,11 @@ public partial class App : Application
         {
             case TextBlock textBlock:
                 textBlock.Foreground = brush;
-                textBlock.FontFamily = font;
+                if (textBlock.FontFamily?.Source is not string fontSource ||
+                    !fontSource.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase))
+                {
+                    textBlock.FontFamily = font;
+                }
                 break;
             case Control control:
                 control.Foreground = brush;
