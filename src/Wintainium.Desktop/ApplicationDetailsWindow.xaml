@@ -169,5 +169,6 @@
                 <TextBlock x:Name="DetailsErrorText" TextWrapping="Wrap" Visibility="Collapsed" />
             </StackPanel>
         </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>
