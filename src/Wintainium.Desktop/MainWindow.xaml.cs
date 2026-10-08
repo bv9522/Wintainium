@@ -843,13 +843,24 @@ public sealed partial class MainWindow : Window
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
-            Title = "Sort & Filter",
+            Title = new TextBlock
+            {
+                Text = "Sort & Filter",
+                FontFamily = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000"),
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF))
+            },
             Content = content,
             PrimaryButtonText = "Apply",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         };
         App.ApplyThemeToElement(dialog);
+        if (dialog.Resources.TryGetValue("WintainiumY2KButtonStyle", out var buttonStyle)
+            && buttonStyle is Style y2kButtonStyle)
+        {
+            dialog.PrimaryButtonStyle = y2kButtonStyle;
+            dialog.CloseButtonStyle = y2kButtonStyle;
+        }
 
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
         {
