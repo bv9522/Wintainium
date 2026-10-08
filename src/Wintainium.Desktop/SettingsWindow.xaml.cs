@@ -115,11 +115,20 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
+        QueueY2KSettingsTextColorPass(8);
+    }
+
+    private void QueueY2KSettingsTextColorPass(int remainingPasses)
+    {
         DispatcherQueue.TryEnqueue(() =>
         {
             ApplyY2KSettingsTextColor();
 
-            DispatcherQueue.TryEnqueue(ApplyY2KSettingsTextColor);
+            if (remainingPasses > 1 &&
+                App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+            {
+                QueueY2KSettingsTextColorPass(remainingPasses - 1);
+            }
         });
     }
 
