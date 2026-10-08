@@ -76,6 +76,8 @@ public sealed partial class SettingsWindow : Window
         _categoryTitle.Text = CategoryNames[index];
         _categoryDescription.Text = CategoryDescriptions[index];
         _categoryContent.Children.Clear();
+        ApplyY2KTypography(_categoryTitle);
+        ApplyY2KTypography(_categoryDescription);
 
         switch (index)
         {
@@ -268,6 +270,7 @@ public sealed partial class SettingsWindow : Window
 
         ApplyY2KTypography(header);
         _categoryContent.Children.Add(header);
+        ApplyY2KTypography(header);
     }
 
     private void AddAppearanceControls()
