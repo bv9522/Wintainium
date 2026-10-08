@@ -64,11 +64,21 @@
                 </Grid.ColumnDefinitions>
 
                 <ListView x:Name="CategoryList" SelectedIndex="0">
-                    <ListViewItem Content="General" />
-                    <ListViewItem Content="Appearance" />
-                    <ListViewItem Content="Updates" />
-                    <ListViewItem Content="Sources" />
-                    <ListViewItem Content="Advanced" />
+                    <ListViewItem>
+                        <TextBlock Text="General" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                    </ListViewItem>
+                    <ListViewItem>
+                        <TextBlock Text="Appearance" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                    </ListViewItem>
+                    <ListViewItem>
+                        <TextBlock Text="Updates" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                    </ListViewItem>
+                    <ListViewItem>
+                        <TextBlock Text="Sources" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                    </ListViewItem>
+                    <ListViewItem>
+                        <TextBlock Text="Advanced" Foreground="#765CFF" FontFamily="ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000" />
+                    </ListViewItem>
                 </ListView>
 
                 <Border
