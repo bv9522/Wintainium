@@ -4,6 +4,13 @@
     xmlns:media="using:Microsoft.UI.Xaml.Media.Imaging">
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
+            <LinearGradientBrush x:Key="WintainiumY2KTitleBarBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#F4F7F9" Offset="0" />
+                <GradientStop Color="#C7D2D9" Offset="0.22" />
+                <GradientStop Color="#71828C" Offset="0.48" />
+                <GradientStop Color="#D9E2E7" Offset="0.70" />
+                <GradientStop Color="#8A9AA4" Offset="1" />
+            </LinearGradientBrush>
             <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" Stretch="UniformToFill">
                 <ImageBrush.ImageSource>
                     <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-LightChrome.svg" />
