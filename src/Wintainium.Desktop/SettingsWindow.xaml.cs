@@ -102,7 +102,7 @@ public sealed partial class SettingsWindow : Window
                 break;
         }
 
-        ApplyY2KSectionHeaderColors();
+        ApplyY2KSettingsTextColor();
     }
 
     private void AddGeneralControls()
@@ -276,18 +276,39 @@ public sealed partial class SettingsWindow : Window
             ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
     }
 
-    private void ApplyY2KSectionHeaderColors()
+    private void ApplyY2KSettingsTextColor()
     {
-        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K ||
+            Content is not FrameworkElement root)
         {
             return;
         }
 
-        foreach (var child in _categoryContent.Children)
+        var violet = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        ApplyY2KSettingsTextColor(root, violet);
+    }
+
+    private static void ApplyY2KSettingsTextColor(
+        FrameworkElement element,
+        Microsoft.UI.Xaml.Media.Brush violet)
+    {
+        switch (element)
         {
-            if (child is TextBlock header)
+            case TextBlock textBlock:
+                textBlock.Foreground = violet;
+                break;
+            case Control control:
+                control.Foreground = violet;
+                break;
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyY2KTypography(header);
+                ApplyY2KSettingsTextColor(child, violet);
             }
         }
     }
