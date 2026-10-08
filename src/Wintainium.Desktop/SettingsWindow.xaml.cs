@@ -40,6 +40,7 @@ public sealed partial class SettingsWindow : Window
         _settings = settings;
         InitializeComponent();
         App.TrackWindow(this);
+        ApplyY2KSettingsTextResources();
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
 
@@ -106,6 +107,36 @@ public sealed partial class SettingsWindow : Window
 
         ApplyY2KSettingsTextColor();
         QueueY2KSettingsTextColorPass();
+    }
+
+    private void ApplyY2KSettingsTextResources()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        var violet = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+
+        var resources = ((FrameworkElement)Content).Resources;
+        foreach (var key in new[]
+        {
+            "SystemControlForegroundBaseHighBrush",
+            "SystemControlForegroundBaseMediumHighBrush",
+            "SystemControlForegroundBaseMediumBrush",
+            "SystemControlForegroundBaseMediumLowBrush",
+            "SystemControlForegroundBaseLowBrush",
+            "SystemControlForegroundBaseDisabledBrush",
+            "SystemControlForegroundAltHighBrush",
+            "SystemControlForegroundAltMediumHighBrush",
+            "SystemControlForegroundAltMediumBrush",
+            "SystemControlForegroundAltMediumLowBrush",
+            "SystemControlForegroundAltLowBrush"
+        })
+        {
+            resources[key] = violet;
+        }
     }
 
     private void QueueY2KSettingsTextColorPass()
