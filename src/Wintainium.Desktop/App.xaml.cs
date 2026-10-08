@@ -139,6 +139,7 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
+            ClearY2KTextColor(content);
             return;
         }
 
@@ -197,6 +198,7 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
+            ClearY2KTextColor(element);
             return;
         }
 
@@ -229,6 +231,33 @@ public partial class App : Application
         }
 
         ApplyY2KTextColor(element);
+    }
+
+    private static void ClearY2KTextColor(FrameworkElement root)
+    {
+        ClearY2KTextColorCore(root);
+    }
+
+    private static void ClearY2KTextColorCore(FrameworkElement element)
+    {
+        switch (element)
+        {
+            case TextBlock textBlock:
+                textBlock.ClearValue(TextBlock.ForegroundProperty);
+                break;
+            case Control control:
+                control.ClearValue(Control.ForegroundProperty);
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ClearY2KTextColorCore(child);
+            }
+        }
     }
 
     private static void ApplyY2KTextColor(FrameworkElement root)
