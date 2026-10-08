@@ -43,6 +43,17 @@ public sealed partial class MainWindow : Window
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
+            SetTitleBar(null);
+            AppWindow.TitleBar.ResetToDefault();
+            ExtendsContentIntoTitleBar = false;
+            return;
+        }
+
+        var titleBar = AppWindow.TitleBar;
+        if (!titleBar.IsCustomizationSupported())
+        {
+            Y2KTitleBar.Visibility = Visibility.Collapsed;
+            SetTitleBar(null);
             ExtendsContentIntoTitleBar = false;
             return;
         }
@@ -56,7 +67,6 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(Y2KTitleBar);
 
-        var titleBar = AppWindow.TitleBar;
         var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
         var violetHover = ColorHelper.FromArgb(48, 0x76, 0x5C, 0xFF);
         var violetPressed = ColorHelper.FromArgb(80, 0x76, 0x5C, 0xFF);
