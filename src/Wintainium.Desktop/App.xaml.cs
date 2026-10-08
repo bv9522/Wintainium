@@ -71,7 +71,7 @@ public partial class App : Application
                 RefreshThemeResources(window);
                 if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
                 {
-                    ApplyY2KTextColor(content);
+                    QueueY2KTextColorPass(content);
                 }
             }
 
@@ -89,7 +89,7 @@ public partial class App : Application
             if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
                 && window.Content is FrameworkElement content)
             {
-                ApplyY2KTextColor(content);
+                QueueY2KTextColorPass(content);
             }
         }
     }
@@ -251,6 +251,12 @@ public partial class App : Application
             ApplyThemeToWindow(window);
             ApplyVisualStyleToWindow(window);
             RefreshThemeResources(window);
+
+            if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+                && window.Content is FrameworkElement content)
+            {
+                QueueY2KTextColorPass(content);
+            }
         }
     }
 
@@ -419,6 +425,25 @@ public partial class App : Application
         }
 
         ApplyY2KTextColor(root, GetY2KTextBrush(), GetY2KDisplayFont());
+    }
+
+    private static void QueueY2KTextColorPass(FrameworkElement root, int remainingPasses = 8)
+    {
+        if (remainingPasses <= 0 || Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        root.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+            {
+                return;
+            }
+
+            ApplyY2KTextColor(root);
+            QueueY2KTextColorPass(root, remainingPasses - 1);
+        });
     }
 
     private static void ApplyY2KTextColor(FrameworkElement element, Brush brush, FontFamily font)
