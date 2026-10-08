@@ -363,7 +363,7 @@ public partial class App : Application
         {
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyY2KContentDialogTypography(child, violet, cyberwave);
+                ApplyY2KContentDialogTypography(child, violet, cyberwave, buttonStyle);
             }
         }
     }
