@@ -120,8 +120,6 @@ public sealed partial class SettingsWindow : Window
             ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
 
         var resources = ((FrameworkElement)Content).Resources;
-        var foregroundTheme = new ResourceDictionary();
-
         foreach (var key in new[]
         {
             "SystemControlForegroundBaseHighBrush",
@@ -137,15 +135,8 @@ public sealed partial class SettingsWindow : Window
             "SystemControlForegroundAltLowBrush"
         })
         {
-            foregroundTheme[key] = violet;
+            resources[key] = violet;
         }
-
-        // These are ThemeResource lookups used by WinUI control templates.
-        // Put the aliases in a local ThemeDictionary rather than ordinary
-        // window resources so the generated template elements resolve the
-        // Settings-local Y2K foreground values during every theme pass.
-        resources.ThemeDictionaries["Light"] = foregroundTheme;
-        resources.ThemeDictionaries["Dark"] = foregroundTheme;
     }
 
     private void QueueY2KSettingsTextColorPass()
