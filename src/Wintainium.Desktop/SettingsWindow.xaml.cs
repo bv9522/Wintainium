@@ -107,6 +107,32 @@ public sealed partial class SettingsWindow : Window
 
         ApplyY2KSettingsTextColor();
         QueueY2KSettingsTextColorPass();
+        QueueY2KSettingsLoadedColorPass();
+    }
+
+    private void QueueY2KSettingsLoadedColorPass()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        foreach (var child in _categoryContent.Children)
+        {
+            if (child is FrameworkElement element)
+            {
+                element.Loaded -= SettingsElement_Loaded;
+                element.Loaded += SettingsElement_Loaded;
+            }
+        }
+    }
+
+    private void SettingsElement_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        {
+            ApplyY2KSettingsTextColor();
+        }
     }
 
     private void ApplyY2KSettingsTextResources()
