@@ -238,6 +238,7 @@
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
     <Style x:Key="WintainiumY2KButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
