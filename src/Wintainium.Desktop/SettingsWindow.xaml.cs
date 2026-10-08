@@ -50,6 +50,8 @@ public sealed partial class SettingsWindow : Window
             Spacing = 16
         };
 
+        ApplyY2KTypography(_categoryTitle);
+
         var scrollViewer = (ScrollViewer)((Border)((Grid)((Grid)Content).Children[1]).Children[1]).Child;
         var panel = (StackPanel)scrollViewer.Content;
         panel.Children.Add(_categoryContent);
@@ -243,16 +245,26 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
+    private static void ApplyY2KTypography(TextBlock textBlock)
+    {
+        textBlock.FontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
+            "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
+        textBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+    }
+
     private void AddSectionHeader(string text)
     {
-        _categoryContent.Children.Add(
-            new TextBlock
-            {
-                Text = text,
-                FontSize = 16,
-                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Margin = new Thickness(0, 8, 0, 0)
-            });
+        var header = new TextBlock
+        {
+            Text = text,
+            FontSize = 16,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+
+        ApplyY2KTypography(header);
+        _categoryContent.Children.Add(header);
     }
 
     private void AddAppearanceControls()
