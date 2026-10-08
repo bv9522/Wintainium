@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.System;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
@@ -40,7 +41,7 @@ public sealed partial class MainWindow : Window
 
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
-        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
@@ -50,7 +51,7 @@ public sealed partial class MainWindow : Window
         }
 
         var titleBar = AppWindow.TitleBar;
-        if (!titleBar.IsCustomizationSupported())
+        if (!AppWindowTitleBar.IsCustomizationSupported())
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
