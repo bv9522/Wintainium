@@ -142,49 +142,49 @@
             <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#1A3043" />
             <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#4A7695" />
             <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="#294D67" />
-            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderDisabledForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ControlHeaderForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ControlHeaderDisabledForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ContentDialogTitleForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlHeaderForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlHeaderDisabledForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ControlHeaderForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ControlHeaderDisabledForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ContentDialogTitleForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#39FF9A" />
 
 
-            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#765CFF" />
-            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#765CFF" />
-            <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#765CFF" />
-            <SolidColorBrush x:Key="ButtonPressedForegroundThemeBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="ButtonPointerOverForegroundThemeBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="ButtonDisabledForegroundThemeBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#765CFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderForegroundPointerOver" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextControlHeaderForegroundFocused" Color="#765CFF" />
-            <SolidColorBrush x:Key="TextBoxForegroundHeaderThemeBrush" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxHeaderForeground" Color="#765CFF" />
-            <SolidColorBrush x:Key="ComboBoxHeaderForegroundDisabled" Color="#765CFF" />
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ButtonPressedForegroundThemeBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ButtonPointerOverForegroundThemeBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ButtonDisabledForegroundThemeBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#39FF9A" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#39FF9A" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundPointerOver" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextControlHeaderForegroundFocused" Color="#39FF9A" />
+            <SolidColorBrush x:Key="TextBoxForegroundHeaderThemeBrush" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForeground" Color="#39FF9A" />
+            <SolidColorBrush x:Key="ComboBoxHeaderForegroundDisabled" Color="#39FF9A" />
             <LinearGradientBrush x:Key="WintainiumY2KChromeBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#C7D4DC" Offset="0" /><GradientStop Color="#718493" Offset="0.38" /><GradientStop Color="#405363" Offset="0.6" /><GradientStop Color="#AFC0CB" Offset="1" />
             </LinearGradientBrush>
             <SolidColorBrush x:Key="WintainiumY2KChromeHighlightBrush" Color="#E7F4FC" />
             <SolidColorBrush x:Key="WintainiumY2KChromeEdgeBrush" Color="#49677D" />
             <SolidColorBrush x:Key="WintainiumY2KElectricBlueBrush" Color="#00B7FF" />
-            <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#765CFF" />
+            <SolidColorBrush x:Key="WintainiumY2KVioletBrush" Color="#39FF9A" />
             <SolidColorBrush x:Key="WintainiumY2KMatrixGreenBrush" Color="#39FF9A" />
             <SolidColorBrush x:Key="WintainiumY2KOrangeBrush" Color="#FF8B36" />
             <SolidColorBrush x:Key="WintainiumY2KBlueGlowBrush" Color="#42C7FF" />
@@ -195,7 +195,7 @@
             <SolidColorBrush x:Key="WintainiumY2KErrorBrush" Color="#FF5D73" />
             <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
             <SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#4A7695" />
-            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000</FontFamily>
+            <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Consolas</FontFamily>
             <CornerRadius x:Key="ControlCornerRadius">9</CornerRadius>
             <CornerRadius x:Key="OverlayCornerRadius">14</CornerRadius>
         </ResourceDictionary>
