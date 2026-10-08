@@ -181,9 +181,9 @@ public partial class App : Application
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
         ApplyY2KTextColor(content);
 
-        if (window is MainWindow mainWindow)
+        if (window is MainWindow mainWindowChrome)
         {
-            mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+            mainWindowChrome.ApplyWindowChromeForCurrentVisualStyle();
         }
     }
 
