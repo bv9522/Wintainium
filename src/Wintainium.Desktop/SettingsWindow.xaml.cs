@@ -167,6 +167,7 @@ public sealed partial class SettingsWindow : Window
                     (WintainiumUpdateCheckFrequency)frequency.SelectedIndex);
             }
         };
+        ApplyY2KControlTypography(frequency);
         _categoryContent.Children.Add(frequency);
 
         AddSectionHeader("Automatic Updates");
@@ -207,6 +208,8 @@ public sealed partial class SettingsWindow : Window
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
 
+        ApplyY2KControlTypography(toggle);
+
         var descriptionText = new TextBlock
         {
             Text = description,
@@ -214,6 +217,8 @@ public sealed partial class SettingsWindow : Window
             Opacity = 0.68,
             Margin = new Thickness(0, 2, 0, 0)
         };
+
+        ApplyY2KTypography(descriptionText);
 
         var panel = new StackPanel
         {
@@ -257,6 +262,17 @@ public sealed partial class SettingsWindow : Window
         }
 
         textBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+    }
+
+    private static void ApplyY2KControlTypography(Control control)
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
+        control.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
             ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
     }
 
@@ -333,16 +349,19 @@ public sealed partial class SettingsWindow : Window
 
     private void AddPlaceholder(string text)
     {
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap
+        };
+        ApplyY2KTypography(textBlock);
+
         _categoryContent.Children.Add(
             new Border
             {
                 Padding = new Thickness(16),
                 CornerRadius = new CornerRadius(8),
-                Child = new TextBlock
-                {
-                    Text = text,
-                    TextWrapping = TextWrapping.Wrap
-                }
+                Child = textBlock
             });
     }
 
