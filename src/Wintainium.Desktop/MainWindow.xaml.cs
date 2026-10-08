@@ -61,26 +61,32 @@ public sealed partial class MainWindow : Window
         }
 
         Y2KTitleBar.Visibility = Visibility.Visible;
-        Y2KTitleBarText.FontFamily = new FontFamily(
-            "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
-        Y2KTitleBarText.Foreground = new SolidColorBrush(
-            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        Y2KTitleBarText.FontFamily = App.GetY2KDisplayFont();
+        Y2KTitleBarText.Foreground = App.GetY2KTextBrush();
+        if (Content is FrameworkElement content
+            && content.Resources.TryGetValue("WintainiumY2KTitleBarBrush", out var titleBarBrush)
+            && titleBarBrush is Brush titleBarBackground)
+        {
+            Y2KTitleBar.Background = titleBarBackground;
+        }
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(Y2KTitleBar);
 
-        var violet = ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
-        var violetHover = ColorHelper.FromArgb(48, 0x76, 0x5C, 0xFF);
-        var violetPressed = ColorHelper.FromArgb(80, 0x76, 0x5C, 0xFF);
+        var textColor = App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            ? ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A)
+            : ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
+        var textHover = ColorHelper.FromArgb(48, textColor.R, textColor.G, textColor.B);
+        var textPressed = ColorHelper.FromArgb(80, textColor.R, textColor.G, textColor.B);
 
         titleBar.ButtonBackgroundColor = Colors.Transparent;
-        titleBar.ButtonForegroundColor = violet;
-        titleBar.ButtonHoverBackgroundColor = violetHover;
-        titleBar.ButtonHoverForegroundColor = violet;
-        titleBar.ButtonPressedBackgroundColor = violetPressed;
-        titleBar.ButtonPressedForegroundColor = violet;
+        titleBar.ButtonForegroundColor = textColor;
+        titleBar.ButtonHoverBackgroundColor = textHover;
+        titleBar.ButtonHoverForegroundColor = textColor;
+        titleBar.ButtonPressedBackgroundColor = textPressed;
+        titleBar.ButtonPressedForegroundColor = textColor;
         titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-        titleBar.ButtonInactiveForegroundColor = violet;
+        titleBar.ButtonInactiveForegroundColor = textColor;
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
