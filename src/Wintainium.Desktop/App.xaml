@@ -17,6 +17,8 @@
             <CornerRadius x:Key="WintainiumY2KCardCornerRadius">12</CornerRadius>
             <CornerRadius x:Key="WintainiumY2KControlCornerRadius">8</CornerRadius>
             <SolidColorBrush x:Key="WintainiumY2KGridLineBrush" Color="#808080" />
+            <!-- Construction-safe Y2K text brush. Applied to the live visual tree only when Y2K is active. -->
+            <SolidColorBrush x:Key="WintainiumY2KTextBrush" Color="#765CFF" />
             <FontFamily x:Key="WintainiumY2KDisplayFontFamily">Segoe UI Variable</FontFamily>
 
             <!--
