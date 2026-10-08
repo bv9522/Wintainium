@@ -142,7 +142,7 @@
                         <TextBox x:Name="NotesTextBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" PlaceholderText="Add notes about this software." />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <Button Content="Don't Save" Click="DontSaveButton_Click" />
-                            <Button Content="Save" Style="{StaticResource AccentButtonStyle}" Click="SaveNotesButton_Click" />
+                            <Button Content="Save" Click="SaveNotesButton_Click" />
                         </StackPanel>
                         <TextBlock x:Name="NotesStatusText" Opacity="0.72" />
                     </StackPanel>
