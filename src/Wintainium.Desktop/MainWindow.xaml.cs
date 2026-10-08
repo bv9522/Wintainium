@@ -39,22 +39,9 @@ public sealed partial class MainWindow : Window
 
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
-        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
-        {
-            AppTitleBar.Visibility = Visibility.Collapsed;
-            SetTitleBar(null);
-            ExtendsContentIntoTitleBar = false;
-
-            return;
-        }
-
-        AppTitleBar.Visibility = Visibility.Visible;
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
-
-        // Keep the native caption buttons. The custom title-bar surface is supplied
-        // by AppTitleBar; avoid native AppWindow.TitleBar color customization here
-        // because it can fail during early WinUI window initialization.
+        // Temporarily leave native window chrome untouched while isolating startup.
+        // The custom Y2K title-bar surface remains in XAML, but SetTitleBar is not
+        // invoked until the startup path is proven stable.
     }
 
     internal void SetApplicationCollection(IEnumerable<WintainiumApplicationModel> applications)
@@ -310,8 +297,6 @@ public sealed partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        ApplyWindowChromeForCurrentVisualStyle();
-
         if (sender is FrameworkElement content)
         {
             content.Loaded -= MainWindow_Loaded;
