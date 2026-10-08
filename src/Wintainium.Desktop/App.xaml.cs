@@ -488,7 +488,7 @@ public partial class App : Application
         var theme = preference switch
         {
             WintainiumThemePreference.Light => ElementTheme.Light,
-            WintaniumThemePreference.Dark => ElementTheme.Dark,
+            WintainiumThemePreference.Dark => ElementTheme.Dark,
             _ => GetSystemElementTheme()
         };
 
