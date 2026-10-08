@@ -134,8 +134,6 @@ public sealed partial class SettingsWindow : Window
         }
 
         var textBrush = App.GetY2KTextBrush();
-        var displayFont = App.GetY2KDisplayFont();
-
         var resources = ((FrameworkElement)Content).Resources;
         foreach (var key in new[]
         {
