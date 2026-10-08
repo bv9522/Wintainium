@@ -852,7 +852,7 @@ public sealed partial class MainWindow : Window
             Content = content,
             SecondaryButtonText = "Apply",
             CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Secondary
+            DefaultButton = ContentDialogButton.None
         };
         App.ApplyThemeToElement(dialog);
 
