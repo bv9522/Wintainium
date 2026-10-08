@@ -69,6 +69,10 @@ public partial class App : Application
                 content.Loaded -= ApplyVisualStyleAfterLoaded;
                 ApplyVisualStyleToWindow(window);
                 RefreshThemeResources(window);
+                if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+                {
+                    ApplyY2KTextColor(content);
+                }
             }
 
             content.Loaded += ApplyVisualStyleAfterLoaded;
@@ -82,6 +86,11 @@ public partial class App : Application
             ApplyThemeToWindow(window);
             ApplyVisualStyleToWindow(window);
             RefreshThemeResources(window);
+            if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+                && window.Content is FrameworkElement content)
+            {
+                ApplyY2KTextColor(content);
+            }
         }
     }
 
