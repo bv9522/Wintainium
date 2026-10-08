@@ -141,6 +141,12 @@ public partial class App : Application
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             ClearY2KTextColor(content);
+
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+            }
+
             return;
         }
 
@@ -174,6 +180,11 @@ public partial class App : Application
         content.Resources.MergedDictionaries.Add(activeTheme);
         WindowVisualStyleResources[windowId] = (visualStyle, activeTheme);
         ApplyY2KTextColor(content);
+
+        if (window is MainWindow mainWindow)
+        {
+            mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+        }
 
     }
 
