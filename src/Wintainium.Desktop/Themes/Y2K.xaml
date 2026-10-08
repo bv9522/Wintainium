@@ -229,6 +229,8 @@
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
+    <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
+    <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
@@ -295,8 +297,6 @@
         <Setter Property="FontFamily" Value="{ThemeResource WintainiumY2KDisplayFontFamily}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
-    <CornerRadius x:Key="WintainiumY2KCardCornerRadius">14</CornerRadius>
-    <CornerRadius x:Key="WintainiumY2KControlCornerRadius">9</CornerRadius>
     <Style x:Key="WintainiumY2KCardStyle" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
