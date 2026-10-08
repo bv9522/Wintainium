@@ -46,7 +46,7 @@
                         <TextBlock
                             Text="General Wintainium behavior and preferences."
                             TextWrapping="Wrap"
-                            Opacity="0.72" />
+                            Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
                     </StackPanel>
                 </ScrollViewer>
             </Border>
