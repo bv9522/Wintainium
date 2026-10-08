@@ -328,10 +328,14 @@ public partial class App : Application
 
         var violet = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
         var cyberwave = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
-        ApplyY2KContentDialogTypography(dialog, violet, cyberwave);
+        ApplyY2KContentDialogTypography(dialog, violet, cyberwave, dialog.CloseButtonStyle);
     }
 
-    private static void ApplyY2KContentDialogTypography(FrameworkElement element, Brush violet, FontFamily cyberwave)
+    private static void ApplyY2KContentDialogTypography(
+        FrameworkElement element,
+        Brush violet,
+        FontFamily cyberwave,
+        Style? buttonStyle)
     {
         switch (element)
         {
@@ -340,6 +344,11 @@ public partial class App : Application
                 textBlock.FontFamily = cyberwave;
                 break;
             case Button button:
+                if (buttonStyle is not null)
+                {
+                    button.Style = buttonStyle;
+                }
+
                 button.Foreground = violet;
                 button.FontFamily = cyberwave;
                 break;
