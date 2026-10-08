@@ -26,11 +26,11 @@
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                 <TextBlock
                     Text="My Software"
-                    Style="{StaticResource WintainiumY2KTitleTextBlockStyle}"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                    Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
                 <TextBlock
                         Text="Software tracked by Wintainium"
                     Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
-                    Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                    Opacity="0.72" />
             </StackPanel>
 
             <TextBlock
@@ -40,7 +40,7 @@
                 Grid.ColumnSpan="4"
                 Margin="0,8,0,0"
                 Text="0 applications"
-                Opacity="0.60"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                Opacity="0.60" />
 
             <Button
                 Grid.Row="0"
@@ -91,13 +91,13 @@
                                            FontSize="16"
                                            FontWeight="SemiBold"
                                            TextTrimming="CharacterEllipsis"
-                                           MaxLines="2"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                           MaxLines="2" />
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                        <TextBlock Text="{Binding InstallationStateText}"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="{Binding InstallationStateText}" />
                                     </Border>
                                     <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                        <TextBlock Text="{Binding UpdateStatusText}"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="{Binding UpdateStatusText}" />
                                     </Border>
                                 </StackPanel>
                                 <Grid>
@@ -106,12 +106,12 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding AvailableVersionText}" HorizontalAlignment="Right" Opacity="0.78"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" HorizontalAlignment="Right" Opacity="0.78" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -149,21 +149,21 @@
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis"
-                                       MaxLines="2"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                       MaxLines="2" />
                             <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="4">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" HorizontalAlignment="Right"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" HorizontalAlignment="Right"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" HorizontalAlignment="Right" />
                                     </StackPanel>
                                     <StackPanel Spacing="2">
-                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                        <TextBlock Text="{Binding AvailableVersionText}" Opacity="0.78" HorizontalAlignment="Right"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" Opacity="0.78" HorizontalAlignment="Right" />
                                     </StackPanel>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                                    <TextBlock Text="{Binding InstallationStateText}"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
-                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                                    <TextBlock Text="{Binding InstallationStateText}" />
+                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
@@ -179,18 +179,18 @@
                 MaxWidth="520">
                 <TextBlock Text="Your software collection"
                            Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}"
-                           HorizontalAlignment="Center"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                           HorizontalAlignment="Center" />
                 <TextBlock Text="Applications you add to Wintainium will appear here."
                            Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
                            TextAlignment="Center"
                            Opacity="0.72"
-                           TextWrapping="Wrap"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                           TextWrapping="Wrap" />
                 <TextBlock
                     x:Name="CollectionLoadingText"
                     Text="Loading your software collection…"
                     HorizontalAlignment="Center"
                     Opacity="0.60"
-                    Visibility="Collapsed"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+                    Visibility="Collapsed" />
             </StackPanel>
         </Grid>
 
@@ -199,7 +199,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45"  Foreground="{ThemeResource WintainiumY2KVioletBrush}" />
+            <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" />
                 <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" />
