@@ -133,8 +133,8 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        var violet = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        var textBrush = App.GetY2KTextBrush();
+        var displayFont = App.GetY2KDisplayFont();
 
         var resources = ((FrameworkElement)Content).Resources;
         foreach (var key in new[]
@@ -152,7 +152,7 @@ public sealed partial class SettingsWindow : Window
             "SystemControlForegroundAltLowBrush"
         })
         {
-            resources[key] = violet;
+            resources[key] = textBrush;
         }
     }
 
@@ -341,8 +341,7 @@ public sealed partial class SettingsWindow : Window
         var textBlock = new TextBlock
         {
             Text = text,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
-                "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000")
+            FontFamily = App.GetY2KDisplayFont()
         };
 
         ApplyY2KTypography(textBlock);
@@ -356,8 +355,8 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        textBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        textBlock.Foreground = App.GetY2KTextBrush();
+        textBlock.FontFamily = App.GetY2KDisplayFont();
     }
 
     private static void ApplyY2KControlTypography(Control control)
@@ -367,8 +366,8 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        control.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
+        control.Foreground = App.GetY2KTextBrush();
+        control.FontFamily = App.GetY2KDisplayFont();
     }
 
     private void ApplyY2KSettingsTextColor()
@@ -379,22 +378,23 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        var violet = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
-        ApplyY2KSettingsTextColor(root, violet);
+        ApplyY2KSettingsTextColor(root, App.GetY2KTextBrush(), App.GetY2KDisplayFont());
     }
 
     private static void ApplyY2KSettingsTextColor(
         FrameworkElement element,
-        Microsoft.UI.Xaml.Media.Brush violet)
+        Microsoft.UI.Xaml.Media.Brush textBrush,
+        Microsoft.UI.Xaml.Media.FontFamily displayFont)
     {
         switch (element)
         {
             case TextBlock textBlock:
-                textBlock.Foreground = violet;
+                textBlock.Foreground = textBrush;
+                textBlock.FontFamily = displayFont;
                 break;
             case Control control:
-                control.Foreground = violet;
+                control.Foreground = textBrush;
+                control.FontFamily = displayFont;
                 break;
         }
 
@@ -403,7 +403,7 @@ public sealed partial class SettingsWindow : Window
         {
             if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyY2KSettingsTextColor(child, violet);
+                ApplyY2KSettingsTextColor(child, textBrush, displayFont);
             }
         }
     }
