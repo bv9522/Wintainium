@@ -339,6 +339,12 @@ public partial class App : Application
                 textBlock.Foreground = violet;
                 textBlock.FontFamily = cyberwave;
                 break;
+            case Button button:
+                button.Background = violet;
+                button.BorderBrush = violet;
+                button.Foreground = violet;
+                button.FontFamily = cyberwave;
+                break;
             case Control control:
                 control.Foreground = violet;
                 control.FontFamily = cyberwave;
