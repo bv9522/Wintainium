@@ -397,6 +397,12 @@ public partial class App : Application
                 break;
             case Control control:
                 control.ClearValue(Control.ForegroundProperty);
+                if (control.FontFamily?.Source is string fontSource &&
+                    (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
+                {
+                    control.ClearValue(Control.FontFamilyProperty);
+                }
                 break;
         }
 
