@@ -851,9 +851,7 @@ public sealed partial class MainWindow : Window
             XamlRoot = Content.XamlRoot,
             Title = new TextBlock
             {
-                Text = "Sort & Filter",
-                FontFamily = new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000"),
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF))
+                Text = "Sort & Filter"
             },
             Content = content,
             SecondaryButtonText = "Apply",
