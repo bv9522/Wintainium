@@ -247,8 +247,11 @@ public sealed partial class SettingsWindow : Window
 
     private static void ApplyY2KTypography(TextBlock textBlock)
     {
-        textBlock.FontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
-            "ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            return;
+        }
+
         textBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
             ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF));
     }
