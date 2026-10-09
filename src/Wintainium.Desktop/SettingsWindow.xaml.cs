@@ -55,6 +55,33 @@ public sealed partial class SettingsWindow : Window
         UpdateCategoryContent(0);
     }
 
+    internal void RefreshAppearance()
+    {
+        ApplyY2KSettingsTextResources();
+
+        if (Content is FrameworkElement root &&
+            root.FindName("CategoryNavigationChrome") is Border navigationChrome)
+        {
+            if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K &&
+                _settings.Current.Theme == WintainiumThemePreference.Light)
+            {
+                navigationChrome.Background = App.GetY2KLightChromeBrush();
+                navigationChrome.BorderBrush = App.GetY2KLightChromeEdgeBrush();
+            }
+            else
+            {
+                navigationChrome.ClearValue(Border.BackgroundProperty);
+                navigationChrome.ClearValue(Border.BorderBrushProperty);
+            }
+        }
+
+        if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        {
+            ApplyY2KSettingsTextColor();
+            QueueY2KSettingsTextColorPass();
+        }
+    }
+
     private void CategoryList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         UpdateCategoryContent(((ListView)sender!).SelectedIndex);
@@ -128,14 +155,8 @@ public sealed partial class SettingsWindow : Window
 
     private void ApplyY2KSettingsTextResources()
     {
-        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
-        {
-            return;
-        }
-
-        var textBrush = App.GetY2KTextBrush();
         var resources = ((FrameworkElement)Content).Resources;
-        foreach (var key in new[]
+        var keys = new[]
         {
             "SystemControlForegroundBaseHighBrush",
             "SystemControlForegroundBaseMediumHighBrush",
@@ -148,7 +169,20 @@ public sealed partial class SettingsWindow : Window
             "SystemControlForegroundAltMediumBrush",
             "SystemControlForegroundAltMediumLowBrush",
             "SystemControlForegroundAltLowBrush"
-        })
+        };
+
+        if (_settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
+        {
+            foreach (var key in keys)
+            {
+                resources.Remove(key);
+            }
+
+            return;
+        }
+
+        var textBrush = App.GetY2KTextBrush();
+        foreach (var key in keys)
         {
             resources[key] = textBrush;
         }
