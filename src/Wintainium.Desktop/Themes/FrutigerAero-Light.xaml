@@ -43,6 +43,7 @@
     <CornerRadius x:Key="OverlayCornerRadius">18</CornerRadius>
     <Style TargetType="Button">
         <Setter Property="FontFamily" Value="{StaticResource WintainiumFrutigerAeroFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -51,12 +52,14 @@
     </Style>
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{StaticResource WintainiumFrutigerAeroFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
     </Style>
     <Style TargetType="TextBox">
         <Setter Property="FontFamily" Value="{StaticResource WintainiumFrutigerAeroFontFamily}" />
+        <Setter Property="FontSize" Value="15" />
         <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
