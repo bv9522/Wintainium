@@ -84,10 +84,10 @@
 <!-- Four sparse hexadecimal readouts, staggered like steps across the canvas. -->
 <!-- Opacity fallback remains subtle if the SVG host ignores SMIL animation. -->
 <g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="18" letter-spacing="1.6">
-  <text x="220" y="222" opacity=".12">0x57<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
-  <text x="1190" y="326" opacity=".12">0x4E<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
-  <text x="315" y="714" opacity=".12">0x31<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
-  <text x="1100" y="754" opacity=".12">0x05<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
+  <text x="220" y="222" opacity=".82">0x57<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
+  <text x="1190" y="326" opacity=".82">0x4E<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
+  <text x="315" y="714" opacity=".82">0x31<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
+  <text x="1100" y="754" opacity=".82">0x05<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
 </g>
 
 <!-- Five precise vertex markers -->
