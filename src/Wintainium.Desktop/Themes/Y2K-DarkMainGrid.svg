@@ -80,43 +80,20 @@
 <rect x="150" y="108" width="1300" height="1" fill="url(#axis)" opacity=".28"/>
 <rect x="150" y="792" width="1300" height="1" fill="url(#axis)" opacity=".15"/>
 
-<!-- Cyber Y2K interface details: four corner brackets, animated hex telemetry, and circuit traces -->
-<!-- Four independent corner brackets sit at the canvas corners, not around the W. -->
-<g fill="none" stroke="#39FF9A" stroke-width="2.2" stroke-linecap="square" opacity=".58">
-  <path d="M42 78 V42 H78 M1522 42 H1558 V78"/>
-  <path d="M42 822 V858 H78 M1522 858 H1558 V822"/>
+<!-- Cyber Y2K interface details: four clear corner brackets and stepped hexadecimal telemetry -->
+<!-- Four corner brackets frame the full canvas; no border around the central W. -->
+<g fill="none" stroke="#39FF9A" stroke-width="2.8" stroke-linecap="square" opacity=".78">
+  <path d="M42 92 V42 H92 M1508 42 H1558 V92"/>
+  <path d="M42 808 V858 H92 M1508 858 H1558 V808"/>
 </g>
 
-<!-- Peripheral circuit traces. Each telemetry node is anchored directly to a trace. -->
-<g fill="none" stroke="#39FF9A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".38">
-  <path d="M95 390 H155 V365 H245"/>
-  <path d="M1505 430 H1445 V455 H1355"/>
-  <path d="M360 120 V155 H420 V205"/>
-  <path d="M1240 720 V685 H1180 V635"/>
-  <path d="M95 390 l-7 -4 M95 390 l-7 4"/>
-  <path d="M1505 430 l7 -4 M1505 430 l7 4"/>
-</g>
-
-<!-- Circuit nodes are placed on trace corners or endpoints, not floating nearby. -->
-<g fill="#39FF9A">
-  <circle cx="155" cy="390" r="3.5" opacity=".8"/>
-  <circle cx="155" cy="365" r="3.5" opacity=".8"/>
-  <circle cx="1445" cy="430" r="3.5" opacity=".8"/>
-  <circle cx="1445" cy="455" r="3.5" opacity=".8"/>
-  <circle cx="360" cy="155" r="3.2" opacity=".72"/>
-  <circle cx="420" cy="155" r="3.2" opacity=".72"/>
-  <circle cx="1240" cy="685" r="3.2" opacity=".72"/>
-  <circle cx="1180" cy="685" r="3.2" opacity=".72"/>
-  <circle cx="155" cy="390" r="1.2" fill="#C8FFE2"/>
-  <circle cx="1445" cy="430" r="1.2" fill="#C8FFE2"/>
-</g>
-
-<!-- Readable hexadecimal telemetry; labels pulse in a deliberate staggered sequence. -->
-<g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="16" letter-spacing="1.4">
-  <text x="250" y="357" opacity=".05">0x57<animate attributeName="opacity" values=".05;.88;.88;.05" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
-  <text x="1135" y="448" opacity=".05">0x4E<animate attributeName="opacity" values=".05;.88;.88;.05" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
-  <text x="435" y="205" opacity=".05">0x31<animate attributeName="opacity" values=".05;.88;.88;.05" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
-  <text x="1010" y="635" opacity=".05">0x05<animate attributeName="opacity" values=".05;.88;.88;.05" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
+<!-- Hexadecimal readouts fade in sequence, with each label offset by two seconds. -->
+<!-- Base opacity keeps the labels legible if the SVG host does not support SMIL animation. -->
+<g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="18" letter-spacing="1.6">
+  <text x="220" y="222" opacity=".78">0x57<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
+  <text x="1190" y="326" opacity=".78">0x4E<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
+  <text x="315" y="714" opacity=".78">0x31<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
+  <text x="1100" y="754" opacity=".78">0x05<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
 </g>
 
 <!-- Five precise vertex markers -->
