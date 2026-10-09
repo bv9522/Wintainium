@@ -141,6 +141,27 @@ public sealed partial class SettingsWindow : Window
             }
         }
 
+        // ListView category labels are authored as ListViewItem/TextBlock
+        // content and may not be reached consistently by the visual-tree walk.
+        // Visit the item containers and their content explicitly so all five
+        // Settings tabs refresh when the active Y2K theme changes.
+        if (element is ListView categoryList)
+        {
+            foreach (var item in categoryList.Items)
+            {
+                if (item is FrameworkElement itemElement)
+                {
+                    RefreshY2KSettingsElements(itemElement, applyY2K, visited);
+                }
+            }
+        }
+
+        if (element is ListViewItem listViewItem &&
+            listViewItem.Content is FrameworkElement listItemContent)
+        {
+            RefreshY2KSettingsElements(listItemContent, applyY2K, visited);
+        }
+
         // ComboBox headers and ItemsSource entries are not necessarily in the
         // visual tree until the dropdown opens. Refresh them explicitly so
         // their Y2K styling cannot survive a theme or visual-style change.
