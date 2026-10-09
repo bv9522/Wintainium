@@ -25,6 +25,4 @@
     <path d="M64 17 V44 M56 38 L64 46 L72 38"
           stroke="#D7FFEB" stroke-width="1.4"/>
   </g>
-  <path d="M9 12 H22 M106 12 H119 M9 78 H22 M106 78 H119"
-        fill="none" stroke="#00B7FF" stroke-width="1.2" opacity="0.72"/>
 </svg>
