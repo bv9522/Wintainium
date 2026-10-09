@@ -124,7 +124,7 @@
         <ResourceDictionary x:Key="Dark">
             <ImageBrush x:Key="ApplicationPageBackgroundThemeBrush" Stretch="UniformToFill">
                 <ImageBrush.ImageSource>
-                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkGrid.svg" />
+                    <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkMainGrid.svg" />
                 </ImageBrush.ImageSource>
             </ImageBrush>
             <ImageBrush x:Key="ContentDialogBackground" Stretch="UniformToFill">
