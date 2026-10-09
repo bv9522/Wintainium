@@ -136,8 +136,12 @@ public partial class App : Application
 
         content.RequestedTheme = alternateTheme;
 
-        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+            || (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && Settings.Current.Theme == WintainiumThemePreference.Light))
         {
+            // Re-applying RequestedTheme forces ThemeResource brushes to refresh after
+            // a runtime dictionary swap, including open Settings windows and dropdowns.
             content.DispatcherQueue.TryEnqueue(() => content.RequestedTheme = effectiveTheme);
         }
         else
