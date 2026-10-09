@@ -44,7 +44,7 @@ public sealed partial class MainWindow : Window
     {
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
-            Y2KTitleBarLogo.Visibility = Visibility.Collapsed;
+            Y2KMainWindowLogo.Visibility = Visibility.Collapsed;
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
             AppWindow.TitleBar.ResetToDefault();
@@ -53,18 +53,18 @@ public sealed partial class MainWindow : Window
         }
 
         var titleBar = AppWindow.TitleBar;
+        Y2KMainWindowLogo.Visibility = App.Settings.Current.Theme != WintainiumThemePreference.Light
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
         if (!AppWindowTitleBar.IsCustomizationSupported())
         {
-            Y2KTitleBarLogo.Visibility = Visibility.Collapsed;
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
             ExtendsContentIntoTitleBar = false;
             return;
         }
 
-        Y2KTitleBarLogo.Visibility = App.Settings.Current.Theme != WintainiumThemePreference.Light
-            ? Visibility.Visible
-            : Visibility.Collapsed;
         Y2KTitleBar.Visibility = Visibility.Visible;
         Y2KTitleBarText.FontFamily = App.GetY2KDisplayFont();
         Y2KTitleBarText.Foreground = App.GetY2KTextBrush();
