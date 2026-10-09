@@ -13,6 +13,54 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Frutiger Aero-only glass skyline decoration; the app's controls remain above it. -->
+        <Grid x:Name="FrutigerAeroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
+            <Ellipse Width="116" Height="116" Fill="#99FFFFFF" Stroke="#CCFFFFFF" StrokeThickness="2"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,72,0,0" />
+            <Ellipse Width="54" Height="54" Fill="#77FFFFFF" Stroke="#AAFFFFFF" StrokeThickness="1.5"
+                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,132,96,0" />
+            <Ellipse Width="30" Height="30" Fill="#AAFFFFFF" Stroke="#CCFFFFFF" StrokeThickness="1"
+                     HorizontalAlignment="Center" VerticalAlignment="Top" Margin="180,36,0,0" />
+            <Canvas Height="250" VerticalAlignment="Bottom">
+                <Border Canvas.Left="0" Canvas.Top="132" Width="88" Height="118" CornerRadius="7,7,0,0"
+                        Background="#55FFFFFF" BorderBrush="#88FFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="78" Canvas.Top="92" Width="66" Height="158" CornerRadius="6,6,0,0"
+                        Background="#77D7F7F4" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="136" Canvas.Top="45" Width="48" Height="205" CornerRadius="5,5,0,0"
+                        Background="#99FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="151" Canvas.Top="18" Width="18" Height="28"
+                        Background="#88FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="158" Canvas.Top="0" Width="4" Height="20" Background="#CCFFFFFF" />
+                <Border Canvas.Left="190" Canvas.Top="112" Width="70" Height="138" CornerRadius="6,6,0,0"
+                        Background="#66BEEDE9" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="254" Canvas.Top="74" Width="60" Height="176" CornerRadius="5,5,0,0"
+                        Background="#88FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="278" Canvas.Top="42" Width="12" Height="34" Background="#99FFFFFF" />
+                <Border Canvas.Left="322" Canvas.Top="138" Width="84" Height="112" CornerRadius="6,6,0,0"
+                        Background="#66D6F6F2" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="400" Canvas.Top="98" Width="58" Height="152" CornerRadius="5,5,0,0"
+                        Background="#88FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="448" Canvas.Top="154" Width="78" Height="96" CornerRadius="5,5,0,0"
+                        Background="#55FFFFFF" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="514" Canvas.Top="122" Width="62" Height="128" CornerRadius="5,5,0,0"
+                        Background="#66BEEDE9" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="566" Canvas.Top="58" Width="46" Height="192" CornerRadius="5,5,0,0"
+                        Background="#99FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="584" Canvas.Top="18" Width="10" Height="42" Background="#AAFFFFFF" />
+                <Border Canvas.Left="604" Canvas.Top="138" Width="84" Height="112" CornerRadius="5,5,0,0"
+                        Background="#55FFFFFF" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="680" Canvas.Top="90" Width="70" Height="160" CornerRadius="5,5,0,0"
+                        Background="#77D7F7F4" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="742" Canvas.Top="128" Width="88" Height="122" CornerRadius="5,5,0,0"
+                        Background="#55FFFFFF" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="820" Canvas.Top="72" Width="62" Height="178" CornerRadius="5,5,0,0"
+                        Background="#88FFFFFF" BorderBrush="#CCFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="874" Canvas.Top="148" Width="90" Height="102" CornerRadius="5,5,0,0"
+                        Background="#55FFFFFF" BorderBrush="#AAFFFFFF" BorderThickness="1" />
+                <Border Canvas.Left="0" Canvas.Top="236" Width="1100" Height="14" Background="#66FFFFFF" />
+            </Canvas>
+        </Grid>
+
         <Grid
             x:Name="Y2KTitleBar"
             Grid.Row="0"
