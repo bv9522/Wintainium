@@ -80,17 +80,40 @@
 <rect x="150" y="108" width="1300" height="1" fill="url(#axis)" opacity=".28"/>
 <rect x="150" y="792" width="1300" height="1" fill="url(#axis)" opacity=".15"/>
 
-<!-- Sparse data telemetry: a few peripheral nodes and one W-related hexadecimal detail -->
-<g fill="none" stroke="#39FF9A" stroke-width="1" opacity=".34">
-  <circle cx="235" cy="315" r="3.2"/>
-  <circle cx="235" cy="315" r="1" fill="#C8FFE2" stroke="none"/>
-  <circle cx="1360" cy="515" r="3.2"/>
-  <circle cx="1360" cy="515" r="1" fill="#C8FFE2" stroke="none"/>
-  <circle cx="430" cy="735" r="2.4"/>
-  <circle cx="1190" cy="185" r="2.4"/>
+<!-- Cyber Y2K interface details: targeting brackets, sparse telemetry, hex readouts, and circuit traces -->
+<!-- Corner brackets frame the emblem loosely without boxing it in. -->
+<g fill="none" stroke="#39FF9A" stroke-width="2" stroke-linecap="square" opacity=".38">
+  <path d="M510 292 V270 H548 M1052 270 H1090 V292"/>
+  <path d="M510 618 V640 H548 M1052 640 H1090 V618"/>
 </g>
-<g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="12" letter-spacing="2" opacity=".34">
-  <text x="270" y="319">0x57</text>
+<g fill="none" stroke="#39FF9A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".30">
+  <!-- Peripheral circuit traces; kept away from the central W silhouette. -->
+  <path d="M95 390 H155 V365 H205"/>
+  <path d="M1505 430 H1445 V455 H1395"/>
+  <path d="M360 120 V155 H390 V178"/>
+  <path d="M1240 720 V685 H1208 V660"/>
+  <path d="M95 390 l-7 -4 M95 390 l-7 4"/>
+  <path d="M1505 430 l7 -4 M1505 430 l7 4"/>
+</g>
+<!-- Data nodes: restrained but visible enough to reward a closer look. -->
+<g fill="#39FF9A">
+  <circle cx="205" cy="365" r="3.2" opacity=".65"/>
+  <circle cx="205" cy="365" r="1.1" fill="#C8FFE2"/>
+  <circle cx="1395" cy="455" r="3.2" opacity=".65"/>
+  <circle cx="1395" cy="455" r="1.1" fill="#C8FFE2"/>
+  <circle cx="390" cy="178" r="2.8" opacity=".56"/>
+  <circle cx="1208" cy="660" r="2.8" opacity=".56"/>
+  <circle cx="285" cy="650" r="2.2" opacity=".46"/>
+  <circle cx="1320" cy="240" r="2.2" opacity=".46"/>
+  <circle cx="465" cy="245" r="2.2" opacity=".42"/>
+  <circle cx="1135" cy="590" r="2.2" opacity=".42"/>
+</g>
+<!-- Tiny terminal readouts: the first references W (ASCII 0x57). -->
+<g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="12" letter-spacing="1.7" opacity=".48">
+  <text x="230" y="369">0x57</text>
+  <text x="1270" y="459">NODE_05</text>
+  <text x="300" y="654">SIG: 57</text>
+  <text x="1160" y="244">LINK // 05</text>
 </g>
 
 <!-- Five precise vertex markers -->
