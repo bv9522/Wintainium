@@ -325,6 +325,18 @@ public partial class App : Application
             _ => GetSystemElementTheme()
         };
 
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            var aeroStyle = new ResourceDictionary
+            {
+                Source = new Uri("ms-appx:///Themes/FrutigerAero-Light.xaml")
+            };
+            element.Resources.MergedDictionaries.Add(aeroStyle);
+            ApplyFrutigerAeroTypography(element);
+            return;
+        }
+
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             ClearY2KTextColor(element);
