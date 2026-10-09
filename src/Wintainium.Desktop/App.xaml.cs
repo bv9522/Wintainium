@@ -287,8 +287,8 @@ public partial class App : Application
 
         var themeKey = Settings.Current.Theme switch
         {
-            WintainiumThemePreference.Dark => "Dark",
-            _ => "Light"
+            WintainiumThemePreference.Light => "Light",
+            _ => "Dark"
         };
 
         if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme)
