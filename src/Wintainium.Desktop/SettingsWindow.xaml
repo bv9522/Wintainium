@@ -66,9 +66,11 @@
                 </Border>
 
                 <Border
+                    x:Name="SettingsContentChrome"
                     Grid.Column="1"
                     Margin="24,0,0,0"
-                    Padding="24">
+                    Padding="24"
+                    BorderThickness="1">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="12">
                             <TextBlock
