@@ -75,6 +75,30 @@ public sealed partial class SettingsWindow : Window
             }
         }
 
+        if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && _settings.Current.Theme == WintainiumThemePreference.Light
+            && Content is FrameworkElement glassRoot)
+        {
+            var glass = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
+            var glassEdge = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+            if (glassRoot.FindName("CategoryNavigationChrome") is Border aeroNavigation)
+            {
+                aeroNavigation.Background = glass;
+                aeroNavigation.BorderBrush = glassEdge;
+            }
+            if (glassRoot.FindName("SettingsContentChrome") is Border aeroContent)
+            {
+                aeroContent.Background = glass;
+                aeroContent.BorderBrush = glassEdge;
+            }
+        }
+        else if (Content is FrameworkElement resetRoot
+            && resetRoot.FindName("SettingsContentChrome") is Border resetContent)
+        {
+            resetContent.ClearValue(Border.BackgroundProperty);
+            resetContent.ClearValue(Border.BorderBrushProperty);
+        }
+
         if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
         {
             ApplyY2KSettingsTextColor();
