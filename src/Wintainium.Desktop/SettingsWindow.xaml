@@ -41,23 +41,29 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <ListView x:Name="CategoryList" SelectedIndex="0">
-                    <ListViewItem>
-                        <TextBlock Text="General" />
-                    </ListViewItem>
-                    <ListViewItem>
-                        <TextBlock Text="Appearance" />
-                    </ListViewItem>
-                    <ListViewItem>
-                        <TextBlock Text="Updates" />
-                    </ListViewItem>
-                    <ListViewItem>
-                        <TextBlock Text="Sources" />
-                    </ListViewItem>
-                    <ListViewItem>
-                        <TextBlock Text="Advanced" />
-                    </ListViewItem>
-                </ListView>
+                <Border
+                    x:Name="CategoryNavigationChrome"
+                    Grid.Column="0"
+                    Padding="4"
+                    BorderThickness="1">
+                    <ListView x:Name="CategoryList" SelectedIndex="0">
+                        <ListViewItem>
+                            <TextBlock Text="General" />
+                        </ListViewItem>
+                        <ListViewItem>
+                            <TextBlock Text="Appearance" />
+                        </ListViewItem>
+                        <ListViewItem>
+                            <TextBlock Text="Updates" />
+                        </ListViewItem>
+                        <ListViewItem>
+                            <TextBlock Text="Sources" />
+                        </ListViewItem>
+                        <ListViewItem>
+                            <TextBlock Text="Advanced" />
+                        </ListViewItem>
+                    </ListView>
+                </Border>
 
                 <Border
                     Grid.Column="1"
