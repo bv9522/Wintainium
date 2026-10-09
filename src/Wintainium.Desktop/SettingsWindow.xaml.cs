@@ -80,7 +80,55 @@ public sealed partial class SettingsWindow : Window
             ApplyY2KSettingsTextColor();
             QueueY2KSettingsTextColorPass();
         }
+        else
+        {
+            ClearY2KSettingsOverrides();
+        }
     }
+
+    private void ClearY2KSettingsOverrides()
+    {
+        if (Content is FrameworkElement root)
+        {
+            ClearY2KSettingsOverrides(root);
+        }
+    }
+
+    private static void ClearY2KSettingsOverrides(FrameworkElement element)
+    {
+        switch (element)
+        {
+            case TextBlock textBlock:
+                textBlock.ClearValue(TextBlock.ForegroundProperty);
+                if (IsY2KFont(textBlock.FontFamily?.Source))
+                {
+                    textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                }
+                break;
+            case Control control:
+                control.ClearValue(Control.ForegroundProperty);
+                if (IsY2KFont(control.FontFamily?.Source))
+                {
+                    control.ClearValue(Control.FontFamilyProperty);
+                }
+                break;
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ClearY2KSettingsOverrides(child);
+            }
+        }
+    }
+
+    private static bool IsY2KFont(string? fontSource) =>
+        fontSource is not null &&
+        (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
+         fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
+         fontSource.Contains("Cyberwave 2000", StringComparison.OrdinalIgnoreCase));
 
     private void CategoryList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
