@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#03080E"/>
+    <stop offset=".42" stop-color="#06131A"/>
+    <stop offset="1" stop-color="#080D12"/>
+  </linearGradient>
+  <radialGradient id="halo" cx=".5" cy=".5" r=".72">
+    <stop offset="0" stop-color="#0A3827" stop-opacity=".40"/>
+    <stop offset=".52" stop-color="#06271C" stop-opacity=".16"/>
+    <stop offset="1" stop-color="#02050A" stop-opacity=".52"/>
+  </radialGradient>
+  <linearGradient id="axis" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#39FF9A" stop-opacity="0"/>
+    <stop offset=".5" stop-color="#39FF9A" stop-opacity=".28"/>
+    <stop offset="1" stop-color="#39FF9A" stop-opacity="0"/>
+  </linearGradient>
+  <pattern id="scanlines" width="4" height="8" patternUnits="userSpaceOnUse">
+    <rect width="4" height="1" fill="#39FF9A" opacity=".028"/>
+  </pattern>
+  <filter id="wGlow" x="-35%" y="-35%" width="170%" height="170%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="5"/>
+  </filter>
+  <radialGradient id="vertexGlow">
+    <stop offset="0" stop-color="#39FF9A" stop-opacity=".34"/>
+    <stop offset="1" stop-color="#39FF9A" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<rect width="1600" height="900" fill="url(#halo)"/>
+<rect width="1600" height="900" fill="url(#scanlines)"/>
+
+<!-- Minimal technical grid texture, deliberately secondary to the emblem -->
+<g fill="none" stroke="#1C754B" stroke-width=".7" opacity=".11">
+  <path d="M0 225 H1600 M0 675 H1600"/>
+  <path d="M300 0 V900 M1300 0 V900"/>
+</g>
+
+<!-- Five restrained perspective fans. Every ray ends at one of the W's five vertices. -->
+<g fill="none" stroke="#39FF9A" stroke-width="1.15" stroke-linecap="round" opacity=".25">
+  <!-- Left upper endpoint -->
+  <path d="M0 0 L600 340 M0 450 L600 340 M150 900 L600 340 M800 0 L600 340"/>
+  <!-- Left inner valley -->
+  <path d="M0 180 L700 560 M250 0 L700 560 M0 900 L700 560 M520 900 L700 560"/>
+  <!-- Center peak -->
+  <path d="M450 0 L800 390 M800 0 L800 390 M1150 0 L800 390 M1600 180 L800 390 M1600 720 L800 390"/>
+  <!-- Right inner valley -->
+  <path d="M1080 0 L900 560 M1600 0 L900 560 M1600 450 L900 560 M1120 900 L900 560"/>
+  <!-- Right upper endpoint -->
+  <path d="M800 0 L1000 340 M1600 0 L1000 340 M1600 450 L1000 340 M1450 900 L1000 340"/>
+</g>
+
+<!-- Soft glow anchors at the five exact W vertices -->
+<g>
+  <circle cx="600" cy="340" r="38" fill="url(#vertexGlow)"/>
+  <circle cx="700" cy="560" r="38" fill="url(#vertexGlow)"/>
+  <circle cx="800" cy="390" r="38" fill="url(#vertexGlow)"/>
+  <circle cx="900" cy="560" r="38" fill="url(#vertexGlow)"/>
+  <circle cx="1000" cy="340" r="38" fill="url(#vertexGlow)"/>
+</g>
+
+<!-- Central Cyber Y2K W emblem -->
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter" filter="url(#wGlow)">
+  <path d="M600 340 L700 560 L800 390 L900 560 L1000 340"
+        stroke="#39FF9A" stroke-width="13" opacity=".88"/>
+  <path d="M600 340 L700 560 L800 390 L900 560 L1000 340"
+        stroke="#C8FFE2" stroke-width="2.4"/>
+  <!-- Downward acquisition arrow sits below the W's center junction -->
+  <path d="M800 420 V485 M780 466 L800 486 L820 466"
+        stroke="#39FF9A" stroke-width="5.5"/>
+  <path d="M800 424 V480 M786 466 L800 480 L814 466"
+        stroke="#E0FFEE" stroke-width="1.6"/>
+</g>
+
+<!-- Quiet horizontal system traces -->
+<rect x="150" y="108" width="1300" height="1" fill="url(#axis)" opacity=".28"/>
+<rect x="150" y="792" width="1300" height="1" fill="url(#axis)" opacity=".15"/>
+
+<!-- Sparse stepped hexadecimal telemetry only; no decorative borders or circuit traces. -->
+<!-- Four sparse hexadecimal readouts, staggered like steps across the canvas. -->
+<!-- Opacity fallback remains subtle if the SVG host ignores SMIL animation. -->
+<g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="18" letter-spacing="1.6">
+  <text x="220" y="222" opacity=".82">0x57<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
+  <text x="1190" y="326" opacity=".82">0x4E<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
+  <text x="315" y="714" opacity=".82">0x31<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
+  <text x="1100" y="754" opacity=".82">0x05<animate attributeName="opacity" values=".52;.95;.95;.52" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
+</g>
+
+<!-- Five precise vertex markers -->
+<g fill="#39FF9A">
+  <circle cx="600" cy="340" r="3.4" opacity=".9"/>
+  <circle cx="700" cy="560" r="3.4" opacity=".9"/>
+  <circle cx="800" cy="390" r="3.4" opacity=".9"/>
+  <circle cx="900" cy="560" r="3.4" opacity=".9"/>
+  <circle cx="1000" cy="340" r="3.4" opacity=".9"/>
+</g>
+<g fill="#39FF9A" opacity=".12" filter="url(#softGlow)">
+  <circle cx="600" cy="340" r="10"/>
+  <circle cx="700" cy="560" r="10"/>
+  <circle cx="800" cy="390" r="10"/>
+  <circle cx="900" cy="560" r="10"/>
+  <circle cx="1000" cy="340" r="10"/>
+</g>
+</svg>
