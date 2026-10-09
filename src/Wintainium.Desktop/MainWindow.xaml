@@ -238,4 +238,10 @@
             </StackPanel>
         </Grid>
     </Grid>
+        <Grid x:Name="Y2KHexTelemetry" IsHitTestVisible="False" Visibility="Collapsed">
+            <TextBlock x:Name="HexReadout1" Text="0x57" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,112,0,0" />
+            <TextBlock x:Name="HexReadout2" Text="0x4E" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,196,72,0" />
+            <TextBlock x:Name="HexReadout3" Text="0x31" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="104,0,0,104" />
+            <TextBlock x:Name="HexReadout4" Text="0x05" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,90,72" />
+        </Grid>
 </Window>
