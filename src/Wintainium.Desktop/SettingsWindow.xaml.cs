@@ -90,28 +90,77 @@ public sealed partial class SettingsWindow : Window
     {
         if (Content is FrameworkElement root)
         {
-            ClearY2KSettingsOverrides(root);
+            RefreshY2KSettingsElements(root, applyY2K: false, new HashSet<FrameworkElement>());
         }
     }
 
-    private static void ClearY2KSettingsOverrides(FrameworkElement element)
+    private void RefreshY2KSettingsElements(
+        FrameworkElement element,
+        bool applyY2K,
+        HashSet<FrameworkElement> visited)
     {
-        switch (element)
+        if (!visited.Add(element))
         {
-            case TextBlock textBlock:
-                textBlock.ClearValue(TextBlock.ForegroundProperty);
-                if (IsY2KFont(textBlock.FontFamily?.Source))
+            return;
+        }
+
+        if (applyY2K)
+        {
+            var textBrush = App.GetY2KTextBrush();
+            var displayFont = App.GetY2KDisplayFont();
+            switch (element)
+            {
+                case TextBlock textBlock:
+                    textBlock.Foreground = textBrush;
+                    textBlock.FontFamily = displayFont;
+                    break;
+                case Control control:
+                    control.Foreground = textBrush;
+                    control.FontFamily = displayFont;
+                    break;
+            }
+        }
+        else
+        {
+            switch (element)
+            {
+                case TextBlock textBlock:
+                    textBlock.ClearValue(TextBlock.ForegroundProperty);
+                    if (IsY2KFont(textBlock.FontFamily?.Source))
+                    {
+                        textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                    }
+                    break;
+                case Control control:
+                    control.ClearValue(Control.ForegroundProperty);
+                    if (IsY2KFont(control.FontFamily?.Source))
+                    {
+                        control.ClearValue(Control.FontFamilyProperty);
+                    }
+                    break;
+            }
+        }
+
+        // ComboBox headers and ItemsSource entries are not necessarily in the
+        // visual tree until the dropdown opens. Refresh them explicitly so
+        // their Y2K styling cannot survive a theme or visual-style change.
+        if (element is ComboBox comboBox)
+        {
+            if (comboBox.Header is FrameworkElement headerElement)
+            {
+                RefreshY2KSettingsElements(headerElement, applyY2K, visited);
+            }
+
+            if (comboBox.ItemsSource is System.Collections.IEnumerable items)
+            {
+                foreach (var item in items)
                 {
-                    textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                    if (item is FrameworkElement itemElement)
+                    {
+                        RefreshY2KSettingsElements(itemElement, applyY2K, visited);
+                    }
                 }
-                break;
-            case Control control:
-                control.ClearValue(Control.ForegroundProperty);
-                if (IsY2KFont(control.FontFamily?.Source))
-                {
-                    control.ClearValue(Control.FontFamilyProperty);
-                }
-                break;
+            }
         }
 
         var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
@@ -119,7 +168,7 @@ public sealed partial class SettingsWindow : Window
         {
             if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ClearY2KSettingsOverrides(child);
+                RefreshY2KSettingsElements(child, applyY2K, visited);
             }
         }
     }
@@ -466,34 +515,7 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        ApplyY2KSettingsTextColor(root, App.GetY2KTextBrush(), App.GetY2KDisplayFont());
-    }
-
-    private static void ApplyY2KSettingsTextColor(
-        FrameworkElement element,
-        Microsoft.UI.Xaml.Media.Brush textBrush,
-        Microsoft.UI.Xaml.Media.FontFamily displayFont)
-    {
-        switch (element)
-        {
-            case TextBlock textBlock:
-                textBlock.Foreground = textBrush;
-                textBlock.FontFamily = displayFont;
-                break;
-            case Control control:
-                control.Foreground = textBrush;
-                control.FontFamily = displayFont;
-                break;
-        }
-
-        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
-        for (var index = 0; index < childCount; index++)
-        {
-            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
-            {
-                ApplyY2KSettingsTextColor(child, textBrush, displayFont);
-            }
-        }
+        RefreshY2KSettingsElements(root, applyY2K: true, new HashSet<FrameworkElement>());
     }
 
     private void AddSectionHeader(string text)
