@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Windowing;
 using Windows.System;
 using Wintainium.Desktop.Models;
@@ -24,6 +25,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeHexTelemetryAnimations();
         Title = "Wintainium";
         _services = ((App)Application.Current).Services;
 
@@ -40,8 +42,35 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void InitializeHexTelemetryAnimations()
+    {
+        var readouts = new[] { HexReadout1, HexReadout2, HexReadout3, HexReadout4 };
+        for (var index = 0; index < readouts.Length; index++)
+        {
+            var animation = new DoubleAnimation
+            {
+                From = 0.22,
+                To = 0.92,
+                Duration = new Duration(TimeSpan.FromSeconds(2.4)),
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                BeginTime = TimeSpan.FromSeconds(index * 1.35)
+            };
+            Storyboard.SetTarget(animation, readouts[index]);
+            Storyboard.SetTargetProperty(animation, "Opacity");
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(animation);
+            storyboard.Begin();
+        }
+    }
+
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
+        Y2KHexTelemetry.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
