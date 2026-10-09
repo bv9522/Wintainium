@@ -2,73 +2,108 @@
 <defs>
   <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#03080E"/>
-    <stop offset=".38" stop-color="#06131F"/>
-    <stop offset=".72" stop-color="#050F1A"/>
-    <stop offset="1" stop-color="#0B0820"/>
+    <stop offset=".38" stop-color="#06131A"/>
+    <stop offset=".72" stop-color="#050F16"/>
+    <stop offset="1" stop-color="#080D12"/>
   </linearGradient>
-  <radialGradient id="halo" cx=".52" cy=".40" r=".76">
-    <stop offset="0" stop-color="#0B4160" stop-opacity=".42"/>
-    <stop offset=".42" stop-color="#07304A" stop-opacity=".18"/>
-    <stop offset=".72" stop-color="#06111D" stop-opacity=".06"/>
-    <stop offset="1" stop-color="#02050A" stop-opacity=".42"/>
+  <radialGradient id="halo" cx=".5" cy=".5" r=".72">
+    <stop offset="0" stop-color="#0A3827" stop-opacity=".44"/>
+    <stop offset=".48" stop-color="#06271C" stop-opacity=".20"/>
+    <stop offset="1" stop-color="#02050A" stop-opacity=".55"/>
   </radialGradient>
   <linearGradient id="grid" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#25C4FF" stop-opacity=".23"/>
-    <stop offset="1" stop-color="#08739F" stop-opacity=".08"/>
+    <stop offset="0" stop-color="#39FF9A" stop-opacity=".24"/>
+    <stop offset="1" stop-color="#168D58" stop-opacity=".07"/>
   </linearGradient>
-  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#00B7FF" stop-opacity="0"/>
-    <stop offset=".5" stop-color="#00B7FF" stop-opacity=".48"/>
-    <stop offset="1" stop-color="#00B7FF" stop-opacity="0"/>
+  <linearGradient id="axis" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#39FF9A" stop-opacity="0"/>
+    <stop offset=".5" stop-color="#39FF9A" stop-opacity=".48"/>
+    <stop offset="1" stop-color="#39FF9A" stop-opacity="0"/>
   </linearGradient>
   <pattern id="scanlines" width="4" height="8" patternUnits="userSpaceOnUse">
-    <rect width="4" height="1" fill="#57CFFF" opacity=".035"/>
+    <rect width="4" height="1" fill="#39FF9A" opacity=".035"/>
   </pattern>
-  <filter id="glow">
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
     <feGaussianBlur stdDeviation="5"/>
   </filter>
+  <filter id="wGlow" x="-35%" y="-35%" width="170%" height="170%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <radialGradient id="vertexGlow">
+    <stop offset="0" stop-color="#39FF9A" stop-opacity=".42"/>
+    <stop offset="1" stop-color="#39FF9A" stop-opacity="0"/>
+  </radialGradient>
 </defs>
-
 <rect width="1600" height="900" fill="url(#bg)"/>
 <rect width="1600" height="900" fill="url(#halo)"/>
 <rect width="1600" height="900" fill="url(#scanlines)"/>
 
-<!-- Fine technical grid -->
-<g stroke="url(#grid)" fill="none">
-  <path d="M0 150 H1600 M0 300 H1600 M0 450 H1600 M0 600 H1600 M0 750 H1600" stroke-width="1" opacity=".34"/>
-  <path d="M100 0 V900 M300 0 V900 M500 0 V900 M700 0 V900 M900 0 V900 M1100 0 V900 M1300 0 V900 M1500 0 V900" stroke-width="1" opacity=".30"/>
+<!-- Fine green technical grid -->
+<g stroke="url(#grid)" fill="none" stroke-width="1">
+  <path d="M0 150 H1600 M0 300 H1600 M0 450 H1600 M0 600 H1600 M0 750 H1600" opacity=".25"/>
+  <path d="M100 0 V900 M300 0 V900 M500 0 V900 M700 0 V900 M900 0 V900 M1100 0 V900 M1300 0 V900 M1500 0 V900" opacity=".22"/>
 </g>
-
-<!-- Secondary micro-grid -->
-<g stroke="#1B6688" stroke-width=".5" opacity=".20">
+<g stroke="#1C754B" stroke-width=".5" opacity=".18" fill="none">
   <path d="M0 75 H1600 M0 225 H1600 M0 375 H1600 M0 525 H1600 M0 675 H1600 M0 825 H1600"/>
   <path d="M0 0 V900 M200 0 V900 M400 0 V900 M600 0 V900 M800 0 V900 M1000 0 V900 M1200 0 V900 M1400 0 V900 M1600 0 V900"/>
 </g>
 
-<!-- Restrained perspective traces -->
-<g stroke="#00B7FF" fill="none">
-  <path d="M0 840 L800 500 L1600 840" stroke-width="1" opacity=".20"/>
-  <path d="M0 885 L800 525 L1600 885" stroke-width="1" opacity=".12"/>
-  <path d="M260 900 L800 520 L1340 900" stroke-width="1" opacity=".11"/>
-  <path d="M540 900 L800 520 L1060 900" stroke-width="1" opacity=".09"/>
-  <path d="M800 520 V0" stroke-width="1" opacity=".10"/>
+<!-- Perspective data lines converge on the five vertices of the W -->
+<g fill="none" stroke="#39FF9A" stroke-width="1.15" stroke-linecap="round" opacity=".28">
+  <path d="M0 0 L600 340 M250 0 L600 340 M500 0 L600 340 M800 0 L600 340 M1100 0 L600 340 M1400 0 L600 340 M1600 0 L600 340"/>
+  <path d="M0 180 L600 340 M0 450 L600 340 M0 720 L600 340 M0 900 L600 340 M300 900 L600 340 M600 900 L600 340"/>
+  <path d="M1600 100 L600 340 M1600 350 L600 340 M1600 600 L600 340 M1600 850 L600 340"/>
+  <path d="M0 0 L700 560 M300 0 L700 560 M600 0 L700 560 M900 0 L700 560 M1200 0 L700 560 M1600 0 L700 560"/>
+  <path d="M0 250 L700 560 M0 500 L700 560 M0 750 L700 560 M0 900 L700 560 M400 900 L700 560"/>
+  <path d="M1600 180 L700 560 M1600 450 L700 560 M1600 720 L700 560 M1300 900 L700 560"/>
+  <path d="M0 0 L800 390 M250 0 L800 390 M500 0 L800 390 M750 0 L800 390 M1050 0 L800 390 M1350 0 L800 390 M1600 0 L800 390"/>
+  <path d="M0 180 L800 390 M0 450 L800 390 M0 720 L800 390 M0 900 L800 390 M400 900 L800 390 M800 900 L800 390"/>
+  <path d="M1600 180 L800 390 M1600 450 L800 390 M1600 720 L800 390 M1600 900 L800 390"/>
+  <path d="M0 0 L900 560 M400 0 L900 560 M800 0 L900 560 M1200 0 L900 560 M1600 0 L900 560"/>
+  <path d="M0 180 L900 560 M0 450 L900 560 M0 720 L900 560 M0 900 L900 560 M800 900 L900 560"/>
+  <path d="M1600 250 L900 560 M1600 500 L900 560 M1600 750 L900 560 M1200 900 L900 560"/>
+  <path d="M0 0 L1000 340 M300 0 L1000 340 M600 0 L1000 340 M900 0 L1000 340 M1200 0 L1000 340 M1600 0 L1000 340"/>
+  <path d="M0 180 L1000 340 M0 450 L1000 340 M0 720 L1000 340 M0 900 L1000 340"/>
+  <path d="M1600 100 L1000 340 M1600 350 L1000 340 M1600 600 L1000 340 M1600 850 L1000 340 M1300 900 L1000 340"/>
 </g>
 
-<!-- Quiet system-axis highlight -->
-<rect x="150" y="108" width="1300" height="1" fill="url(#accent)" opacity=".38"/>
-<rect x="150" y="792" width="1300" height="1" fill="url(#accent)" opacity=".20"/>
+<!-- Soft vertex halos -->
+<g>
+  <circle cx="600" cy="340" r="42" fill="url(#vertexGlow)"/>
+  <circle cx="700" cy="560" r="42" fill="url(#vertexGlow)"/>
+  <circle cx="800" cy="390" r="42" fill="url(#vertexGlow)"/>
+  <circle cx="900" cy="560" r="42" fill="url(#vertexGlow)"/>
+  <circle cx="1000" cy="340" r="42" fill="url(#vertexGlow)"/>
+</g>
 
-<!-- Sparse network nodes -->
+<!-- Central Cyber Y2K W emblem: five vertices, green only -->
+<g fill="none" stroke-linecap="square" stroke-linejoin="miter" filter="url(#wGlow)">
+  <path d="M600 340 L700 560 L800 390 L900 560 L1000 340"
+        stroke="#39FF9A" stroke-width="13" opacity=".88"/>
+  <path d="M600 340 L700 560 L800 390 L900 560 L1000 340"
+        stroke="#C8FFE2" stroke-width="2.4"/>
+  <path d="M800 282 V348 M781 330 L800 349 L819 330"
+        stroke="#39FF9A" stroke-width="5.5"/>
+  <path d="M800 286 V343 M786 329 L800 343 L814 329"
+        stroke="#E0FFEE" stroke-width="1.6"/>
+</g>
+
+<!-- Restrained system axes and five endpoint markers -->
+<rect x="150" y="108" width="1300" height="1" fill="url(#axis)" opacity=".34"/>
+<rect x="150" y="792" width="1300" height="1" fill="url(#axis)" opacity=".18"/>
 <g fill="#39FF9A">
-  <circle cx="800" cy="520" r="2.5" opacity=".55"/>
-  <circle cx="500" cy="600" r="1.8" opacity=".34"/>
-  <circle cx="1100" cy="600" r="1.8" opacity=".34"/>
-  <circle cx="300" cy="750" r="1.5" opacity=".24"/>
-  <circle cx="1300" cy="750" r="1.5" opacity=".24"/>
+  <circle cx="600" cy="340" r="3.4" opacity=".9"/>
+  <circle cx="700" cy="560" r="3.4" opacity=".9"/>
+  <circle cx="800" cy="390" r="3.4" opacity=".9"/>
+  <circle cx="900" cy="560" r="3.4" opacity=".9"/>
+  <circle cx="1000" cy="340" r="3.4" opacity=".9"/>
 </g>
-<g fill="#00B7FF">
-  <circle cx="800" cy="520" r="8" opacity=".08" filter="url(#glow)"/>
-  <circle cx="500" cy="600" r="6" opacity=".05" filter="url(#glow)"/>
-  <circle cx="1100" cy="600" r="6" opacity=".05" filter="url(#glow)"/>
+<g fill="#39FF9A" opacity=".12" filter="url(#glow)">
+  <circle cx="600" cy="340" r="11"/>
+  <circle cx="700" cy="560" r="11"/>
+  <circle cx="800" cy="390" r="11"/>
+  <circle cx="900" cy="560" r="11"/>
+  <circle cx="1000" cy="340" r="11"/>
 </g>
 </svg>
