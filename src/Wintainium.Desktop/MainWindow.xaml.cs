@@ -145,6 +145,46 @@ public sealed partial class MainWindow : Window
         System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         UpdateCollectionVisibility();
+        RefreshSoftwareCardTextColors();
+    }
+
+    private void SoftwareCard_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement card)
+        {
+            ApplySoftwareCardTextColor(card);
+        }
+    }
+
+    internal void RefreshSoftwareCardTextColors()
+    {
+        ApplySoftwareCardTextColor(ApplicationListView);
+        ApplySoftwareCardTextColor(ApplicationGridView);
+    }
+
+    private static void ApplySoftwareCardTextColor(FrameworkElement element)
+    {
+        if (element is TextBlock textBlock &&
+            !(textBlock.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+        {
+            if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+            {
+                textBlock.Foreground = App.GetY2KTextBrush();
+            }
+            else
+            {
+                textBlock.ClearValue(TextBlock.ForegroundProperty);
+            }
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplySoftwareCardTextColor(child);
+            }
+        }
     }
 
     private void UpdateCollectionVisibility()
@@ -382,6 +422,8 @@ public sealed partial class MainWindow : Window
         {
             content.Loaded -= MainWindow_Loaded;
         }
+
+        RefreshSoftwareCardTextColors();
         await RefreshApplicationCollectionAsync();
     }
 
