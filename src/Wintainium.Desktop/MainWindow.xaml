@@ -2,8 +2,7 @@
     x:Class="Wintainium.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
-    xmlns:media="using:Microsoft.UI.Xaml.Media.Imaging">
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -55,17 +54,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <Image
-                    x:Name="Y2KMainWindowLogo"
-                    Width="44"
-                    Height="34"
-                    Stretch="Uniform"
-                    Visibility="Collapsed">
-                    <Image.Source>
-                        <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkW.svg" />
-                    </Image.Source>
-                </Image>
-                <StackPanel Spacing="4" VerticalAlignment="Center">
+<StackPanel Spacing="4" VerticalAlignment="Center">
                     <TextBlock
                         Text="My Software"
                         Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
