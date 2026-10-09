@@ -563,11 +563,6 @@ public partial class App : Application
             return;
         }
 
-        if (isMainWindowRoot && (element.Name is "ApplicationListView" or "ApplicationGridView"))
-        {
-            return;
-        }
-
         switch (element)
         {
             case TextBlock textBlock:
@@ -575,11 +570,13 @@ public partial class App : Application
                 {
                     textBlock.FontFamily = font;
                     textBlock.Foreground = textBrush;
+                    textBlock.FontSize = Math.Max(textBlock.FontSize, 15);
                 }
                 break;
             case Control control:
                 control.FontFamily = font;
                 control.Foreground = textBrush;
+                control.FontSize = Math.Max(control.FontSize, 15);
                 break;
         }
 
