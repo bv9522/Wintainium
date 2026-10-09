@@ -92,6 +92,11 @@ public partial class App : Application
                 QueueY2KTextColorPass(content);
             }
 
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.RefreshSoftwareCardTextColors();
+            }
+
             if (window is SettingsWindow settingsWindow)
             {
                 settingsWindow.RefreshAppearance();
@@ -261,6 +266,11 @@ public partial class App : Application
                 && window.Content is FrameworkElement content)
             {
                 QueueY2KTextColorPass(content);
+            }
+
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.RefreshSoftwareCardTextColors();
             }
 
             if (window is SettingsWindow settingsWindow)
