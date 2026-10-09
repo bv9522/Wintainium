@@ -238,11 +238,46 @@
             </StackPanel>
         </Grid>
             <Grid x:Name="Y2KHexTelemetry" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
-            <TextBlock x:Name="HexReadout1" Text="0x57" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,112,0,0" />
-            <TextBlock x:Name="HexReadout2" Text="0x4E" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,196,72,0" />
-            <TextBlock x:Name="HexReadout3" Text="0x31" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="104,0,0,104" />
-            <TextBlock x:Name="HexReadout4" Text="0x05" Foreground="#39FF9A" FontFamily="Consolas" FontSize="13" CharacterSpacing="180" Opacity="0.78" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,90,72" />
-        </Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="HexReadout1" Grid.Row="0" Grid.Column="0" Text="0x57A9" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="22,24,0,0" />
+                <TextBlock x:Name="HexReadout2" Grid.Row="0" Grid.Column="1" Text="NODE04" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0" />
+                <TextBlock x:Name="HexReadout3" Grid.Row="0" Grid.Column="2" Text="A7C31" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0" />
+                <TextBlock x:Name="HexReadout4" Grid.Row="0" Grid.Column="3" Text="4E2F" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,28,28,0" />
+                <TextBlock x:Name="HexReadout5" Grid.Row="1" Grid.Column="0" Text="SYS08" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0,0,0" />
+                <TextBlock x:Name="HexReadout6" Grid.Row="1" Grid.Column="1" Text="B19D" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="18,0,0,22" />
+                <TextBlock x:Name="HexReadout7" Grid.Row="1" Grid.Column="2" Text="7F0A" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,26,18,0" />
+                <TextBlock x:Name="HexReadout8" Grid.Row="1" Grid.Column="3" Text="C0DE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,12,0,0" />
+                <TextBlock x:Name="HexReadout9" Grid.Row="2" Grid.Column="0" Text="31AF" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0" />
+                <TextBlock x:Name="HexReadout10" Grid.Row="2" Grid.Column="1" Text="DATA6" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,28,0,0" />
+                <TextBlock x:Name="HexReadout11" Grid.Row="2" Grid.Column="2" Text="9B42" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <TextBlock x:Name="HexReadout12" Grid.Row="2" Grid.Column="3" Text="RX204" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18" />
+                <TextBlock x:Name="HexReadout13" Grid.Row="3" Grid.Column="0" Text="05E1" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="28,0,0,0" />
+                <TextBlock x:Name="HexReadout14" Grid.Row="3" Grid.Column="1" Text="F8A2" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,18" />
+                <TextBlock x:Name="HexReadout15" Grid.Row="3" Grid.Column="2" Text="KERNEL7" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0" />
+                <TextBlock x:Name="HexReadout16" Grid.Row="3" Grid.Column="3" Text="2D6C" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,16,0,0" />
+                <TextBlock x:Name="HexReadout17" Grid.Row="4" Grid.Column="0" Text="UPLINK" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0" />
+                <TextBlock x:Name="HexReadout18" Grid.Row="4" Grid.Column="1" Text="8A0F" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="24,0,0,0" />
+                <TextBlock x:Name="HexReadout19" Grid.Row="4" Grid.Column="2" Text="E31B" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,22,0" />
+                <TextBlock x:Name="HexReadout20" Grid.Row="4" Grid.Column="3" Text="7C5D" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,22" />
+                <TextBlock x:Name="HexReadout21" Grid.Row="5" Grid.Column="0" Text="MATRIX9" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,10,0,0" />
+                <TextBlock x:Name="HexReadout22" Grid.Row="5" Grid.Column="1" Text="4B70" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" />
+                <TextBlock x:Name="HexReadout23" Grid.Row="5" Grid.Column="2" Text="AX19" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0" />
+                <TextBlock x:Name="HexReadout24" Grid.Row="5" Grid.Column="3" Text="0F6E" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,12,22,0" />
+            </Grid>
+
     </Grid>
 
 </Window>
