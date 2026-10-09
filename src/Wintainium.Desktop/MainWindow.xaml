@@ -2,7 +2,8 @@
     x:Class="Wintainium.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:media="using:Microsoft.UI.Xaml.Media.Imaging">
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -28,13 +29,28 @@
                     <GradientStop Color="#8A9AA4" Offset="1" />
                 </LinearGradientBrush>
             </Grid.Background>
-            <TextBlock
-                x:Name="Y2KTitleBarText"
-                Text="Wintainium"
-                VerticalAlignment="Center"
-                FontSize="16"
-                FontWeight="SemiBold"
-                Foreground="#765CFF" />
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8"
+                VerticalAlignment="Center">
+                <Image
+                    x:Name="Y2KTitleBarLogo"
+                    Width="28"
+                    Height="24"
+                    Stretch="Uniform"
+                    Visibility="Collapsed">
+                    <Image.Source>
+                        <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkW.svg" />
+                    </Image.Source>
+                </Image>
+                <TextBlock
+                    x:Name="Y2KTitleBarText"
+                    Text="Wintainium"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Foreground="#765CFF" />
+            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1" Padding="28,24,28,16">
