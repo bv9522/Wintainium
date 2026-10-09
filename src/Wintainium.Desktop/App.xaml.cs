@@ -91,6 +91,11 @@ public partial class App : Application
             {
                 QueueY2KTextColorPass(content);
             }
+
+            if (window is SettingsWindow settingsWindow)
+            {
+                settingsWindow.RefreshAppearance();
+            }
         }
     }
 
@@ -257,6 +262,11 @@ public partial class App : Application
             {
                 QueueY2KTextColorPass(content);
             }
+
+            if (window is SettingsWindow settingsWindow)
+            {
+                settingsWindow.RefreshAppearance();
+            }
         }
     }
 
@@ -339,6 +349,48 @@ public partial class App : Application
         var textBrush = GetY2KTextBrush();
         var displayFont = GetY2KDisplayFont();
         ApplyY2KContentDialogTypography(dialog, textBrush, displayFont, dialog.CloseButtonStyle);
+        ApplyY2KContentDialogButtonAreaBackground(dialog);
+    }
+
+    private static void ApplyY2KContentDialogButtonAreaBackground(FrameworkElement element)
+    {
+        var isButtonArea = element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host";
+        if (isButtonArea)
+        {
+            if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K &&
+                Settings.Current.Theme == WintainiumThemePreference.Light)
+            {
+                var chromeBrush = GetY2KLightChromeBrush();
+                if (element is Panel panel)
+                {
+                    panel.Background = chromeBrush;
+                }
+                else if (element is Border border)
+                {
+                    border.Background = chromeBrush;
+                }
+            }
+            else
+            {
+                if (element is Panel panel)
+                {
+                    panel.ClearValue(Panel.BackgroundProperty);
+                }
+                else if (element is Border border)
+                {
+                    border.ClearValue(Border.BackgroundProperty);
+                }
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyY2KContentDialogButtonAreaBackground(child);
+            }
+        }
     }
 
     private static void ApplyY2KContentDialogTypography(
@@ -473,6 +525,26 @@ public partial class App : Application
             }
         }
     }
+
+    internal static Brush GetY2KLightChromeBrush()
+    {
+        return new LinearGradientBrush
+        {
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            EndPoint = new Windows.Foundation.Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xF4, 0xF7, 0xF9), Offset = 0 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xC7, 0xD2, 0xD9), Offset = 0.22 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x71, 0x82, 0x8C), Offset = 0.48 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xD9, 0xE2, 0xE7), Offset = 0.70 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x8A, 0x9A, 0xA4), Offset = 1 }
+            }
+        };
+    }
+
+    internal static Brush GetY2KLightChromeEdgeBrush() =>
+        new SolidColorBrush(ColorHelper.FromArgb(255, 0x60, 0x78, 0x87));
 
     internal static Brush GetY2KTextBrush()
     {
