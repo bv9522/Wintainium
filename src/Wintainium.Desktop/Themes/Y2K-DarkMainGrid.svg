@@ -80,20 +80,14 @@
 <rect x="150" y="108" width="1300" height="1" fill="url(#axis)" opacity=".28"/>
 <rect x="150" y="792" width="1300" height="1" fill="url(#axis)" opacity=".15"/>
 
-<!-- Cyber Y2K interface details: four clear corner brackets and stepped hexadecimal telemetry -->
-<!-- Four corner brackets frame the full canvas; no border around the central W. -->
-<g fill="none" stroke="#39FF9A" stroke-width="2.8" stroke-linecap="square" opacity=".78">
-  <path d="M42 92 V42 H92 M1508 42 H1558 V92"/>
-  <path d="M42 808 V858 H92 M1508 858 H1558 V808"/>
-</g>
-
-<!-- Hexadecimal readouts fade in sequence, with each label offset by two seconds. -->
-<!-- Base opacity keeps the labels legible if the SVG host does not support SMIL animation. -->
+<!-- Sparse stepped hexadecimal telemetry only; no decorative borders or circuit traces. -->
+<!-- Four sparse hexadecimal readouts, staggered like steps across the canvas. -->
+<!-- Opacity fallback remains subtle if the SVG host ignores SMIL animation. -->
 <g fill="#39FF9A" font-family="Consolas, 'Courier New', monospace" font-size="18" letter-spacing="1.6">
-  <text x="220" y="222" opacity=".78">0x57<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
-  <text x="1190" y="326" opacity=".78">0x4E<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
-  <text x="315" y="714" opacity=".78">0x31<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
-  <text x="1100" y="754" opacity=".78">0x05<animate attributeName="opacity" values=".12;.95;.95;.12" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
+  <text x="220" y="222" opacity=".12">0x57<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="0s" repeatCount="indefinite"/></text>
+  <text x="1190" y="326" opacity=".12">0x4E<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="2s" repeatCount="indefinite"/></text>
+  <text x="315" y="714" opacity=".12">0x31<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="4s" repeatCount="indefinite"/></text>
+  <text x="1100" y="754" opacity=".12">0x05<animate attributeName="opacity" values=".08;.95;.95;.08" keyTimes="0;.18;.58;1" dur="8s" begin="6s" repeatCount="indefinite"/></text>
 </g>
 
 <!-- Five precise vertex markers -->
