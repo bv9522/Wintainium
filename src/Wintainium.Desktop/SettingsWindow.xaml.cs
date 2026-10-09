@@ -84,6 +84,13 @@ public sealed partial class SettingsWindow : Window
         {
             ClearY2KSettingsOverrides();
         }
+
+        if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && _settings.Current.Theme == WintainiumThemePreference.Light
+            && Content is FrameworkElement aeroRoot)
+        {
+            App.ApplyFrutigerAeroTypography(aeroRoot);
+        }
     }
 
     private void ClearY2KSettingsOverrides()
@@ -244,6 +251,13 @@ public sealed partial class SettingsWindow : Window
         ApplyY2KSettingsTextColor();
         QueueY2KSettingsTextColorPass();
         QueueY2KSettingsLoadedColorPass();
+
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Light
+            && Content is FrameworkElement aeroRoot)
+        {
+            App.ApplyFrutigerAeroTypography(aeroRoot);
+        }
     }
 
     private void QueueY2KSettingsLoadedColorPass()
@@ -596,7 +610,7 @@ public sealed partial class SettingsWindow : Window
 
         _categoryContent.Children.Add(theme);
         _categoryContent.Children.Add(visualStyle);
-        AddPlaceholder("Theme and visual style are active and apply immediately. Y2K is the first visual style foundation; additional style layers will be implemented separately.");
+        AddPlaceholder("Theme and visual style changes apply immediately. Frutiger Aero light mode uses a bright aqua glass-inspired palette and Horatio D typography.");
     }
 
     private void AddPlaceholder(string text)
