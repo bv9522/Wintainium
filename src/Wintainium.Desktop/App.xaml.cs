@@ -73,6 +73,11 @@ public partial class App : Application
                 {
                     QueueY2KTextColorPass(content);
                 }
+                else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
+                }
             }
 
             content.Loaded += ApplyVisualStyleAfterLoaded;
@@ -86,10 +91,17 @@ public partial class App : Application
             ApplyThemeToWindow(window);
             ApplyVisualStyleToWindow(window);
             RefreshThemeResources(window);
-            if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-                && window.Content is FrameworkElement content)
+            if (window.Content is FrameworkElement content)
             {
-                QueueY2KTextColorPass(content);
+                if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+                {
+                    QueueY2KTextColorPass(content);
+                }
+                else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
+                }
             }
 
             if (window is MainWindow mainWindow)
@@ -150,10 +162,24 @@ public partial class App : Application
             WindowVisualStyleResources.Remove(windowId);
         }
 
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            var aeroStyle = new ResourceDictionary
+            {
+                Source = new Uri("ms-appx:///Themes/FrutigerAero-Light.xaml")
+            };
+            content.Resources.MergedDictionaries.Add(aeroStyle);
+            var activeAeroTheme = new ResourceDictionary();
+            WindowVisualStyleResources[windowId] = (aeroStyle, activeAeroTheme);
+            ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
+            ApplyWindowChromeForCurrentVisualStyle(window);
+            return;
+        }
+
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             ClearY2KTextColor(content);
-
             ApplyWindowChromeForCurrentVisualStyle(window);
             return;
         }
@@ -262,10 +288,17 @@ public partial class App : Application
             ApplyVisualStyleToWindow(window);
             RefreshThemeResources(window);
 
-            if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-                && window.Content is FrameworkElement content)
+            if (window.Content is FrameworkElement content)
             {
-                QueueY2KTextColorPass(content);
+                if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
+                {
+                    QueueY2KTextColorPass(content);
+                }
+                else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
+                }
             }
 
             if (window is MainWindow mainWindow)
@@ -453,7 +486,10 @@ public partial class App : Application
                 textBlock.ClearValue(TextBlock.ForegroundProperty);
                 if (textBlock.FontFamily?.Source is string fontSource &&
                     (fontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
-                     fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
+                     fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Horatio%20D%20Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Horatio D Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase)))
                 {
                     textBlock.ClearValue(TextBlock.FontFamilyProperty);
                 }
@@ -462,7 +498,10 @@ public partial class App : Application
                 control.ClearValue(Control.ForegroundProperty);
                 if (control.FontFamily?.Source is string controlFontSource &&
                     (controlFontSource.Equals("Consolas", StringComparison.OrdinalIgnoreCase) ||
-                     controlFontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase)))
+                     controlFontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("Horatio%20D%20Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("Horatio D Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase)))
                 {
                     control.ClearValue(Control.FontFamilyProperty);
                 }
@@ -475,6 +514,77 @@ public partial class App : Application
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
                 ClearY2KTextColorCore(child);
+            }
+        }
+    }
+
+    internal static void ApplyFrutigerAeroTypography(
+        FrameworkElement root,
+        bool preserveSoftwareCardTypography = false)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || Settings.Current.Theme != WintainiumThemePreference.Light)
+        {
+            return;
+        }
+
+        var font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+        var textBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+        var visited = new HashSet<FrameworkElement>();
+        ApplyFrutigerAeroTypographyCore(root, font, textBrush, visited,
+            preserveSoftwareCardTypography && root is MainWindow);
+    }
+
+    private static void ApplyFrutigerAeroTypographyCore(
+        FrameworkElement element,
+        FontFamily font,
+        Brush textBrush,
+        HashSet<FrameworkElement> visited,
+        bool isMainWindowRoot)
+    {
+        if (!visited.Add(element))
+        {
+            return;
+        }
+
+        if (isMainWindowRoot && (element.Name is "ApplicationListView" or "ApplicationGridView"))
+        {
+            return;
+        }
+
+        switch (element)
+        {
+            case TextBlock textBlock:
+                if (!(textBlock.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    textBlock.FontFamily = font;
+                    textBlock.Foreground = textBrush;
+                }
+                break;
+            case Control control:
+                control.FontFamily = font;
+                control.Foreground = textBrush;
+                break;
+        }
+
+        // ComboBox items may be detached from the visual tree while a popup is closed.
+        if (element is ComboBox comboBox)
+        {
+            foreach (var item in comboBox.Items)
+            {
+                if (item is FrameworkElement itemElement)
+                {
+                    ApplyFrutigerAeroTypographyCore(itemElement, font, textBrush, visited, false);
+                }
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyFrutigerAeroTypographyCore(child, font, textBrush, visited, isMainWindowRoot);
             }
         }
     }
