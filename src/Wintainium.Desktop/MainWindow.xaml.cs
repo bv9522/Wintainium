@@ -157,6 +157,12 @@ public sealed partial class MainWindow : Window
     {
         if (sender is FrameworkElement card)
         {
+            if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+            {
+                App.ApplyFrutigerAeroTypography(card);
+            }
+
             ApplySoftwareCardTextColor(card);
         }
     }
@@ -176,9 +182,18 @@ public sealed partial class MainWindow : Window
             {
                 textBlock.Foreground = App.GetY2KTextBrush();
             }
+            else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+            {
+                textBlock.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+            }
             else
             {
                 textBlock.ClearValue(TextBlock.ForegroundProperty);
+                if (textBlock.FontFamily?.Source?.Contains("Horatio D", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                }
             }
         }
 
