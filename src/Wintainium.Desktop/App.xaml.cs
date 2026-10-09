@@ -532,7 +532,7 @@ public partial class App : Application
         var textBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
         var visited = new HashSet<FrameworkElement>();
         ApplyFrutigerAeroTypographyCore(root, font, textBrush, visited,
-            preserveSoftwareCardTypography && root is MainWindow);
+            preserveSoftwareCardTypography);
     }
 
     private static void ApplyFrutigerAeroTypographyCore(
