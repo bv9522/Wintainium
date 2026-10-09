@@ -79,6 +79,11 @@ public sealed partial class MainWindow : Window
             && App.Settings.Current.Theme == WintainiumThemePreference.Dark
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        FrutigerAeroBackdrop.Visibility =
+            App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Light
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {Y2KTitleBar.Visibility = Visibility.Collapsed;
