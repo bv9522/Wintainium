@@ -19,7 +19,6 @@
     <Content Include="Themes\Y2K-DarkGrid.svg" />
     <Content Include="Themes\Y2K-DarkMainGrid.svg" />
     <Content Include="Themes\Y2K-DarkW.svg" />
-    <Content Include="Themes\FrutigerAero-Light.xaml" />
     <Content Include="Horatio D Regular.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
