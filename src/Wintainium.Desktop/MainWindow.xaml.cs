@@ -43,21 +43,14 @@ public sealed partial class MainWindow : Window
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
-        {
-            Y2KMainWindowLogo.Visibility = Visibility.Collapsed;
-            Y2KTitleBar.Visibility = Visibility.Collapsed;
+        {Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
             AppWindow.TitleBar.ResetToDefault();
             ExtendsContentIntoTitleBar = false;
             return;
         }
 
-        var titleBar = AppWindow.TitleBar;
-        Y2KMainWindowLogo.Visibility = App.Settings.Current.Theme != WintainiumThemePreference.Light
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-        if (!AppWindowTitleBar.IsCustomizationSupported())
+        var titleBar = AppWindow.TitleBar;if (!AppWindowTitleBar.IsCustomizationSupported())
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
