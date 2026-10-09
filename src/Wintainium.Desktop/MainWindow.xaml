@@ -33,16 +33,6 @@
                 Orientation="Horizontal"
                 Spacing="8"
                 VerticalAlignment="Center">
-                <Image
-                    x:Name="Y2KTitleBarLogo"
-                    Width="28"
-                    Height="24"
-                    Stretch="Uniform"
-                    Visibility="Collapsed">
-                    <Image.Source>
-                        <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkW.svg" />
-                    </Image.Source>
-                </Image>
                 <TextBlock
                     x:Name="Y2KTitleBarText"
                     Text="Wintainium"
@@ -64,14 +54,26 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
-                <TextBlock
-                    Text="My Software"
-                    Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
-                <TextBlock
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Image
+                    x:Name="Y2KMainWindowLogo"
+                    Width="44"
+                    Height="34"
+                    Stretch="Uniform"
+                    Visibility="Collapsed">
+                    <Image.Source>
+                        <media:SvgImageSource UriSource="ms-appx:///Themes/Y2K-DarkW.svg" />
+                    </Image.Source>
+                </Image>
+                <StackPanel Spacing="4" VerticalAlignment="Center">
+                    <TextBlock
+                        Text="My Software"
+                        Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
+                    <TextBlock
                         Text="Software tracked by Wintainium"
-                    Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
-                    Opacity="0.72" />
+                        Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
+                        Opacity="0.72" />
+                </StackPanel>
             </StackPanel>
 
             <TextBlock
