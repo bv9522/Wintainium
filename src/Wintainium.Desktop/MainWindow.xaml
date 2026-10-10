@@ -13,16 +13,13 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Frutiger Aero-only glass skyline decoration; the app's controls remain above it. -->
-        <!-- Frutiger Aero Light uses a real, wide-angle Governors Island photograph:
-             grass and harbor foreground, clear sky, and the recognizable Lower Manhattan skyline.
-             Photo: Governors Island, "An update from Governors Island" (outlook-hill-view.jpeg).
-             Kept separate from all other theme backdrops. -->
+        <!-- Frutiger Aero Light-only scenic backdrop. Kept isolated from all other visual styles. -->
         <Grid x:Name="FrutigerAeroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
-            <Image Source="https://gov-island-site.s3.amazonaws.com/blog/2024/an-update-from-governors-island/outlook-hill-view.jpeg"
+            <Image Source="ms-appx:///Themes/New%20York%20Eco-Utopia%20Seascape.png"
                    Stretch="UniformToFill" />
-            <Rectangle Fill="#080B5368" />
-            <!-- Subtle glassy highlights; the photograph remains the dominant visual. -->
+            <!-- A very light aqua wash keeps the supplied artwork prominent while helping controls remain legible. -->
+            <Rectangle Fill="#100B5368" />
+            <!-- Subtle glassy highlights; the supplied artwork remains the dominant visual. -->
             <Ellipse Width="150" Height="150" Fill="#20FFFFFF" Stroke="#55FFFFFF" StrokeThickness="1.5"
                      HorizontalAlignment="Left" VerticalAlignment="Top" Margin="58,46,0,0" />
             <Ellipse Width="64" Height="64" Fill="#20FFFFFF" Stroke="#66FFFFFF" StrokeThickness="1"
