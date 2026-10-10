@@ -319,6 +319,10 @@ public partial class App : Application
 
         var nativeTitleBar = window.AppWindow.TitleBar;
         var textColor = ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67);
+        nativeTitleBar.BackgroundColor = Colors.Transparent;
+        nativeTitleBar.ForegroundColor = textColor;
+        nativeTitleBar.InactiveBackgroundColor = Colors.Transparent;
+        nativeTitleBar.InactiveForegroundColor = textColor;
         nativeTitleBar.ButtonBackgroundColor = Colors.Transparent;
         nativeTitleBar.ButtonForegroundColor = textColor;
         nativeTitleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(42, 0xFF, 0xFF, 0xFF);
