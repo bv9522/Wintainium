@@ -238,6 +238,13 @@ public partial class App : Application
             return;
         }
 
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            ApplyFrutigerAeroTitleBar(window, titleBar, titleText);
+            return;
+        }
+
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K ||
             !AppWindowTitleBar.IsCustomizationSupported())
         {
@@ -282,6 +289,71 @@ public partial class App : Application
         nativeTitleBar.ButtonPressedForegroundColor = textColor;
         nativeTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
         nativeTitleBar.ButtonInactiveForegroundColor = textColor;
+    }
+
+    internal static void ApplyFrutigerAeroTitleBar(Window window, Grid titleBar, TextBlock titleText)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || Settings.Current.Theme != WintainiumThemePreference.Light)
+        {
+            return;
+        }
+
+        if (!AppWindowTitleBar.IsCustomizationSupported())
+        {
+            titleBar.Visibility = Visibility.Collapsed;
+            window.SetTitleBar(null);
+            window.ExtendsContentIntoTitleBar = false;
+            window.AppWindow.TitleBar.ResetToDefault();
+            return;
+        }
+
+        titleText.Text = window.Title;
+        titleText.FontFamily = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+        titleText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+        titleText.FontSize = Math.Max(titleText.FontSize, 16);
+        titleBar.Background = GetFrutigerAeroTitleBarBrush();
+        titleBar.Visibility = Visibility.Visible;
+        window.ExtendsContentIntoTitleBar = true;
+        window.SetTitleBar(titleBar);
+
+        var nativeTitleBar = window.AppWindow.TitleBar;
+        var textColor = ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67);
+        nativeTitleBar.ButtonBackgroundColor = Colors.Transparent;
+        nativeTitleBar.ButtonForegroundColor = textColor;
+        nativeTitleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(42, 0xFF, 0xFF, 0xFF);
+        nativeTitleBar.ButtonHoverForegroundColor = textColor;
+        nativeTitleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(72, 0x5B, 0xB9, 0xD0);
+        nativeTitleBar.ButtonPressedForegroundColor = textColor;
+        nativeTitleBar.ButtonInactiveBackgroundColor = ColorHelper.FromArgb(18, 0xFF, 0xFF, 0xFF);
+        nativeTitleBar.ButtonInactiveForegroundColor = textColor;
+    }
+
+    internal static Brush GetFrutigerAeroTitleBarBrush()
+    {
+        return new LinearGradientBrush
+        {
+            StartPoint = new Windows.Foundation.Point(0, 0),
+            EndPoint = new Windows.Foundation.Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop { Color = ColorHelper.FromArgb(242, 0xF4, 0xFD, 0xFF), Offset = 0 },
+                new GradientStop { Color = ColorHelper.FromArgb(218, 0xD4, 0xF5, 0xFC), Offset = 0.18 },
+                new GradientStop { Color = ColorHelper.FromArgb(190, 0x8D, 0xD7, 0xEB), Offset = 0.52 },
+                new GradientStop { Color = ColorHelper.FromArgb(224, 0xC8, 0xF0, 0xF8), Offset = 0.78 },
+                new GradientStop { Color = ColorHelper.FromArgb(238, 0xE9, 0xFA, 0xFC), Offset = 1 }
+            }
+        };
+    }
+
+    private static void FrutigerAeroContentDialog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContentDialog dialog
+            && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            ApplyFrutigerAeroTypography(dialog);
+        }
     }
 
     internal static void ApplyThemePreference()
@@ -338,6 +410,11 @@ public partial class App : Application
             };
             element.Resources.MergedDictionaries.Add(aeroStyle);
             ApplyFrutigerAeroTypography(element);
+            if (element is ContentDialog aeroDialog)
+            {
+                aeroDialog.Loaded -= FrutigerAeroContentDialog_Loaded;
+                aeroDialog.Loaded += FrutigerAeroContentDialog_Loaded;
+            }
             return;
         }
 
