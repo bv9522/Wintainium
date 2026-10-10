@@ -16,9 +16,9 @@
         <!-- Frutiger Aero Light-only scenic backdrop. Kept isolated from all other visual styles. -->
         <Grid x:Name="FrutigerAeroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
             <Image Source="ms-appx:///Themes/New%20York%20Eco-Utopia%20Seascape.png"
-                   Stretch="Uniform"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
+                   Stretch="Fill"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch" />
             <!-- A very light aqua wash keeps the supplied artwork prominent while helping controls remain legible. -->
             <Rectangle Fill="#100B5368" />
             <!-- Subtle glassy highlights; the supplied artwork remains the dominant visual. -->
