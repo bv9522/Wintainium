@@ -14,16 +14,21 @@
         </Grid.RowDefinitions>
 
         <!-- Frutiger Aero-only glass skyline decoration; the app's controls remain above it. -->
+        <!-- Frutiger Aero Light uses a real, wide-angle Governors Island photograph:
+             grass and harbor foreground, clear sky, and the recognizable Lower Manhattan skyline.
+             Photo: Governors Island, "An update from Governors Island" (outlook-hill-view.jpeg).
+             Kept separate from all other theme backdrops. -->
         <Grid x:Name="FrutigerAeroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
-            <Image Source="https://miro.medium.com/v2/resize:fit:720/format:webp/1*_zqJUXJaDneHRrXeXtR5vQ.webp"
+            <Image Source="https://gov-island-site.s3.amazonaws.com/blog/2024/an-update-from-governors-island/outlook-hill-view.jpeg"
                    Stretch="UniformToFill" />
-            <Rectangle Fill="#1A0B5368" />
-            <Ellipse Width="116" Height="116" Fill="#44FFFFFF" Stroke="#CCFFFFFF" StrokeThickness="2"
-                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,72,0,0" />
-            <Ellipse Width="54" Height="54" Fill="#44FFFFFF" Stroke="#AAFFFFFF" StrokeThickness="1.5"
-                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,132,96,0" />
-            <Ellipse Width="30" Height="30" Fill="#55FFFFFF" Stroke="#CCFFFFFF" StrokeThickness="1"
-                     HorizontalAlignment="Center" VerticalAlignment="Top" Margin="180,36,0,0" />
+            <Rectangle Fill="#080B5368" />
+            <!-- Subtle glassy highlights; the photograph remains the dominant visual. -->
+            <Ellipse Width="150" Height="150" Fill="#20FFFFFF" Stroke="#55FFFFFF" StrokeThickness="1.5"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="58,46,0,0" />
+            <Ellipse Width="64" Height="64" Fill="#20FFFFFF" Stroke="#66FFFFFF" StrokeThickness="1"
+                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,110,86,0" />
+            <Ellipse Width="28" Height="28" Fill="#30FFFFFF" Stroke="#77FFFFFF" StrokeThickness="1"
+                     HorizontalAlignment="Center" VerticalAlignment="Top" Margin="180,30,0,0" />
         </Grid>
 
         <Grid
