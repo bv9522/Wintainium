@@ -85,8 +85,16 @@ public sealed partial class MainWindow : Window
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            App.ApplyFrutigerAeroTitleBar(this, Y2KTitleBar, Y2KTitleBarText);
+            return;
+        }
+
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
-        {Y2KTitleBar.Visibility = Visibility.Collapsed;
+        {
+            Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
             AppWindow.TitleBar.ResetToDefault();
             ExtendsContentIntoTitleBar = false;
