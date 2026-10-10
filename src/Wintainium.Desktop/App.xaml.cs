@@ -570,13 +570,13 @@ public partial class App : Application
                 {
                     textBlock.FontFamily = font;
                     textBlock.Foreground = textBrush;
-                    textBlock.FontSize = Math.Max(textBlock.FontSize, 15);
+                    textBlock.FontSize = Math.Max(textBlock.FontSize, 16);
                 }
                 break;
             case Control control:
                 control.FontFamily = font;
                 control.Foreground = textBrush;
-                control.FontSize = Math.Max(control.FontSize, 15);
+                control.FontSize = Math.Max(control.FontSize, 16);
                 break;
         }
 
