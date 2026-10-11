@@ -569,7 +569,9 @@ public partial class App : Application
                 }
                 break;
             case Border border:
-                if (IsMetroPanel(border.Background, 170))
+                if (IsMetroPanel(border.Background, 170)
+                    || IsMetroPanel(border.Background, 205)
+                    || IsMetroPanel(border.Background, 210))
                 {
                     border.ClearValue(Border.BackgroundProperty);
                 }
