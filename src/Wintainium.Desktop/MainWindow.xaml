@@ -126,10 +126,10 @@
                     <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFC928" StrokeThickness="30" StrokeLineJoin="Round" />
                     <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFFFFF" StrokeThickness="3" StrokeLineJoin="Round" Opacity="0.82" />
                     <!-- Downward arrow inside the W: black outline, gold shaft and arrowhead. -->
-                    <Path Data="M800,390 L800,488" Stroke="#FF000000" StrokeThickness="31" StrokeLineCap="Square" />
-                    <Path Data="M800,390 L800,488" Stroke="#FFFFC928" StrokeThickness="19" StrokeLineCap="Square" />
-                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FF000000" StrokeThickness="35" StrokeLineJoin="Round" StrokeLineCap="Round" />
-                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FFFFC928" StrokeThickness="21" StrokeLineJoin="Round" StrokeLineCap="Round" />
+                    <Path Data="M800,390 L800,488" Stroke="#FF000000" StrokeThickness="31" />
+                    <Path Data="M800,390 L800,488" Stroke="#FFFFC928" StrokeThickness="19" />
+                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FF000000" StrokeThickness="35" StrokeLineJoin="Round" />
+                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FFFFC928" StrokeThickness="21" StrokeLineJoin="Round" />
                     <!-- A crisp center dot gives the arrow a compact visual anchor. -->
                     <Ellipse Canvas.Left="786" Canvas.Top="378" Width="28" Height="28" Fill="#FF000000" Stroke="#FFFFC928" StrokeThickness="5" />
                 </Canvas>
