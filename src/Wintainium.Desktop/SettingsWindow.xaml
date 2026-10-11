@@ -10,6 +10,49 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Frutiger Metro DARK-only artwork; Frutiger Aero Light remains untouched. -->
+        <Grid x:Name="FrutigerMetroBackdrop" Grid.RowSpan="2" IsHitTestVisible="False" Visibility="Collapsed">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#FF100507" Offset="0" />
+                    <GradientStop Color="#FF390A12" Offset="0.48" />
+                    <GradientStop Color="#FF080406" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Viewbox Stretch="UniformToFill">
+                <Canvas Width="1600" Height="900">
+                    <Polygon Points="760,405 785,405 220,0 280,0" Fill="#FFFFC928" />
+                    <Polygon Points="790,405 810,405 510,0 548,0" Fill="#FFFF5A1F" />
+                    <Polygon Points="815,405 840,405 1090,0 1130,0" Fill="#FFDC143C" />
+                    <Polygon Points="830,425 850,438 1600,150 1600,195" Fill="#FF8B1A1A" />
+                    <Polygon Points="840,450 850,470 1600,425 1600,460" Fill="#FFFFC928" />
+                    <Polygon Points="830,478 842,496 1600,740 1600,790" Fill="#FFFF5A1F" />
+                    <Polygon Points="805,500 825,500 1110,900 1065,900" Fill="#FFDC143C" />
+                    <Polygon Points="780,500 800,500 570,900 525,900" Fill="#FFFFC928" />
+                    <Polygon Points="755,485 770,475 0,720 0,675" Fill="#FFFF5A1F" />
+                    <Polygon Points="750,455 760,435 0,430 0,390" Fill="#FFDC143C" />
+                    <Ellipse Canvas.Left="55" Canvas.Top="260" Width="250" Height="250" Fill="#FF000000" Stroke="#FFFFC928" StrokeThickness="9" />
+                    <Ellipse Canvas.Left="82" Canvas.Top="287" Width="196" Height="196" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="1320" Canvas.Top="425" Width="215" Height="215" Fill="#FF000000" Stroke="#FFFF5A1F" StrokeThickness="9" />
+                    <Ellipse Canvas.Left="1350" Canvas.Top="455" Width="155" Height="155" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="570" Canvas.Top="195" Width="460" Height="460" Stroke="#FF000000" StrokeThickness="18" />
+                    <Ellipse Canvas.Left="586" Canvas.Top="211" Width="428" Height="428" Stroke="#FFFFC928" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="615" Canvas.Top="240" Width="370" Height="370" Stroke="#FFFF5A1F" StrokeThickness="3" StrokeDashArray="2,5" />
+                    <Polygon Points="800,265 835,376 930,300 884,399 1010,405 900,448 984,530 877,489 858,610 800,510 742,610 723,489 616,530 700,448 590,405 716,399 670,300 765,376" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="11" />
+                    <Polygon Points="800,300 825,382 900,330 866,405 955,410 876,444 935,505 862,476 848,558 800,495 752,558 738,476 665,505 724,444 645,410 734,405 700,330 775,382" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="7" />
+                    <Polygon Points="800,330 819,392 875,357 849,414 912,417 854,445 894,487 849,465 836,523 800,478 764,523 751,465 706,487 746,445 688,417 751,414 725,357 781,392" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="5" />
+                    <TextBlock Canvas.Left="708" Canvas.Top="340" Text="W" FontFamily="ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top" FontSize="230" Foreground="#FFFFC928" />
+                    <Polygon Points="800,580 745,520 780,520 780,470 820,470 820,520 855,520" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="8" />
+                    <Polygon Points="390,50 411,113 470,80 439,139 507,151 442,172 480,229 421,199 403,267 382,203 326,237 353,176 286,163 349,143 314,85 374,113" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="7" />
+                    <Polygon Points="1250,170 1265,219 1310,194 1287,238 1337,248 1289,264 1315,309 1268,286 1253,336 1237,287 1193,311 1216,265 1168,251 1215,237 1190,194 1236,219" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="7" />
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FF000000" StrokeThickness="30" />
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FFFFC928" StrokeThickness="15" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FF000000" StrokeThickness="34" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FFDC143C" StrokeThickness="16" />
+                </Canvas>
+            </Viewbox>
+        </Grid>
+
         <Grid x:Name="Y2KTitleBar" Grid.Row="0" Visibility="Collapsed" Height="32" Padding="16,0,0,0">
             <Grid.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
