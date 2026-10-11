@@ -60,61 +60,66 @@ public sealed partial class SettingsWindow : Window
     {
         ApplyY2KSettingsTextResources();
 
-        if (Content is FrameworkElement root &&
-            root.FindName("CategoryNavigationChrome") is Border navigationChrome)
+        if (Content is FrameworkElement root)
         {
-            if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K &&
-                _settings.Current.Theme == WintainiumThemePreference.Light)
+            var isMetroDark = _settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && _settings.Current.Theme == WintainiumThemePreference.Dark;
+            if (!isMetroDark)
             {
-                navigationChrome.Background = App.GetY2KLightChromeBrush();
-                navigationChrome.BorderBrush = App.GetY2KLightChromeEdgeBrush();
+                App.ClearFrutigerMetroDarkAppearance(root);
             }
-            else
-            {
-                navigationChrome.ClearValue(Border.BackgroundProperty);
-                navigationChrome.ClearValue(Border.BorderBrushProperty);
-            }
-        }
 
-        if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && _settings.Current.Theme == WintainiumThemePreference.Light
-            && Content is FrameworkElement glassRoot)
-        {
-            var glass = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
-            var glassEdge = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
-            if (glassRoot.FindName("CategoryNavigationChrome") is Border aeroNavigation)
+            if (root.FindName("CategoryNavigationChrome") is Border navigation)
             {
-                aeroNavigation.Background = glass;
-                aeroNavigation.BorderBrush = glassEdge;
+                if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    navigation.Background = App.GetY2KLightChromeBrush();
+                    navigation.BorderBrush = App.GetY2KLightChromeEdgeBrush();
+                }
+                else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
+                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                }
+                else if (isMetroDark)
+                {
+                    navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(205, 38, 8, 13));
+                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+                }
+                else
+                {
+                    navigation.ClearValue(Border.BackgroundProperty);
+                    navigation.ClearValue(Border.BorderBrushProperty);
+                }
             }
-            if (glassRoot.FindName("SettingsContentChrome") is Border aeroContent)
+
+            if (root.FindName("SettingsContentChrome") is Border contentChrome)
             {
-                aeroContent.Background = glass;
-                aeroContent.BorderBrush = glassEdge;
+                if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    contentChrome.Background = App.GetY2KLightChromeBrush();
+                    contentChrome.BorderBrush = App.GetY2KLightChromeEdgeBrush();
+                }
+                else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                {
+                    contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
+                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                }
+                else if (isMetroDark)
+                {
+                    contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(205, 38, 8, 13));
+                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+                }
+                else
+                {
+                    contentChrome.ClearValue(Border.BackgroundProperty);
+                    contentChrome.ClearValue(Border.BorderBrushProperty);
+                }
             }
-        }
-        else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && _settings.Current.Theme == WintainiumThemePreference.Dark
-            && Content is FrameworkElement metroRoot)
-        {
-            var metroPanel = new SolidColorBrush(ColorHelper.FromArgb(205, 38, 8, 13));
-            var metroEdge = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
-            if (metroRoot.FindName("CategoryNavigationChrome") is Border metroNavigation)
-            {
-                metroNavigation.Background = metroPanel;
-                metroNavigation.BorderBrush = metroEdge;
-            }
-            if (metroRoot.FindName("SettingsContentChrome") is Border metroContent)
-            {
-                metroContent.Background = metroPanel;
-                metroContent.BorderBrush = metroEdge;
-            }
-        }
-        else if (Content is FrameworkElement resetRoot
-            && resetRoot.FindName("SettingsContentChrome") is Border resetContent)
-        {
-            resetContent.ClearValue(Border.BackgroundProperty);
-            resetContent.ClearValue(Border.BorderBrushProperty);
         }
 
         if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
