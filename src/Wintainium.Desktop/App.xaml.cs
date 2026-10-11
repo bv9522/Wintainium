@@ -459,8 +459,8 @@ public partial class App : Application
             Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
             StrokeThickness = 9
         });
-        Canvas.SetLeft(canvas.Children[^1], 55);
-        Canvas.SetTop(canvas.Children[^1], 260);
+        Canvas.SetLeft(canvas.Children[canvas.Children.Count - 1], 55);
+        Canvas.SetTop(canvas.Children[canvas.Children.Count - 1], 260);
         canvas.Children.Add(new Ellipse
         {
             Width = 215, Height = 215,
@@ -468,8 +468,8 @@ public partial class App : Application
             Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31)),
             StrokeThickness = 9
         });
-        Canvas.SetLeft(canvas.Children[^1], 1320);
-        Canvas.SetTop(canvas.Children[^1], 425);
+        Canvas.SetLeft(canvas.Children[canvas.Children.Count - 1], 1320);
+        Canvas.SetTop(canvas.Children[canvas.Children.Count - 1], 425);
         canvas.Children.Add(new Polyline
         {
             Points = new PointCollection { new Point(510, 310), new Point(625, 570), new Point(800, 365), new Point(975, 570), new Point(1090, 310) },
