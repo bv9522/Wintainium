@@ -20,10 +20,13 @@
                 </LinearGradientBrush>
             </Grid.Background>
             <Viewbox Stretch="UniformToFill">
+                
                 <Canvas Width="1600" Height="900">
-                    <Polygon Points="760,405 785,405 220,0 280,0" Fill="#FFFFC928" />
-                    <Polygon Points="790,405 810,405 510,0 548,0" Fill="#FFFF5A1F" />
-                    <Polygon Points="815,405 840,405 1090,0 1130,0" Fill="#FFDC143C" />
+                    <!-- Dense Metro poster composition: the W is the burst's epicenter. -->
+                    <!-- Long straight rays and hard-edged bands radiate from the center. -->
+                    <Polygon Points="760,405 785,405 220,0 280,0" Fill="#FFFFC928" Opacity="0.95" />
+                    <Polygon Points="790,405 810,405 510,0 548,0" Fill="#FFFF5A1F" Opacity="0.95" />
+                    <Polygon Points="815,405 840,405 1090,0 1130,0" Fill="#FFDC143C" Opacity="0.95" />
                     <Polygon Points="830,425 850,438 1600,150 1600,195" Fill="#FF8B1A1A" />
                     <Polygon Points="840,450 850,470 1600,425 1600,460" Fill="#FFFFC928" />
                     <Polygon Points="830,478 842,496 1600,740 1600,790" Fill="#FFFF5A1F" />
@@ -31,27 +34,360 @@
                     <Polygon Points="780,500 800,500 570,900 525,900" Fill="#FFFFC928" />
                     <Polygon Points="755,485 770,475 0,720 0,675" Fill="#FFFF5A1F" />
                     <Polygon Points="750,455 760,435 0,430 0,390" Fill="#FFDC143C" />
+                    <Polygon Points="750,430 765,415 0,155 0,115" Fill="#FF8B1A1A" />
+                    <Polygon Points="760,405 785,405 290,0 350,0" Fill="#FF000000" Opacity="0.5" />
+                    <!-- Layered starburst spikes around the center -->
+                    <Polygon Points="800,265 835,376 930,300 884,399 1010,405 900,448 984,530 877,489 858,610 800,510 742,610 723,489 616,530 700,448 590,405 716,399 670,300 765,376"
+                             Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="11" />
+                    <Polygon Points="800,300 825,382 900,330 866,405 955,410 876,444 935,505 862,476 848,558 800,495 752,558 738,476 665,505 724,444 645,410 734,405 700,330 775,382"
+                             Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="7" />
+                    <Polygon Points="800,330 819,392 875,357 849,414 912,417 854,445 894,487 849,465 836,523 800,478 764,523 751,465 706,487 746,445 688,417 751,414 725,357 781,392"
+                             Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="5" />
+                    <!-- Offset streamlines keep the graphic directional and energetic -->
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FF000000" StrokeThickness="30" />
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FFFFC928" StrokeThickness="15" />
+                    <Path Data="M-100,204 C180,49 370,304 610,164 S1050,39 1710,189" Stroke="#FFFF5A1F" StrokeThickness="5" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FF000000" StrokeThickness="34" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FFFFC928" StrokeThickness="16" />
+                    <Path Data="M-100,765 C180,605 410,860 680,700 S1190,595 1710,765" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Path Data="M0,410 C260,320 370,450 590,365 S1050,300 1600,420" Stroke="#FF000000" StrokeThickness="12" />
+                    <Path Data="M0,410 C260,320 370,450 590,365 S1050,300 1600,420" Stroke="#FF8B1A1A" StrokeThickness="4" />
+                    <!-- Diagonal urban stripes -->
+                    <Polygon Points="0,0 180,0 640,900 500,900" Fill="#FF000000" Opacity="0.62" />
+                    <Polygon Points="0,0 104,0 564,900 500,900" Fill="#FFFFC928" Opacity="0.13" />
+                    <Polygon Points="1480,0 1600,0 1110,900 1000,900" Fill="#FF000000" Opacity="0.6" />
+                    <Polygon Points="1540,0 1600,0 1110,900 1060,900" Fill="#FFFF5A1F" Opacity="0.13" />
+                    <!-- Record discs and grooves, embedded in the radial field -->
                     <Ellipse Canvas.Left="55" Canvas.Top="260" Width="250" Height="250" Fill="#FF000000" Stroke="#FFFFC928" StrokeThickness="9" />
-                    <Ellipse Canvas.Left="82" Canvas.Top="287" Width="196" Height="196" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="72" Canvas.Top="277" Width="216" Height="216" Fill="#FF24080C" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="94" Canvas.Top="299" Width="172" Height="172" Stroke="#FF8B1A1A" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="115" Canvas.Top="320" Width="130" Height="130" Stroke="#FFFFC928" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="151" Canvas.Top="356" Width="58" Height="58" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="6" />
                     <Ellipse Canvas.Left="1320" Canvas.Top="425" Width="215" Height="215" Fill="#FF000000" Stroke="#FFFF5A1F" StrokeThickness="9" />
-                    <Ellipse Canvas.Left="1350" Canvas.Top="455" Width="155" Height="155" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="1337" Canvas.Top="442" Width="181" Height="181" Fill="#FF26080D" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="1360" Canvas.Top="465" Width="135" Height="135" Stroke="#FFFFC928" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="1399" Canvas.Top="504" Width="57" Height="57" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="6" />
+                    <!-- Extra artifact rings and concentric target marks -->
                     <Ellipse Canvas.Left="570" Canvas.Top="195" Width="460" Height="460" Stroke="#FF000000" StrokeThickness="18" />
                     <Ellipse Canvas.Left="586" Canvas.Top="211" Width="428" Height="428" Stroke="#FFFFC928" StrokeThickness="5" />
                     <Ellipse Canvas.Left="615" Canvas.Top="240" Width="370" Height="370" Stroke="#FFFF5A1F" StrokeThickness="3" StrokeDashArray="2,5" />
-                    <Polygon Points="800,265 835,376 930,300 884,399 1010,405 900,448 984,530 877,489 858,610 800,510 742,610 723,489 616,530 700,448 590,405 716,399 670,300 765,376" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="11" />
-                    <Polygon Points="800,300 825,382 900,330 866,405 955,410 876,444 935,505 862,476 848,558 800,495 752,558 738,476 665,505 724,444 645,410 734,405 700,330 775,382" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="7" />
-                    <Polygon Points="800,330 819,392 875,357 849,414 912,417 854,445 894,487 849,465 836,523 800,478 764,523 751,465 706,487 746,445 688,417 751,414 725,357 781,392" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="5" />
-                    <TextBlock Canvas.Left="708" Canvas.Top="340" Text="W" FontFamily="ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top" FontSize="230" Foreground="#FFFFC928" />
-                    <Polygon Points="800,580 745,520 780,520 780,470 820,470 820,520 855,520" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="8" />
+                    <Ellipse Canvas.Left="655" Canvas.Top="280" Width="290" Height="290" Stroke="#FFDC143C" StrokeThickness="4" StrokeDashArray="1,4" />
+                    <Ellipse Canvas.Left="1000" Canvas.Top="70" Width="92" Height="92" Stroke="#FF000000" StrokeThickness="12" />
+                    <Ellipse Canvas.Left="1000" Canvas.Top="70" Width="92" Height="92" Stroke="#FFFF5A1F" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="500" Canvas.Top="700" Width="100" Height="100" Stroke="#FF000000" StrokeThickness="12" />
+                    <Ellipse Canvas.Left="500" Canvas.Top="700" Width="100" Height="100" Stroke="#FFDC143C" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="1130" Canvas.Top="310" Width="72" Height="72" Stroke="#FF000000" StrokeThickness="10" />
+                    <Ellipse Canvas.Left="1130" Canvas.Top="310" Width="72" Height="72" Stroke="#FFFFC928" StrokeThickness="4" />
+                    <!-- More starbursts, stars, ticks and shards -->
                     <Polygon Points="390,50 411,113 470,80 439,139 507,151 442,172 480,229 421,199 403,267 382,203 326,237 353,176 286,163 349,143 314,85 374,113" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="7" />
                     <Polygon Points="1250,170 1265,219 1310,194 1287,238 1337,248 1289,264 1315,309 1268,286 1253,336 1237,287 1193,311 1216,265 1168,251 1215,237 1190,194 1236,219" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="7" />
-                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FF000000" StrokeThickness="30" />
-                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FFFFC928" StrokeThickness="15" />
-                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FF000000" StrokeThickness="34" />
-                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FFDC143C" StrokeThickness="16" />
+                    <Polygon Points="1120,610 1135,650 1176,634 1155,670 1196,686 1154,696 1169,738 1133,715 1110,753 1105,711 1061,720 1088,686 1054,658 1098,664" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="250,610 265,647 305,650 275,675 285,715 250,692 215,715 225,675 195,650 235,647" Fill="#FF8B1A1A" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="1360,70 1374,105 1410,108 1383,132 1392,168 1360,148 1328,168 1337,132 1310,108 1346,105" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="5" />
+                    <Polygon Points="730,90 742,120 775,122 750,143 758,175 730,157 702,175 710,143 685,122 718,120" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="4" />
+                    <Polygon Points="900,710 910,736 938,738 916,756 923,784 900,768 877,784 884,756 862,738 890,736" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="4" />
+                    <!-- Fine straight-line artifacts and dot trails -->
+                    <Path Data="M0,95 L35,95 M17,77 L17,113 M1550,330 L1590,330 M1570,310 L1570,350 M330,815 L370,815 M350,795 L350,835" Stroke="#FF000000" StrokeThickness="9" />
+                    <Path Data="M0,95 L35,95 M17,77 L17,113 M1550,330 L1590,330 M1570,310 L1570,350 M330,815 L370,815 M350,795 L350,835" Stroke="#FFFFC928" StrokeThickness="3" />
+                    <Path Data="M115,545 L350,545 L395,500 M1200,205 L1275,280 L1360,280 M340,250 L410,250 L450,290 M1040,760 L1110,760 L1160,810" Stroke="#FF000000" StrokeThickness="10" />
+                    <Path Data="M115,545 L350,545 L395,500 M1200,205 L1275,280 L1360,280 M340,250 L410,250 L450,290 M1040,760 L1110,760 L1160,810" Stroke="#FFFF5A1F" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="430" Canvas.Top="75" Width="8" Height="8" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="452" Canvas.Top="91" Width="8" Height="8" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="474" Canvas.Top="107" Width="8" Height="8" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="496" Canvas.Top="123" Width="8" Height="8" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="518" Canvas.Top="139" Width="8" Height="8" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="1080" Canvas.Top="790" Width="8" Height="8" Fill="#FFFF5A1F" />
+                    <Ellipse Canvas.Left="1102" Canvas.Top="806" Width="8" Height="8" Fill="#FFFF5A1F" />
+                    <Ellipse Canvas.Left="1124" Canvas.Top="822" Width="8" Height="8" Fill="#FFFF5A1F" />
+                    <Ellipse Canvas.Left="1146" Canvas.Top="838" Width="8" Height="8" Fill="#FFFF5A1F" />
+                    <!-- Tighten the burst into a crowded, layered epicenter immediately behind the W. -->
+                    <Polygon Points="800,292 817,366 866,328 846,382 907,383 855,414 899,451 847,444 850,501 813,460 782,505 778,456 727,474 754,431 700,411 756,397 734,350 779,376" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="8" />
+                    <Polygon Points="800,318 811,379 855,350 834,394 883,403 840,426 872,459 828,445 819,488 797,451 768,480 770,441 730,449 758,420 721,400 766,398 752,363 786,385" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="5" />
+                    <Polygon Points="800,344 809,389 838,370 827,405 858,411 829,428 850,449 820,443 814,470 798,449 781,468 779,442 751,446 772,426 749,409 778,407 767,381 790,393" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="4" />
+                    <Polygon Points="645,344 690,376 675,405 716,413 690,438 727,459 688,463 675,493 655,464 625,477 639,444 608,424 646,413 625,385 657,392" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="955,342 925,380 944,405 908,418 932,443 900,462 936,465 950,492 970,462 999,477 986,445 1018,425 981,412 1000,385 967,393" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="686,500 718,483 727,512 751,494 760,526 735,537 714,558 703,532 674,539" Fill="#FF8B1A1A" Stroke="#FF000000" StrokeThickness="5" />
+                    <Polygon Points="914,500 882,483 873,512 849,494 840,526 865,537 886,558 897,532 926,539" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="672" Canvas.Top="372" Width="18" Height="18" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="910" Canvas.Top="373" Width="18" Height="18" Fill="#FFDC143C" Stroke="#FF000000" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="690" Canvas.Top="476" Width="14" Height="14" Fill="#FFFF5A1F" Stroke="#FF000000" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="895" Canvas.Top="477" Width="14" Height="14" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="745" Canvas.Top="335" Width="10" Height="10" Fill="#FFDC143C" />
+                    <Ellipse Canvas.Left="846" Canvas.Top="330" Width="10" Height="10" Fill="#FFFF5A1F" />
+                    <Ellipse Canvas.Left="745" Canvas.Top="535" Width="10" Height="10" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="846" Canvas.Top="535" Width="10" Height="10" Fill="#FFDC143C" />
+                    <Path Data="M650,405 L704,405 M896,405 L950,405 M680,470 L724,450 M876,450 L920,470 M760,300 L777,350 M840,350 L858,300 M760,510 L778,555 M840,555 L858,510" Stroke="#FF000000" StrokeThickness="10" />
+                    <Path Data="M650,405 L704,405 M896,405 L950,405 M680,470 L724,450 M876,450 L920,470 M760,300 L777,350 M840,350 L858,300 M760,510 L778,555 M840,555 L858,510" Stroke="#FFFFC928" StrokeThickness="4" />
+                    <!-- The large W, black-keylined with gold face, sits on the burst epicenter. -->
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FF000000" StrokeThickness="48" StrokeLineJoin="Round" />
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFC928" StrokeThickness="30" StrokeLineJoin="Round" />
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFFFFF" StrokeThickness="3" StrokeLineJoin="Round" Opacity="0.82" />
+                    <!-- Downward arrow inside the W: black outline, gold shaft and arrowhead. -->
+                    <Path Data="M800,390 L800,488" Stroke="#FF000000" StrokeThickness="31" />
+                    <Path Data="M800,390 L800,488" Stroke="#FFFFC928" StrokeThickness="19" />
+                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FF000000" StrokeThickness="35" StrokeLineJoin="Round" />
+                    <Path Data="M748,455 L800,514 L852,455" Stroke="#FFFFC928" StrokeThickness="21" StrokeLineJoin="Round" />
+                    <!-- A crisp center dot gives the arrow a compact visual anchor. -->
+                    <Ellipse Canvas.Left="786" Canvas.Top="378" Width="28" Height="28" Fill="#FF000000" Stroke="#FFFFC928" StrokeThickness="5" />
                 </Canvas>
             </Viewbox>
+            <Rectangle Fill="#58060306" />
         </Grid>
+
+        <Grid
+            x:Name="Y2KTitleBar"
+            Grid.Row="0"
+            Visibility="Collapsed"
+            Height="32"
+            Padding="16,0,0,0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F4F7F9" Offset="0" />
+                    <GradientStop Color="#C7D2D9" Offset="0.22" />
+                    <GradientStop Color="#71828C" Offset="0.48" />
+                    <GradientStop Color="#D9E2E7" Offset="0.70" />
+                    <GradientStop Color="#8A9AA4" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8"
+                VerticalAlignment="Center">
+                <TextBlock
+                    x:Name="Y2KTitleBarText"
+                    Text="Wintainium"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Foreground="#765CFF" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="28,24,28,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+<StackPanel Spacing="4" VerticalAlignment="Center">
+                    <TextBlock
+                        Text="My Software"
+                        Style="{StaticResource WintainiumY2KTitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="Software tracked by Wintainium"
+                        Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
+                        Opacity="0.72" />
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock
+                x:Name="ApplicationSummaryText"
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="4"
+                Margin="0,8,0,0"
+                Text="0 applications"
+                Opacity="0.60" />
+
+            <Button
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="12,0,8,0"
+                Content="&#xE16E;  Sort &amp; Filter"
+                Click="SortAndFilterButton_Click" />
+
+            <Button
+                x:Name="ViewModeButton"
+                Grid.Row="0"
+                Grid.Column="2"
+                Margin="0,0,8,0"
+                Content="Grid"
+                Click="ViewModeButton_Click"
+                ToolTipService.ToolTip="Switch to grid view" />
+
+            <Button
+                Grid.Row="0"
+                Grid.Column="3"
+                Content="Settings"
+                Click="SettingsButton_Click" />
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="28,0,28,16">
+            <GridView
+                x:Name="ApplicationGridView"
+                Visibility="Collapsed"
+                SelectionMode="Single"
+                IsItemClickEnabled="True"
+                ItemClick="ApplicationGridView_ItemClick"
+                Padding="4"
+                HorizontalAlignment="Stretch">
+                <GridView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="240" Padding="16" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped" Loaded="SoftwareCard_Loaded">
+                            <StackPanel Spacing="10">
+                                <Border Width="52" Height="52" CornerRadius="10" HorizontalAlignment="Left" Background="{ThemeResource AccentFillColorSecondaryBrush}">
+                                    <Grid>
+                                        <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Image Source="{Binding IconUri}"
+                                               Stretch="Uniform"
+                                               Margin="8" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="{Binding DisplayName}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxLines="2" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Text="{Binding InstallationStateText}" />
+                                    </Border>
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Text="{Binding UpdateStatusText}" />
+                                    </Border>
+                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" HorizontalAlignment="Right" Opacity="0.78" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+            <ListView
+                x:Name="ApplicationListView"
+                SelectionMode="Single"
+                IsItemClickEnabled="True"
+                ItemClick="ApplicationListView_ItemClick"
+                Padding="4">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,2" Padding="12" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ApplicationItem_RightTapped" Loaded="SoftwareCard_Loaded">
+                        <Grid MinHeight="64">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="8" VerticalAlignment="Center">
+                                <Grid>
+                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Image Source="{Binding IconUri}"
+                                           Stretch="Uniform"
+                                           Margin="7" />
+                                </Grid>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding DisplayName}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxLines="2" />
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="4">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" Opacity="0.78" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                    <TextBlock Text="{Binding InstallationStateText}" />
+                                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.72" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <StackPanel
+                x:Name="EmptyStatePanel"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="10"
+                MaxWidth="520">
+                <TextBlock Text="Your software collection"
+                           Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Applications you add to Wintainium will appear here."
+                           Style="{StaticResource WintainiumY2KBodyTextBlockStyle}"
+                           TextAlignment="Center"
+                           Opacity="0.72"
+                           TextWrapping="Wrap" />
+                <TextBlock
+                    x:Name="CollectionLoadingText"
+                    Text="Loading your software collection…"
+                    HorizontalAlignment="Center"
+                    Opacity="0.60"
+                    Visibility="Collapsed" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="3" Padding="28,12,28,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Wintainium" VerticalAlignment="Center" Opacity="0.45" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Content="&#xE72C;  Refresh" Click="RefreshButton_Click" />
+                <Button Content="&#xE710;  Add Software" FontWeight="SemiBold" Click="AddSoftwareButton_Click" />
+            </StackPanel>
+        </Grid>
+            <Grid x:Name="Y2KHexTelemetry" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="HexReadout1" Grid.Row="0" Grid.Column="0" Text="W1NTA1N1UM" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="22,24,0,0" />
+                <TextBlock x:Name="HexReadout2" Grid.Row="0" Grid.Column="1" Text="1NSTALL" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0" />
+                <TextBlock x:Name="HexReadout3" Grid.Row="0" Grid.Column="2" Text="UPD4TE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0" />
+                <TextBlock x:Name="HexReadout4" Grid.Row="0" Grid.Column="3" Text="M4NAGE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,28,28,0" />
+                <TextBlock x:Name="HexReadout5" Grid.Row="1" Grid.Column="0" Text="5OFTWARE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0,0,0" />
+                <TextBlock x:Name="HexReadout6" Grid.Row="1" Grid.Column="1" Text="APPL1CAT1ON" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="18,0,0,22" />
+                <TextBlock x:Name="HexReadout7" Grid.Row="1" Grid.Column="2" Text="V3R1FY" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,26,18,0" />
+                <TextBlock x:Name="HexReadout8" Grid.Row="1" Grid.Column="3" Text="D0WNLOAD" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,12,0,0" />
+                <TextBlock x:Name="HexReadout9" Grid.Row="2" Grid.Column="0" Text="1NTEGR1TY" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0" />
+                <TextBlock x:Name="HexReadout10" Grid.Row="2" Grid.Column="1" Text="0RCH3STRATE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,28,0,0" />
+                <TextBlock x:Name="HexReadout11" Grid.Row="2" Grid.Column="2" Text="PR0V1DER" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0,0,0" />
+                <TextBlock x:Name="HexReadout12" Grid.Row="2" Grid.Column="3" Text="C0RE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18" />
+                <TextBlock x:Name="HexReadout13" Grid.Row="3" Grid.Column="0" Text="P4CKAGE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="28,0,0,0" />
+                <TextBlock x:Name="HexReadout14" Grid.Row="3" Grid.Column="1" Text="4RT1FACT" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,18" />
+                <TextBlock x:Name="HexReadout15" Grid.Row="3" Grid.Column="2" Text="5OURCE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpac
 
         <Grid x:Name="Y2KTitleBar" Grid.Row="0" Visibility="Collapsed" Height="32" Padding="16,0,0,0">
             <Grid.Background>
