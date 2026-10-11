@@ -431,7 +431,7 @@ public partial class App : Application
     }
 
 
-    private static void ApplyFrutigerMetroDarkAppearance(FrameworkElement root)
+    internal static void ApplyFrutigerMetroDarkAppearance(FrameworkElement root)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
             || Settings.Current.Theme != WintainiumThemePreference.Dark)
