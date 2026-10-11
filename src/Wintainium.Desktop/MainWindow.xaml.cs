@@ -84,6 +84,22 @@ public sealed partial class MainWindow : Window
             && App.Settings.Current.Theme == WintainiumThemePreference.Light
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        FrutigerMetroBackdrop.Visibility =
+            App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            Y2KTitleBar.Visibility = Visibility.Collapsed;
+            SetTitleBar(null);
+            AppWindow.TitleBar.ResetToDefault();
+            ExtendsContentIntoTitleBar = false;
+            ApplyFrutigerMetroDarkTypography();
+            return;
+        }
 
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && App.Settings.Current.Theme == WintainiumThemePreference.Light)
@@ -170,6 +186,11 @@ public sealed partial class MainWindow : Window
             {
                 App.ApplyFrutigerAeroTypography(card);
             }
+            else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+            {
+                ApplyFrutigerMetroDarkTypography(card);
+            }
 
             ApplySoftwareCardTextColor(card);
         }
@@ -195,6 +216,12 @@ public sealed partial class MainWindow : Window
             {
                 textBlock.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
             }
+            else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+            {
+                textBlock.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+                textBlock.FontFamily = GetFrutigerMetroDarkFont();
+            }
             else
             {
                 textBlock.ClearValue(TextBlock.ForegroundProperty);
@@ -211,6 +238,83 @@ public sealed partial class MainWindow : Window
             if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
                 ApplySoftwareCardTextColor(child);
+            }
+        }
+    }
+
+
+    private static FontFamily GetFrutigerMetroDarkFont() =>
+        new("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
+
+    private static Brush GetFrutigerMetroDarkGoldBrush() =>
+        new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+
+    private void ApplyFrutigerMetroDarkTypography()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || App.Settings.Current.Theme != WintainiumThemePreference.Dark)
+        {
+            return;
+        }
+
+        ApplyFrutigerMetroDarkTypographyCore(
+            Content as FrameworkElement,
+            GetFrutigerMetroDarkFont(),
+            GetFrutigerMetroDarkGoldBrush());
+        RefreshSoftwareCardTextColors();
+    }
+
+    private static void ApplyFrutigerMetroDarkTypography(FrameworkElement root)
+    {
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            ApplyFrutigerMetroDarkTypographyCore(root, GetFrutigerMetroDarkFont(), GetFrutigerMetroDarkGoldBrush());
+        }
+    }
+
+    private static void ApplyFrutigerMetroDarkTypographyCore(FrameworkElement? root, FontFamily font, Brush gold)
+    {
+        if (root is null)
+        {
+            return;
+        }
+
+        switch (root)
+        {
+            case TextBlock textBlock:
+                if (!(textBlock.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    textBlock.FontFamily = font;
+                    textBlock.Foreground = gold;
+                }
+                break;
+            case Button button:
+                button.FontFamily = font;
+                button.Foreground = gold;
+                button.Background = new SolidColorBrush(ColorHelper.FromArgb(235, 0x16, 0x13, 0x1B));
+                button.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x00, 0x00, 0x00));
+                button.BorderThickness = new Thickness(2);
+                break;
+            case Control control:
+                control.FontFamily = font;
+                control.Foreground = gold;
+                break;
+        }
+
+        if (root is Border border)
+        {
+            border.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x00, 0x00, 0x00));
+            border.BorderThickness = new Thickness(2);
+            border.Background = new SolidColorBrush(ColorHelper.FromArgb(222, 0x1A, 0x15, 0x20));
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(root, index) is FrameworkElement child)
+            {
+                ApplyFrutigerMetroDarkTypographyCore(child, font, gold);
             }
         }
     }
