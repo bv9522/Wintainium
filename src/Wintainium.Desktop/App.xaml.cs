@@ -586,7 +586,9 @@ public partial class App : Application
                      fontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
                      fontSource.Contains("Horatio%20D%20Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
                      fontSource.Contains("Horatio D Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
-                     fontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase)))
+                     fontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("CutieTopRegular-VArx.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     fontSource.Contains("Cutie Top", StringComparison.OrdinalIgnoreCase)))
                 {
                     textBlock.ClearValue(TextBlock.FontFamilyProperty);
                 }
@@ -598,7 +600,9 @@ public partial class App : Application
                      controlFontSource.Contains("Cyberwave2000-Regular.otf", StringComparison.OrdinalIgnoreCase) ||
                      controlFontSource.Contains("Horatio%20D%20Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
                      controlFontSource.Contains("Horatio D Regular.ttf", StringComparison.OrdinalIgnoreCase) ||
-                     controlFontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase)))
+                     controlFontSource.Contains("Horatio D", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("CutieTopRegular-VArx.ttf", StringComparison.OrdinalIgnoreCase) ||
+                     controlFontSource.Contains("Cutie Top", StringComparison.OrdinalIgnoreCase)))
                 {
                     control.ClearValue(Control.FontFamilyProperty);
                 }
