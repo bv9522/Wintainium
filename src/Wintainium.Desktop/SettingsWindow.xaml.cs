@@ -97,7 +97,7 @@ public sealed partial class SettingsWindow : Window
             && _settings.Current.Theme == WintainiumThemePreference.Dark
             && Content is FrameworkElement metroRoot)
         {
-            var metroPanel = new SolidColorBrush(ColorHelper.FromArgb(244, 38, 8, 13));
+            var metroPanel = new SolidColorBrush(ColorHelper.FromArgb(205, 38, 8, 13));
             var metroEdge = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
             if (metroRoot.FindName("CategoryNavigationChrome") is Border metroNavigation)
             {
