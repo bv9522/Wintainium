@@ -133,6 +133,12 @@ public sealed partial class SettingsWindow : Window
         {
             App.ApplyFrutigerAeroTypography(aeroRoot);
         }
+        else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && _settings.Current.Theme == WintainiumThemePreference.Dark
+            && Content is FrameworkElement metroRoot)
+        {
+            App.ApplyFrutigerMetroDarkAppearance(metroRoot);
+        }
     }
 
     private void ClearY2KSettingsOverrides()
@@ -299,6 +305,12 @@ public sealed partial class SettingsWindow : Window
             && Content is FrameworkElement aeroRoot)
         {
             App.ApplyFrutigerAeroTypography(aeroRoot);
+        }
+        else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            && Content is FrameworkElement metroRoot)
+        {
+            App.ApplyFrutigerMetroDarkAppearance(metroRoot);
         }
     }
 
