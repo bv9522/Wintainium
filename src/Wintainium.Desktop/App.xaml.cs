@@ -406,6 +406,9 @@ public partial class App : Application
             // Keep dialog content in its original visual-tree parent. Reparenting
             // ContentDialog.Content from its presenter during Loaded can throw and
             // terminate the async-void command handler. Use a Metro gradient instead.
+            ApplyFrutigerMetroDarkAppearance(dialog);
+            // Set the dialog gradient after recursive control styling, which also
+            // touches ContentDialog.Background.
             dialog.Background = new LinearGradientBrush
             {
                 StartPoint = new Point(0, 0),
@@ -417,7 +420,6 @@ public partial class App : Application
                     new GradientStop { Color = ColorHelper.FromArgb(255, 8, 4, 6), Offset = 1 }
                 }
             };
-            ApplyFrutigerMetroDarkAppearance(dialog);
         }
     }
 
