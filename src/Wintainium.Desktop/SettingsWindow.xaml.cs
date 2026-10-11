@@ -93,6 +93,23 @@ public sealed partial class SettingsWindow : Window
                 aeroContent.BorderBrush = glassEdge;
             }
         }
+        else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && _settings.Current.Theme == WintainiumThemePreference.Dark
+            && Content is FrameworkElement metroRoot)
+        {
+            var metroPanel = new SolidColorBrush(ColorHelper.FromArgb(244, 38, 8, 13));
+            var metroEdge = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+            if (metroRoot.FindName("CategoryNavigationChrome") is Border metroNavigation)
+            {
+                metroNavigation.Background = metroPanel;
+                metroNavigation.BorderBrush = metroEdge;
+            }
+            if (metroRoot.FindName("SettingsContentChrome") is Border metroContent)
+            {
+                metroContent.Background = metroPanel;
+                metroContent.BorderBrush = metroEdge;
+            }
+        }
         else if (Content is FrameworkElement resetRoot
             && resetRoot.FindName("SettingsContentChrome") is Border resetContent)
         {
