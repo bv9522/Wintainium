@@ -121,6 +121,24 @@
                     <Ellipse Canvas.Left="1102" Canvas.Top="806" Width="8" Height="8" Fill="#FF00D9D0" />
                     <Ellipse Canvas.Left="1124" Canvas.Top="822" Width="8" Height="8" Fill="#FF00D9D0" />
                     <Ellipse Canvas.Left="1146" Canvas.Top="838" Width="8" Height="8" Fill="#FF00D9D0" />
+                    <!-- Tighten the burst into a crowded, layered epicenter immediately behind the W. -->
+                    <Polygon Points="800,292 817,366 866,328 846,382 907,383 855,414 899,451 847,444 850,501 813,460 782,505 778,456 727,474 754,431 700,411 756,397 734,350 779,376" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="8" />
+                    <Polygon Points="800,318 811,379 855,350 834,394 883,403 840,426 872,459 828,445 819,488 797,451 768,480 770,441 730,449 758,420 721,400 766,398 752,363 786,385" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="5" />
+                    <Polygon Points="800,344 809,389 838,370 827,405 858,411 829,428 850,449 820,443 814,470 798,449 781,468 779,442 751,446 772,426 749,409 778,407 767,381 790,393" Fill="#FFFF3B87" Stroke="#FF000000" StrokeThickness="4" />
+                    <Polygon Points="645,344 690,376 675,405 716,413 690,438 727,459 688,463 675,493 655,464 625,477 639,444 608,424 646,413 625,385 657,392" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="955,342 925,380 944,405 908,418 932,443 900,462 936,465 950,492 970,462 999,477 986,445 1018,425 981,412 1000,385 967,393" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="6" />
+                    <Polygon Points="686,500 718,483 727,512 751,494 760,526 735,537 714,558 703,532 674,539" Fill="#FF7D42FF" Stroke="#FF000000" StrokeThickness="5" />
+                    <Polygon Points="914,500 882,483 873,512 849,494 840,526 865,537 886,558 897,532 926,539" Fill="#FFFF3B87" Stroke="#FF000000" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="672" Canvas.Top="372" Width="18" Height="18" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="910" Canvas.Top="373" Width="18" Height="18" Fill="#FFFF3B87" Stroke="#FF000000" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="690" Canvas.Top="476" Width="14" Height="14" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="895" Canvas.Top="477" Width="14" Height="14" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="745" Canvas.Top="335" Width="10" Height="10" Fill="#FFFF3B87" />
+                    <Ellipse Canvas.Left="846" Canvas.Top="330" Width="10" Height="10" Fill="#FF00D9D0" />
+                    <Ellipse Canvas.Left="745" Canvas.Top="535" Width="10" Height="10" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="846" Canvas.Top="535" Width="10" Height="10" Fill="#FFFF3B87" />
+                    <Path Data="M650,405 L704,405 M896,405 L950,405 M680,470 L724,450 M876,450 L920,470 M760,300 L777,350 M840,350 L858,300 M760,510 L778,555 M840,555 L858,510" Stroke="#FF000000" StrokeThickness="10" />
+                    <Path Data="M650,405 L704,405 M896,405 L950,405 M680,470 L724,450 M876,450 L920,470 M760,300 L777,350 M840,350 L858,300 M760,510 L778,555 M840,555 L858,510" Stroke="#FFFFC928" StrokeThickness="4" />
                     <!-- The large W, black-keylined with gold face, sits on the burst epicenter. -->
                     <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FF000000" StrokeThickness="48" StrokeLineJoin="Round" />
                     <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFC928" StrokeThickness="30" StrokeLineJoin="Round" />
