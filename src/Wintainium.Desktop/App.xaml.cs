@@ -377,6 +377,16 @@ public partial class App : Application
         };
     }
 
+    private static void FrutigerMetroContentDialog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContentDialog dialog
+            && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            ApplyFrutigerMetroDarkAppearance(dialog);
+        }
+    }
+
     private static void FrutigerAeroContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog
@@ -504,6 +514,11 @@ public partial class App : Application
             && Settings.Current.Theme == WintainiumThemePreference.Dark)
         {
             ApplyFrutigerMetroDarkAppearance(element);
+            if (element is ContentDialog metroDialog)
+            {
+                metroDialog.Loaded -= FrutigerMetroContentDialog_Loaded;
+                metroDialog.Loaded += FrutigerMetroContentDialog_Loaded;
+            }
             return;
         }
 
