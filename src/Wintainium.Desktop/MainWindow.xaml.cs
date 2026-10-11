@@ -225,7 +225,9 @@ public sealed partial class MainWindow : Window
             else
             {
                 textBlock.ClearValue(TextBlock.ForegroundProperty);
-                if (textBlock.FontFamily?.Source?.Contains("Horatio D", StringComparison.OrdinalIgnoreCase) ?? false)
+                if ((textBlock.FontFamily?.Source?.Contains("Horatio D", StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (textBlock.FontFamily?.Source?.Contains("Cutie Top", StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (textBlock.FontFamily?.Source?.Contains("CutieTopRegular-VArx.ttf", StringComparison.OrdinalIgnoreCase) ?? false))
                 {
                     textBlock.ClearValue(TextBlock.FontFamilyProperty);
                 }
@@ -292,21 +294,11 @@ public sealed partial class MainWindow : Window
             case Button button:
                 button.FontFamily = font;
                 button.Foreground = gold;
-                button.Background = new SolidColorBrush(ColorHelper.FromArgb(235, 0x16, 0x13, 0x1B));
-                button.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x00, 0x00, 0x00));
-                button.BorderThickness = new Thickness(2);
                 break;
             case Control control:
                 control.FontFamily = font;
                 control.Foreground = gold;
                 break;
-        }
-
-        if (root is Border border)
-        {
-            border.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x00, 0x00, 0x00));
-            border.BorderThickness = new Thickness(2);
-            border.Background = new SolidColorBrush(ColorHelper.FromArgb(222, 0x1A, 0x15, 0x20));
         }
 
         var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
