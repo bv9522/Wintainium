@@ -78,6 +78,16 @@ public partial class App : Application
                 {
                     ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
                 }
+                else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && Settings.Current.Theme == WintainiumThemePreference.Dark)
+                {
+                    ApplyFrutigerMetroDarkAppearance(content);
+                }
+                else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && Settings.Current.Theme == WintainiumThemePreference.Dark)
+                {
+                    ApplyFrutigerMetroDarkAppearance(content);
+                }
             }
 
             content.Loaded += ApplyVisualStyleAfterLoaded;
@@ -441,6 +451,8 @@ public partial class App : Application
                     control.FontFamily = font;
                     control.Foreground = gold;
                 }
+                control.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 38, 8, 13));
+                control.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
                 break;
             case Border border:
                 border.Background = new SolidColorBrush(ColorHelper.FromArgb(244, 38, 8, 13));
