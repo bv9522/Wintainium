@@ -166,6 +166,19 @@ public partial class App : Application
         }
 
         var windowId = window.AppWindow.Id;
+        var isFrutigerMetroDark = Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Dark;
+
+        if (!isFrutigerMetroDark
+            && content.FindName("FrutigerMetroBackdrop") is FrameworkElement previousMetroBackdrop)
+        {
+            previousMetroBackdrop.Visibility = Visibility.Collapsed;
+        }
+
+        if (!isFrutigerMetroDark)
+        {
+            ClearFrutigerMetroDarkAppearance(content);
+        }
 
         if (WindowVisualStyleResources.TryGetValue(windowId, out var existing))
         {
@@ -390,23 +403,10 @@ public partial class App : Application
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && Settings.Current.Theme == WintainiumThemePreference.Dark)
         {
-            EnsureFrutigerMetroDialogBackdrop(dialog);
-            ApplyFrutigerMetroDarkAppearance(dialog);
-        }
-    }
-
-    private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
-    {
-        if (dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
-        {
-            return;
-        }
-
-        var background = new Grid
-        {
-            IsHitTestVisible = false,
-            Background = new LinearGradientBrush
+            // Keep dialog content in its original visual-tree parent. Reparenting
+            // ContentDialog.Content from its presenter during Loaded can throw and
+            // terminate the async-void command handler. Use a Metro gradient instead.
+            dialog.Background = new LinearGradientBrush
             {
                 StartPoint = new Point(0, 0),
                 EndPoint = new Point(1, 1),
@@ -416,92 +416,9 @@ public partial class App : Application
                     new GradientStop { Color = ColorHelper.FromArgb(255, 57, 10, 18), Offset = 0.48 },
                     new GradientStop { Color = ColorHelper.FromArgb(255, 8, 4, 6), Offset = 1 }
                 }
-            }
-        };
-
-        var canvas = new Canvas { Width = 1600, Height = 900 };
-        var viewbox = new Viewbox { Stretch = Stretch.UniformToFill, IsHitTestVisible = false };
-        viewbox.Child = canvas;
-
-        canvas.Children.Add(new Polygon
-        {
-            Points = new PointCollection { new Point(760, 405), new Point(785, 405), new Point(220, 0), new Point(280, 0) },
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 255, 201, 40))
-        });
-        canvas.Children.Add(new Polygon
-        {
-            Points = new PointCollection { new Point(790, 405), new Point(810, 405), new Point(510, 0), new Point(548, 0) },
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 255, 90, 31))
-        });
-        canvas.Children.Add(new Polygon
-        {
-            Points = new PointCollection { new Point(815, 405), new Point(840, 405), new Point(1090, 0), new Point(1130, 0) },
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 220, 20, 60))
-        });
-        canvas.Children.Add(new Polygon
-        {
-            Points = new PointCollection
-            {
-                new Point(800, 265), new Point(835, 376), new Point(930, 300), new Point(884, 399),
-                new Point(1010, 405), new Point(900, 448), new Point(984, 530), new Point(877, 489),
-                new Point(858, 610), new Point(800, 510), new Point(742, 610), new Point(723, 489),
-                new Point(616, 530), new Point(700, 448), new Point(590, 405), new Point(716, 399),
-                new Point(670, 300), new Point(765, 376)
-            },
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 255, 201, 40)),
-            Stroke = new SolidColorBrush(Colors.Black),
-            StrokeThickness = 11
-        });
-        canvas.Children.Add(new Ellipse
-        {
-            Width = 250, Height = 250,
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 0, 0, 0)),
-            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
-            StrokeThickness = 9
-        });
-        Canvas.SetLeft(canvas.Children[canvas.Children.Count - 1], 55);
-        Canvas.SetTop(canvas.Children[canvas.Children.Count - 1], 260);
-        canvas.Children.Add(new Ellipse
-        {
-            Width = 215, Height = 215,
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 0, 0, 0)),
-            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31)),
-            StrokeThickness = 9
-        });
-        Canvas.SetLeft(canvas.Children[canvas.Children.Count - 1], 1320);
-        Canvas.SetTop(canvas.Children[canvas.Children.Count - 1], 425);
-        canvas.Children.Add(new Polyline
-        {
-            Points = new PointCollection { new Point(510, 310), new Point(625, 570), new Point(800, 365), new Point(975, 570), new Point(1090, 310) },
-            Stroke = new SolidColorBrush(Colors.Black),
-            StrokeThickness = 48
-        });
-        canvas.Children.Add(new Polyline
-        {
-            Points = new PointCollection { new Point(510, 310), new Point(625, 570), new Point(800, 365), new Point(975, 570), new Point(1090, 310) },
-            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
-            StrokeThickness = 30
-        });
-        canvas.Children.Add(new Polyline
-        {
-            Points = new PointCollection { new Point(800, 390), new Point(800, 488) },
-            Stroke = new SolidColorBrush(Colors.Black),
-            StrokeThickness = 31
-        });
-        canvas.Children.Add(new Polygon
-        {
-            Points = new PointCollection { new Point(748, 455), new Point(800, 514), new Point(852, 455) },
-            Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
-            Stroke = new SolidColorBrush(Colors.Black),
-            StrokeThickness = 7
-        });
-        background.Children.Add(viewbox);
-
-        var host = new Grid { Tag = "FrutigerMetroDialogBackdropHost" };
-        host.Children.Add(background);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(210, 8, 4, 6));
+            };
+            ApplyFrutigerMetroDarkAppearance(dialog);
+        }
     }
 
     private static void FrutigerAeroContentDialog_Loaded(object sender, RoutedEventArgs e)
@@ -594,6 +511,80 @@ public partial class App : Application
             if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
                 ApplyFrutigerMetroDarkElement(child, font, gold);
+            }
+        }
+    }
+
+    internal static void ClearFrutigerMetroDarkAppearance(FrameworkElement root)
+    {
+        ClearFrutigerMetroDarkAppearanceCore(root);
+    }
+
+    private static void ClearFrutigerMetroDarkAppearanceCore(FrameworkElement element)
+    {
+        static bool IsMetroGold(Brush? brush) =>
+            brush is SolidColorBrush solid && solid.Color.A == 255
+            && solid.Color.R == 0xFF && solid.Color.G == 0xC9 && solid.Color.B == 0x28;
+
+        static bool IsMetroPanel(Brush? brush, byte alpha) =>
+            brush is SolidColorBrush solid && solid.Color.A == alpha
+            && solid.Color.R == 38 && solid.Color.G == 8 && solid.Color.B == 13;
+
+        static bool IsMetroEdge(Brush? brush) =>
+            brush is SolidColorBrush solid && solid.Color.R == 255
+            && solid.Color.G == 90 && solid.Color.B == 31;
+
+        switch (element)
+        {
+            case TextBlock textBlock:
+                if (textBlock.FontFamily?.Source?.Contains("CutieTopRegular-VArx.ttf", StringComparison.OrdinalIgnoreCase) == true
+                    || textBlock.FontFamily?.Source?.Contains("Cutie Top", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    textBlock.ClearValue(TextBlock.FontFamilyProperty);
+                }
+                if (IsMetroGold(textBlock.Foreground))
+                {
+                    textBlock.ClearValue(TextBlock.ForegroundProperty);
+                }
+                break;
+            case Control control:
+                if (control.FontFamily?.Source?.Contains("CutieTopRegular-VArx.ttf", StringComparison.OrdinalIgnoreCase) == true
+                    || control.FontFamily?.Source?.Contains("Cutie Top", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    control.ClearValue(Control.FontFamilyProperty);
+                }
+                if (IsMetroGold(control.Foreground))
+                {
+                    control.ClearValue(Control.ForegroundProperty);
+                }
+                if (IsMetroPanel(control.Background, 210))
+                {
+                    control.ClearValue(Control.BackgroundProperty);
+                }
+                if (IsMetroEdge(control.BorderBrush))
+                {
+                    control.ClearValue(Control.BorderBrushProperty);
+                }
+                break;
+            case Border border:
+                if (IsMetroPanel(border.Background, 170))
+                {
+                    border.ClearValue(Border.BackgroundProperty);
+                }
+                if (IsMetroEdge(border.BorderBrush))
+                {
+                    border.ClearValue(Border.BorderBrushProperty);
+                    border.ClearValue(Border.BorderThicknessProperty);
+                }
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ClearFrutigerMetroDarkAppearanceCore(child);
             }
         }
     }
