@@ -21,6 +21,7 @@ public sealed partial class MainWindow : Window
     private CancellationTokenSource? _collectionRefreshCancellation;
     private readonly HashSet<string> _activeApplicationOperations = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, long> _applicationRefreshGenerations = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<Border, Brush?> _softwareCardOriginalBackgrounds = new();
 
     public MainWindow()
     {
@@ -89,6 +90,8 @@ public sealed partial class MainWindow : Window
             && App.Settings.Current.Theme == WintainiumThemePreference.Dark
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+
+        RefreshSoftwareCardBackgrounds();
 
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
@@ -181,6 +184,13 @@ public sealed partial class MainWindow : Window
     {
         if (sender is FrameworkElement card)
         {
+            if (card is Border softwareCard && !_softwareCardOriginalBackgrounds.ContainsKey(softwareCard))
+            {
+                _softwareCardOriginalBackgrounds.Add(softwareCard, softwareCard.Background);
+            }
+
+            RefreshSoftwareCardBackgrounds();
+
             if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
                 && App.Settings.Current.Theme == WintainiumThemePreference.Light)
             {
@@ -193,6 +203,20 @@ public sealed partial class MainWindow : Window
             }
 
             ApplySoftwareCardTextColor(card);
+        }
+    }
+
+    private void RefreshSoftwareCardBackgrounds()
+    {
+        var useFrutigerMetroBackground =
+            App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Dark;
+
+        foreach (var entry in _softwareCardOriginalBackgrounds)
+        {
+            entry.Key.Background = useFrutigerMetroBackground
+                ? new SolidColorBrush(ColorHelper.FromArgb(255, 25, 20, 29))
+                : entry.Value;
         }
     }
 
