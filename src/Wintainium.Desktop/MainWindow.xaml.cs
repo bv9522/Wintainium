@@ -215,7 +215,7 @@ public sealed partial class MainWindow : Window
         foreach (var entry in _softwareCardOriginalBackgrounds)
         {
             entry.Key.Background = useFrutigerMetroBackground
-                ? new SolidColorBrush(ColorHelper.FromArgb(255, 25, 20, 29))
+                ? new SolidColorBrush(ColorHelper.FromArgb(255, 38, 8, 13))
                 : entry.Value;
         }
     }
