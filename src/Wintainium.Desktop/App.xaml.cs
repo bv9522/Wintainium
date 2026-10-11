@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
+using Windows.Foundation;
 using Windows.UI.ViewManagement;
 using Wintainium.Desktop.Settings;
 
@@ -388,8 +390,118 @@ public partial class App : Application
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && Settings.Current.Theme == WintainiumThemePreference.Dark)
         {
+            EnsureFrutigerMetroDialogBackdrop(dialog);
             ApplyFrutigerMetroDarkAppearance(dialog);
         }
+    }
+
+    private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
+    {
+        if (dialog.Content is not FrameworkElement currentContent
+            || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
+        {
+            return;
+        }
+
+        var background = new Grid
+        {
+            IsHitTestVisible = false,
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 1),
+                GradientStops =
+                {
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 16, 5, 7), Offset = 0 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 57, 10, 18), Offset = 0.48 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 8, 4, 6), Offset = 1 }
+                }
+            }
+        };
+
+        var canvas = new Canvas { Width = 1600, Height = 900 };
+        var viewbox = new Viewbox { Stretch = Stretch.UniformToFill, IsHitTestVisible = false };
+        viewbox.Child = canvas;
+
+        canvas.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(760, 405), new Point(785, 405), new Point(220, 0), new Point(280, 0) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 255, 201, 40))
+        });
+        canvas.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(790, 405), new Point(810, 405), new Point(510, 0), new Point(548, 0) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 255, 90, 31))
+        });
+        canvas.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(815, 405), new Point(840, 405), new Point(1090, 0), new Point(1130, 0) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(235, 220, 20, 60))
+        });
+        canvas.Children.Add(new Polygon
+        {
+            Points = new PointCollection
+            {
+                new Point(800, 265), new Point(835, 376), new Point(930, 300), new Point(884, 399),
+                new Point(1010, 405), new Point(900, 448), new Point(984, 530), new Point(877, 489),
+                new Point(858, 610), new Point(800, 510), new Point(742, 610), new Point(723, 489),
+                new Point(616, 530), new Point(700, 448), new Point(590, 405), new Point(716, 399),
+                new Point(670, 300), new Point(765, 376)
+            },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 255, 201, 40)),
+            Stroke = new SolidColorBrush(Colors.Black),
+            StrokeThickness = 11
+        });
+        canvas.Children.Add(new Ellipse
+        {
+            Width = 250, Height = 250,
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 0, 0, 0)),
+            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
+            StrokeThickness = 9
+        });
+        Canvas.SetLeft(canvas.Children[^1], 55);
+        Canvas.SetTop(canvas.Children[^1], 260);
+        canvas.Children.Add(new Ellipse
+        {
+            Width = 215, Height = 215,
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(220, 0, 0, 0)),
+            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31)),
+            StrokeThickness = 9
+        });
+        Canvas.SetLeft(canvas.Children[^1], 1320);
+        Canvas.SetTop(canvas.Children[^1], 425);
+        canvas.Children.Add(new Polyline
+        {
+            Points = new PointCollection { new Point(510, 310), new Point(625, 570), new Point(800, 365), new Point(975, 570), new Point(1090, 310) },
+            Stroke = new SolidColorBrush(Colors.Black),
+            StrokeThickness = 48
+        });
+        canvas.Children.Add(new Polyline
+        {
+            Points = new PointCollection { new Point(510, 310), new Point(625, 570), new Point(800, 365), new Point(975, 570), new Point(1090, 310) },
+            Stroke = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
+            StrokeThickness = 30
+        });
+        canvas.Children.Add(new Polyline
+        {
+            Points = new PointCollection { new Point(800, 390), new Point(800, 488) },
+            Stroke = new SolidColorBrush(Colors.Black),
+            StrokeThickness = 31
+        });
+        canvas.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(748, 455), new Point(800, 514), new Point(852, 455) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 201, 40)),
+            Stroke = new SolidColorBrush(Colors.Black),
+            StrokeThickness = 7
+        });
+        background.Children.Add(viewbox);
+
+        var host = new Grid { Tag = "FrutigerMetroDialogBackdropHost" };
+        host.Children.Add(background);
+        host.Children.Add(currentContent);
+        dialog.Content = host;
+        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(210, 8, 4, 6));
     }
 
     private static void FrutigerAeroContentDialog_Loaded(object sender, RoutedEventArgs e)
