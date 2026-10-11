@@ -51,6 +51,19 @@ public sealed partial class ApplicationDetailsWindow : Window
 
         InitializeComponent();
         App.TrackWindow(this);
+        if (Content is FrameworkElement detailsRoot)
+        {
+            detailsRoot.Loaded += (_, _) =>
+            {
+                if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                    && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+                    && detailsRoot.FindName("FrutigerMetroBackdrop") is FrameworkElement metroBackdrop)
+                {
+                    metroBackdrop.Visibility = Visibility.Visible;
+                    App.ApplyFrutigerMetroDarkAppearance(detailsRoot);
+                }
+            };
+        }
         Closed += ApplicationDetailsWindow_Closed;
 
         _application = application;
