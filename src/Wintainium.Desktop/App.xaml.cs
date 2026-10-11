@@ -181,6 +181,23 @@ public partial class App : Application
             return;
         }
 
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            if (content.FindName("FrutigerMetroBackdrop") is FrameworkElement metroBackdrop)
+            {
+                metroBackdrop.Visibility = Visibility.Visible;
+            }
+            ApplyFrutigerMetroDarkAppearance(content);
+            ApplyWindowChromeForCurrentVisualStyle(window);
+            return;
+        }
+
+        if (content.FindName("FrutigerMetroBackdrop") is FrameworkElement hiddenMetroBackdrop)
+        {
+            hiddenMetroBackdrop.Visibility = Visibility.Collapsed;
+        }
+
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             ClearY2KTextColor(content);
@@ -393,6 +410,55 @@ public partial class App : Application
         }
     }
 
+
+    private static void ApplyFrutigerMetroDarkAppearance(FrameworkElement root)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || Settings.Current.Theme != WintainiumThemePreference.Dark)
+        {
+            return;
+        }
+
+        var font = new FontFamily("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
+        var gold = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+        ApplyFrutigerMetroDarkElement(root, font, gold);
+    }
+
+    private static void ApplyFrutigerMetroDarkElement(FrameworkElement element, FontFamily font, Brush gold)
+    {
+        switch (element)
+        {
+            case TextBlock textBlock:
+                if (!(textBlock.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    textBlock.FontFamily = font;
+                    textBlock.Foreground = gold;
+                }
+                break;
+            case Control control:
+                if (!(control.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    control.FontFamily = font;
+                    control.Foreground = gold;
+                }
+                break;
+            case Border border:
+                border.Background = new SolidColorBrush(ColorHelper.FromArgb(244, 38, 8, 13));
+                border.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+                border.BorderThickness = new Thickness(1);
+                break;
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyFrutigerMetroDarkElement(child, font, gold);
+            }
+        }
+    }
+
     internal static void ApplyThemeToElement(FrameworkElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -419,6 +485,13 @@ public partial class App : Application
                 aeroDialog.Loaded -= FrutigerAeroContentDialog_Loaded;
                 aeroDialog.Loaded += FrutigerAeroContentDialog_Loaded;
             }
+            return;
+        }
+
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+        {
+            ApplyFrutigerMetroDarkAppearance(element);
             return;
         }
 
