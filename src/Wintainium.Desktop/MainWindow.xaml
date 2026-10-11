@@ -30,6 +30,72 @@
                      HorizontalAlignment="Center" VerticalAlignment="Top" Margin="180,30,0,0" />
         </Grid>
 
+
+        <!-- Frutiger Metro DARK-only native vector poster art; no bitmap and no hit testing. -->
+        <Grid x:Name="FrutigerMetroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#FF09090C" Offset="0" />
+                    <GradientStop Color="#FF19141C" Offset="0.48" />
+                    <GradientStop Color="#FF08090D" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Viewbox Stretch="UniformToFill">
+                <Canvas Width="1600" Height="900">
+                    <!-- Black-keylined streamlines and saturated ribbon trails -->
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FF000000" StrokeThickness="30" />
+                    <Path Data="M-100,170 C180,15 370,270 610,130 S1050,5 1710,155" Stroke="#FFFFC928" StrokeThickness="15" />
+                    <Path Data="M-100,204 C180,49 370,304 610,164 S1050,39 1710,189" Stroke="#FF00D9D0" StrokeThickness="5" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FF000000" StrokeThickness="34" />
+                    <Path Data="M-100,735 C180,575 410,830 680,670 S1190,565 1710,735" Stroke="#FFFFC928" StrokeThickness="16" />
+                    <Path Data="M-100,765 C180,605 410,860 680,700 S1190,595 1710,765" Stroke="#FFFF3B87" StrokeThickness="5" />
+                    <Path Data="M0,410 C260,320 370,450 590,365 S1050,300 1600,420" Stroke="#FF000000" StrokeThickness="12" />
+                    <Path Data="M0,410 C260,320 370,450 590,365 S1050,300 1600,420" Stroke="#FF7D42FF" StrokeThickness="4" />
+                    <Polygon Points="0,0 180,0 640,900 500,900" Fill="#FF000000" Opacity="0.62" />
+                    <Polygon Points="0,0 104,0 564,900 500,900" Fill="#FFFFC928" Opacity="0.13" />
+                    <Polygon Points="1480,0 1600,0 1110,900 1000,900" Fill="#FF000000" Opacity="0.6" />
+                    <Polygon Points="1540,0 1600,0 1110,900 1060,900" Fill="#FF00D9D0" Opacity="0.13" />
+                    <!-- Record discs, layered grooves and black outlines -->
+                    <Ellipse Canvas.Left="75" Canvas.Top="250" Width="230" Height="230" Fill="#FF000000" Stroke="#FFFFC928" StrokeThickness="8" />
+                    <Ellipse Canvas.Left="91" Canvas.Top="266" Width="198" Height="198" Fill="#FF28202C" Stroke="#FFFF3B87" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="111" Canvas.Top="286" Width="158" Height="158" Stroke="#FF7D42FF" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="133" Canvas.Top="308" Width="114" Height="114" Stroke="#FFFFC928" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="166" Canvas.Top="341" Width="48" Height="48" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="5" />
+                    <Ellipse Canvas.Left="1370" Canvas.Top="420" Width="190" Height="190" Fill="#FF000000" Stroke="#FF00D9D0" StrokeThickness="8" />
+                    <Ellipse Canvas.Left="1386" Canvas.Top="436" Width="158" Height="158" Fill="#FF29202D" Stroke="#FFFF3B87" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="1408" Canvas.Top="458" Width="114" Height="114" Stroke="#FFFFC928" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="1440" Canvas.Top="490" Width="50" Height="50" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="5" />
+                    <!-- Oversized comic-book starbursts -->
+                    <Polygon Points="390,50 411,113 470,80 439,139 507,151 442,172 480,229 421,199 403,267 382,203 326,237 353,176 286,163 349,143 314,85 374,113" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="7" />
+                    <Polygon Points="1250,170 1265,219 1310,194 1287,238 1337,248 1289,264 1315,309 1268,286 1253,336 1237,287 1193,311 1216,265 1168,251 1215,237 1190,194 1236,219" Fill="#FFFF3B87" Stroke="#FF000000" StrokeThickness="7" />
+                    <Polygon Points="1120,610 1135,650 1176,634 1155,670 1196,686 1154,696 1169,738 1133,715 1110,753 1105,711 1061,720 1088,686 1054,658 1098,664" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="6" />
+                    <!-- The W emblem: geometric, musical-poster bold, black keyline -->
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FF000000" StrokeThickness="42" StrokeLineJoin="Round" />
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFC928" StrokeThickness="27" StrokeLineJoin="Round" />
+                    <Path Data="M510,310 L625,570 L800,365 L975,570 L1090,310" Stroke="#FFFFFFFF" StrokeThickness="3" StrokeLineJoin="Round" Opacity="0.82" />
+                    <!-- Supporting rings, stars, spark marks and dot trails -->
+                    <Ellipse Canvas.Left="1040" Canvas.Top="70" Width="72" Height="72" Stroke="#FF000000" StrokeThickness="10" />
+                    <Ellipse Canvas.Left="1040" Canvas.Top="70" Width="72" Height="72" Stroke="#FF00D9D0" StrokeThickness="4" />
+                    <Ellipse Canvas.Left="535" Canvas.Top="690" Width="82" Height="82" Stroke="#FF000000" StrokeThickness="10" />
+                    <Ellipse Canvas.Left="535" Canvas.Top="690" Width="82" Height="82" Stroke="#FFFF3B87" StrokeThickness="4" />
+                    <Polygon Points="730,90 742,120 775,122 750,143 758,175 730,157 702,175 710,143 685,122 718,120" Fill="#FF00D9D0" Stroke="#FF000000" StrokeThickness="4" />
+                    <Polygon Points="900,710 910,736 938,738 916,756 923,784 900,768 877,784 884,756 862,738 890,736" Fill="#FFFFC928" Stroke="#FF000000" StrokeThickness="4" />
+                    <Path Data="M0,95 L35,95 M17,77 L17,113 M1550,330 L1590,330 M1570,310 L1570,350 M330,815 L370,815 M350,795 L350,835" Stroke="#FF000000" StrokeThickness="9" />
+                    <Path Data="M0,95 L35,95 M17,77 L17,113 M1550,330 L1590,330 M1570,310 L1570,350 M330,815 L370,815 M350,795 L350,835" Stroke="#FFFFC928" StrokeThickness="3" />
+                    <Ellipse Canvas.Left="460" Canvas.Top="75" Width="7" Height="7" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="482" Canvas.Top="91" Width="7" Height="7" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="504" Canvas.Top="107" Width="7" Height="7" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="526" Canvas.Top="123" Width="7" Height="7" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="548" Canvas.Top="139" Width="7" Height="7" Fill="#FFFFC928" />
+                    <Ellipse Canvas.Left="1150" Canvas.Top="810" Width="7" Height="7" Fill="#FF00D9D0" />
+                    <Ellipse Canvas.Left="1172" Canvas.Top="826" Width="7" Height="7" Fill="#FF00D9D0" />
+                    <Ellipse Canvas.Left="1194" Canvas.Top="842" Width="7" Height="7" Fill="#FF00D9D0" />
+                    <Ellipse Canvas.Left="1216" Canvas.Top="858" Width="7" Height="7" Fill="#FF00D9D0" />
+                </Canvas>
+            </Viewbox>
+            <Rectangle Fill="#5807070B" />
+        </Grid>
+
         <Grid
             x:Name="Y2KTitleBar"
             Grid.Row="0"
