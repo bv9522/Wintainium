@@ -248,11 +248,7 @@ public partial class App : Application
 
         content.Resources.MergedDictionaries.Add(visualStyle);
 
-        var themeKey = Settings.Current.Theme switch
-        {
-            WintainiumThemePreference.Light => "Light",
-            _ => "Dark"
-        };
+        var themeKey = IsDarkThemeActive ? "Dark" : "Light";
 
         var activeTheme = new ResourceDictionary();
         if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme)
@@ -337,7 +333,7 @@ public partial class App : Application
         window.SetTitleBar(titleBar);
 
         var nativeTitleBar = window.AppWindow.TitleBar;
-        var textColor = Settings.Current.Theme != WintainiumThemePreference.Light
+        var textColor = IsDarkThemeActive
             ? ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A)
             : ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
         var textHover = ColorHelper.FromArgb(48, textColor.R, textColor.G, textColor.B);
@@ -852,11 +848,7 @@ public partial class App : Application
 
         element.Resources.MergedDictionaries.Add(visualStyle);
 
-        var themeKey = Settings.Current.Theme switch
-        {
-            WintainiumThemePreference.Light => "Light",
-            _ => "Dark"
-        };
+        var themeKey = IsDarkThemeActive ? "Dark" : "Light";
 
         if (visualStyle.ThemeDictionaries.TryGetValue(themeKey, out var selectedTheme)
             && selectedTheme is ResourceDictionary selectedThemeDictionary)
@@ -942,7 +934,7 @@ public partial class App : Application
         if (isButtonArea)
         {
             if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K &&
-                Settings.Current.Theme == WintainiumThemePreference.Light)
+                !IsDarkThemeActive)
             {
                 var chromeBrush = GetY2KLightChromeBrush();
                 if (element is Panel panel)
@@ -1217,7 +1209,7 @@ public partial class App : Application
 
     internal static Brush GetY2KTextBrush()
     {
-        if (Settings.Current.Theme != WintainiumThemePreference.Light)
+        if (IsDarkThemeActive)
         {
             return new SolidColorBrush(ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A));
         }
@@ -1233,7 +1225,7 @@ public partial class App : Application
 
     internal static FontFamily GetY2KDisplayFont()
     {
-        return Settings.Current.Theme != WintainiumThemePreference.Light
+        return IsDarkThemeActive
             ? new FontFamily("Consolas")
             : new FontFamily("ms-appx:///Cyberwave2000-Regular.otf#Cyberwave 2000");
     }
