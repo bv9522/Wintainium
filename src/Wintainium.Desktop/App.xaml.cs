@@ -81,7 +81,7 @@ public partial class App : Application
                     QueueY2KTextColorPass(content);
                 }
                 else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !IsDarkThemeActive)
                 {
                     ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
                 }
@@ -111,7 +111,7 @@ public partial class App : Application
                     QueueY2KTextColorPass(content);
                 }
                 else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !IsDarkThemeActive)
                 {
                     ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
                 }
@@ -151,7 +151,7 @@ public partial class App : Application
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
             || (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && Settings.Current.Theme == WintainiumThemePreference.Light))
+                && !IsDarkThemeActive))
         {
             // Re-applying RequestedTheme forces ThemeResource brushes to refresh after
             // a runtime dictionary swap, including open Settings windows and dropdowns.
@@ -194,7 +194,7 @@ public partial class App : Application
         }
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !IsDarkThemeActive)
         {
             var aeroStyle = new ResourceDictionary
             {
@@ -292,7 +292,7 @@ public partial class App : Application
         }
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !IsDarkThemeActive)
         {
             ApplyFrutigerAeroTitleBar(window, titleBar, titleText);
             return;
@@ -517,7 +517,7 @@ public partial class App : Application
     {
         if (sender is ContentDialog dialog
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !IsDarkThemeActive)
         {
             ApplyFrutigerAeroTypography(dialog);
 
@@ -761,7 +761,7 @@ public partial class App : Application
         };
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !IsDarkThemeActive)
         {
             var aeroStyle = new ResourceDictionary
             {
@@ -995,7 +995,7 @@ public partial class App : Application
         bool preserveSoftwareCardTypography = false)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || Settings.Current.Theme != WintainiumThemePreference.Light)
+            || IsDarkThemeActive)
         {
             return;
         }
