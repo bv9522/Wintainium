@@ -484,8 +484,53 @@ public partial class App : Application
         };
         overlay.Children.Add(artwork);
         templateRoot.Children.Insert(0, overlay);
-        templateRoot.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
-        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+
+        // The WinUI ContentDialog template can put an opaque Border or layout
+        // panel between the template Grid and its content/footer. Clear those
+        // layout surfaces only; retain input-field and button backgrounds.
+        MakeDialogTemplateSurfacesTransparent(templateRoot);
+        templateRoot.Background = TransparentDialogBrush;
+        dialog.Background = TransparentDialogBrush;
+    }
+
+    private static readonly Brush TransparentDialogBrush =
+        new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+
+    private static void MakeDialogTemplateSurfacesTransparent(DependencyObject root)
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is not FrameworkElement element)
+            {
+                continue;
+            }
+
+            if (element is Panel panel)
+            {
+                panel.Background = TransparentDialogBrush;
+            }
+            else if (element is Border border
+                && border.Child is FrameworkElement borderChild
+                && (borderChild is Panel || borderChild is ContentPresenter))
+            {
+                border.Background = TransparentDialogBrush;
+            }
+
+            // Preserve controls' own visual surfaces, but recurse through the
+            // structural content hosts that paint over the backdrop.
+            if (element is Panel
+                || element is Border
+                || element is ContentPresenter
+                || (element is ContentControl
+                    && element is not TextBox
+                    && element is not ComboBox
+                    && element is not Button))
+            {
+                MakeDialogTemplateSurfacesTransparent(element);
+            }
+        }
     }
 
     private static Grid? FindDialogTemplateRoot(ContentDialog dialog)
@@ -531,6 +576,16 @@ public partial class App : Application
                     Visibility = IsDarkThemeActive ? Visibility.Visible : Visibility.Collapsed
                 });
                 return images;
+
+            case WintainiumVisualStyle.FrutigerAero when !IsDarkThemeActive:
+                return new Image
+                {
+                    Source = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
+                    Stretch = Stretch.Fill,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    IsHitTestVisible = false
+                };
 
             case WintainiumVisualStyle.FrutigerAero when IsDarkThemeActive:
                 return new FrutigerMetroBackdrop
