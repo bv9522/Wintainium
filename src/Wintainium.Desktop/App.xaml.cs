@@ -470,11 +470,12 @@ public partial class App : Application
 
         // Reuse the exact backdrop UserControl used by MainWindow so the main window
         // and these dialogs cannot drift into separate Metro artwork implementations.
+        // Do not impose a minimum size on the dialog's content host. The
+        // backdrop must fill the dialog's natural layout size rather than enlarge
+        // the Sort & Filter and Add Software dialogs.
         var host = new Grid
         {
-            Tag = "FrutigerMetroDialogBackdropHost",
-            MinWidth = 420,
-            MinHeight = 250
+            Tag = "FrutigerMetroDialogBackdropHost"
         };
         var backdrop = new FrutigerMetroBackdrop
         {
@@ -519,6 +520,22 @@ public partial class App : Application
             && Settings.Current.Theme == WintainiumThemePreference.Light)
         {
             ApplyFrutigerAeroTypography(dialog);
+
+            // Match the aqua-white page surface used by the Frutiger Aero Settings
+            // window so ContentDialogs such as Sort & Filter and Add Software do
+            // not fall back to the platform's plain dialog surface.
+            dialog.Background = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(0, 1),
+                GradientStops =
+                {
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
+                }
+            };
         }
     }
 
