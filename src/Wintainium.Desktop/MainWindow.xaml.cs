@@ -26,7 +26,6 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        InitializeHexTelemetryAnimations();
         Title = "Wintainium";
         _services = ((App)Application.Current).Services;
 
@@ -43,37 +42,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void InitializeHexTelemetryAnimations()
-    {
-        var readouts = new[]
-        {
-            HexReadout1, HexReadout2, HexReadout3, HexReadout4,
-            HexReadout5, HexReadout6, HexReadout7, HexReadout8,
-            HexReadout9, HexReadout10, HexReadout11, HexReadout12,
-            HexReadout13, HexReadout14, HexReadout15, HexReadout16,
-            HexReadout17, HexReadout18, HexReadout19, HexReadout20,
-            HexReadout21, HexReadout22, HexReadout23, HexReadout24
-        };
-
-        for (var index = 0; index < readouts.Length; index++)
-        {
-            var animation = new DoubleAnimation
-            {
-                From = 0.16,
-                To = index % 3 == 0 ? 0.62 : 0.46,
-                Duration = new Duration(TimeSpan.FromSeconds(2.8 + (index % 4) * 0.45)),
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever,
-                BeginTime = TimeSpan.FromSeconds(index * 0.42)
-            };
-            Storyboard.SetTarget(animation, readouts[index]);
-            Storyboard.SetTargetProperty(animation, "Opacity");
-            var storyboard = new Storyboard();
-            storyboard.Children.Add(animation);
-            storyboard.Begin();
-        }
-    }
-
     internal void ApplyWindowChromeForCurrentVisualStyle()
     {
         Windows11BlissBackdrop.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
@@ -84,7 +52,7 @@ public sealed partial class MainWindow : Window
         Windows11BlissDarkImage.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
             && App.IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
-        Y2KHexTelemetry.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+        Y2KDarkTelemetryBackdrop.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
             && App.IsDarkThemeActive
                 ? Visibility.Visible
                 : Visibility.Collapsed;
