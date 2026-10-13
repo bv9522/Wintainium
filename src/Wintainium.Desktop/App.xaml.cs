@@ -435,10 +435,11 @@ public partial class App : Application
             return;
         }
 
-        // Put the wallpaper on the main dialog body, not the separate footer
-        // surface behind the action buttons. This mirrors Y2K Light's proven
-        // ContentDialogBackground resource pattern without touching the template.
-        dialog.Resources["ContentDialogBackground"] = new ImageBrush
+        // Y2K Light works because its ContentDialog style explicitly binds the
+        // dialog's main surface to ContentDialogBackground. The stock Windows 11
+        // dialog style does not make that binding, so provide the same narrowly
+        // scoped presentation here. The template's footer remains its own surface.
+        var wallpaper = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
                 IsDarkThemeActive
@@ -446,6 +447,14 @@ public partial class App : Application
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Stretch = Stretch.UniformToFill
         };
+        dialog.Resources["ContentDialogBackground"] = wallpaper;
+
+        var dialogStyle = new Style(typeof(ContentDialog))
+        {
+            BasedOn = Application.Current.Resources["DefaultContentDialogStyle"] as Style
+        };
+        dialogStyle.Setters.Add(new Setter(ContentDialog.BackgroundProperty, wallpaper));
+        dialog.Style = dialogStyle;
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
