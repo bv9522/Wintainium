@@ -347,7 +347,7 @@ public partial class App : Application
     internal static void ApplyFrutigerAeroTitleBar(Window window, Grid titleBar, TextBlock titleText)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || !IsDarkThemeActive)
+            || IsDarkThemeActive)
         {
             return;
         }
@@ -530,20 +530,58 @@ public partial class App : Application
             dialog.Background = aeroSurface;
             if (dialog.Content is FrameworkElement contentRoot)
             {
-                switch (contentRoot)
+                ApplyFrutigerAeroDialogSurface(contentRoot);
+                QueueFrutigerAeroDialogTypography(contentRoot, 8);
+            }
+        }
+    }
+
+    private static void ApplyFrutigerAeroDialogSurface(FrameworkElement root)
+    {
+        var surface = CreateFrutigerAeroDialogSurfaceBrush();
+
+        // ContentDialog's footer and its content presenter are separate surfaces.
+        // Paint the content-side layout containers too; styling only the dialog
+        // Background leaves the body white while controls inherit the FA typography.
+        switch (root)
+        {
+            case Panel panel:
+                panel.Background = surface;
+                break;
+            case Border border:
+                border.Background = surface;
+                break;
+            case Control control when control is not TextBox && control is not ComboBox:
+                control.Background = surface;
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(root, index) is FrameworkElement child)
+            {
+                // Preserve input surfaces; only replace default white container
+                // surfaces, not TextBox/ComboBox fields or button styling.
+                if (child is TextBox || child is ComboBox || child is PasswordBox)
+                {
+                    continue;
+                }
+
+                switch (child)
                 {
                     case Panel panel:
-                        panel.Background = CreateFrutigerAeroDialogSurfaceBrush();
+                        panel.Background = surface;
                         break;
-                    case Border border:
-                        border.Background = CreateFrutigerAeroDialogSurfaceBrush();
-                        break;
-                    case Control control:
-                        control.Background = CreateFrutigerAeroDialogSurfaceBrush();
+                    case Border border when border.Background is null
+                        || (border.Background is SolidColorBrush solid
+                            && solid.Color.A == 255 && solid.Color.R == 255
+                            && solid.Color.G == 255 && solid.Color.B == 255):
+                        border.Background = surface;
                         break;
                 }
 
-                QueueFrutigerAeroDialogTypography(contentRoot, 8);
+                ApplyFrutigerAeroDialogSurface(child);
             }
         }
     }
