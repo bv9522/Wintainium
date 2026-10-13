@@ -801,7 +801,8 @@ public sealed partial class MainWindow : Window
             Content = content,
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.None
+            DefaultButton = ContentDialogButton.None,
+            Width = 480
         };
         App.ApplyThemeToElement(dialog);
 
@@ -1058,7 +1059,8 @@ public sealed partial class MainWindow : Window
             Content = content,
             SecondaryButtonText = "Apply",
             CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.None
+            DefaultButton = ContentDialogButton.None,
+            Width = 480
         };
         App.ApplyThemeToElement(dialog);
 
