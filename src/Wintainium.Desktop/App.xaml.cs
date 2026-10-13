@@ -441,7 +441,14 @@ public partial class App : Application
         {
             Tag = "Windows11BlissDialogBackdropHost"
         };
-        host.Children.Add(new Image
+
+        // Canvas has no intrinsic desired size, so the wallpaper is decorative
+        // and cannot enlarge the dialog beyond its actual content dimensions.
+        var backdropCanvas = new Canvas
+        {
+            IsHitTestVisible = false
+        };
+        backdropCanvas.Children.Add(new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Width = 480,
@@ -451,7 +458,7 @@ public partial class App : Application
             Visibility = IsDarkThemeActive
                 ? Visibility.Collapsed : Visibility.Visible
         });
-        host.Children.Add(new Image
+        backdropCanvas.Children.Add(new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
             Width = 480,
@@ -461,6 +468,8 @@ public partial class App : Application
             Visibility = IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed
         });
+
+        host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
         dialog.Content = host;
         dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
@@ -474,32 +483,33 @@ public partial class App : Application
             return;
         }
 
-        // Reuse the exact backdrop UserControl used by MainWindow so the main window
-        // and these dialogs cannot drift into separate Metro artwork implementations.
-        // Do not impose a minimum size on the dialog's content host. The
-        // backdrop must fill the dialog's natural layout size rather than enlarge
-        // the Sort & Filter and Add Software dialogs.
         var host = new Grid
         {
             Tag = "FrutigerMetroDialogBackdropHost"
         };
-        // The Metro artwork's 1600x900 canvas has a large intrinsic desired size.
-        // Constrain the dialog-only backdrop viewport so it paints behind the dialog
-        // without forcing the dialog itself to become poster-sized.
-        var backdrop = new FrutigerMetroBackdrop
+
+        // Keep the poster artwork in a zero-desired-size Canvas. The canvas
+        // paints behind the dialog without contributing its 1600x900 source
+        // artwork or the viewport dimensions to dialog layout measurement.
+        var backdropCanvas = new Canvas
         {
-            IsHitTestVisible = false,
-            Visibility = Visibility.Visible
+            IsHitTestVisible = false
         };
-        host.Children.Add(new Viewbox
+        backdropCanvas.Children.Add(new Viewbox
         {
             Width = 480,
             Height = 240,
             Stretch = Stretch.Fill,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Child = backdrop
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Child = new FrutigerMetroBackdrop
+            {
+                IsHitTestVisible = false,
+                Visibility = Visibility.Visible
+            }
         });
+
+        host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
         dialog.Content = host;
     }
@@ -902,19 +912,28 @@ public partial class App : Application
         {
             Tag = "Y2KDarkTelemetryDialogHost"
         };
-        host.Children.Add(new Viewbox
+
+        // Telemetry is decorative. A Canvas prevents the background control's
+        // layout size from setting a minimum width or height for the dialog.
+        var backdropCanvas = new Canvas
+        {
+            IsHitTestVisible = false
+        };
+        backdropCanvas.Children.Add(new Viewbox
         {
             Width = 480,
             Height = 240,
             Stretch = Stretch.Fill,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
             Child = new Y2KDarkTelemetryBackdrop
             {
                 Visibility = Visibility.Visible,
                 IsHitTestVisible = false
             }
         });
+
+        host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
         dialog.Content = host;
         dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 8, 4, 6));
