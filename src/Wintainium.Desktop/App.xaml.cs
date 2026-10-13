@@ -445,6 +445,8 @@ public partial class App : Application
         host.Children.Add(new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
+            Width = 480,
+            Height = 240,
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
             Visibility = IsDarkThemeActive
@@ -453,6 +455,8 @@ public partial class App : Application
         host.Children.Add(new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
+            Width = 480,
+            Height = 240,
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
             Visibility = IsDarkThemeActive
