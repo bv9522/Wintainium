@@ -435,42 +435,16 @@ public partial class App : Application
             return;
         }
 
-        var currentContent = dialog.Content as FrameworkElement;
-        if (currentContent is null || currentContent.Tag as string == "Windows11BlissDialogBackdropHost")
+        // Follow the proven Y2K Light ContentDialogBackground pattern: paint the
+        // dialog itself, never mutate the ContentDialog's visual template.
+        dialog.Background = new ImageBrush
         {
-            return;
-        }
-
-        var host = new Grid { Tag = "Windows11BlissDialogBackdropHost" };
-        var canvas = new Canvas { IsHitTestVisible = false };
-        var lightImage = new Image
-        {
-            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
-            Stretch = Stretch.Fill,
-            IsHitTestVisible = false,
-            Visibility = IsDarkThemeActive ? Visibility.Collapsed : Visibility.Visible
+            ImageSource = new BitmapImage(new Uri(
+                IsDarkThemeActive
+                    ? "ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png"
+                    : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
+            Stretch = Stretch.UniformToFill
         };
-        var darkImage = new Image
-        {
-            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
-            Stretch = Stretch.Fill,
-            IsHitTestVisible = false,
-            Visibility = IsDarkThemeActive ? Visibility.Visible : Visibility.Collapsed
-        };
-        canvas.Children.Add(lightImage);
-        canvas.Children.Add(darkImage);
-        canvas.SizeChanged += (_, args) =>
-        {
-            foreach (var image in canvas.Children.OfType<FrameworkElement>())
-            {
-                image.Width = args.NewSize.Width;
-                image.Height = args.NewSize.Height;
-            }
-        };
-        host.Children.Add(canvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = TransparentDialogBrush;
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
@@ -508,31 +482,18 @@ public partial class App : Application
     private static void EnsureFrutigerAeroLightDialogBackdrop(ContentDialog dialog)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || IsDarkThemeActive
-            || dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "FrutigerAeroDialogBackdropHost")
+            || IsDarkThemeActive)
         {
             return;
         }
 
-        var host = new Grid { Tag = "FrutigerAeroDialogBackdropHost" };
-        var canvas = new Canvas { IsHitTestVisible = false };
-        var image = new Image
+        // As with Y2K Light's ContentDialogBackground ImageBrush, attach artwork
+        // to the dialog surface so it cannot affect layout or reparent content.
+        dialog.Background = new ImageBrush
         {
-            Source = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
-            Stretch = Stretch.Fill,
-            IsHitTestVisible = false
+            ImageSource = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
+            Stretch = Stretch.UniformToFill
         };
-        canvas.Children.Add(image);
-        canvas.SizeChanged += (_, args) =>
-        {
-            image.Width = args.NewSize.Width;
-            image.Height = args.NewSize.Height;
-        };
-        host.Children.Add(canvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = TransparentDialogBrush;
     }
 
     private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
@@ -595,16 +556,12 @@ public partial class App : Application
         {
             ApplyFrutigerAeroTypography(dialog);
 
-            // Match the aqua-white page surface used by the Frutiger Aero Settings
-            // window so ContentDialogs such as Sort & Filter and Add Software do
-            // not fall back to the platform's plain dialog surface.
-            var aeroSurface = CreateFrutigerAeroDialogSurfaceBrush();
-            // ContentDialog.Background paints the command/button footer; the
-            // content root has its own surface and must receive the same FA treatment.
-            dialog.Background = aeroSurface;
+            // Use the main Frutiger Aero artwork on the dialog surface, following
+            // the working Y2K Light ContentDialogBackground ImageBrush pattern.
+            EnsureFrutigerAeroLightDialogBackdrop(dialog);
             if (dialog.Content is FrameworkElement contentRoot)
             {
-                ApplyFrutigerAeroDialogSurface(contentRoot);
+                // Do not paint opaque container gradients over the backdrop.
                 QueueFrutigerAeroDialogTypography(contentRoot, 8);
             }
         }
