@@ -440,8 +440,7 @@ public partial class App : Application
         var host = new Grid
         {
             Tag = "Windows11BlissDialogBackdropHost",
-            MinWidth = 420,
-            MinHeight = 250
+            ClipToBounds = true
         };
         host.Children.Add(new Image
         {
@@ -481,12 +480,23 @@ public partial class App : Application
         {
             Tag = "FrutigerMetroDialogBackdropHost"
         };
+        // The Metro artwork's 1600x900 canvas has a large intrinsic desired size.
+        // Constrain the dialog-only backdrop viewport so it paints behind the dialog
+        // without forcing the dialog itself to become poster-sized.
         var backdrop = new FrutigerMetroBackdrop
         {
             IsHitTestVisible = false,
             Visibility = Visibility.Visible
         };
-        host.Children.Add(backdrop);
+        host.Children.Add(new Viewbox
+        {
+            Width = 480,
+            Height = 1,
+            Stretch = Stretch.Fill,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Child = backdrop
+        });
         host.Children.Add(currentContent);
         dialog.Content = host;
     }
@@ -887,12 +897,21 @@ public partial class App : Application
 
         var host = new Grid
         {
-            Tag = "Y2KDarkTelemetryDialogHost"
+            Tag = "Y2KDarkTelemetryDialogHost",
+            ClipToBounds = true
         };
-        host.Children.Add(new Y2KDarkTelemetryBackdrop
+        host.Children.Add(new Viewbox
         {
-            Visibility = Visibility.Visible,
-            IsHitTestVisible = false
+            Width = 480,
+            Height = 1,
+            Stretch = Stretch.Fill,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Child = new Y2KDarkTelemetryBackdrop
+            {
+                Visibility = Visibility.Visible,
+                IsHitTestVisible = false
+            }
         });
         host.Children.Add(currentContent);
         dialog.Content = host;
