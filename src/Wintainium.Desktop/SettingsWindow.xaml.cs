@@ -625,6 +625,11 @@ public sealed partial class SettingsWindow : Window
         };
 
         ApplyY2KTypography(header);
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            App.ApplyFrutigerAeroTypography(header);
+        }
         _categoryContent.Children.Add(header);
     }
 
@@ -632,11 +637,16 @@ public sealed partial class SettingsWindow : Window
     {
         var theme = new ComboBox
         {
-            Header = "Theme",
+            Header = new TextBlock { Text = "Theme" },
             Width = 360,
             ItemsSource = new[] { "System", "Light", "Dark" },
             SelectedIndex = (int)_settings.Current.Theme
         };
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+        {
+            App.ApplyFrutigerAeroTypography(theme);
+        }
 
         var visualStyle = new ComboBox
         {
