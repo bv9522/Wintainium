@@ -117,7 +117,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(Y2KTitleBar);
 
-        var textColor = App.Settings.Current.Theme == WintainiumThemePreference.Dark
+        var textColor = App.IsDarkThemeActive
             ? ColorHelper.FromArgb(255, 0x39, 0xFF, 0x9A)
             : ColorHelper.FromArgb(255, 0x76, 0x5C, 0xFF);
         var textHover = ColorHelper.FromArgb(48, textColor.R, textColor.G, textColor.B);
