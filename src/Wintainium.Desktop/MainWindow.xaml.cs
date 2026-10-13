@@ -79,10 +79,10 @@ public sealed partial class MainWindow : Window
         Windows11BlissBackdrop.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
             ? Visibility.Visible : Visibility.Collapsed;
         Windows11BlissLightImage.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
-            && App.Settings.Current.Theme != WintainiumThemePreference.Dark
+            && !App.IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
         Windows11BlissDarkImage.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            && App.IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
         Y2KHexTelemetry.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
             && App.Settings.Current.Theme == WintainiumThemePreference.Dark
