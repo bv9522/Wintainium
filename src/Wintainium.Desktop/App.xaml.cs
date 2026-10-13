@@ -435,9 +435,10 @@ public partial class App : Application
             return;
         }
 
-        // Follow the proven Y2K Light ContentDialogBackground pattern: paint the
-        // dialog itself, never mutate the ContentDialog's visual template.
-        dialog.Background = new ImageBrush
+        // Put the wallpaper on the main dialog body, not the separate footer
+        // surface behind the action buttons. This mirrors Y2K Light's proven
+        // ContentDialogBackground resource pattern without touching the template.
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
                 IsDarkThemeActive
@@ -490,9 +491,9 @@ public partial class App : Application
             return;
         }
 
-        // As with Y2K Light's ContentDialogBackground ImageBrush, attach artwork
-        // to the dialog surface so it cannot affect layout or reparent content.
-        dialog.Background = new ImageBrush
+        // Place the NYC artwork on the main dialog body. The footer behind
+        // the action buttons remains its separate theme surface.
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
             Stretch = Stretch.UniformToFill
