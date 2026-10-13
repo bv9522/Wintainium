@@ -439,8 +439,7 @@ public partial class App : Application
 
         var host = new Grid
         {
-            Tag = "Windows11BlissDialogBackdropHost",
-            ClipToBounds = true
+            Tag = "Windows11BlissDialogBackdropHost"
         };
         host.Children.Add(new Image
         {
@@ -901,8 +900,7 @@ public partial class App : Application
 
         var host = new Grid
         {
-            Tag = "Y2KDarkTelemetryDialogHost",
-            ClipToBounds = true
+            Tag = "Y2KDarkTelemetryDialogHost"
         };
         host.Children.Add(new Viewbox
         {
