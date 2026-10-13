@@ -74,7 +74,7 @@ public sealed partial class SettingsWindow : Window
             if (root.FindName("CategoryNavigationChrome") is Border navigation)
             {
                 if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !App.IsDarkThemeActive)
                 {
                     navigation.Background = App.GetY2KLightChromeBrush();
                     navigation.BorderBrush = App.GetY2KLightChromeEdgeBrush();
@@ -100,7 +100,7 @@ public sealed partial class SettingsWindow : Window
             if (root.FindName("SettingsContentChrome") is Border contentChrome)
             {
                 if (_settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !App.IsDarkThemeActive)
                 {
                     contentChrome.Background = App.GetY2KLightChromeBrush();
                     contentChrome.BorderBrush = App.GetY2KLightChromeEdgeBrush();
