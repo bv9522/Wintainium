@@ -565,19 +565,9 @@ public partial class App : Application
             // ContentDialog.Content from its presenter during Loaded can throw and
             // terminate the async-void command handler. Use a Metro gradient instead.
             ApplyFrutigerMetroDarkAppearance(dialog);
-            // Set the dialog gradient after recursive control styling, which also
-            // touches ContentDialog.Background.
-            dialog.Background = new LinearGradientBrush
-            {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(1, 1),
-                GradientStops =
-                {
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 16, 5, 7), Offset = 0 },
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 57, 10, 18), Offset = 0.48 },
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 8, 4, 6), Offset = 1 }
-                }
-            };
+            // The full-window Metro artwork is on the dialog template root.
+            // Keep the ContentDialog surface transparent so it cannot cover the art.
+            dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
         }
     }
 
@@ -952,6 +942,12 @@ public partial class App : Application
         if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
         {
             ApplyY2KContentDialogPresentation(dialog);
+            if (IsDarkThemeActive)
+            {
+                // Keep the dialog surface transparent so the telemetry backdrop
+                // remains visible across the full window.
+                dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+            }
         }
     }
 
