@@ -908,12 +908,6 @@ public partial class App : Application
         }
     }
 
-    private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
-    {
-        dialog.Loaded -= ThemedDialogBackdrop_Loaded;
-        dialog.Loaded += ThemedDialogBackdrop_Loaded;
-    }
-
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
