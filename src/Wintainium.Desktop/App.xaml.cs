@@ -22,6 +22,10 @@ public partial class App : Application
 
     internal static WintainiumDesktopSettingsService Settings { get; } = new();
 
+    internal static bool IsDarkThemeActive => Settings.Current.Theme == WintainiumThemePreference.Dark
+        || (Settings.Current.Theme == WintainiumThemePreference.System
+            && GetSystemElementTheme() == ElementTheme.Dark);
+
     internal WintainiumDesktopServices Services =>
         _services ??= new WintainiumDesktopServices();
 
@@ -409,13 +413,13 @@ public partial class App : Application
 
         if (root.FindName("Windows11BlissLightImage") is FrameworkElement lightImage)
         {
-            lightImage.Visibility = enabled && Settings.Current.Theme != WintainiumThemePreference.Dark
+            lightImage.Visibility = enabled && !IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         if (root.FindName("Windows11BlissDarkImage") is FrameworkElement darkImage)
         {
-            darkImage.Visibility = enabled && Settings.Current.Theme == WintainiumThemePreference.Dark
+            darkImage.Visibility = enabled && IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
         }
     }
@@ -440,7 +444,7 @@ public partial class App : Application
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
-            Visibility = Settings.Current.Theme == WintainiumThemePreference.Dark
+            Visibility = IsDarkThemeActive
                 ? Visibility.Collapsed : Visibility.Visible
         });
         host.Children.Add(new Image
@@ -448,7 +452,7 @@ public partial class App : Application
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
-            Visibility = Settings.Current.Theme == WintainiumThemePreference.Dark
+            Visibility = IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed
         });
         host.Children.Add(currentContent);
