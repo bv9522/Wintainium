@@ -85,7 +85,7 @@ public sealed partial class MainWindow : Window
             && App.IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
         Y2KHexTelemetry.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            && App.IsDarkThemeActive
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         FrutigerAeroBackdrop.Visibility =
