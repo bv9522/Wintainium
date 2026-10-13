@@ -430,97 +430,129 @@ public partial class App : Application
 
     private static void EnsureWindows11DialogBackdrop(ContentDialog dialog)
     {
-        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Windows11
-            || dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "Windows11BlissDialogBackdropHost")
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Windows11)
         {
             return;
         }
 
-        var host = new Grid
-        {
-            Tag = "Windows11BlissDialogBackdropHost"
-        };
-
-        // Canvas contributes no desired size, but is arranged to the full dialog
-        // bounds. Resize its decorative images to that arranged area so the art
-        // covers the entire window instead of ending at a fixed 480x240 corner.
-        var backdropCanvas = new Canvas
-        {
-            IsHitTestVisible = false
-        };
-        var lightImage = new Image
-        {
-            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
-            Stretch = Stretch.Fill,
-            IsHitTestVisible = false,
-            Visibility = IsDarkThemeActive
-                ? Visibility.Collapsed : Visibility.Visible
-        };
-        var darkImage = new Image
-        {
-            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
-            Stretch = Stretch.Fill,
-            IsHitTestVisible = false,
-            Visibility = IsDarkThemeActive
-                ? Visibility.Visible : Visibility.Collapsed
-        };
-        backdropCanvas.Children.Add(lightImage);
-        backdropCanvas.Children.Add(darkImage);
-        backdropCanvas.SizeChanged += (_, args) =>
-        {
-            foreach (var child in backdropCanvas.Children.OfType<FrameworkElement>())
-            {
-                child.Width = args.NewSize.Width;
-                child.Height = args.NewSize.Height;
-            }
-        };
-
-        host.Children.Add(backdropCanvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+        dialog.Loaded -= ThemedDialogBackdrop_Loaded;
+        dialog.Loaded += ThemedDialogBackdrop_Loaded;
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
     {
-        if (dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
+        dialog.Loaded -= ThemedDialogBackdrop_Loaded;
+        dialog.Loaded += ThemedDialogBackdrop_Loaded;
+    }
+
+    private static void ThemedDialogBackdrop_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ContentDialog dialog)
         {
             return;
         }
 
-        var host = new Grid
+        var style = Settings.Current.VisualStyle;
+        if (style != WintainiumVisualStyle.Windows11
+            && style != WintainiumVisualStyle.FrutigerAero
+            && style != WintainiumVisualStyle.Y2K)
         {
-            Tag = "FrutigerMetroDialogBackdropHost"
-        };
+            return;
+        }
 
-        // Keep the poster artwork in a zero-desired-size Canvas. The canvas
-        // paints behind the dialog without contributing its 1600x900 source
-        // artwork or the viewport dimensions to dialog layout measurement.
-        var backdropCanvas = new Canvas
+        // ContentDialog.Content occupies only the body above the command footer.
+        // Put artwork on the outer template panel so it spans the body, footer,
+        // and inset without contributing to the dialog's measured dimensions.
+        var templateRoot = FindDialogTemplateRoot(dialog);
+        if (templateRoot is null || templateRoot.Tag as string == "WintainiumFullDialogBackdrop")
         {
-            IsHitTestVisible = false
+            return;
+        }
+
+        var artwork = CreateDialogBackdropArtwork(style);
+        if (artwork is null)
+        {
+            return;
+        }
+
+        var overlay = new Grid
+        {
+            Tag = "WintainiumFullDialogBackdrop",
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
         };
-        var artworkViewport = new Viewbox
+        overlay.Children.Add(artwork);
+        templateRoot.Children.Insert(0, overlay);
+        templateRoot.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+    }
+
+    private static Grid? FindDialogTemplateRoot(ContentDialog dialog)
+    {
+        // Find the outer template Grid that contains both body and command footer.
+        var pending = new Queue<DependencyObject>();
+        pending.Enqueue(dialog);
+        while (pending.Count > 0)
         {
-            Stretch = Stretch.Fill,
-            Child = new FrutigerMetroBackdrop
+            var current = pending.Dequeue();
+            var childCount = VisualTreeHelper.GetChildrenCount(current);
+            for (var index = 0; index < childCount; index++)
             {
-                IsHitTestVisible = false,
-                Visibility = Visibility.Visible
-            }
-        };
-        backdropCanvas.Children.Add(artworkViewport);
-        backdropCanvas.SizeChanged += (_, args) =>
-        {
-            artworkViewport.Width = args.NewSize.Width;
-            artworkViewport.Height = args.NewSize.Height;
-        };
+                var child = VisualTreeHelper.GetChild(current, index);
+                if (child is Grid grid && !ReferenceEquals(grid, dialog.Content))
+                {
+                    return grid;
+                }
 
-        host.Children.Add(backdropCanvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
+                pending.Enqueue(child);
+            }
+        }
+
+        return null;
+    }
+
+    private static FrameworkElement? CreateDialogBackdropArtwork(WintainiumVisualStyle style)
+    {
+        switch (style)
+        {
+            case WintainiumVisualStyle.Windows11:
+                var images = new Grid { IsHitTestVisible = false };
+                images.Children.Add(new Image
+                {
+                    Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
+                    Stretch = Stretch.Fill,
+                    Visibility = IsDarkThemeActive ? Visibility.Collapsed : Visibility.Visible
+                });
+                images.Children.Add(new Image
+                {
+                    Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
+                    Stretch = Stretch.Fill,
+                    Visibility = IsDarkThemeActive ? Visibility.Visible : Visibility.Collapsed
+                });
+                return images;
+
+            case WintainiumVisualStyle.FrutigerAero when IsDarkThemeActive:
+                return new FrutigerMetroBackdrop
+                {
+                    Visibility = Visibility.Visible,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    IsHitTestVisible = false
+                };
+
+            case WintainiumVisualStyle.Y2K when IsDarkThemeActive:
+                return new Y2KDarkTelemetryBackdrop
+                {
+                    Visibility = Visibility.Visible,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    IsHitTestVisible = false
+                };
+
+            default:
+                return null;
+        }
     }
 
     private static void FrutigerMetroContentDialog_Loaded(object sender, RoutedEventArgs e)
@@ -911,43 +943,8 @@ public partial class App : Application
 
     private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
     {
-        if (dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "Y2KDarkTelemetryDialogHost")
-        {
-            return;
-        }
-
-        var host = new Grid
-        {
-            Tag = "Y2KDarkTelemetryDialogHost"
-        };
-
-        // Telemetry is decorative. A Canvas prevents the background control's
-        // layout size from setting a minimum width or height for the dialog.
-        var backdropCanvas = new Canvas
-        {
-            IsHitTestVisible = false
-        };
-        var telemetryViewport = new Viewbox
-        {
-            Stretch = Stretch.Fill,
-            Child = new Y2KDarkTelemetryBackdrop
-            {
-                Visibility = Visibility.Visible,
-                IsHitTestVisible = false
-            }
-        };
-        backdropCanvas.Children.Add(telemetryViewport);
-        backdropCanvas.SizeChanged += (_, args) =>
-        {
-            telemetryViewport.Width = args.NewSize.Width;
-            telemetryViewport.Height = args.NewSize.Height;
-        };
-
-        host.Children.Add(backdropCanvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 8, 4, 6));
+        dialog.Loaded -= ThemedDialogBackdrop_Loaded;
+        dialog.Loaded += ThemedDialogBackdrop_Loaded;
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
