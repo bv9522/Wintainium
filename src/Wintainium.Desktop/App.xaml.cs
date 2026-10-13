@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
 using Windows.UI.ViewManagement;
@@ -54,6 +55,7 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(window);
 
         var windowId = window.AppWindow.Id;
+        ApplyWindows11BlissBackdrop(content);
         ActiveWindows[windowId] = window;
         window.Closed += (_, _) =>
         {
@@ -397,6 +399,63 @@ public partial class App : Application
         };
     }
 
+    private static void ApplyWindows11BlissBackdrop(FrameworkElement root)
+    {
+        var enabled = Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11;
+        if (root.FindName("Windows11BlissBackdrop") is FrameworkElement backdrop)
+        {
+            backdrop.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (root.FindName("Windows11BlissLightImage") is FrameworkElement lightImage)
+        {
+            lightImage.Visibility = enabled && Settings.Current.Theme != WintainiumThemePreference.Dark
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (root.FindName("Windows11BlissDarkImage") is FrameworkElement darkImage)
+        {
+            darkImage.Visibility = enabled && Settings.Current.Theme == WintainiumThemePreference.Dark
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private static void EnsureWindows11DialogBackdrop(ContentDialog dialog)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Windows11
+            || dialog.Content is not FrameworkElement currentContent
+            || currentContent.Tag as string == "Windows11BlissDialogBackdropHost")
+        {
+            return;
+        }
+
+        var host = new Grid
+        {
+            Tag = "Windows11BlissDialogBackdropHost",
+            MinWidth = 420,
+            MinHeight = 250
+        };
+        host.Children.Add(new Image
+        {
+            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
+            Stretch = Stretch.Fill,
+            IsHitTestVisible = false,
+            Visibility = Settings.Current.Theme == WintainiumThemePreference.Dark
+                ? Visibility.Collapsed : Visibility.Visible
+        });
+        host.Children.Add(new Image
+        {
+            Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
+            Stretch = Stretch.Fill,
+            IsHitTestVisible = false,
+            Visibility = Settings.Current.Theme == WintainiumThemePreference.Dark
+                ? Visibility.Visible : Visibility.Collapsed
+        });
+        host.Children.Add(currentContent);
+        dialog.Content = host;
+        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+    }
+
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
     {
         if (dialog.Content is not FrameworkElement currentContent
@@ -622,6 +681,10 @@ public partial class App : Application
     internal static void ApplyThemeToElement(FrameworkElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
+        if (element is ContentDialog windows11Dialog)
+        {
+            EnsureWindows11DialogBackdrop(windows11Dialog);
+        }
 
         var preference = Settings.Current.Theme;
         element.RequestedTheme = preference switch
