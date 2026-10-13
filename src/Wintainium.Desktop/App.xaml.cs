@@ -455,8 +455,20 @@ public partial class App : Application
         var host = new Grid
         {
             Tag = "Windows11DialogBackdropHost",
-            Background = wallpaper
+            Background = wallpaper,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
         };
+
+        // ContentDialog's content presenter can size to the fields' desired
+        // bounds unless both the dialog content and its root explicitly stretch.
+        // Stretch the content region, not the dialog surface, so the wallpaper
+        // fills the upper body while the action-button footer remains untouched.
+        currentContent.HorizontalAlignment = HorizontalAlignment.Stretch;
+        currentContent.VerticalAlignment = VerticalAlignment.Stretch;
+        dialog.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+        dialog.VerticalContentAlignment = VerticalAlignment.Stretch;
+
         host.Children.Add(currentContent);
         dialog.Content = host;
     }
