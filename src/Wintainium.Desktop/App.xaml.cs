@@ -397,6 +397,72 @@ public partial class App : Application
         };
     }
 
+    private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
+    {
+        if (dialog.Content is not FrameworkElement currentContent
+            || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
+        {
+            return;
+        }
+
+        // Wrap the unparented content before ShowAsync builds the dialog visual tree.
+        // This keeps the poster visible behind transparent content without changing
+        // the ContentDialog's internal presenter while it is loaded.
+        var host = new Grid
+        {
+            Tag = "FrutigerMetroDialogBackdropHost",
+            MinWidth = 420,
+            MinHeight = 250
+        };
+        var backdrop = new Grid
+        {
+            IsHitTestVisible = false,
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 1),
+                GradientStops =
+                {
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 16, 5, 7), Offset = 0 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 57, 10, 18), Offset = 0.48 },
+                    new GradientStop { Color = ColorHelper.FromArgb(255, 8, 4, 6), Offset = 1 }
+                }
+            }
+        };
+        var art = new Canvas { Width = 900, Height = 480 };
+        art.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(0, 0), new Point(220, 0), new Point(620, 480), new Point(480, 480) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(90, 255, 201, 40))
+        });
+        art.Children.Add(new Polygon
+        {
+            Points = new PointCollection { new Point(900, 0), new Point(900, 120), new Point(330, 480), new Point(470, 480) },
+            Fill = new SolidColorBrush(ColorHelper.FromArgb(100, 220, 20, 60))
+        });
+        art.Children.Add(new Ellipse
+        {
+            Width = 300,
+            Height = 300,
+            Stroke = new SolidColorBrush(ColorHelper.FromArgb(180, 255, 201, 40)),
+            StrokeThickness = 8
+        });
+        Canvas.SetLeft(art.Children[art.Children.Count - 1], 300);
+        Canvas.SetTop(art.Children[art.Children.Count - 1], 85);
+        art.Children.Add(new Polyline
+        {
+            Points = new PointCollection { new Point(180, 110), new Point(300, 365), new Point(450, 170), new Point(600, 365), new Point(720, 110) },
+            Stroke = new SolidColorBrush(ColorHelper.FromArgb(235, 255, 201, 40)),
+            StrokeThickness = 25,
+            StrokeLineJoin = PenLineJoin.Round
+        });
+        backdrop.Children.Add(new Viewbox { Stretch = Stretch.UniformToFill, Child = art });
+        backdrop.Children.Add(new Rectangle { Fill = new SolidColorBrush(ColorHelper.FromArgb(55, 0, 0, 0)) });
+        host.Children.Add(backdrop);
+        host.Children.Add(currentContent);
+        dialog.Content = host;
+    }
+
     private static void FrutigerMetroContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog
@@ -625,11 +691,15 @@ public partial class App : Application
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && Settings.Current.Theme == WintainiumThemePreference.Dark)
         {
-            ApplyFrutigerMetroDarkAppearance(element);
             if (element is ContentDialog metroDialog)
             {
-                metroDialog.Loaded -= FrutigerMetroContentDialog_Loaded;
-                metroDialog.Loaded += FrutigerMetroContentDialog_Loaded;
+                EnsureFrutigerMetroDialogBackdrop(metroDialog);
+            }
+            ApplyFrutigerMetroDarkAppearance(element);
+            if (element is ContentDialog metroDialogForLoaded)
+            {
+                metroDialogForLoaded.Loaded -= FrutigerMetroContentDialog_Loaded;
+                metroDialogForLoaded.Loaded += FrutigerMetroContentDialog_Loaded;
             }
             return;
         }
