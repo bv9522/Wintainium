@@ -994,6 +994,13 @@ public partial class App : Application
         // ComboBox items may be detached from the visual tree while a popup is closed.
         if (element is ComboBox comboBox)
         {
+            // ComboBox headers and item elements can be outside the visual tree
+            // while a popup is closed, so style them explicitly as well.
+            if (comboBox.Header is FrameworkElement headerElement)
+            {
+                ApplyFrutigerAeroTypographyCore(headerElement, font, textBrush, visited, false);
+            }
+
             foreach (var item in comboBox.Items)
             {
                 if (item is FrameworkElement itemElement)
