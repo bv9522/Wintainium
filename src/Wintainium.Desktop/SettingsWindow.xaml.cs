@@ -80,7 +80,7 @@ public sealed partial class SettingsWindow : Window
                     navigation.BorderBrush = App.GetY2KLightChromeEdgeBrush();
                 }
                 else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !App.IsDarkThemeActive)
                 {
                     navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
                     navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
@@ -106,7 +106,7 @@ public sealed partial class SettingsWindow : Window
                     contentChrome.BorderBrush = App.GetY2KLightChromeEdgeBrush();
                 }
                 else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && _settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !App.IsDarkThemeActive)
                 {
                     contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
                     contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
@@ -666,7 +666,7 @@ public sealed partial class SettingsWindow : Window
             SelectedIndex = (int)_settings.Current.Theme
         };
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !App.IsDarkThemeActive)
         {
             App.ApplyFrutigerAeroTypography(theme);
         }
