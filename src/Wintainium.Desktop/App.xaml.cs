@@ -464,7 +464,9 @@ public partial class App : Application
         // Put artwork on the outer template panel so it spans the body, footer,
         // and inset without contributing to the dialog's measured dimensions.
         var templateRoot = FindDialogTemplateRoot(dialog);
-        if (templateRoot is null || templateRoot.Tag as string == "WintainiumFullDialogBackdrop")
+        if (templateRoot is null
+            || templateRoot.Children.OfType<FrameworkElement>()
+                .Any(child => child.Tag as string == "WintainiumFullDialogBackdrop"))
         {
             return;
         }
