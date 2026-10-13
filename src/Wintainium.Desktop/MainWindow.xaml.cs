@@ -90,12 +90,12 @@ public sealed partial class MainWindow : Window
                 : Visibility.Collapsed;
         FrutigerAeroBackdrop.Visibility =
             App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Light
+            && !App.IsDarkThemeActive
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         FrutigerMetroBackdrop.Visibility =
             App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            && App.IsDarkThemeActive
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
