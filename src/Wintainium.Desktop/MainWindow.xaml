@@ -6,18 +6,19 @@
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <!-- Windows 11 Bliss backdrop; enabled only for the native Windows 11 visual style. -->
-        <Grid x:Name="Windows11BlissBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
-            <Image x:Name="Windows11BlissLightImage" Source="ms-appx:///Themes/Windows%2011%20Bliss%20Light.png" Stretch="Fill" Visibility="Collapsed" />
-            <Image x:Name="Windows11BlissDarkImage" Source="ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png" Stretch="Fill" Visibility="Collapsed" />
-        </Grid>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+
+        <!-- Windows 11 Bliss backdrop; enabled only for the native Windows 11 visual style. -->
+        <Grid x:Name="Windows11BlissBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
+            <Image x:Name="Windows11BlissLightImage" Source="ms-appx:///Themes/Windows%2011%20Bliss%20Light.png" Stretch="Fill" Visibility="Collapsed" />
+            <Image x:Name="Windows11BlissDarkImage" Source="ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png" Stretch="Fill" Visibility="Collapsed" />
+        </Grid>
+
 
         <!-- Frutiger Aero Light-only scenic backdrop. Kept isolated from all other visual styles. -->
         <Grid x:Name="FrutigerAeroBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
