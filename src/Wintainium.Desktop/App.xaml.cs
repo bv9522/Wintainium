@@ -284,6 +284,14 @@ public partial class App : Application
             return;
         }
 
+        if (content.FindName("Y2KDarkTelemetryBackdrop") is Y2KDarkTelemetryBackdrop telemetryBackdrop)
+        {
+            telemetryBackdrop.Visibility = Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+                && IsDarkThemeActive
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+        }
+
         var titleBar = content.FindName("Y2KTitleBar") as Grid;
         var titleText = content.FindName("Y2KTitleBarText") as TextBlock;
         if (titleBar is null || titleText is null)
@@ -862,6 +870,11 @@ public partial class App : Application
             element.Resources.MergedDictionaries.Add(activeTheme);
         }
 
+        if (element is ContentDialog darkY2KDialog && IsDarkThemeActive)
+        {
+            EnsureY2KDarkTelemetryDialogBackdrop(darkY2KDialog);
+        }
+
         ApplyY2KTextColor(element);
 
         if (element is ContentDialog dialog)
@@ -870,6 +883,28 @@ public partial class App : Application
             dialog.Loaded -= Y2KContentDialog_Loaded;
             dialog.Loaded += Y2KContentDialog_Loaded;
         }
+    }
+
+    private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
+    {
+        if (dialog.Content is not FrameworkElement currentContent
+            || currentContent.Tag as string == "Y2KDarkTelemetryDialogHost")
+        {
+            return;
+        }
+
+        var host = new Grid
+        {
+            Tag = "Y2KDarkTelemetryDialogHost"
+        };
+        host.Children.Add(new Y2KDarkTelemetryBackdrop
+        {
+            Visibility = Visibility.Visible,
+            IsHitTestVisible = false
+        });
+        host.Children.Add(currentContent);
+        dialog.Content = host;
+        dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 8, 4, 6));
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
