@@ -33,6 +33,7 @@ public sealed partial class SettingsWindow : Window
     private readonly TextBlock _categoryTitle;
     private readonly TextBlock _categoryDescription;
     private readonly StackPanel _categoryContent;
+    private ComboBox? _visualStyleSelector;
 
     internal SettingsWindow(WintainiumDesktopSettingsService settings)
     {
@@ -59,6 +60,7 @@ public sealed partial class SettingsWindow : Window
     internal void RefreshAppearance()
     {
         ApplyY2KSettingsTextResources();
+        RefreshVisualStyleSelectorTypography();
 
         if (Content is FrameworkElement root)
         {
@@ -649,6 +651,9 @@ public sealed partial class SettingsWindow : Window
             SelectedIndex = (int)_settings.Current.VisualStyle
         };
 
+        _visualStyleSelector = visualStyle;
+        RefreshVisualStyleSelectorTypography();
+
         theme.SelectionChanged += (_, _) =>
         {
             if (theme.SelectedIndex >= 0)
@@ -664,12 +669,74 @@ public sealed partial class SettingsWindow : Window
             {
                 _settings.SetVisualStyle((WintainiumVisualStyle)visualStyle.SelectedIndex);
                 App.ApplyVisualStylePreference();
+                RefreshVisualStyleSelectorTypography();
             }
         };
 
         _categoryContent.Children.Add(theme);
         _categoryContent.Children.Add(visualStyle);
         AddPlaceholder("Theme and visual style changes apply immediately. Frutiger Aero light mode uses a bright aqua glass-inspired palette and Horatio D typography.");
+    }
+
+    private void RefreshVisualStyleSelectorTypography()
+    {
+        if (_visualStyleSelector is not ComboBox selector)
+        {
+            return;
+        }
+
+        FontFamily? font = null;
+        Brush? foreground = null;
+        switch (_settings.Current.VisualStyle)
+        {
+            case WintainiumVisualStyle.FrutigerAero when _settings.Current.Theme == WintainiumThemePreference.Light:
+                font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+                foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+                break;
+            case WintainiumVisualStyle.FrutigerAero when _settings.Current.Theme == WintainiumThemePreference.Dark:
+                font = new FontFamily("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
+                foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+                break;
+            case WintainiumVisualStyle.Y2K:
+                font = App.GetY2KDisplayFont();
+                foreground = App.GetY2KTextBrush();
+                break;
+        }
+
+        if (font is null)
+        {
+            selector.ClearValue(Control.FontFamilyProperty);
+            selector.ClearValue(Control.ForegroundProperty);
+        }
+        else
+        {
+            selector.FontFamily = font;
+            selector.Foreground = foreground;
+        }
+
+        // ItemsSource contains pre-created TextBlocks; style these explicitly because
+        // unopened ComboBox popup items are not guaranteed to be in the visual tree.
+        if (selector.ItemsSource is System.Collections.IEnumerable items)
+        {
+            foreach (var item in items)
+            {
+                if (item is not TextBlock itemText)
+                {
+                    continue;
+                }
+
+                if (font is null)
+                {
+                    itemText.ClearValue(TextBlock.FontFamilyProperty);
+                    itemText.ClearValue(TextBlock.ForegroundProperty);
+                }
+                else
+                {
+                    itemText.FontFamily = font;
+                    itemText.Foreground = foreground;
+                }
+            }
+        }
     }
 
     private void AddPlaceholder(string text)
