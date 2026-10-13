@@ -86,7 +86,7 @@ public partial class App : Application
                     ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
                 }
                 else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && Settings.Current.Theme == WintainiumThemePreference.Dark
+                    && IsDarkThemeActive
                     && window is not MainWindow)
                 {
                     ApplyFrutigerMetroDarkAppearance(content);
@@ -173,7 +173,7 @@ public partial class App : Application
         var windowId = window.AppWindow.Id;
         ApplyWindows11BlissBackdrop(content);
         var isFrutigerMetroDark = Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Dark;
+            && IsDarkThemeActive;
 
         if (!isFrutigerMetroDark
             && content.FindName("FrutigerMetroBackdrop") is FrameworkElement previousMetroBackdrop)
@@ -209,7 +209,7 @@ public partial class App : Application
         }
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+            && IsDarkThemeActive)
         {
             if (content.FindName("FrutigerMetroBackdrop") is FrameworkElement metroBackdrop)
             {
@@ -491,7 +491,7 @@ public partial class App : Application
     {
         if (sender is ContentDialog dialog
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+            && IsDarkThemeActive)
         {
             // Keep dialog content in its original visual-tree parent. Reparenting
             // ContentDialog.Content from its presenter during Loaded can throw and
@@ -524,19 +524,64 @@ public partial class App : Application
             // Match the aqua-white page surface used by the Frutiger Aero Settings
             // window so ContentDialogs such as Sort & Filter and Add Software do
             // not fall back to the platform's plain dialog surface.
-            dialog.Background = new LinearGradientBrush
+            var aeroSurface = CreateFrutigerAeroDialogSurfaceBrush();
+            // ContentDialog.Background paints the command/button footer; the
+            // content root has its own surface and must receive the same FA treatment.
+            dialog.Background = aeroSurface;
+            if (dialog.Content is FrameworkElement contentRoot)
             {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(0, 1),
-                GradientStops =
+                switch (contentRoot)
                 {
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
-                    new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
+                    case Panel panel:
+                        panel.Background = CreateFrutigerAeroDialogSurfaceBrush();
+                        break;
+                    case Border border:
+                        border.Background = CreateFrutigerAeroDialogSurfaceBrush();
+                        break;
+                    case Control control:
+                        control.Background = CreateFrutigerAeroDialogSurfaceBrush();
+                        break;
                 }
-            };
+
+                QueueFrutigerAeroDialogTypography(contentRoot, 8);
+            }
         }
+    }
+
+    private static Brush CreateFrutigerAeroDialogSurfaceBrush() =>
+        new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
+            }
+        };
+
+    private static void QueueFrutigerAeroDialogTypography(FrameworkElement root, int remainingPasses)
+    {
+        if (remainingPasses <= 0
+            || Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || Settings.Current.Theme != WintainiumThemePreference.Light)
+        {
+            return;
+        }
+
+        root.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+                || Settings.Current.Theme != WintainiumThemePreference.Light)
+            {
+                return;
+            }
+
+            ApplyFrutigerAeroTypography(root);
+            QueueFrutigerAeroDialogTypography(root, remainingPasses - 1);
+        });
     }
 
     internal static void ApplyThemePreference()
@@ -733,7 +778,7 @@ public partial class App : Application
         }
 
         if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && Settings.Current.Theme == WintainiumThemePreference.Dark)
+            && IsDarkThemeActive)
         {
             if (element is ContentDialog metroDialog)
             {
