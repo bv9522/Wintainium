@@ -491,7 +491,7 @@ public partial class App : Application
         host.Children.Add(new Viewbox
         {
             Width = 480,
-            Height = 1,
+            Height = 240,
             Stretch = Stretch.Fill,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -903,7 +903,7 @@ public partial class App : Application
         host.Children.Add(new Viewbox
         {
             Width = 480,
-            Height = 1,
+            Height = 240,
             Stretch = Stretch.Fill,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
