@@ -135,10 +135,10 @@ public sealed partial class SettingsWindow : Window
         }
 
         if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && _settings.Current.Theme == WintainiumThemePreference.Light
+            && !App.IsDarkThemeActive
             && Content is FrameworkElement aeroRoot)
         {
-            App.ApplyFrutigerAeroTypography(aeroRoot);
+            QueueFrutigerAeroSettingsTypography(aeroRoot, 8);
         }
         else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && App.IsDarkThemeActive
@@ -722,7 +722,7 @@ public sealed partial class SettingsWindow : Window
         Brush? foreground = null;
         switch (_settings.Current.VisualStyle)
         {
-            case WintainiumVisualStyle.FrutigerAero when _settings.Current.Theme == WintainiumThemePreference.Light:
+            case WintainiumVisualStyle.FrutigerAero when !App.IsDarkThemeActive:
                 font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
                 foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
                 break;
