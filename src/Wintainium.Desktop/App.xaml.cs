@@ -450,12 +450,15 @@ public partial class App : Application
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || !IsDarkThemeActive
             || dialog.Content is not FrameworkElement currentContent
             || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
         {
             return;
         }
 
+        // Keep the artwork in the dialog's content layer. Never traverse or
+        // mutate the ContentDialog template, which can detach the main window.
         var host = new Grid { Tag = "FrutigerMetroDialogBackdropHost" };
         var canvas = new Canvas { IsHitTestVisible = false };
         var artworkViewport = new Viewbox
@@ -542,8 +545,8 @@ public partial class App : Application
             // ContentDialog.Content from its presenter during Loaded can throw and
             // terminate the async-void command handler. Use a Metro gradient instead.
             ApplyFrutigerMetroDarkAppearance(dialog);
-            // The full-window Metro artwork is on the dialog template root.
-            // Keep the ContentDialog surface transparent so it cannot cover the art.
+            // Keep the ContentDialog surface transparent so the content-layer
+            // Metro artwork remains visible behind the dialog fields.
             dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
         }
     }
