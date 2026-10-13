@@ -599,7 +599,7 @@ public partial class App : Application
                     QueueY2KTextColorPass(content);
                 }
                 else if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                    && Settings.Current.Theme == WintainiumThemePreference.Light)
+                    && !IsDarkThemeActive)
                 {
                     ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
                 }
@@ -621,7 +621,7 @@ public partial class App : Application
     internal static void ApplyFrutigerMetroDarkAppearance(FrameworkElement root)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || Settings.Current.Theme != WintainiumThemePreference.Dark)
+            || !IsDarkThemeActive)
         {
             return;
         }
