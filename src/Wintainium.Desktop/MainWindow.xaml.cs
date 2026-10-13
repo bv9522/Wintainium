@@ -102,7 +102,7 @@ public sealed partial class MainWindow : Window
         RefreshSoftwareCardBackgrounds();
 
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+            && App.IsDarkThemeActive)
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
             SetTitleBar(null);
@@ -113,7 +113,7 @@ public sealed partial class MainWindow : Window
         }
 
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !App.IsDarkThemeActive)
         {
             App.ApplyFrutigerAeroTitleBar(this, Y2KTitleBar, Y2KTitleBarText);
             return;
@@ -200,12 +200,12 @@ public sealed partial class MainWindow : Window
             RefreshSoftwareCardBackgrounds();
 
             if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+                && !App.IsDarkThemeActive)
             {
                 App.ApplyFrutigerAeroTypography(card);
             }
             else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+                && App.IsDarkThemeActive)
             {
                 ApplyFrutigerMetroDarkTypography(card);
             }
@@ -218,7 +218,7 @@ public sealed partial class MainWindow : Window
     {
         var useFrutigerMetroBackground =
             App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark;
+            && App.IsDarkThemeActive;
 
         foreach (var entry in _softwareCardOriginalBackgrounds)
         {
@@ -244,12 +244,12 @@ public sealed partial class MainWindow : Window
                 textBlock.Foreground = App.GetY2KTextBrush();
             }
             else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+                && !App.IsDarkThemeActive)
             {
                 textBlock.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
             }
             else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+                && App.IsDarkThemeActive)
             {
                 textBlock.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
                 textBlock.FontFamily = GetFrutigerMetroDarkFont();
@@ -286,7 +286,7 @@ public sealed partial class MainWindow : Window
     private void ApplyFrutigerMetroDarkTypography()
     {
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || App.Settings.Current.Theme != WintainiumThemePreference.Dark)
+            || !App.IsDarkThemeActive)
         {
             return;
         }
@@ -301,7 +301,7 @@ public sealed partial class MainWindow : Window
     private static void ApplyFrutigerMetroDarkTypography(FrameworkElement root)
     {
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark)
+            && App.IsDarkThemeActive)
         {
             ApplyFrutigerMetroDarkTypographyCore(root, GetFrutigerMetroDarkFont(), GetFrutigerMetroDarkGoldBrush());
         }
