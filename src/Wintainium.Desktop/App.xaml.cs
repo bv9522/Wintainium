@@ -59,7 +59,6 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(window);
 
         var windowId = window.AppWindow.Id;
-        ApplyWindows11BlissBackdrop(content);
         ActiveWindows[windowId] = window;
         window.Closed += (_, _) =>
         {
@@ -172,6 +171,7 @@ public partial class App : Application
         }
 
         var windowId = window.AppWindow.Id;
+        ApplyWindows11BlissBackdrop(content);
         var isFrutigerMetroDark = Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && Settings.Current.Theme == WintainiumThemePreference.Dark;
 
