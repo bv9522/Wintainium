@@ -442,32 +442,39 @@ public partial class App : Application
             Tag = "Windows11BlissDialogBackdropHost"
         };
 
-        // Canvas has no intrinsic desired size, so the wallpaper is decorative
-        // and cannot enlarge the dialog beyond its actual content dimensions.
+        // Canvas contributes no desired size, but is arranged to the full dialog
+        // bounds. Resize its decorative images to that arranged area so the art
+        // covers the entire window instead of ending at a fixed 480x240 corner.
         var backdropCanvas = new Canvas
         {
             IsHitTestVisible = false
         };
-        backdropCanvas.Children.Add(new Image
+        var lightImage = new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
-            Width = 480,
-            Height = 240,
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
             Visibility = IsDarkThemeActive
                 ? Visibility.Collapsed : Visibility.Visible
-        });
-        backdropCanvas.Children.Add(new Image
+        };
+        var darkImage = new Image
         {
             Source = new BitmapImage(new Uri("ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png")),
-            Width = 480,
-            Height = 240,
             Stretch = Stretch.Fill,
             IsHitTestVisible = false,
             Visibility = IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed
-        });
+        };
+        backdropCanvas.Children.Add(lightImage);
+        backdropCanvas.Children.Add(darkImage);
+        backdropCanvas.SizeChanged += (_, args) =>
+        {
+            foreach (var child in backdropCanvas.Children.OfType<FrameworkElement>())
+            {
+                child.Width = args.NewSize.Width;
+                child.Height = args.NewSize.Height;
+            }
+        };
 
         host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
@@ -495,19 +502,21 @@ public partial class App : Application
         {
             IsHitTestVisible = false
         };
-        backdropCanvas.Children.Add(new Viewbox
+        var artworkViewport = new Viewbox
         {
-            Width = 480,
-            Height = 240,
             Stretch = Stretch.Fill,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
             Child = new FrutigerMetroBackdrop
             {
                 IsHitTestVisible = false,
                 Visibility = Visibility.Visible
             }
-        });
+        };
+        backdropCanvas.Children.Add(artworkViewport);
+        backdropCanvas.SizeChanged += (_, args) =>
+        {
+            artworkViewport.Width = args.NewSize.Width;
+            artworkViewport.Height = args.NewSize.Height;
+        };
 
         host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
@@ -919,19 +928,21 @@ public partial class App : Application
         {
             IsHitTestVisible = false
         };
-        backdropCanvas.Children.Add(new Viewbox
+        var telemetryViewport = new Viewbox
         {
-            Width = 480,
-            Height = 240,
             Stretch = Stretch.Fill,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
             Child = new Y2KDarkTelemetryBackdrop
             {
                 Visibility = Visibility.Visible,
                 IsHitTestVisible = false
             }
-        });
+        };
+        backdropCanvas.Children.Add(telemetryViewport);
+        backdropCanvas.SizeChanged += (_, args) =>
+        {
+            telemetryViewport.Width = args.NewSize.Width;
+            telemetryViewport.Height = args.NewSize.Height;
+        };
 
         host.Children.Add(backdropCanvas);
         host.Children.Add(currentContent);
