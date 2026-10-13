@@ -347,7 +347,7 @@ public partial class App : Application
     internal static void ApplyFrutigerAeroTitleBar(Window window, Grid titleBar, TextBlock titleText)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || Settings.Current.Theme != WintainiumThemePreference.Light)
+            || !IsDarkThemeActive)
         {
             return;
         }
@@ -566,7 +566,7 @@ public partial class App : Application
     {
         if (remainingPasses <= 0
             || Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || Settings.Current.Theme != WintainiumThemePreference.Light)
+            || IsDarkThemeActive)
         {
             return;
         }
@@ -574,7 +574,7 @@ public partial class App : Application
         root.DispatcherQueue.TryEnqueue(() =>
         {
             if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-                || Settings.Current.Theme != WintainiumThemePreference.Light)
+                || IsDarkThemeActive)
             {
                 return;
             }
@@ -1201,7 +1201,33 @@ public partial class App : Application
         {
             if (window.Content is FrameworkElement content)
             {
-                content.DispatcherQueue.TryEnqueue(() => ApplyThemeToWindow(window));
+                content.DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyThemeToWindow(window);
+                    ApplyVisualStyleToWindow(window);
+                    RefreshThemeResources(window);
+                    if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero)
+                    {
+                        if (IsDarkThemeActive)
+                        {
+                            ApplyFrutigerMetroDarkAppearance(content);
+                        }
+                        else
+                        {
+                            ApplyFrutigerAeroTypography(content, preserveSoftwareCardTypography: window is MainWindow);
+                        }
+                    }
+
+                    if (window is SettingsWindow settingsWindow)
+                    {
+                        settingsWindow.RefreshAppearance();
+                    }
+
+                    if (window is MainWindow mainWindow)
+                    {
+                        mainWindow.ApplyWindowChromeForCurrentVisualStyle();
+                    }
+                });
             }
         }
     }
