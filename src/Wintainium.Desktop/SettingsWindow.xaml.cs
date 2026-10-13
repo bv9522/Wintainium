@@ -65,7 +65,7 @@ public sealed partial class SettingsWindow : Window
         if (Content is FrameworkElement root)
         {
             var isMetroDark = _settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-                && _settings.Current.Theme == WintainiumThemePreference.Dark;
+                && App.IsDarkThemeActive;
             if (!isMetroDark)
             {
                 App.ClearFrutigerMetroDarkAppearance(root);
@@ -141,7 +141,7 @@ public sealed partial class SettingsWindow : Window
             App.ApplyFrutigerAeroTypography(aeroRoot);
         }
         else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && _settings.Current.Theme == WintainiumThemePreference.Dark
+            && App.IsDarkThemeActive
             && Content is FrameworkElement metroRoot)
         {
             App.ApplyFrutigerMetroDarkAppearance(metroRoot);
@@ -308,17 +308,39 @@ public sealed partial class SettingsWindow : Window
         QueueY2KSettingsLoadedColorPass();
 
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Light
+            && !App.IsDarkThemeActive
             && Content is FrameworkElement aeroRoot)
         {
-            App.ApplyFrutigerAeroTypography(aeroRoot);
+            QueueFrutigerAeroSettingsTypography(aeroRoot, 8);
         }
         else if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Dark
+            && App.IsDarkThemeActive
             && Content is FrameworkElement metroRoot)
         {
             App.ApplyFrutigerMetroDarkAppearance(metroRoot);
         }
+    }
+
+    private static void QueueFrutigerAeroSettingsTypography(FrameworkElement root, int remainingPasses)
+    {
+        if (remainingPasses <= 0
+            || App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || App.IsDarkThemeActive)
+        {
+            return;
+        }
+
+        root.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+                || App.IsDarkThemeActive)
+            {
+                return;
+            }
+
+            App.ApplyFrutigerAeroTypography(root);
+            QueueFrutigerAeroSettingsTypography(root, remainingPasses - 1);
+        });
     }
 
     private void QueueY2KSettingsLoadedColorPass()
@@ -626,9 +648,10 @@ public sealed partial class SettingsWindow : Window
 
         ApplyY2KTypography(header);
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && App.Settings.Current.Theme == WintainiumThemePreference.Light)
+            && !App.IsDarkThemeActive)
         {
-            App.ApplyFrutigerAeroTypography(header);
+            header.FontFamily = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+            header.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
         }
         _categoryContent.Children.Add(header);
     }
@@ -703,7 +726,7 @@ public sealed partial class SettingsWindow : Window
                 font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
                 foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
                 break;
-            case WintainiumVisualStyle.FrutigerAero when _settings.Current.Theme == WintainiumThemePreference.Dark:
+            case WintainiumVisualStyle.FrutigerAero when App.IsDarkThemeActive:
                 font = new FontFamily("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
                 foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
                 break;
