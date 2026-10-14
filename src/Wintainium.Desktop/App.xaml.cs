@@ -609,13 +609,29 @@ public partial class App : Application
             return;
         }
 
-        // Place the NYC artwork on the main dialog body. The footer behind
-        // the action buttons remains its separate theme surface.
-        dialog.Resources["ContentDialogBackground"] = new ImageBrush
+        // Keep the NYC artwork confined to the main dialog body. Explicitly
+        // clear the template overlay so the artwork/glass treatment appears above
+        // the command row rather than allowing the page backdrop to show through.
+        var dialogBackground = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
             Stretch = Stretch.UniformToFill
         };
+        dialog.Resources["ContentDialogBackground"] = dialogBackground;
+        dialog.Resources["ContentDialogTopOverlay"] =
+            new SolidColorBrush(ColorHelper.FromArgb(217, 255, 255, 255));
+        dialog.Background = dialogBackground;
+
+        // Reuse the proven dialog template style so body and footer use separate
+        // surfaces. Do not modify the main window's own page background.
+        if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
+            dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
+        {
+            dialog.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
+            });
+        }
     }
 
     private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
@@ -1043,6 +1059,30 @@ public partial class App : Application
             {
                 // Reassert the full-body image brush after the dialog template loads.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
+                ClearY2KDialogInputBorders(dialog);
+            }
+        }
+    }
+
+    private static void ClearY2KDialogInputBorders(FrameworkElement element)
+    {
+        // Y2K Dark's telemetry backdrop is intentionally detailed; remove the
+        // default input outlines in these dialogs without changing other themes.
+        if (element is TextBox or ComboBox)
+        {
+            if (element is Control control)
+            {
+                control.BorderThickness = new Thickness(0);
+                control.BorderBrush = TransparentDialogBrush;
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ClearY2KDialogInputBorders(child);
             }
         }
     }
