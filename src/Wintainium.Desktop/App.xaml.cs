@@ -656,7 +656,7 @@ public partial class App : Application
             {
                 UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
             },
-            Stretch = Stretch.UniformToFill
+            Stretch = Stretch.Fill
         };
         dialog.Resources["ContentDialogBackground"] = dialogBackground;
 
