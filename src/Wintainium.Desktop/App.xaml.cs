@@ -528,6 +528,36 @@ public partial class App : Application
         }
     }
 
+    private static void RevealFrutigerMetroDialogBodyBackdrop(FrameworkElement element)
+    {
+        // WinUI's footer uses these named hosts. Do not repaint or clear their
+        // template surfaces while making the upper body transparent.
+        if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+        {
+            return;
+        }
+
+        // FM's general appearance pass styles every Border and Control. Dialog
+        // content wrappers must remain transparent or they obscure the image brush.
+        if (element is Panel panel)
+        {
+            panel.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        }
+        else if (element is Border border)
+        {
+            border.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                RevealFrutigerMetroDialogBodyBackdrop(child);
+            }
+        }
+    }
+
     private static void EnsureFrutigerAeroLightDialogBackdrop(ContentDialog dialog)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
@@ -601,9 +631,11 @@ public partial class App : Application
             ApplyFrutigerMetroDarkAppearance(dialog);
             EnsureFrutigerMetroDialogBackdrop(dialog);
 
-            // Keep the FM artwork confined to the upper dialog body, just as in
-            // Windows 11: the footer/button hosts must have their own opaque surface.
-            ApplyWindows11DialogFooterSurface(dialog);
+            // The Metro styling pass assigns translucent fills to every Control
+            // and Border, including WinUI's body layout surfaces. Clear those layout
+            // fills so the dialog-level artwork can show through the upper body.
+            // Leave the footer/template area alone; it must not become an artwork panel.
+            RevealFrutigerMetroDialogBodyBackdrop(dialog);
         }
     }
 
