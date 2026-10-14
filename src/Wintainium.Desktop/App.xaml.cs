@@ -435,9 +435,8 @@ public partial class App : Application
             return;
         }
 
-        // ContentDialogBackground is the template resource for the dialog body.
-        // Override it on this dialog instance so the Bliss image fills the main
-        // section without painting the separate footer or mutating template visuals.
+        // Mirror the working Y2K ContentDialog setup: provide ContentDialogBackground
+        // and ensure the ContentDialog style explicitly consumes that ThemeResource.
         dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
@@ -446,6 +445,12 @@ public partial class App : Application
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Stretch = Stretch.UniformToFill
         };
+
+        var dialogStyleDictionary = new ResourceDictionary
+        {
+            Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
+        };
+        dialog.Resources.MergedDictionaries.Add(dialogStyleDictionary);
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
