@@ -435,11 +435,10 @@ public partial class App : Application
             return;
         }
 
-        // Use the dialog's actual background surface, as Y2K Light does.
-        // WinUI's ContentDialog template also exposes that surface behind the
-        // footer, so the footer must be explicitly restored to its neutral
-        // Windows 11 surface to keep the wallpaper confined to the main body.
-        var wallpaper = new ImageBrush
+        // ContentDialogBackground is the template resource for the dialog body.
+        // Override it on this dialog instance so the Bliss image fills the main
+        // section without painting the separate footer or mutating template visuals.
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
                 IsDarkThemeActive
@@ -447,50 +446,6 @@ public partial class App : Application
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Stretch = Stretch.UniformToFill
         };
-
-        dialog.Background = wallpaper;
-        dialog.Loaded -= Windows11ContentDialog_Loaded;
-        dialog.Loaded += Windows11ContentDialog_Loaded;
-    }
-
-    private static void Windows11ContentDialog_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is ContentDialog dialog
-            && Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11)
-        {
-            ApplyWindows11DialogButtonAreaBackground(dialog);
-        }
-    }
-
-    private static void ApplyWindows11DialogButtonAreaBackground(FrameworkElement element)
-    {
-        var isButtonArea = element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host";
-        if (isButtonArea)
-        {
-            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(
-                255,
-                IsDarkThemeActive ? (byte)32 : (byte)243,
-                IsDarkThemeActive ? (byte)32 : (byte)243,
-                IsDarkThemeActive ? (byte)32 : (byte)243));
-
-            if (element is Panel panel)
-            {
-                panel.Background = footerBrush;
-            }
-            else if (element is Border border)
-            {
-                border.Background = footerBrush;
-            }
-        }
-
-        var childCount = VisualTreeHelper.GetChildrenCount(element);
-        for (var index = 0; index < childCount; index++)
-        {
-            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
-            {
-                ApplyWindows11DialogButtonAreaBackground(child);
-            }
-        }
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
