@@ -569,7 +569,7 @@ public partial class App : Application
         {
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
             },
             Stretch = Stretch.UniformToFill
         };
