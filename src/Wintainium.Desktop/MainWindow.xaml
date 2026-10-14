@@ -13,6 +13,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Explicit full-window Y2K Dark artwork. Do not rely solely on a swapped ThemeResource for this backdrop. -->
+        <Grid x:Name="Y2KDarkMainBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
+            <Image Source="ms-appx:///Themes/Y2K-DarkMainGrid.svg"
+                   Stretch="Fill"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch" />
+        </Grid>
+
         <!-- Windows 11 Bliss backdrop; enabled only for the native Windows 11 visual style. -->
         <Grid x:Name="Windows11BlissBackdrop" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed">
             <Image x:Name="Windows11BlissLightImage" Source="ms-appx:///Themes/Windows%2011%20Bliss%20Light.png" Stretch="Fill" Visibility="Collapsed" />
