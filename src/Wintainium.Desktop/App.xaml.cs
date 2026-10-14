@@ -505,7 +505,7 @@ public partial class App : Application
         // Match Windows 11: the image is supplied through ContentDialogBackground,
         // and the shared ContentDialog style paints the body from that resource.
         // Do not assign the image to arbitrary content containers.
-        dialog.Resources["ContentDialogBackground"] = new ImageBrush
+        var dialogBackground = new ImageBrush
         {
             ImageSource = new SvgImageSource
             {
@@ -513,6 +513,13 @@ public partial class App : Application
             },
             Stretch = Stretch.UniformToFill
         };
+
+        // Match the working Windows 11 implementation exactly: publish the brush
+        // as ContentDialogBackground AND assign it directly to the dialog surface.
+        // The ContentDialog template can otherwise resolve the resource for a
+        // different surface than the upper dialog body.
+        dialog.Resources["ContentDialogBackground"] = dialogBackground;
+        dialog.Background = dialogBackground;
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
 
