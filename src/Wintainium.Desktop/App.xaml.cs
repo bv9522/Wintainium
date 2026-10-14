@@ -435,15 +435,11 @@ public partial class App : Application
             return;
         }
 
-        if (dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "Windows11DialogBackdropHost")
-        {
-            return;
-        }
-
-        // The stock ContentDialog.Background paints the outer/footer surface on
-        // this app's Windows 11 dialog template. Put the wallpaper behind the
-        // content in the main body instead, leaving the lower button area alone.
+        // Match the proven Y2K dialog pattern: put the image brush in the
+        // dialog's resources and apply it through a ContentDialog style based
+        // on DefaultContentDialogStyle. Do not wrap Content in a Grid, because
+        // that only paints the fields' desired-size rectangle rather than the
+        // full upper dialog surface.
         var wallpaper = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
@@ -452,25 +448,17 @@ public partial class App : Application
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
             Stretch = Stretch.UniformToFill
         };
-        var host = new Grid
+
+        dialog.Resources["ContentDialogBackground"] = wallpaper;
+
+        var style = new Style(typeof(ContentDialog))
         {
-            Tag = "Windows11DialogBackdropHost",
-            Background = wallpaper,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
+            BasedOn = (Style)Application.Current.Resources["DefaultContentDialogStyle"]
         };
-
-        // ContentDialog's content presenter can size to the fields' desired
-        // bounds unless both the dialog content and its root explicitly stretch.
-        // Stretch the content region, not the dialog surface, so the wallpaper
-        // fills the upper body while the action-button footer remains untouched.
-        currentContent.HorizontalAlignment = HorizontalAlignment.Stretch;
-        currentContent.VerticalAlignment = VerticalAlignment.Stretch;
-        dialog.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-        dialog.VerticalContentAlignment = VerticalAlignment.Stretch;
-
-        host.Children.Add(currentContent);
-        dialog.Content = host;
+        style.Setters.Add(new Setter(
+            Control.BackgroundProperty,
+            new ThemeResourceExtension("ContentDialogBackground")));
+        dialog.Style = style;
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
