@@ -555,34 +555,25 @@ public partial class App : Application
     private static void EnsureY2KDarkTelemetryDialogBackdrop(ContentDialog dialog)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K
-            || !IsDarkThemeActive
-            || dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "Y2KDarkTelemetryDialogHost")
+            || !IsDarkThemeActive)
         {
             return;
         }
 
-        var host = new Grid { Tag = "Y2KDarkTelemetryDialogHost" };
-        var canvas = new Canvas { IsHitTestVisible = false };
-        var telemetryViewport = new Viewbox
+        // Match the proven Windows 11 dialog approach: paint the ContentDialog body
+        // through its Background brush instead of inserting artwork into the content
+        // grid (which constrained it to a square around the fields).
+        dialog.Resources["ContentDialogTopOverlay"] =
+            new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
-            Stretch = Stretch.Fill,
-            Child = new Y2KDarkTelemetryBackdrop
+            ImageSource = new SvgImageSource
             {
-                Visibility = Visibility.Visible,
-                IsHitTestVisible = false
-            }
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkGrid.svg")
+            },
+            Stretch = Stretch.UniformToFill
         };
-        canvas.Children.Add(telemetryViewport);
-        canvas.SizeChanged += (_, args) =>
-        {
-            telemetryViewport.Width = args.NewSize.Width;
-            telemetryViewport.Height = args.NewSize.Height;
-        };
-        host.Children.Add(canvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = TransparentDialogBrush;
+        dialog.Background = (Brush)dialog.Resources["ContentDialogBackground"];
     }
 
     private static readonly Brush TransparentDialogBrush =
@@ -968,9 +959,8 @@ public partial class App : Application
             ApplyY2KContentDialogPresentation(dialog);
             if (IsDarkThemeActive)
             {
-                // Keep the dialog surface transparent so the telemetry backdrop
-                // remains visible across the full window.
-                dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+                // Reassert the full-body image brush after the dialog template loads.
+                EnsureY2KDarkTelemetryDialogBackdrop(dialog);
             }
         }
     }
