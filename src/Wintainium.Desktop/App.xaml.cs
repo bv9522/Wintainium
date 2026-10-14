@@ -660,9 +660,9 @@ public partial class App : Application
         };
         dialog.Resources["ContentDialogBackground"] = dialogBackground;
 
-        // Apply the image directly as well as exposing the theme resource.
-        // This avoids relying on an implicit ContentDialog style being selected
-        // inside the popup's resource scope.
+        // The main Y2K Dark window uses this SVG as its base layer plus the
+        // native telemetry backdrop control. Keep the SVG here as the base layer;
+        // the matching telemetry layer is added to the dialog template after load.
         dialog.Background = dialogBackground;
 
         // Keep the Windows 11 style resource for the transparent body overlay
