@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#100507"/><stop offset=".48" stop-color="#390a12"/><stop offset="1" stop-color="#080406"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff4b2"/><stop offset=".35" stop-color="#ffc928"/><stop offset="1" stop-color="#ff5a1f"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<g opacity=".98">
+<path d="M800 420 180 0h110L800 420 500 0h65L820 420 1100 0h65L840 440 1600 140v65L850 465 1600 410v55L845 485 1600 760v65L825 500 1080 900h-65L800 505 520 900h-65L780 500 0 730v-60L755 475 0 430v-55L760 430 0 160v-55Z" fill="#ff5a1f" opacity=".62"/>
+<path d="M0 0h175l465 900H500ZM1480 0h120L1110 900h-110Z" fill="#000" opacity=".62"/>
+<path d="M0 170C260 10 400 270 620 130S1100 10 1600 150M0 735C280 570 430 830 680 670S1200 570 1600 735" fill="none" stroke="#000" stroke-width="34"/>
+<path d="M0 170C260 10 400 270 620 130S1100 10 1600 150M0 735C280 570 430 830 680 670S1200 570 1600 735" fill="none" stroke="#ffc928" stroke-width="15"/>
+<circle cx="190" cy="385" r="126" fill="#000" stroke="#ffc928" stroke-width="9"/><circle cx="190" cy="385" r="92" fill="#24080c" stroke="#dc143c" stroke-width="5"/><circle cx="190" cy="385" r="55" fill="none" stroke="#ffc928" stroke-width="4"/>
+<circle cx="1420" cy="525" r="108" fill="#000" stroke="#ff5a1f" stroke-width="9"/><circle cx="1420" cy="525" r="73" fill="#26080d" stroke="#dc143c" stroke-width="5"/><circle cx="1420" cy="525" r="40" fill="none" stroke="#ffc928" stroke-width="4"/>
+<g stroke="#000" stroke-width="10"><polygon points="800,240 840,365 955,300 895,405 1030,415 910,460 990,555 875,500 850,635 800,520 750,635 725,500 610,555 690,460 570,415 705,405 645,300 760,365" fill="#ffc928"/><polygon points="800,290 830,382 910,340 865,415 960,425 875,455 930,520 860,485 840,575 800,505 760,575 740,485 670,520 725,455 640,425 735,415 690,340 770,382" fill="#ff5a1f" stroke-width="7"/></g>
+<path d="M510 310 625 570 800 365 975 570 1090 310" fill="none" stroke="#000" stroke-width="54" stroke-linejoin="round"/>
+<path d="M510 310 625 570 800 365 975 570 1090 310" fill="none" stroke="url(#gold)" stroke-width="34" stroke-linejoin="round"/>
+<path d="M800 390V488M748 455 800 514 852 455" fill="none" stroke="#000" stroke-width="36" stroke-linejoin="round"/>
+<path d="M800 390V488M748 455 800 514 852 455" fill="none" stroke="#ffc928" stroke-width="21" stroke-linejoin="round"/>
+<g fill="none" stroke="#ffc928" opacity=".65"><circle cx="800" cy="440" r="230" stroke-width="4" stroke-dasharray="3 12"/><circle cx="800" cy="440" r="270" stroke-width="3" stroke-dasharray="2 18"/></g>
+<g fill="#ffc928"><circle cx="430" cy="75" r="5"/><circle cx="452" cy="91" r="5"/><circle cx="474" cy="107" r="5"/><circle cx="496" cy="123" r="5"/><circle cx="518" cy="139" r="5"/><circle cx="1080" cy="790" r="5"/><circle cx="1102" cy="806" r="5"/><circle cx="1124" cy="822" r="5"/></g>
+</g>
+<rect width="1600" height="900" fill="#080406" opacity=".16"/>
+</svg>
