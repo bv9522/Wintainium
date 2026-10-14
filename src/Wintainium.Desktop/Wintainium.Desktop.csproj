@@ -19,6 +19,7 @@
     <Content Include="Themes\Y2K-DarkGrid.svg" />
     <Content Include="Themes\Y2K-DarkMainGrid.svg" />
     <Content Include="Themes\Y2K-DarkW.svg" />
+    <Content Include="Themes\Frutiger-Metro-Dialog.svg" />
     <Content Include="Themes\Windows 11 Bliss Light.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
