@@ -451,12 +451,13 @@ public partial class App : Application
 
         dialog.Resources["ContentDialogBackground"] = wallpaper;
 
-        var style = new Style(typeof(ContentDialog))
+        // Use a small XAML dictionary so the background setter uses the same
+        // ThemeResource lookup pattern as Y2K.xaml. A content wrapper only
+        // paints the bounds of the fields and cannot fill the whole body.
+        dialog.Resources.MergedDictionaries.Add(new ResourceDictionary
         {
-            BasedOn = (Style)Application.Current.Resources["DefaultContentDialogStyle"]
-        };
-        style.Setters.Add(new Setter(Control.BackgroundProperty, wallpaper));
-        dialog.Style = style;
+            Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
+        });
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
