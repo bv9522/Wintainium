@@ -565,7 +565,7 @@ public partial class App : Application
         // grid (which constrained it to a square around the fields).
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
-        dialog.Resources["ContentDialogBackground"] = new ImageBrush
+        var dialogBackground = new ImageBrush
         {
             ImageSource = new SvgImageSource
             {
@@ -573,10 +573,16 @@ public partial class App : Application
             },
             Stretch = Stretch.UniformToFill
         };
+        dialog.Resources["ContentDialogBackground"] = dialogBackground;
 
-        // The ContentDialog template paints its body through a ThemeResource.
-        // Use the same explicit style hook as Windows 11 and Y2K Light so the
-        // full upper body actually consumes the artwork brush.
+        // Apply the image directly as well as exposing the theme resource.
+        // This avoids relying on an implicit ContentDialog style being selected
+        // inside the popup's resource scope.
+        dialog.Background = dialogBackground;
+
+        // Keep the Windows 11 style resource for the transparent body overlay
+        // and consistent footer separation, but don't depend on its style setter
+        // as the only mechanism that paints the dialog body.
         var dialogStyleDictionary = new ResourceDictionary
         {
             Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
