@@ -573,7 +573,19 @@ public partial class App : Application
             },
             Stretch = Stretch.UniformToFill
         };
-        dialog.Background = (Brush)dialog.Resources["ContentDialogBackground"];
+
+        // The ContentDialog template paints its body through a ThemeResource.
+        // Use the same explicit style hook as Windows 11 and Y2K Light so the
+        // full upper body actually consumes the artwork brush.
+        var dialogStyleDictionary = new ResourceDictionary
+        {
+            Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
+        };
+        if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
+            dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
+        {
+            dialog.Resources.MergedDictionaries.Add(dialogStyleDictionary);
+        }
     }
 
     private static readonly Brush TransparentDialogBrush =
