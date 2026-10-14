@@ -504,6 +504,12 @@ public partial class App : Application
             return;
         }
 
+        // Mirror the working Y2K Light dialog setup: make WinUI's main-body
+        // overlay transparent so the Metro artwork can show across the full dialog
+        // body instead of only through the individual content controls.
+        dialog.Resources["ContentDialogTopOverlay"] =
+            new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+
         // Keep the artwork in the dialog's content layer. Never traverse or
         // mutate the ContentDialog template, which can detach the main window.
         var host = new Grid { Tag = "FrutigerMetroDialogBackdropHost" };
