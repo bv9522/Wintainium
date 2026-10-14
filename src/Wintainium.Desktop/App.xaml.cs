@@ -524,7 +524,7 @@ public partial class App : Application
         // The template is available only after Loaded. Locate the actual content
         // presenter and place a non-measuring Canvas in the same Grid cell behind it.
         // This leaves ContentDialog measurement and the footer layout untouched.
-        var contentPresenter = FindMetroDialogContentPresenter(dialog);
+        var contentPresenter = FindMetroDialogContentPresenter(dialog, dialog.Content);
         if (contentPresenter is null
             || VisualTreeHelper.GetParent(contentPresenter) is not Grid bodyCell)
         {
@@ -575,20 +575,19 @@ public partial class App : Application
         ResizeMetroArtwork(new Size(contentPresenter.ActualWidth, contentPresenter.ActualHeight));
     }
 
-    private static ContentPresenter? FindMetroDialogContentPresenter(DependencyObject root)
+    private static ContentPresenter? FindMetroDialogContentPresenter(DependencyObject root, object? dialogContent)
     {
         var childCount = VisualTreeHelper.GetChildrenCount(root);
         for (var index = 0; index < childCount; index++)
         {
             var child = VisualTreeHelper.GetChild(root, index);
             if (child is ContentPresenter presenter
-                && (presenter.Name.Contains("ContentPresenter", StringComparison.OrdinalIgnoreCase)
-                    || presenter.Content is not null))
+                && ReferenceEquals(presenter.Content, dialogContent))
             {
                 return presenter;
             }
 
-            var nested = FindMetroDialogContentPresenter(child);
+            var nested = FindMetroDialogContentPresenter(child, dialogContent);
             if (nested is not null)
             {
                 return nested;
