@@ -1,6 +1,8 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- WinUI overlays the main dialog body with ContentDialogTopOverlay. Keep it transparent so the image brush behind the body is visible; the command/footer area remains separate. -->
+    <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
     <Style TargetType="ContentDialog" BasedOn="{StaticResource DefaultContentDialogStyle}">
         <Setter Property="Background" Value="{ThemeResource ContentDialogBackground}" />
     </Style>
