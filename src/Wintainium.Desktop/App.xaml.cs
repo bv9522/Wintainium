@@ -502,18 +502,6 @@ public partial class App : Application
             return;
         }
 
-        // Match Windows 11: the image is supplied through ContentDialogBackground,
-        // and the shared ContentDialog style paints the body from that resource.
-        // Do not assign the image to arbitrary content containers.
-        var dialogBackground = new ImageBrush
-        {
-            ImageSource = new SvgImageSource
-            {
-                UriSource = new Uri("ms-appx:///Themes/Frutiger-Metro-Dialog.svg")
-            },
-            Stretch = Stretch.UniformToFill
-        };
-
         // Keep the dialog's existing body placement, but use the exact same
         // FrutigerMetroBackdrop control as the main window instead of the separate
         // dialog SVG, whose composition differs from the main artwork.
