@@ -652,7 +652,7 @@ public partial class App : Application
         {
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
             },
             Stretch = Stretch.UniformToFill
         };
@@ -1030,6 +1030,7 @@ public partial class App : Application
         if (element is ContentDialog darkY2KDialog && IsDarkThemeActive)
         {
             EnsureY2KDarkTelemetryDialogBackdrop(darkY2KDialog);
+            EnsureY2KDarkDialogTelemetryOverlay(darkY2KDialog);
         }
 
         ApplyY2KTextColor(element);
@@ -1040,6 +1041,35 @@ public partial class App : Application
             dialog.Loaded -= Y2KContentDialog_Loaded;
             dialog.Loaded += Y2KContentDialog_Loaded;
         }
+    }
+
+    private static void EnsureY2KDarkDialogTelemetryOverlay(ContentDialog dialog)
+    {
+        // ContentDialogs such as Sort & Filter and Add Software do not have a
+        // window-level backdrop layer. Put the same native telemetry overlay
+        // used by MainWindow behind their existing content, without intercepting
+        // input or changing the dialog's content controls.
+        if (dialog.Content is not FrameworkElement content
+            || content is Grid grid && grid.Children.OfType<Y2KDarkTelemetryBackdrop>().Any())
+        {
+            return;
+        }
+
+        var overlayGrid = new Grid
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        overlayGrid.Children.Add(new Y2KDarkTelemetryBackdrop
+        {
+            Visibility = Visibility.Visible,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        });
+
+        dialog.Content = null;
+        overlayGrid.Children.Add(content);
+        dialog.Content = overlayGrid;
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
