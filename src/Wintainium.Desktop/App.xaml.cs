@@ -435,11 +435,10 @@ public partial class App : Application
             return;
         }
 
-        // Match the proven Y2K dialog pattern: put the image brush in the
-        // dialog's resources and apply it through a ContentDialog style based
-        // on DefaultContentDialogStyle. Do not wrap Content in a Grid, because
-        // that only paints the fields' desired-size rectangle rather than the
-        // full upper dialog surface.
+        // Use the dialog's actual background surface, as Y2K Light does.
+        // WinUI's ContentDialog template also exposes that surface behind the
+        // footer, so the footer must be explicitly restored to its neutral
+        // Windows 11 surface to keep the wallpaper confined to the main body.
         var wallpaper = new ImageBrush
         {
             ImageSource = new BitmapImage(new Uri(
@@ -449,15 +448,49 @@ public partial class App : Application
             Stretch = Stretch.UniformToFill
         };
 
-        dialog.Resources["ContentDialogBackground"] = wallpaper;
+        dialog.Background = wallpaper;
+        dialog.Loaded -= Windows11ContentDialog_Loaded;
+        dialog.Loaded += Windows11ContentDialog_Loaded;
+    }
 
-        // Use a small XAML dictionary so the background setter uses the same
-        // ThemeResource lookup pattern as Y2K.xaml. A content wrapper only
-        // paints the bounds of the fields and cannot fill the whole body.
-        dialog.Resources.MergedDictionaries.Add(new ResourceDictionary
+    private static void Windows11ContentDialog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContentDialog dialog
+            && Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11)
         {
-            Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
-        });
+            ApplyWindows11DialogButtonAreaBackground(dialog);
+        }
+    }
+
+    private static void ApplyWindows11DialogButtonAreaBackground(FrameworkElement element)
+    {
+        var isButtonArea = element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host";
+        if (isButtonArea)
+        {
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(
+                255,
+                IsDarkThemeActive ? (byte)32 : (byte)243,
+                IsDarkThemeActive ? (byte)32 : (byte)243,
+                IsDarkThemeActive ? (byte)32 : (byte)243));
+
+            if (element is Panel panel)
+            {
+                panel.Background = footerBrush;
+            }
+            else if (element is Border border)
+            {
+                border.Background = footerBrush;
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyWindows11DialogButtonAreaBackground(child);
+            }
+        }
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
