@@ -512,7 +512,8 @@ public partial class App : Application
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
 
         if (dialog.Content is not Grid bodyGrid
-            || bodyGrid.Children.OfType<FrutigerMetroBackdrop>().FirstOrDefault() is null)
+            || !bodyGrid.Children.OfType<Canvas>().Any(canvas =>
+                canvas.Children.OfType<FrutigerMetroBackdrop>().Any()))
         {
             var originalContent = dialog.Content as UIElement;
             bodyGrid = new Grid
@@ -520,13 +521,26 @@ public partial class App : Application
                 Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0))
             };
 
-            var mainArtwork = new FrutigerMetroBackdrop
+            // Canvas does not contribute its children's 1600x900 artwork size
+            // to ContentDialog measurement, so the original dialog dimensions remain intact.
+            var artworkLayer = new Canvas
             {
-                Visibility = Visibility.Visible,
+                IsHitTestVisible = false,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
-            bodyGrid.Children.Add(mainArtwork);
+            var mainArtwork = new FrutigerMetroBackdrop
+            {
+                Visibility = Visibility.Visible,
+                IsHitTestVisible = false
+            };
+            artworkLayer.Children.Add(mainArtwork);
+            artworkLayer.SizeChanged += (_, args) =>
+            {
+                mainArtwork.Width = args.NewSize.Width;
+                mainArtwork.Height = args.NewSize.Height;
+            };
+            bodyGrid.Children.Add(artworkLayer);
 
             if (originalContent is not null)
             {
