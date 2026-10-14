@@ -600,6 +600,10 @@ public partial class App : Application
             // dialog opened; apply only the Metro typography and control styling.
             ApplyFrutigerMetroDarkAppearance(dialog);
             EnsureFrutigerMetroDialogBackdrop(dialog);
+
+            // Keep the FM artwork confined to the upper dialog body, just as in
+            // Windows 11: the footer/button hosts must have their own opaque surface.
+            ApplyWindows11DialogFooterSurface(dialog);
         }
     }
 
