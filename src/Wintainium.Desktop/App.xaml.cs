@@ -455,9 +455,7 @@ public partial class App : Application
         {
             BasedOn = (Style)Application.Current.Resources["DefaultContentDialogStyle"]
         };
-        style.Setters.Add(new Setter(
-            Control.BackgroundProperty,
-            new ThemeResourceExtension("ContentDialogBackground")));
+        style.Setters.Add(new Setter(Control.BackgroundProperty, wallpaper));
         dialog.Style = style;
     }
 
