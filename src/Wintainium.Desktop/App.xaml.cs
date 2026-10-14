@@ -502,15 +502,22 @@ public partial class App : Application
             return;
         }
 
-        // Follow the Windows 11 dialog pattern for the dialog's own surface and
-        // transparent top overlay. The Metro artwork itself must be hosted in the
-        // ContentDialog template's body cell, not inside dialog.Content: that content
-        // can be smaller than the full upper body and therefore clips the artwork.
-        var metroSurface = new SolidColorBrush(ColorHelper.FromArgb(255, 16, 5, 7));
-        dialog.Resources["ContentDialogBackground"] = metroSurface;
-        dialog.Background = metroSurface;
+        // Paint the ContentDialog body itself, matching the proven Windows 11 and
+        // Y2K dialog-backdrop pattern. Hosting the artwork inside dialog.Content or
+        // its content presenter constrains it to the fields' smaller layout area.
+        var metroArtwork = new ImageBrush
+        {
+            ImageSource = new SvgImageSource
+            {
+                UriSource = new Uri("ms-appx:///Themes/Frutiger-Metro-Dialog.svg")
+            },
+            Stretch = Stretch.UniformToFill
+        };
+
+        dialog.Resources["ContentDialogBackground"] = metroArtwork;
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        dialog.Background = metroArtwork;
 
         if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
             dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
@@ -520,80 +527,6 @@ public partial class App : Application
                 Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
             });
         }
-
-        // The template is available only after Loaded. Locate the actual content
-        // presenter and place a non-measuring Canvas in the same Grid cell behind it.
-        // This leaves ContentDialog measurement and the footer layout untouched.
-        var contentPresenter = FindMetroDialogContentPresenter(dialog, dialog.Content);
-        if (contentPresenter is null
-            || VisualTreeHelper.GetParent(contentPresenter) is not Grid bodyCell)
-        {
-            return;
-        }
-
-        if (bodyCell.Children.OfType<Canvas>().Any(canvas =>
-            canvas.Children.OfType<FrutigerMetroBackdrop>().Any()))
-        {
-            return;
-        }
-
-        var artworkLayer = new Canvas
-        {
-            IsHitTestVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-        Grid.SetRow(artworkLayer, Grid.GetRow(contentPresenter));
-        Grid.SetColumn(artworkLayer, Grid.GetColumn(contentPresenter));
-        Grid.SetRowSpan(artworkLayer, Grid.GetRowSpan(contentPresenter));
-        Grid.SetColumnSpan(artworkLayer, Grid.GetColumnSpan(contentPresenter));
-
-        var mainArtwork = new FrutigerMetroBackdrop
-        {
-            Visibility = Visibility.Visible,
-            IsHitTestVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-        artworkLayer.Children.Add(mainArtwork);
-        bodyCell.Children.Insert(0, artworkLayer);
-
-        void ResizeMetroArtwork(Size size)
-        {
-            if (size.Width <= 0 || size.Height <= 0)
-            {
-                return;
-            }
-
-            mainArtwork.Width = size.Width;
-            mainArtwork.Height = size.Height;
-        }
-
-        contentPresenter.SizeChanged += (_, args) => ResizeMetroArtwork(args.NewSize);
-        artworkLayer.SizeChanged += (_, args) => ResizeMetroArtwork(args.NewSize);
-        ResizeMetroArtwork(new Size(contentPresenter.ActualWidth, contentPresenter.ActualHeight));
-    }
-
-    private static ContentPresenter? FindMetroDialogContentPresenter(DependencyObject root, object? dialogContent)
-    {
-        var childCount = VisualTreeHelper.GetChildrenCount(root);
-        for (var index = 0; index < childCount; index++)
-        {
-            var child = VisualTreeHelper.GetChild(root, index);
-            if (child is ContentPresenter presenter
-                && ReferenceEquals(presenter.Content, dialogContent))
-            {
-                return presenter;
-            }
-
-            var nested = FindMetroDialogContentPresenter(child, dialogContent);
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return null;
     }
 
     private static void ApplyFrutigerMetroDialogFooterSurface(FrameworkElement element)
