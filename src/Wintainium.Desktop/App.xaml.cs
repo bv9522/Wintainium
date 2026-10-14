@@ -535,7 +535,7 @@ public partial class App : Application
         // artwork. Use an opaque Metro surface, not transparency or a light gray fill.
         if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
         {
-            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 7, 12));
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(210, 28, 7, 12));
             if (element is Panel panel)
             {
                 panel.Background = footerBrush;
