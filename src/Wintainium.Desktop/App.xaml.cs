@@ -1062,39 +1062,10 @@ public partial class App : Application
             {
                 // Reassert the full-body image brush after the dialog template loads.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
-                ApplyY2KDarkTelemetryArtworkLayer(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
         }
-    }
-
-    private static void ApplyY2KDarkTelemetryArtworkLayer(ContentDialog dialog)
-    {
-        // The visible words in the main window are native WinUI text readouts,
-        // not part of the SVG. Layer the same control behind this dialog's
-        // existing content so those readouts appear over the matching SVG base.
-        if (dialog.Content is not FrameworkElement content
-            || content.Tag as string == "Y2KDarkTelemetryArtworkApplied")
-        {
-            return;
-        }
-
-        var artwork = new Y2KDarkTelemetryBackdrop
-        {
-            Visibility = Visibility.Visible,
-            IsHitTestVisible = false
-        };
-        content.Tag = "Y2KDarkTelemetryArtworkApplied";
-
-        var contentHost = new Grid
-        {
-            Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0)),
-            MinHeight = Math.Max(180, content.MinHeight)
-        };
-        contentHost.Children.Add(artwork);
-        contentHost.Children.Add(content);
-        dialog.Content = contentHost;
     }
 
     private static void ApplyY2KDarkDialogFooterSurface(FrameworkElement element)
