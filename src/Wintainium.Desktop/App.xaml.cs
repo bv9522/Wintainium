@@ -451,6 +451,47 @@ public partial class App : Application
             Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
         };
         dialog.Resources.MergedDictionaries.Add(dialogStyleDictionary);
+        dialog.Loaded -= Windows11ContentDialog_Loaded;
+        dialog.Loaded += Windows11ContentDialog_Loaded;
+    }
+
+    private static void Windows11ContentDialog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ContentDialog dialog
+            && Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11)
+        {
+            ApplyWindows11DialogFooterSurface(dialog);
+        }
+    }
+
+    private static void ApplyWindows11DialogFooterSurface(FrameworkElement element)
+    {
+        // Keep the Windows 11 wallpaper on the main dialog body, but give the
+        // button/footer row its own opaque surface so the image cannot show there.
+        if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+        {
+            var footerBrush = new SolidColorBrush(IsDarkThemeActive
+                ? Color.FromArgb(255, 32, 32, 32)
+                : Color.FromArgb(255, 243, 243, 243));
+
+            if (element is Panel panel)
+            {
+                panel.Background = footerBrush;
+            }
+            else if (element is Border border)
+            {
+                border.Background = footerBrush;
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyWindows11DialogFooterSurface(child);
+            }
+        }
     }
 
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
