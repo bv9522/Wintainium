@@ -502,10 +502,10 @@ public partial class App : Application
             return;
         }
 
-        // Follow the proven Windows 11 dialog pattern: supply the artwork as the
-        // ContentDialogBackground brush, make the body overlay transparent, and
-        // apply the shared ContentDialog style that consumes the brush.
-        var dialogBackground = new ImageBrush
+        // Match Windows 11: the image is supplied through ContentDialogBackground,
+        // and the shared ContentDialog style paints the body from that resource.
+        // Do not assign the image to arbitrary content containers.
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
             ImageSource = new SvgImageSource
             {
@@ -513,10 +513,8 @@ public partial class App : Application
             },
             Stretch = Stretch.UniformToFill
         };
-        dialog.Resources["ContentDialogBackground"] = dialogBackground;
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
-        dialog.Background = dialogBackground;
 
         if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
             dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
@@ -528,24 +526,25 @@ public partial class App : Application
         }
     }
 
-    private static void RevealFrutigerMetroDialogBodyBackdrop(FrameworkElement element)
+    private static void ApplyFrutigerMetroDialogFooterSurface(FrameworkElement element)
     {
-        // WinUI's footer uses these named hosts. Do not repaint or clear their
-        // template surfaces while making the upper body transparent.
+        // Like the Windows 11 footer pass, isolate the command row from the body
+        // artwork. Use an opaque Metro surface, not transparency or a light gray fill.
         if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
         {
-            return;
-        }
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 28, 7, 12));
+            if (element is Panel panel)
+            {
+                panel.Background = footerBrush;
+            }
+            else if (element is Border border)
+            {
+                border.Background = footerBrush;
+                border.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+                border.BorderThickness = new Thickness(1);
+            }
 
-        // FM's general appearance pass styles every Border and Control. Dialog
-        // content wrappers must remain transparent or they obscure the image brush.
-        if (element is Panel panel)
-        {
-            panel.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
-        }
-        else if (element is Border border)
-        {
-            border.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+            return;
         }
 
         var childCount = VisualTreeHelper.GetChildrenCount(element);
@@ -553,7 +552,48 @@ public partial class App : Application
         {
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                RevealFrutigerMetroDialogBodyBackdrop(child);
+                ApplyFrutigerMetroDialogFooterSurface(child);
+            }
+        }
+    }
+
+    private static void ApplyFrutigerMetroDialogAppearance(FrameworkElement element)
+    {
+        var font = new FontFamily("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
+        var gold = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+        var controlBackground = new SolidColorBrush(ColorHelper.FromArgb(220, 28, 7, 12));
+        var controlBorder = new SolidColorBrush(ColorHelper.FromArgb(255, 255, 90, 31));
+
+        // Preserve the image-bearing ContentDialog and its layout surfaces. Style
+        // text and actual input/action controls without painting every Border/Control.
+        switch (element)
+        {
+            case TextBlock textBlock:
+                if (!(textBlock.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    textBlock.FontFamily = font;
+                    textBlock.Foreground = gold;
+                }
+                break;
+            case Control control when control is Button
+                or TextBox or ComboBox or CheckBox or RadioButton
+                or ToggleSwitch or PasswordBox or Slider:
+                if (!(control.FontFamily?.Source?.Contains("Segoe MDL2 Assets", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    control.FontFamily = font;
+                    control.Foreground = gold;
+                }
+                control.Background = controlBackground;
+                control.BorderBrush = controlBorder;
+                break;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyFrutigerMetroDialogAppearance(child);
             }
         }
     }
@@ -626,16 +666,11 @@ public partial class App : Application
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && IsDarkThemeActive)
         {
-            // Preserve the full-body artwork brush established before the
-            // dialog opened; apply only the Metro typography and control styling.
-            ApplyFrutigerMetroDarkAppearance(dialog);
+            // Use a dialog-specific FM pass: unlike ordinary FM windows, the dialog's
+            // layout surfaces must not be painted over the ContentDialogBackground image.
             EnsureFrutigerMetroDialogBackdrop(dialog);
-
-            // The Metro styling pass assigns translucent fills to every Control
-            // and Border, including WinUI's body layout surfaces. Clear those layout
-            // fills so the dialog-level artwork can show through the upper body.
-            // Leave the footer/template area alone; it must not become an artwork panel.
-            RevealFrutigerMetroDialogBodyBackdrop(dialog);
+            ApplyFrutigerMetroDialogAppearance(dialog);
+            ApplyFrutigerMetroDialogFooterSurface(dialog);
         }
     }
 
