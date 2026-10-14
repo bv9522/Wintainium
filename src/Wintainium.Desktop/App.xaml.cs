@@ -654,7 +654,7 @@ public partial class App : Application
             // the upper body rather than making the footer transparent.
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
             },
             Stretch = Stretch.UniformToFill
         };
