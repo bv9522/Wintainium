@@ -649,9 +649,12 @@ public partial class App : Application
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
         var dialogBackground = new ImageBrush
         {
+            // Reuse the exact full-size artwork used by the main Y2K Dark window.
+            // The command row is painted separately below, so this image stays in
+            // the upper body rather than making the footer transparent.
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
             },
             Stretch = Stretch.UniformToFill
         };
@@ -1059,7 +1062,37 @@ public partial class App : Application
             {
                 // Reassert the full-body image brush after the dialog template loads.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
+                ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
+            }
+        }
+    }
+
+    private static void ApplyY2KDarkDialogFooterSurface(FrameworkElement element)
+    {
+        // Keep the action/footer row fully opaque and visually distinct from the
+        // upper artwork. This deliberately does not place artwork in the footer.
+        if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+        {
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 3, 8, 14));
+            if (element is Panel panel)
+            {
+                panel.Background = footerBrush;
+            }
+            else if (element is Border border)
+            {
+                border.Background = footerBrush;
+            }
+
+            return;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyY2KDarkDialogFooterSurface(child);
             }
         }
     }
