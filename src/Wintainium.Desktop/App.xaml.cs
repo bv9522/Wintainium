@@ -1062,10 +1062,65 @@ public partial class App : Application
             {
                 // Reassert the full-body image brush after the dialog template loads.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
+                ApplyY2KDarkTelemetryArtworkLayer(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
         }
+    }
+
+    private static void ApplyY2KDarkTelemetryArtworkLayer(ContentDialog dialog)
+    {
+        // The main window's graphic is layered: the Y2K-DarkMainGrid SVG plus
+        // the native telemetry readouts. Add that same native layer to the
+        // dialog's template root, behind its content and above the SVG brush.
+        if (dialog.FindName("Y2KDarkDialogTelemetryArtwork") is not null)
+        {
+            return;
+        }
+
+        AddTelemetryLayerToDialogRoot(dialog, dialog);
+    }
+
+    private static bool AddTelemetryLayerToDialogRoot(FrameworkElement current, ContentDialog dialog)
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(current);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(current, index) is not FrameworkElement child)
+            {
+                continue;
+            }
+
+            if (child is Grid grid
+                && Enumerable.Range(0, VisualTreeHelper.GetChildrenCount(grid))
+                    .Select(i => VisualTreeHelper.GetChild(grid, i))
+                    .OfType<FrameworkElement>()
+                    .Any(item => item.Name == "CommandSpace")
+                && Enumerable.Range(0, VisualTreeHelper.GetChildrenCount(grid))
+                    .Select(i => VisualTreeHelper.GetChild(grid, i))
+                    .OfType<FrameworkElement>()
+                    .Any(item => item is ContentPresenter))
+            {
+                var artwork = new Y2KDarkTelemetryBackdrop
+                {
+                    Name = "Y2KDarkDialogTelemetryArtwork",
+                    Visibility = Visibility.Visible,
+                    IsHitTestVisible = false
+                };
+                Grid.SetRowSpan(artwork, Math.Max(1, grid.RowDefinitions.Count));
+                Grid.SetColumnSpan(artwork, Math.Max(1, grid.ColumnDefinitions.Count));
+                grid.Children.Insert(0, artwork);
+                return true;
+            }
+
+            if (AddTelemetryLayerToDialogRoot(child, dialog))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void ApplyY2KDarkDialogFooterSurface(FrameworkElement element)
