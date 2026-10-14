@@ -497,42 +497,35 @@ public partial class App : Application
     private static void EnsureFrutigerMetroDialogBackdrop(ContentDialog dialog)
     {
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
-            || !IsDarkThemeActive
-            || dialog.Content is not FrameworkElement currentContent
-            || currentContent.Tag as string == "FrutigerMetroDialogBackdropHost")
+            || !IsDarkThemeActive)
         {
             return;
         }
 
-        // Mirror the working Y2K Light dialog setup: make WinUI's main-body
-        // overlay transparent so the Metro artwork can show across the full dialog
-        // body instead of only through the individual content controls.
+        // Follow the proven Windows 11 dialog pattern: supply the artwork as the
+        // ContentDialogBackground brush, make the body overlay transparent, and
+        // apply the shared ContentDialog style that consumes the brush.
+        var dialogBackground = new ImageBrush
+        {
+            ImageSource = new SvgImageSource
+            {
+                UriSource = new Uri("ms-appx:///Themes/Frutiger-Metro-Dialog.svg")
+            },
+            Stretch = Stretch.UniformToFill
+        };
+        dialog.Resources["ContentDialogBackground"] = dialogBackground;
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+        dialog.Background = dialogBackground;
 
-        // Keep the artwork in the dialog's content layer. Never traverse or
-        // mutate the ContentDialog template, which can detach the main window.
-        var host = new Grid { Tag = "FrutigerMetroDialogBackdropHost" };
-        var canvas = new Canvas { IsHitTestVisible = false };
-        var artworkViewport = new Viewbox
+        if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
+            dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
         {
-            Stretch = Stretch.Fill,
-            Child = new FrutigerMetroBackdrop
+            dialog.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
-                IsHitTestVisible = false,
-                Visibility = Visibility.Visible
-            }
-        };
-        canvas.Children.Add(artworkViewport);
-        canvas.SizeChanged += (_, args) =>
-        {
-            artworkViewport.Width = args.NewSize.Width;
-            artworkViewport.Height = args.NewSize.Height;
-        };
-        host.Children.Add(canvas);
-        host.Children.Add(currentContent);
-        dialog.Content = host;
-        dialog.Background = TransparentDialogBrush;
+                Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
+            });
+        }
     }
 
     private static void EnsureFrutigerAeroLightDialogBackdrop(ContentDialog dialog)
@@ -603,13 +596,10 @@ public partial class App : Application
             && Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && IsDarkThemeActive)
         {
-            // Keep dialog content in its original visual-tree parent. Reparenting
-            // ContentDialog.Content from its presenter during Loaded can throw and
-            // terminate the async-void command handler. Use a Metro gradient instead.
+            // Preserve the full-body artwork brush established before the
+            // dialog opened; apply only the Metro typography and control styling.
             ApplyFrutigerMetroDarkAppearance(dialog);
-            // Keep the ContentDialog surface transparent so the content-layer
-            // Metro artwork remains visible behind the dialog fields.
-            dialog.Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+            EnsureFrutigerMetroDialogBackdrop(dialog);
         }
     }
 
