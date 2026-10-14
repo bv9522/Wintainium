@@ -443,7 +443,8 @@ public partial class App : Application
                 IsDarkThemeActive
                     ? "ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png"
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
-            Stretch = Stretch.UniformToFill
+            // Preserve the artwork aspect ratio in compact dialogs; allow cropping rather than squeezing the central W.
+            Stretch = Stretch.Uniform
         };
 
         var dialogStyleDictionary = new ResourceDictionary
@@ -1045,31 +1046,46 @@ public partial class App : Application
 
     private static void EnsureY2KDarkDialogTelemetryOverlay(ContentDialog dialog)
     {
-        // ContentDialogs such as Sort & Filter and Add Software do not have a
-        // window-level backdrop layer. Put the same native telemetry overlay
-        // used by MainWindow behind their existing content, without intercepting
-        // input or changing the dialog's content controls.
-        if (dialog.Content is not FrameworkElement content
-            || content is Grid grid && grid.Children.OfType<Y2KDarkTelemetryBackdrop>().Any())
+        // Keep the original ContentDialog content sizing. The telemetry layer
+        // is background-only and must not enlarge the dialog's desired size.
+        if (dialog.Content is not FrameworkElement content)
         {
             return;
         }
 
-        var overlayGrid = new Grid
+        Grid overlayGrid;
+        if (content is Grid existingGrid)
         {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-        overlayGrid.Children.Add(new Y2KDarkTelemetryBackdrop
+            overlayGrid = existingGrid;
+        }
+        else
+        {
+            overlayGrid = new Grid
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                MinWidth = 0,
+                MinHeight = 0
+            };
+            dialog.Content = null;
+            overlayGrid.Children.Add(content);
+            dialog.Content = overlayGrid;
+        }
+
+        if (overlayGrid.Children.OfType<Y2KDarkTelemetryBackdrop>().Any())
+        {
+            return;
+        }
+
+        var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             Visibility = Visibility.Visible,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        });
-
-        dialog.Content = null;
-        overlayGrid.Children.Add(content);
-        dialog.Content = overlayGrid;
+            VerticalAlignment = VerticalAlignment.Stretch,
+            MinWidth = 0,
+            MinHeight = 0
+        };
+        overlayGrid.Children.Insert(0, telemetryBackdrop);
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
