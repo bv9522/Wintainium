@@ -52,10 +52,14 @@ public sealed partial class MainWindow : Window
         Windows11BlissDarkImage.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
             && App.IsDarkThemeActive
                 ? Visibility.Visible : Visibility.Collapsed;
-        Y2KDarkTelemetryBackdrop.Visibility = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
-            && App.IsDarkThemeActive
-                ? Visibility.Visible
-                : Visibility.Collapsed;
+        var isY2KDark = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K
+            && App.IsDarkThemeActive;
+        Y2KDarkMainBackdrop.Visibility = isY2KDark
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        Y2KDarkTelemetryBackdrop.Visibility = isY2KDark
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         FrutigerAeroBackdrop.Visibility =
             App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && !App.IsDarkThemeActive
