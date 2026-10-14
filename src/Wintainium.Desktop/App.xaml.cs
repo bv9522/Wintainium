@@ -535,11 +535,24 @@ public partial class App : Application
                 IsHitTestVisible = false
             };
             artworkLayer.Children.Add(mainArtwork);
-            artworkLayer.SizeChanged += (_, args) =>
+
+            // Size the artwork from the already-measured dialog body, not from
+            // the backdrop's intrinsic design dimensions. This keeps the dialog
+            // window size unchanged while covering the full upper content region.
+            void ResizeMetroArtwork(Size size)
             {
-                mainArtwork.Width = args.NewSize.Width;
-                mainArtwork.Height = args.NewSize.Height;
-            };
+                if (size.Width <= 0 || size.Height <= 0)
+                {
+                    return;
+                }
+
+                mainArtwork.Width = size.Width;
+                mainArtwork.Height = size.Height;
+            }
+
+            artworkLayer.SizeChanged += (_, args) => ResizeMetroArtwork(args.NewSize);
+            bodyGrid.SizeChanged += (_, args) => ResizeMetroArtwork(args.NewSize);
+            ResizeMetroArtwork(new Size(bodyGrid.ActualWidth, bodyGrid.ActualHeight));
             bodyGrid.Children.Add(artworkLayer);
 
             if (originalContent is not null)
