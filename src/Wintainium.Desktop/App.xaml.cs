@@ -1081,7 +1081,9 @@ public partial class App : Application
         };
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
-            UseExpandedDialogSpacing = true,
+            UseExpandedDialogSpacing =
+                string.Equals(dialog.Title?.ToString(), "Add Software", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(dialog.Title?.ToString(), "Sort and Filter", StringComparison.OrdinalIgnoreCase),
             Visibility = Visibility.Visible,
             IsHitTestVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
