@@ -471,8 +471,8 @@ public partial class App : Application
         if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
         {
             var footerBrush = new SolidColorBrush(IsDarkThemeActive
-                ? Color.FromArgb(255, 32, 32, 32)
-                : Color.FromArgb(255, 243, 243, 243));
+                ? ColorHelper.FromArgb(255, 32, 32, 32)
+                : ColorHelper.FromArgb(255, 243, 243, 243));
 
             if (element is Panel panel)
             {
