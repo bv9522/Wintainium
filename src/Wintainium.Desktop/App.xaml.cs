@@ -514,14 +514,39 @@ public partial class App : Application
             Stretch = Stretch.UniformToFill
         };
 
-        // Match the working Windows 11 implementation exactly: publish the brush
-        // as ContentDialogBackground AND assign it directly to the dialog surface.
-        // The ContentDialog template can otherwise resolve the resource for a
-        // different surface than the upper dialog body.
-        dialog.Resources["ContentDialogBackground"] = dialogBackground;
-        dialog.Background = dialogBackground;
+        // Keep the dialog's existing body placement, but use the exact same
+        // FrutigerMetroBackdrop control as the main window instead of the separate
+        // dialog SVG, whose composition differs from the main artwork.
+        var metroSurface = new SolidColorBrush(ColorHelper.FromArgb(255, 16, 5, 7));
+        dialog.Resources["ContentDialogBackground"] = metroSurface;
+        dialog.Background = metroSurface;
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
+
+        if (dialog.Content is not Grid bodyGrid
+            || bodyGrid.Children.OfType<FrutigerMetroBackdrop>().FirstOrDefault() is null)
+        {
+            var originalContent = dialog.Content as UIElement;
+            bodyGrid = new Grid
+            {
+                Background = new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0))
+            };
+
+            var mainArtwork = new FrutigerMetroBackdrop
+            {
+                Visibility = Visibility.Visible,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            bodyGrid.Children.Add(mainArtwork);
+
+            if (originalContent is not null)
+            {
+                bodyGrid.Children.Add(originalContent);
+            }
+
+            dialog.Content = bodyGrid;
+        }
 
         if (!dialog.Resources.MergedDictionaries.Any(dictionary =>
             dictionary.Source?.OriginalString == "ms-appx:///Themes/Windows11Dialog.xaml"))
