@@ -1081,6 +1081,7 @@ public partial class App : Application
         };
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
+            UseExpandedDialogSpacing = true,
             Visibility = Visibility.Visible,
             IsHitTestVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
