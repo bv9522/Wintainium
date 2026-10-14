@@ -443,8 +443,7 @@ public partial class App : Application
                 IsDarkThemeActive
                     ? "ms-appx:///Themes/Windows%2011%20Bliss%20Dark.png"
                     : "ms-appx:///Themes/Windows%2011%20Bliss%20Light.png")),
-            // Preserve the artwork aspect ratio in compact dialogs; allow cropping rather than squeezing the central W.
-            Stretch = Stretch.Uniform
+            Stretch = Stretch.UniformToFill
         };
 
         var dialogStyleDictionary = new ResourceDictionary
@@ -655,6 +654,7 @@ public partial class App : Application
             {
                 UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
             },
+            // Keep the 16:9 artwork proportional and crop the sides in compact dialogs.
             Stretch = Stretch.UniformToFill
         };
 
@@ -1046,46 +1046,55 @@ public partial class App : Application
 
     private static void EnsureY2KDarkDialogTelemetryOverlay(ContentDialog dialog)
     {
-        // Keep the original ContentDialog content sizing. The telemetry layer
-        // is background-only and must not enlarge the dialog's desired size.
         if (dialog.Content is not FrameworkElement content)
         {
             return;
         }
 
-        Grid overlayGrid;
-        if (content is Grid existingGrid)
+        // The Canvas contributes no desired size. This keeps the dialog at its
+        // existing 480px width and natural content height while the telemetry
+        // overlay fills the visible content viewport and clips to its bounds.
+        var overlayGrid = content as Grid ?? new Grid
         {
-            overlayGrid = existingGrid;
-        }
-        else
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
+        if (content is not Grid)
         {
-            overlayGrid = new Grid
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                MinWidth = 0,
-                MinHeight = 0
-            };
             dialog.Content = null;
             overlayGrid.Children.Add(content);
             dialog.Content = overlayGrid;
         }
 
-        if (overlayGrid.Children.OfType<Y2KDarkTelemetryBackdrop>().Any())
+        if (overlayGrid.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
         {
             return;
         }
 
+        var telemetryCanvas = new Canvas
+        {
+            Name = "Y2KDarkTelemetryCanvas",
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             Visibility = Visibility.Visible,
+            IsHitTestVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            MinWidth = 0,
-            MinHeight = 0
+            VerticalAlignment = VerticalAlignment.Stretch
         };
-        overlayGrid.Children.Insert(0, telemetryBackdrop);
+        telemetryCanvas.Children.Add(telemetryBackdrop);
+        telemetryCanvas.SizeChanged += (_, args) =>
+        {
+            telemetryBackdrop.Width = args.NewSize.Width;
+            telemetryBackdrop.Height = args.NewSize.Height;
+        };
+
+        // Put the canvas behind all existing content without affecting measure.
+        overlayGrid.Children.Insert(0, telemetryCanvas);
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
