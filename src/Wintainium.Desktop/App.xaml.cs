@@ -547,7 +547,6 @@ public partial class App : Application
         Grid.SetColumn(artworkLayer, Grid.GetColumn(contentPresenter));
         Grid.SetRowSpan(artworkLayer, Grid.GetRowSpan(contentPresenter));
         Grid.SetColumnSpan(artworkLayer, Grid.GetColumnSpan(contentPresenter));
-        Panel.SetZIndex(artworkLayer, -1);
 
         var mainArtwork = new FrutigerMetroBackdrop
         {
