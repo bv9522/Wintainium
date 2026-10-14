@@ -642,32 +642,21 @@ public partial class App : Application
             return;
         }
 
-        // Match the proven Windows 11 dialog approach: paint the ContentDialog body
-        // through its Background brush instead of inserting artwork into the content
-        // grid (which constrained it to a square around the fields).
+        // Use the same resource-driven ContentDialog pattern that fixed Y2K Light
+        // and Windows 11 dialogs. The dialog template consumes ContentDialogBackground
+        // through ThemeResource; assigning dialog.Background directly paints the
+        // outer ContentDialog surface and can make the artwork scale/crop incorrectly.
         dialog.Resources["ContentDialogTopOverlay"] =
             new SolidColorBrush(ColorHelper.FromArgb(0, 0, 0, 0));
-        var dialogBackground = new ImageBrush
+        dialog.Resources["ContentDialogBackground"] = new ImageBrush
         {
-            // Reuse the exact full-size artwork used by the main Y2K Dark window.
-            // The command row is painted separately below, so this image stays in
-            // the upper body rather than making the footer transparent.
             ImageSource = new SvgImageSource
             {
                 UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
             },
-            Stretch = Stretch.Fill
+            Stretch = Stretch.UniformToFill
         };
-        dialog.Resources["ContentDialogBackground"] = dialogBackground;
 
-        // The main Y2K Dark window uses this SVG as its base layer plus the
-        // native telemetry backdrop control. Keep the SVG here as the base layer;
-        // the matching telemetry layer is added to the dialog template after load.
-        dialog.Background = dialogBackground;
-
-        // Keep the Windows 11 style resource for the transparent body overlay
-        // and consistent footer separation, but don't depend on its style setter
-        // as the only mechanism that paints the dialog body.
         var dialogStyleDictionary = new ResourceDictionary
         {
             Source = new Uri("ms-appx:///Themes/Windows11Dialog.xaml")
