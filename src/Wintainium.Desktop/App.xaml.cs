@@ -1128,21 +1128,11 @@ public partial class App : Application
             telemetryCanvas.Width = width;
             telemetryCanvas.Height = height;
             telemetryBackdrop.Width = width;
-            if (telemetryLayoutTitle is not null)
-            {
-                const double telemetryDesignHeight = 320;
-                telemetryBackdrop.Height = telemetryDesignHeight;
-                telemetryBackdrop.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
-                telemetryBackdrop.RenderTransform = new Microsoft.UI.Xaml.Media.ScaleTransform
-                {
-                    ScaleX = 1,
-                    ScaleY = Math.Min(1, height / telemetryDesignHeight)
-                };
-            }
-            else
-            {
-                telemetryBackdrop.Height = height;
-            }
+            // Keep the dialog at its natural size and size the backdrop to the
+            // actual content viewport. Word coordinates are distributed by the
+            // backdrop itself; scaling the whole control would squash the glyphs.
+            telemetryBackdrop.Height = height;
+            telemetryBackdrop.ClearValue(UIElement.RenderTransformProperty);
         }
 
         overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
