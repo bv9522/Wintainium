@@ -1098,16 +1098,11 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
-        // These two dialogs otherwise measure their body to the short natural height
-        // of a StackPanel (roughly the height of the form controls). The telemetry
-        // rows then mathematically span only that short body and appear as a narrow
-        // horizontal band. Give the artwork a meaningful body viewport to distribute
-        // across; the title and action/footer remain outside this content grid.
-        if (telemetryLayoutTitle is not null)
-        {
-            overlayGrid.MinHeight = Math.Max(320, overlayGrid.MinHeight);
-        }
-
+        // Use a stable 320px design space for the dialog telemetry, but do not
+        // impose that height on the ContentDialog itself. The backdrop is hosted
+        // inside a Canvas (which does not measure its children), so its design
+        // height can be scaled into the body's actual viewport without resizing
+        // the dialog or moving the title/footer.
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
@@ -1133,7 +1128,21 @@ public partial class App : Application
             telemetryCanvas.Width = width;
             telemetryCanvas.Height = height;
             telemetryBackdrop.Width = width;
-            telemetryBackdrop.Height = height;
+            if (telemetryLayoutTitle is not null)
+            {
+                const double telemetryDesignHeight = 320;
+                telemetryBackdrop.Height = telemetryDesignHeight;
+                telemetryBackdrop.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
+                telemetryBackdrop.RenderTransform = new Microsoft.UI.Xaml.Media.ScaleTransform
+                {
+                    ScaleX = 1,
+                    ScaleY = Math.Min(1, height / telemetryDesignHeight)
+                };
+            }
+            else
+            {
+                telemetryBackdrop.Height = height;
+            }
         }
 
         overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
