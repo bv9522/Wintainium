@@ -39,16 +39,27 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             HexReadout21, HexReadout22, HexReadout23, HexReadout24
         };
 
-        // Long telemetry labels need a little less character spacing and a smaller
-        // type size in narrow dialog cells; otherwise the last characters are clipped.
-        // Restore the XAML-authored sizes in the main window so its appearance is unchanged.
+        // Dialog cells are narrower than the main-window telemetry cells. Fit each
+        // dialog label inside its assigned cell instead of relying on font-size changes
+        // alone: inherited XAML margins and edge alignment can still clip a whole word.
+        // The main window retains its exact authored sizes, spacing, alignment, and margins.
         int[] originalFontSizes = { 12, 11, 12, 11, 11, 12, 12, 11, 12, 11, 12, 11, 11, 12, 11, 12, 11, 12, 12, 11, 11, 12, 11, 12 };
         var isDialogLayout = !string.IsNullOrWhiteSpace(_dialogTitle);
         for (var i = 0; i < readouts.Length; i++)
         {
-            var isLongLabel = readouts[i].Text.Length >= 9;
-            readouts[i].FontSize = isDialogLayout && isLongLabel ? 8 : originalFontSizes[i];
-            readouts[i].CharacterSpacing = isDialogLayout && isLongLabel ? 0 : 100;
+            if (isDialogLayout)
+            {
+                readouts[i].FontSize = 8;
+                readouts[i].CharacterSpacing = 0;
+                readouts[i].Margin = new Thickness(2);
+                readouts[i].TextWrapping = TextWrapping.NoWrap;
+                readouts[i].TextTrimming = TextTrimming.None;
+            }
+            else
+            {
+                readouts[i].FontSize = originalFontSizes[i];
+                readouts[i].CharacterSpacing = 100;
+            }
         }
 
         // Main-window telemetry remains on its original compact 6x4 grid.
