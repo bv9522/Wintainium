@@ -54,11 +54,17 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
                 readouts[i].Margin = new Thickness(2);
                 readouts[i].TextWrapping = TextWrapping.NoWrap;
                 readouts[i].TextTrimming = TextTrimming.None;
+                // Grid cells impose a narrow layout slot (one sixth of the dialog
+                // width). Give each label enough intrinsic width for its full word;
+                // otherwise long telemetry strings can look sliced at an invisible
+                // column boundary even when wrapping and trimming are disabled.
+                readouts[i].Width = Math.Max(40, (readouts[i].Text?.Length ?? 0) * 6.5 + 8);
             }
             else
             {
                 readouts[i].FontSize = originalFontSizes[i];
                 readouts[i].CharacterSpacing = 100;
+                readouts[i].Width = double.NaN;
             }
         }
 
