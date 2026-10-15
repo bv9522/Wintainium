@@ -93,7 +93,9 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         {
             TelemetryGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         }
-        while (TelemetryGrid.ColumnDefinitions.Count < 6)
+        // Four columns give each label enough horizontal room at dialog scale.
+        // Six columns made long words cross neighboring cells and visually collide.
+        while (TelemetryGrid.ColumnDefinitions.Count < 4)
         {
             TelemetryGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         }
@@ -107,10 +109,13 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             0, 9, 2, 7, 4, 5, 1, 8, 3, 6, 0, 9,
             2, 7, 4, 5, 1, 8, 3, 6, 0, 9, 2, 7
         };
+        // Each visible word gets a unique row/column slot. The prior six-column
+        // map reused (row 1, column 4), (row 2, column 2), and (row 7, column 3),
+        // stacking words on top of each other; Add Software exposed all three.
         int[] columns =
         {
-            0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3,
-            1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3
+            0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+            1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2
         };
         var visibleCount = isAddSoftware ? 24 : 20;
 
@@ -157,7 +162,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
 
             dialogCanvas.Width = width;
             dialogCanvas.Height = height;
-            var cellWidth = width / 6.0;
+            var cellWidth = width / 4.0;
             var cellHeight = height / 10.0;
             for (var i = 0; i < visibleCount; i++)
             {
@@ -167,9 +172,13 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
                 // last rows near the bottom edge, with no center-band compression.
                 var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.12);
                 var widthRemaining = Math.Max(0, width - left - 4);
+                var desiredLabelWidth = Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8);
+                // Keep labels within their own column. The six-column layout allowed
+                // long strings to overlap adjacent words even when their coordinates
+                // were distinct.
                 label.Width = Math.Min(
-                    Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8),
-                    widthRemaining);
+                    desiredLabelWidth,
+                    Math.Min(widthRemaining, Math.Max(40, cellWidth - 8)));
                 Canvas.SetLeft(label, left);
                 Canvas.SetTop(label, Math.Min(top, Math.Max(0, height - label.FontSize - 4)));
             }
