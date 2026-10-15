@@ -1098,6 +1098,16 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
+        // These two dialogs otherwise measure their body to the short natural height
+        // of a StackPanel (roughly the height of the form controls). The telemetry
+        // rows then mathematically span only that short body and appear as a narrow
+        // horizontal band. Give the artwork a meaningful body viewport to distribute
+        // across; the title and action/footer remain outside this content grid.
+        if (telemetryLayoutTitle is not null)
+        {
+            overlayGrid.MinHeight = Math.Max(320, overlayGrid.MinHeight);
+        }
+
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
