@@ -1098,15 +1098,10 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
-        // Dialog telemetry needs real vertical room for distinct horizontal bands.
-        // Add Software is the denser layout, but both named dialogs should have a
-        // consistent minimum content viewport instead of compressing the words into
-        // whatever short height their controls happen to request. This changes only
-        // the Y2K Dark Add Software / Sort and Filter dialogs.
-        if (telemetryLayoutTitle is not null)
-        {
-            overlayGrid.MinHeight = Math.Max(320, overlayGrid.MinHeight);
-        }
+        // Do not force a minimum dialog height here. ContentDialog constrains its
+        // content presenter independently, so MinHeight on this wrapper did not
+        // reliably change the visible dialog size. Telemetry now fits the actual
+        // measured content viewport using non-overlapping, four-column positions.
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
