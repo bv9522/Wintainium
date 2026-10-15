@@ -1079,13 +1079,27 @@ public partial class App : Application
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
+        // ContentDialog.Title can be either a string or a UI element. Read the
+        // displayed text explicitly so custom telemetry layouts do not silently
+        // fall back to the main-window layout when a title is a TextBlock.
+        var dialogTitle = dialog.Title switch
+        {
+            string titleText => titleText,
+            TextBlock titleBlock => titleBlock.Text,
+            _ => dialog.Title?.ToString()
+        };
+        var normalizedDialogTitle = dialogTitle?.Trim();
+        var telemetryLayoutTitle =
+            string.Equals(normalizedDialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase)
+                ? "Add Software"
+                : string.Equals(normalizedDialogTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalizedDialogTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase)
+                    ? "Sort and Filter"
+                    : null;
+
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
-            DialogTitle = dialog.Title?.ToString() is string title
-                && (string.Equals(title, "Add Software", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(title, "Sort and Filter", StringComparison.OrdinalIgnoreCase))
-                ? title
-                : null,
+            DialogTitle = telemetryLayoutTitle,
             Visibility = Visibility.Visible,
             IsHitTestVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
