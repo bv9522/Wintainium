@@ -652,12 +652,11 @@ public partial class App : Application
         {
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
             },
-            // The dialog-specific artwork includes telemetry labels deliberately placed
-            // above and below the W. Fill the body so those labels remain distributed
-            // across the complete compact dialog viewport rather than cropping them.
-            Stretch = Stretch.Fill
+            // Preserve the central W emblem and its original proportions. Telemetry
+            // labels are rendered separately by the native WinUI overlay below.
+            Stretch = Stretch.UniformToFill
         };
 
         var dialogStyleDictionary = new ResourceDictionary
@@ -1108,14 +1107,37 @@ public partial class App : Application
             VerticalAlignment = VerticalAlignment.Stretch
         };
         telemetryCanvas.Children.Add(telemetryBackdrop);
+
+        // A Canvas has no desired size of its own, so Stretch alignment alone is
+        // not a reliable guarantee that its child receives the dialog body's full
+        // viewport. Explicitly synchronize both overlay layers to the content Grid.
+        void LayoutTelemetryOverlay()
+        {
+            var width = overlayGrid.ActualWidth;
+            var height = overlayGrid.ActualHeight;
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            telemetryCanvas.Width = width;
+            telemetryCanvas.Height = height;
+            telemetryBackdrop.Width = width;
+            telemetryBackdrop.Height = height;
+        }
+
+        overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
+        overlayGrid.Loaded += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.SizeChanged += (_, args) =>
         {
             telemetryBackdrop.Width = args.NewSize.Width;
             telemetryBackdrop.Height = args.NewSize.Height;
         };
+        telemetryCanvas.Loaded += (_, _) => LayoutTelemetryOverlay();
 
         // Put the canvas behind all existing content without affecting measure.
         overlayGrid.Children.Insert(0, telemetryCanvas);
+        LayoutTelemetryOverlay();
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
