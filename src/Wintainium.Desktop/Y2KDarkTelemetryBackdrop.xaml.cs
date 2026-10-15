@@ -39,9 +39,21 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             HexReadout21, HexReadout22, HexReadout23, HexReadout24
         };
 
+        // Long telemetry labels need a little less character spacing and a smaller
+        // type size in narrow dialog cells; otherwise the last characters are clipped.
+        // Restore the XAML-authored sizes in the main window so its appearance is unchanged.
+        int[] originalFontSizes = { 12, 11, 12, 11, 11, 12, 12, 11, 12, 11, 12, 11, 11, 12, 11, 12, 11, 12, 12, 11, 11, 12, 11, 12 };
+        var isDialogLayout = !string.IsNullOrWhiteSpace(_dialogTitle);
+        for (var i = 0; i < readouts.Length; i++)
+        {
+            var isLongLabel = readouts[i].Text.Length >= 9;
+            readouts[i].FontSize = isDialogLayout && isLongLabel ? 8 : originalFontSizes[i];
+            readouts[i].CharacterSpacing = isDialogLayout && isLongLabel ? 0 : 100;
+        }
+
         // Main-window telemetry remains on its original compact 6x4 grid.
         // Dialogs use a dedicated 8x6 grid with title-specific density.
-        if (string.IsNullOrWhiteSpace(_dialogTitle))
+        if (!isDialogLayout)
         {
             int[] compactRows = { 1, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5 };
             int[] compactColumns = { 2, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
