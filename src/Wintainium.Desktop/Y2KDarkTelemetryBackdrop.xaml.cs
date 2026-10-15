@@ -49,7 +49,10 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         {
             if (isDialogLayout)
             {
-                readouts[i].FontSize = 8;
+                // Keep the authored 11–12px telemetry size in dialogs too.
+                // Vertical distribution must come from word coordinates, not
+                // shrinking the entire backdrop or reducing the glyphs to 8px.
+                readouts[i].FontSize = originalFontSizes[i];
                 readouts[i].CharacterSpacing = 0;
                 readouts[i].Margin = new Thickness(2);
                 readouts[i].TextWrapping = TextWrapping.NoWrap;
