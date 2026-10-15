@@ -652,10 +652,12 @@ public partial class App : Application
         {
             ImageSource = new SvgImageSource
             {
-                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkMainGrid.svg")
+                UriSource = new Uri("ms-appx:///Themes/Y2K-DarkDialogGrid.svg")
             },
-            // Keep the 16:9 artwork proportional and crop the sides in compact dialogs.
-            Stretch = Stretch.UniformToFill
+            // The dialog-specific artwork includes telemetry labels deliberately placed
+            // above and below the W. Fill the body so those labels remain distributed
+            // across the complete compact dialog viewport rather than cropping them.
+            Stretch = Stretch.Fill
         };
 
         var dialogStyleDictionary = new ResourceDictionary
