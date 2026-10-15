@@ -84,6 +84,15 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             return;
         }
 
+        while (TelemetryGrid.RowDefinitions.Count < 8)
+        {
+            TelemetryGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        }
+        while (TelemetryGrid.ColumnDefinitions.Count < 6)
+        {
+            TelemetryGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        }
+
         var isAddSoftware = string.Equals(_dialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
         int[] rows = isAddSoftware
             ? new[] { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 0, 2, 5, 7 }
@@ -99,6 +108,8 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
+        Grid.SetRowSpan(dialogCanvas, TelemetryGrid.RowDefinitions.Count);
+        Grid.SetColumnSpan(dialogCanvas, TelemetryGrid.ColumnDefinitions.Count);
         for (var i = 0; i < readouts.Length; i++)
         {
             TelemetryGrid.Children.Remove(readouts[i]);
