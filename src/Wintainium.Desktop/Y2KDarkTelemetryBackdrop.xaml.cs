@@ -69,7 +69,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         // across the full 8x6 canvas. Sort and Filter gets a calmer 14-readout pattern.
         int[] rows = isAddSoftware
             ? new[] { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 0, 2, 5, 7 }
-            : new[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 0, 2, 4, 6, 1, 3, 5, 7, 1, 7 };
+            : new[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 0, 2, 4, 6, 1, 3, 5, 7, 1, 7 };
         int[] columns = isAddSoftware
             ? new[] { 0, 4, 1, 5, 0, 2, 4, 1, 3, 5, 0, 2, 4, 1, 3, 5, 0, 4, 1, 5, 2, 5, 2, 3 }
             : new[] { 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 2, 3, 2, 3, 0, 5, 0, 5, 2, 3 };
