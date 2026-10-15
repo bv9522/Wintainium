@@ -102,7 +102,31 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         {
             Grid.SetRow(readouts[i], rows[i]);
             Grid.SetColumn(readouts[i], columns[i]);
-            readouts[i].Visibility = i < visibleCount ? Visibility.Visible : Visibility.Collapsed;
+
+            if (i < visibleCount)
+            {
+                // Anchor labels near the top and bottom edges of their assigned rows
+                // instead of letting every word sit around the vertical center. This
+                // uses the full dialog height while keeping each word inside its cell.
+                readouts[i].VerticalAlignment = rows[i] switch
+                {
+                    0 => VerticalAlignment.Top,
+                    7 => VerticalAlignment.Bottom,
+                    1 or 3 or 5 => VerticalAlignment.Center,
+                    _ => VerticalAlignment.Center
+                };
+                readouts[i].HorizontalAlignment = columns[i] switch
+                {
+                    0 => HorizontalAlignment.Left,
+                    5 => HorizontalAlignment.Right,
+                    _ => HorizontalAlignment.Center
+                };
+                readouts[i].Visibility = Visibility.Visible;
+            }
+            else
+            {
+                readouts[i].Visibility = Visibility.Collapsed;
+            }
         }
     }
 
