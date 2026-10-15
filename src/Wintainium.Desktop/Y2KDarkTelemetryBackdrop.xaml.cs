@@ -94,13 +94,16 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         }
 
         var isAddSoftware = string.Equals(_dialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
+        // Use the full height of the dialog for the telemetry instead of leaving
+        // the upper and lower rows mostly empty. Add Software gets all 24 readouts;
+        // Sort & Filter gets 20 to keep its smaller dialog a little less busy.
         int[] rows = isAddSoftware
-            ? new[] { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 0, 2, 5, 7 }
-            : new[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 0, 2, 4, 6, 1, 3, 5, 7, 1, 7 };
+            ? new[] { 0, 7, 0, 7, 1, 6, 1, 6, 2, 5, 2, 5, 3, 4, 3, 4, 0, 7, 1, 6, 2, 5, 0, 7 }
+            : new[] { 0, 7, 0, 7, 1, 6, 1, 6, 2, 5, 2, 5, 3, 4, 0, 7, 1, 6, 2, 5, 3, 4, 0, 7 };
         int[] columns = isAddSoftware
-            ? new[] { 0, 4, 1, 5, 0, 2, 4, 1, 3, 5, 0, 2, 4, 1, 3, 5, 0, 4, 1, 5, 2, 5, 2, 3 }
-            : new[] { 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 2, 3, 2, 3, 0, 5, 0, 5, 2, 3 };
-        var visibleCount = isAddSoftware ? 20 : 14;
+            ? new[] { 0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3, 1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3 }
+            : new[] { 0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3, 1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3 };
+        var visibleCount = isAddSoftware ? 24 : 20;
 
         var dialogCanvas = new Canvas
         {
