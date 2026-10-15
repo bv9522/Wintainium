@@ -140,23 +140,44 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         }
 
         TelemetryGrid.Children.Add(dialogCanvas);
-        dialogCanvas.SizeChanged += (_, args) =>
+
+        // A Canvas has no intrinsic desired size. When a ContentDialog measures its
+        // body with unconstrained height, relying on Canvas.SizeChanged can leave its
+        // coordinate space much shorter than the visible content viewport. Drive the
+        // overlay from the stretched parent grid instead and explicitly size the Canvas.
+        void LayoutDialogTelemetry(double width, double height)
         {
-            var cellWidth = args.NewSize.Width / 6.0;
-            var cellHeight = args.NewSize.Height / 10.0;
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            dialogCanvas.Width = width;
+            dialogCanvas.Height = height;
+            var cellWidth = width / 6.0;
+            var cellHeight = height / 10.0;
             for (var i = 0; i < visibleCount; i++)
             {
                 var label = readouts[i];
                 var left = columns[i] * cellWidth;
-                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.2);
-                var width = Math.Min(
+                // Use the complete available height: first rows sit at the top edge,
+                // last rows near the bottom edge, with no center-band compression.
+                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.12);
+                var widthRemaining = Math.Max(0, width - left - 4);
+                label.Width = Math.Min(
                     Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8),
-                    Math.Max(0, args.NewSize.Width - left - 4));
-                label.Width = width;
+                    widthRemaining);
                 Canvas.SetLeft(label, left);
-                Canvas.SetTop(label, top);
+                Canvas.SetTop(label, Math.Min(top, Math.Max(0, height - label.FontSize - 4)));
             }
-        };
+        }
+
+        TelemetryGrid.SizeChanged += (_, args) =>
+            LayoutDialogTelemetry(args.NewSize.Width, args.NewSize.Height);
+        TelemetryGrid.Loaded += (_, _) =>
+            LayoutDialogTelemetry(TelemetryGrid.ActualWidth, TelemetryGrid.ActualHeight);
+        dialogCanvas.Loaded += (_, _) =>
+            LayoutDialogTelemetry(TelemetryGrid.ActualWidth, TelemetryGrid.ActualHeight);
     }
 
     private void InitializeAnimations()
