@@ -1147,11 +1147,7 @@ public partial class App : Application
 
         overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
         overlayGrid.Loaded += (_, _) => LayoutTelemetryOverlay();
-        telemetryCanvas.SizeChanged += (_, args) =>
-        {
-            telemetryBackdrop.Width = args.NewSize.Width;
-            telemetryBackdrop.Height = args.NewSize.Height;
-        };
+        telemetryCanvas.SizeChanged += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.Loaded += (_, _) => LayoutTelemetryOverlay();
 
         // Put the canvas behind all existing content without affecting measure.
