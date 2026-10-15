@@ -84,7 +84,9 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             return;
         }
 
-        while (TelemetryGrid.RowDefinitions.Count < 8)
+        // Ten rows give the shorter dialog labels more vertical separation while
+        // keeping every readout within the dialog's content area (not the heading/footer).
+        while (TelemetryGrid.RowDefinitions.Count < 10)
         {
             TelemetryGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         }
@@ -94,15 +96,19 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         }
 
         var isAddSoftware = string.Equals(_dialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
-        // Use the full height of the dialog for the telemetry instead of leaving
-        // the upper and lower rows mostly empty. Add Software gets all 24 readouts;
-        // Sort & Filter gets 20 to keep its smaller dialog a little less busy.
-        int[] rows = isAddSoftware
-            ? new[] { 0, 7, 0, 7, 1, 6, 1, 6, 2, 5, 2, 5, 3, 4, 3, 4, 0, 7, 1, 6, 2, 5, 0, 7 }
-            : new[] { 0, 7, 0, 7, 1, 6, 1, 6, 2, 5, 2, 5, 3, 4, 0, 7, 1, 6, 2, 5, 3, 4, 0, 7 };
-        int[] columns = isAddSoftware
-            ? new[] { 0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3, 1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3 }
-            : new[] { 0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3, 1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3 };
+        // Alternate labels across the full content height instead of bunching them
+        // into the same few vertical bands. Add Software uses all 24 readouts;
+        // Sort & Filter uses 20 to keep its smaller dialog less busy.
+        int[] rows =
+        {
+            0, 9, 2, 7, 4, 5, 1, 8, 3, 6, 0, 9,
+            2, 7, 4, 5, 1, 8, 3, 6, 0, 9, 2, 7
+        };
+        int[] columns =
+        {
+            0, 5, 2, 3, 1, 4, 4, 1, 0, 5, 2, 3,
+            1, 4, 4, 1, 3, 2, 5, 0, 4, 1, 2, 3
+        };
         var visibleCount = isAddSoftware ? 24 : 20;
 
         var dialogCanvas = new Canvas
@@ -130,20 +136,22 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             readouts[i].VerticalAlignment = VerticalAlignment.Top;
             readouts[i].Visibility = Visibility.Visible;
             Canvas.SetLeft(readouts[i], columns[i] * 100.0);
-            Canvas.SetTop(readouts[i], rows[i] * 12.5 + (i % 2 == 0 ? 1 : 4));
+            Canvas.SetTop(readouts[i], rows[i] * 10.0 + (i % 2 == 0 ? 1 : 4));
         }
 
         TelemetryGrid.Children.Add(dialogCanvas);
         dialogCanvas.SizeChanged += (_, args) =>
         {
             var cellWidth = args.NewSize.Width / 6.0;
-            var cellHeight = args.NewSize.Height / 8.0;
+            var cellHeight = args.NewSize.Height / 10.0;
             for (var i = 0; i < visibleCount; i++)
             {
                 var label = readouts[i];
                 var left = columns[i] * cellWidth;
-                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.35);
-                var width = Math.Min(label.Width, Math.Max(0, args.NewSize.Width - left - 4));
+                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.2);
+                var width = Math.Min(
+                    Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8),
+                    Math.Max(0, args.NewSize.Width - left - 4));
                 label.Width = width;
                 Canvas.SetLeft(label, left);
                 Canvas.SetTop(label, top);
