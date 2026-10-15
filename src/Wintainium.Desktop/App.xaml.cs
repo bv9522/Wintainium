@@ -1098,11 +1098,15 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
-        // Use a stable 320px design space for the dialog telemetry, but do not
-        // impose that height on the ContentDialog itself. The backdrop is hosted
-        // inside a Canvas (which does not measure its children), so its design
-        // height can be scaled into the body's actual viewport without resizing
-        // the dialog or moving the title/footer.
+        // Dialog telemetry needs real vertical room for distinct horizontal bands.
+        // Add Software is the denser layout, but both named dialogs should have a
+        // consistent minimum content viewport instead of compressing the words into
+        // whatever short height their controls happen to request. This changes only
+        // the Y2K Dark Add Software / Sort and Filter dialogs.
+        if (telemetryLayoutTitle is not null)
+        {
+            overlayGrid.MinHeight = Math.Max(320, overlayGrid.MinHeight);
+        }
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
