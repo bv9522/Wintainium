@@ -69,7 +69,8 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         }
 
         // Main-window telemetry remains on its original compact 6x4 grid.
-        // Dialogs use a dedicated 8x6 grid with title-specific density.
+        // Dialog labels use a Canvas instead of Grid cells: Grid column boundaries
+        // can constrain or clip long labels even when TextBlock.Width is explicit.
         if (!isDialogLayout)
         {
             int[] compactRows = { 1, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5 };
@@ -83,19 +84,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             return;
         }
 
-        while (TelemetryGrid.RowDefinitions.Count < 8)
-        {
-            TelemetryGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        }
-        while (TelemetryGrid.ColumnDefinitions.Count < 6)
-        {
-            TelemetryGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        }
-
         var isAddSoftware = string.Equals(_dialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
-
-        // Add Software has more open vertical space, so use 20 readouts distributed
-        // across the full 8x6 canvas. Sort and Filter gets a calmer 14-readout pattern.
         int[] rows = isAddSoftware
             ? new[] { 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 0, 2, 5, 7 }
             : new[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 0, 2, 4, 6, 1, 3, 5, 7, 1, 7 };
@@ -104,36 +93,48 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             : new[] { 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 1, 5, 0, 4, 2, 3, 2, 3, 0, 5, 0, 5, 2, 3 };
         var visibleCount = isAddSoftware ? 20 : 14;
 
+        var dialogCanvas = new Canvas
+        {
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         for (var i = 0; i < readouts.Length; i++)
         {
-            Grid.SetRow(readouts[i], rows[i]);
-            Grid.SetColumn(readouts[i], columns[i]);
-
-            if (i < visibleCount)
-            {
-                // Anchor labels near the top and bottom edges of their assigned rows
-                // instead of letting every word sit around the vertical center. This
-                // uses the full dialog height while keeping each word inside its cell.
-                readouts[i].VerticalAlignment = rows[i] switch
-                {
-                    0 => VerticalAlignment.Top,
-                    7 => VerticalAlignment.Bottom,
-                    1 or 3 or 5 => VerticalAlignment.Center,
-                    _ => VerticalAlignment.Center
-                };
-                readouts[i].HorizontalAlignment = columns[i] switch
-                {
-                    0 => HorizontalAlignment.Left,
-                    5 => HorizontalAlignment.Right,
-                    _ => HorizontalAlignment.Center
-                };
-                readouts[i].Visibility = Visibility.Visible;
-            }
-            else
+            TelemetryGrid.Children.Remove(readouts[i]);
+            dialogCanvas.Children.Add(readouts[i]);
+            if (i >= visibleCount)
             {
                 readouts[i].Visibility = Visibility.Collapsed;
+                continue;
             }
+
+            readouts[i].Width = Math.Min(
+                Math.Max(40, (readouts[i].Text?.Length ?? 0) * 6.5 + 8),
+                190);
+            readouts[i].HorizontalAlignment = HorizontalAlignment.Left;
+            readouts[i].VerticalAlignment = VerticalAlignment.Top;
+            readouts[i].Visibility = Visibility.Visible;
+            Canvas.SetLeft(readouts[i], columns[i] * 100.0);
+            Canvas.SetTop(readouts[i], rows[i] * 12.5 + (i % 2 == 0 ? 1 : 4));
         }
+
+        TelemetryGrid.Children.Add(dialogCanvas);
+        dialogCanvas.SizeChanged += (_, args) =>
+        {
+            var cellWidth = args.NewSize.Width / 6.0;
+            var cellHeight = args.NewSize.Height / 8.0;
+            for (var i = 0; i < visibleCount; i++)
+            {
+                var label = readouts[i];
+                var left = columns[i] * cellWidth;
+                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.35);
+                var width = Math.Min(label.Width, Math.Max(0, args.NewSize.Width - left - 4));
+                label.Width = width;
+                Canvas.SetLeft(label, left);
+                Canvas.SetTop(label, top);
+            }
+        };
     }
 
     private void InitializeAnimations()
