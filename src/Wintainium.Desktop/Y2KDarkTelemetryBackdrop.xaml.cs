@@ -87,9 +87,10 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             return;
         }
 
-        // Ten rows give the shorter dialog labels more vertical separation while
-        // keeping every readout within the dialog's content area (not the heading/footer).
-        while (TelemetryGrid.RowDefinitions.Count < 10)
+        // Fourteen distinct vertical bands give the words finer placement control
+        // across short dialogs. More rows means each word can sit at its own vertical
+        // level instead of repeatedly sharing one of only ten bands.
+        while (TelemetryGrid.RowDefinitions.Count < 14)
         {
             TelemetryGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         }
@@ -106,16 +107,16 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         // Sort & Filter uses 20 to keep its smaller dialog less busy.
         int[] rows =
         {
-            0, 9, 2, 7, 4, 5, 1, 8, 3, 6, 0, 9,
-            2, 7, 4, 5, 1, 8, 3, 6, 0, 9, 2, 7
+            0, 7, 2, 10, 4, 12, 1, 8, 5, 13, 3, 9,
+            6, 11, 0, 7, 2, 10, 4, 12, 1, 8, 5, 13
         };
         // Each visible word gets a unique row/column slot. The prior six-column
         // map reused (row 1, column 4), (row 2, column 2), and (row 7, column 3),
         // stacking words on top of each other; Add Software exposed all three.
         int[] columns =
         {
-            0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1,
-            1, 1, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2
+            0, 1, 2, 3, 1, 2, 3, 0, 2, 3, 0, 1,
+            3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 1, 2
         };
         var visibleCount = isAddSoftware ? 24 : 20;
 
@@ -163,13 +164,13 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             dialogCanvas.Width = width;
             dialogCanvas.Height = height;
             var cellWidth = width / 4.0;
-            var cellHeight = height / 10.0;
+            var cellHeight = height / 14.0;
             for (var i = 0; i < visibleCount; i++)
             {
                 var label = readouts[i];
                 var left = columns[i] * cellWidth;
-                // Use the complete available height: first rows sit at the top edge,
-                // last rows near the bottom edge, with no center-band compression.
+                // Distribute words across fourteen vertical bands spanning the actual
+                // measured content height, from the top through the bottom of the body.
                 var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.12);
                 var widthRemaining = Math.Max(0, width - left - 4);
                 var desiredLabelWidth = Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8);
