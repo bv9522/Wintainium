@@ -15,7 +15,7 @@
             <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="HexReadout1" Grid.Row="1" Grid.Column="2" Text="W1NTA1N1UM" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,10,0,0" />
-                <TextBlock x:Name="HexReadout2" Grid.Row="0" Grid.Column="1" Text="1NSTALL" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" />
+                <TextBlock x:Name="HexReadout2" Grid.Row="0" Grid.Column="1" Text="W1NTA1N1UM.EXE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" />
                 <TextBlock x:Name="HexReadout3" Grid.Row="0" Grid.Column="2" Text="UPD4TE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="12" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0" />
                 <TextBlock x:Name="HexReadout4" Grid.Row="0" Grid.Column="3" Text="M4NAGE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0" />
                 <TextBlock x:Name="HexReadout5" Grid.Row="1" Grid.Column="0" Text="5OFTWARE" Foreground="#39FF9A" FontFamily="Consolas" FontSize="11" CharacterSpacing="100" Opacity="0.38"  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" />
