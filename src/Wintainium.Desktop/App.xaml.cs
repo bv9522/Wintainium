@@ -1134,6 +1134,137 @@ public partial class App : Application
         LayoutTelemetryOverlay();
     }
 
+    private static void EnsureY2KDarkDialogHeaderTelemetryOverlay(ContentDialog dialog)
+    {
+        // Overlay telemetry in the existing title layout without contributing any
+        // desired size. A Canvas has no intrinsic layout size, so it cannot expand
+        // the dialog or push the native title down.
+        var titleText = dialog.Title switch
+        {
+            string text => text,
+            TextBlock textBlock => textBlock.Text,
+            _ => dialog.Title?.ToString()
+        };
+        var normalizedTitle = titleText?.Trim();
+        if (!string.Equals(normalizedTitle, "Add Software", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var existingCanvas = FindNamedElement(dialog, "Y2KDarkHeaderTelemetryCanvas");
+        if (existingCanvas is not null)
+        {
+            return;
+        }
+
+        var titleElement = FindTitleTextElement(dialog, normalizedTitle);
+        if (titleElement is null)
+        {
+            return;
+        }
+
+        // Use the title's nearest Grid as the overlay surface; do not replace or
+        // resize dialog.Title, and do not add a row or alter any existing margins.
+        var parent = VisualTreeHelper.GetParent(titleElement);
+        while (parent is not null && parent is not Grid)
+        {
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+
+        if (parent is not Grid titleGrid)
+        {
+            return;
+        }
+
+        var telemetryCanvas = new Canvas
+        {
+            Name = "Y2KDarkHeaderTelemetryCanvas",
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        Panel.SetZIndex(telemetryCanvas, 10);
+
+        var labels = new (string Text, double Left)[]
+        {
+            ("W1NTA1N1UM", 8),
+            ("M4NAGE", 112),
+            ("1NSTALL", 190),
+            ("UPD4TE", 278),
+            ("5OFTWARE", 366)
+        };
+
+        foreach (var label in labels)
+        {
+            var word = new TextBlock
+            {
+                Text = label.Text,
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(78, 0x39, 0xFF, 0x9A)),
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 8,
+                CharacterSpacing = 70,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(word, label.Left);
+            Canvas.SetTop(word, 0);
+            telemetryCanvas.Children.Add(word);
+        }
+
+        // Mirror the title element's grid cell. Canvas contributes zero desired
+        // size, keeping the dialog's original dimensions and title placement.
+        Grid.SetRow(telemetryCanvas, Grid.GetRow(titleElement));
+        Grid.SetColumn(telemetryCanvas, Grid.GetColumn(titleElement));
+        Grid.SetRowSpan(telemetryCanvas, Grid.GetRowSpan(titleElement));
+        Grid.SetColumnSpan(telemetryCanvas, Grid.GetColumnSpan(titleElement));
+        titleGrid.Children.Add(telemetryCanvas);
+    }
+
+    private static TextBlock? FindTitleTextElement(DependencyObject root, string title)
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is TextBlock textBlock
+                && (string.Equals(textBlock.Text?.Trim(), title, StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(title, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(textBlock.Text?.Trim(), "Sort & Filter", StringComparison.OrdinalIgnoreCase))))
+            {
+                return textBlock;
+            }
+
+            var nested = FindTitleTextElement(child, title);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    private static FrameworkElement? FindNamedElement(DependencyObject root, string name)
+    {
+        if (root is FrameworkElement element && element.Name == name)
+        {
+            return element;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (var index = 0; index < childCount; index++)
+        {
+            var found = FindNamedElement(VisualTreeHelper.GetChild(root, index), name);
+            if (found is not null)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
@@ -1146,6 +1277,7 @@ public partial class App : Application
                 // background surface but beneath the dialog controls.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
                 EnsureY2KDarkDialogTelemetryOverlay(dialog);
+                EnsureY2KDarkDialogHeaderTelemetryOverlay(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
