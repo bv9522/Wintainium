@@ -1134,103 +1134,6 @@ public partial class App : Application
         LayoutTelemetryOverlay();
     }
 
-    private static void EnsureY2KDarkDialogHeaderTelemetryOverlay(ContentDialog dialog)
-    {
-        // ContentDialog's private template tree is not a stable extension point: inserting
-        // into an arbitrary descendant Panel can target a body/footer panel or a panel
-        // whose layout size is zero. Instead, use the public Title object contract and
-        // make the title itself a transparent, measured layout host. This guarantees the
-        // telemetry is rendered in the actual title presenter, above the existing dialog
-        // background, without duplicating the SVG/W artwork or touching the footer.
-        if (dialog.Title is Grid existingTitleHost
-            && existingTitleHost.Name == "Y2KDarkHeaderTitleHost")
-        {
-            return;
-        }
-
-        var titleText = dialog.Title switch
-        {
-            string text => text,
-            TextBlock textBlock => textBlock.Text,
-            _ => dialog.Title?.ToString()
-        };
-        var normalizedTitle = titleText?.Trim();
-        if (!string.Equals(normalizedTitle, "Add Software", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        var titleHost = new Grid
-        {
-            Name = "Y2KDarkHeaderTitleHost",
-            Height = 62,
-            MinHeight = 62,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Background = TransparentDialogBrush,
-            IsHitTestVisible = false
-        };
-
-        var telemetryCanvas = new Canvas
-        {
-            Name = "Y2KDarkHeaderTelemetryCanvas",
-            IsHitTestVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-
-        // The title host is deliberately taller than the default text-only title so
-        // two small telemetry rows can occupy the upper header band. The title itself
-        // stays readable below them. Coordinates are within the 480px dialog width.
-        var placements = new (string Text, double Left, double Top)[] 
-        {
-            ("W1NTA1N1UM", 8, 3),
-            ("M4NAGE", 132, 3),
-            ("1NSTALL", 252, 3),
-            ("UPD4TE", 365, 3),
-            ("5OFTWARE", 22, 21),
-            ("V3R1FY", 350, 21)
-        };
-
-        foreach (var placement in placements)
-        {
-            var word = new TextBlock
-            {
-                Text = placement.Text,
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(78, 0x39, 0xFF, 0x9A)),
-                FontFamily = new FontFamily("Consolas"),
-                FontSize = 10,
-                CharacterSpacing = 100,
-                IsHitTestVisible = false
-            };
-            Canvas.SetLeft(word, placement.Left);
-            Canvas.SetTop(word, placement.Top);
-            telemetryCanvas.Children.Add(word);
-        }
-
-        var displayTitle = string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
-            ? "Sort & Filter"
-            : normalizedTitle ?? string.Empty;
-        var titleLabel = new TextBlock
-        {
-            Text = displayTitle,
-            FontFamily = GetY2KDisplayFont(),
-            Foreground = GetY2KTextBrush(),
-            FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 0, 0, 1),
-            IsHitTestVisible = false
-        };
-
-        // Add the telemetry first so the title remains the foreground element.
-        titleHost.Children.Add(telemetryCanvas);
-        titleHost.Children.Add(titleLabel);
-        dialog.Title = titleHost;
-    }
-
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
@@ -1243,7 +1146,6 @@ public partial class App : Application
                 // background surface but beneath the dialog controls.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
                 EnsureY2KDarkDialogTelemetryOverlay(dialog);
-                EnsureY2KDarkDialogHeaderTelemetryOverlay(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
