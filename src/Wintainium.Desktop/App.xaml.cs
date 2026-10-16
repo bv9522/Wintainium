@@ -1191,9 +1191,10 @@ public partial class App : Application
         telemetryCanvas.SizeChanged += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.Loaded += (_, _) => LayoutTelemetryOverlay();
 
-        // Insert the transparent words at the back of the dialog template, beneath
-        // title, body controls, and footer buttons; leave the existing image brush alone.
-        overlayHost.Children.Insert(0, telemetryCanvas);
+        // Place telemetry immediately above the template's background surface (often
+        // the first child), but below the title, body controls, and footer buttons.
+        // Inserting at index 0 can put the words behind an opaque background element.
+        overlayHost.Children.Insert(Math.Min(1, overlayHost.Children.Count), telemetryCanvas);
         LayoutTelemetryOverlay();
     }
 
@@ -1204,8 +1205,11 @@ public partial class App : Application
             ApplyY2KContentDialogPresentation(dialog);
             if (IsDarkThemeActive)
             {
-                // Reassert the full-body image brush after the dialog template loads.
+                // The ContentDialog template does not exist during some initial calls.
+                // Retry now that Loaded has fired, then lay telemetry above the template
+                // background surface but beneath the dialog controls.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
+                EnsureY2KDarkDialogTelemetryOverlay(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
