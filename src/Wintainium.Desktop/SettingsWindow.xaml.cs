@@ -43,6 +43,7 @@ public sealed partial class SettingsWindow : Window
         InitializeComponent();
         App.TrackWindow(this);
         ApplyY2KSettingsTextResources();
+        ApplyFrutigerAeroLightSettingsTextResources();
         Title = "Wintainium Settings";
         AppWindow.Resize(new SizeInt32(760, 560));
 
@@ -60,6 +61,7 @@ public sealed partial class SettingsWindow : Window
     internal void RefreshAppearance()
     {
         ApplyY2KSettingsTextResources();
+        ApplyFrutigerAeroLightSettingsTextResources();
         RefreshVisualStyleSelectorTypography();
 
         if (Content is FrameworkElement root)
@@ -448,6 +450,45 @@ public sealed partial class SettingsWindow : Window
         }
 
         var textBrush = App.GetY2KTextBrush();
+        foreach (var key in keys)
+        {
+            resources[key] = textBrush;
+        }
+    }
+
+    // Match the resource-based text-color strategy used by Y2K Settings. Some
+    // WinUI control templates resolve their header foreground through these
+    // theme resources rather than inheriting a TextBlock's local foreground.
+    private void ApplyFrutigerAeroLightSettingsTextResources()
+    {
+        var resources = ((FrameworkElement)Content).Resources;
+        var keys = new[]
+        {
+            "SystemControlForegroundBaseHighBrush",
+            "SystemControlForegroundBaseMediumHighBrush",
+            "SystemControlForegroundBaseMediumBrush",
+            "SystemControlForegroundBaseMediumLowBrush",
+            "SystemControlForegroundBaseLowBrush",
+            "SystemControlForegroundBaseDisabledBrush",
+            "SystemControlForegroundAltHighBrush",
+            "SystemControlForegroundAltMediumHighBrush",
+            "SystemControlForegroundAltMediumBrush",
+            "SystemControlForegroundAltMediumLowBrush",
+            "SystemControlForegroundAltLowBrush"
+        };
+
+        if (_settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || App.IsDarkThemeActive)
+        {
+            foreach (var key in keys)
+            {
+                resources.Remove(key);
+            }
+
+            return;
+        }
+
+        var textBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
         foreach (var key in keys)
         {
             resources[key] = textBrush;
