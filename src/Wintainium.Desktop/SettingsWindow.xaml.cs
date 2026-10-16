@@ -339,8 +339,37 @@ public sealed partial class SettingsWindow : Window
             }
 
             App.ApplyFrutigerAeroTypography(root);
+            ApplyFrutigerAeroSettingsSectionHeaderStyle();
             QueueFrutigerAeroSettingsTypography(root, remainingPasses - 1);
         });
+    }
+
+    // Section headings are created dynamically as General and Updates content is
+    // rebuilt. Reapply one explicit FA Light style after the broader typography pass
+    // so every sub-heading stays visually consistent.
+    private void ApplyFrutigerAeroSettingsSectionHeaderStyle()
+    {
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || App.IsDarkThemeActive)
+        {
+            return;
+        }
+
+        var font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+        var foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+        foreach (var child in _categoryContent.Children)
+        {
+            if (child is not TextBlock header
+                || header.FontWeight.Weight < Microsoft.UI.Text.FontWeights.SemiBold.Weight)
+            {
+                continue;
+            }
+
+            header.FontFamily = font;
+            header.Foreground = foreground;
+            header.FontSize = 16;
+            header.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
+        }
     }
 
     private void QueueY2KSettingsLoadedColorPass()
