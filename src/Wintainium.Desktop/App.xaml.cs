@@ -1187,13 +1187,14 @@ public partial class App : Application
         };
         Canvas.SetZIndex(telemetryCanvas, 10);
 
+        // Spread distinct existing telemetry terms across the title canvas.
         var labels = new (string Text, double Left)[]
         {
             ("W1NTA1N1UM", 8),
             ("M4NAGE", 112),
-            ("1NSTALL", 190),
-            ("UPD4TE", 278),
-            ("5OFTWARE", 366)
+            ("1NSTALL", 212),
+            ("UPD4TE", 312),
+            ("5OFTWARE", 412)
         };
 
         foreach (var label in labels)
