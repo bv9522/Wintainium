@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
+using System.Collections.Generic;
 
 namespace Wintainium.Desktop;
 
@@ -119,6 +120,45 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 1, 2
         };
         var visibleCount = isAddSoftware ? 24 : 20;
+        var isSortAndFilter = string.Equals(_dialogTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(_dialogTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase);
+        var showGridFillNumbers = isAddSoftware || isSortAndFilter;
+        var testCellLabels = new List<(TextBlock Label, int Row, int Column)>();
+        if (showGridFillNumbers)
+        {
+            var occupiedCells = new bool[14, 4];
+            for (var i = 0; i < visibleCount; i++)
+            {
+                occupiedCells[rows[i], columns[i]] = true;
+            }
+
+            // Temporary grid-extent test: preserve every existing word in its current
+            // cell and put a numbered marker only in cells that otherwise have no word.
+            // This diagnostic fill is intentionally limited to Add Software and
+            // Sort and Filter; other dialogs and the main window remain unchanged.
+            for (var row = 0; row < 14; row++)
+            {
+                for (var column = 0; column < 4; column++)
+                {
+                    if (occupiedCells[row, column])
+                    {
+                        continue;
+                    }
+
+                    var marker = new TextBlock
+                    {
+                        Text = (row * 4 + column + 1).ToString("00"),
+                        Foreground = readouts[0].Foreground,
+                        FontFamily = readouts[0].FontFamily,
+                        FontSize = 9,
+                        Opacity = 0.78,
+                        IsHitTestVisible = false,
+                        TextWrapping = TextWrapping.NoWrap
+                    };
+                    testCellLabels.Add((marker, row, column));
+                }
+            }
+        }
 
         var dialogCanvas = new Canvas
         {
@@ -146,6 +186,11 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             readouts[i].Visibility = Visibility.Visible;
             Canvas.SetLeft(readouts[i], columns[i] * 100.0);
             Canvas.SetTop(readouts[i], rows[i] * 10.0 + (i % 2 == 0 ? 1 : 4));
+        }
+
+        foreach (var testCell in testCellLabels)
+        {
+            dialogCanvas.Children.Add(testCell.Label);
         }
 
         TelemetryGrid.Children.Add(dialogCanvas);
@@ -182,6 +227,15 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
                     Math.Min(widthRemaining, Math.Max(40, cellWidth - 8)));
                 Canvas.SetLeft(label, left);
                 Canvas.SetTop(label, Math.Min(top, Math.Max(0, height - label.FontSize - 4)));
+            }
+
+            foreach (var testCell in testCellLabels)
+            {
+                var marker = testCell.Label;
+                marker.Width = Math.Min(32, Math.Max(24, cellWidth - 8));
+                Canvas.SetLeft(marker, testCell.Column * cellWidth + 4);
+                var markerTop = testCell.Row * cellHeight + Math.Max(0, (cellHeight - marker.FontSize) / 2);
+                Canvas.SetTop(marker, Math.Min(markerTop, Math.Max(0, height - marker.FontSize - 2)));
             }
         }
 
