@@ -1159,7 +1159,7 @@ public partial class App : Application
             return;
         }
 
-        var titleElement = FindTitleTextElement(dialog, normalizedTitle);
+        var titleElement = FindTitleTextElement(dialog, normalizedTitle!);
         if (titleElement is null)
         {
             return;
@@ -1185,7 +1185,7 @@ public partial class App : Application
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        Panel.SetZIndex(telemetryCanvas, 10);
+        Canvas.SetZIndex(telemetryCanvas, 10);
 
         var labels = new (string Text, double Left)[]
         {
