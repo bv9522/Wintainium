@@ -132,7 +132,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         {
             TelemetryGrid.Children.Remove(readouts[i]);
             dialogCanvas.Children.Add(readouts[i]);
-            if (!visibleIndices.Contains(i))
+            if (Array.IndexOf(visibleIndices, i) < 0)
             {
                 readouts[i].Visibility = Visibility.Collapsed;
                 continue;
