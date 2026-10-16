@@ -349,7 +349,7 @@ public sealed partial class SettingsWindow : Window
     // relying on FontWeight or visual-tree discovery, which can vary before Loaded.
     private void ApplyFrutigerAeroSettingsSectionHeaderStyle()
     {
-        if (App.Settings.Current.VisualStyle != WintaniumVisualStyle.FrutigerAero
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
             || App.IsDarkThemeActive)
         {
             return;
@@ -373,7 +373,7 @@ public sealed partial class SettingsWindow : Window
 
     private void ApplyFrutigerAeroSettingsSectionHeaderStyle(TextBlock header)
     {
-        if (App.Settings.Current.VisualStyle != WintaniumVisualStyle.FrutigerAero
+        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
             || App.IsDarkThemeActive
             || !IsFrutigerAeroSettingsSectionHeader(header.Text))
         {
