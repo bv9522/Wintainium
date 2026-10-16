@@ -1052,9 +1052,7 @@ public partial class App : Application
             return;
         }
 
-        // The Canvas contributes no desired size. This keeps the dialog at its
-        // existing 480px width and natural content height while the telemetry
-        // overlay fills the visible content viewport and clips to its bounds.
+        // Keep the content wrapper for dialogs whose Content is not already a Grid.
         var overlayGrid = content as Grid ?? new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -1068,7 +1066,19 @@ public partial class App : Application
             dialog.Content = overlayGrid;
         }
 
-        if (overlayGrid.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
+        // The ContentDialog title/header is outside dialog.Content. Place the SAME
+        // transparent telemetry layer on the dialog template's root panel so its
+        // existing words continue upward behind the title area. This adds no second
+        // backdrop image and therefore cannot create a duplicate W emblem.
+        Panel? dialogRootPanel = null;
+        if (VisualTreeHelper.GetChildrenCount(dialog) > 0
+            && VisualTreeHelper.GetChild(dialog, 0) is Panel templateRoot)
+        {
+            dialogRootPanel = templateRoot;
+        }
+
+        var overlayHost = dialogRootPanel ?? overlayGrid;
+        if (overlayHost.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
         {
             return;
         }
@@ -1080,17 +1090,14 @@ public partial class App : Application
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        // This overlay is a sibling of the dialog's existing content inside its Grid.
-        // Without spanning that Grid's rows/columns, it is measured only in the first
-        // cell (often a short header row), compressing every telemetry coordinate into
-        // that small area even when the dialog itself is much taller and wider.
         Grid.SetRow(telemetryCanvas, 0);
         Grid.SetColumn(telemetryCanvas, 0);
-        Grid.SetRowSpan(telemetryCanvas, Math.Max(1, overlayGrid.RowDefinitions.Count));
-        Grid.SetColumnSpan(telemetryCanvas, Math.Max(1, overlayGrid.ColumnDefinitions.Count));
-        // ContentDialog.Title can be either a string or a UI element. Read the
-        // displayed text explicitly so custom telemetry layouts do not silently
-        // fall back to the main-window layout when a title is a TextBlock.
+        if (overlayHost is Grid hostGrid)
+        {
+            Grid.SetRowSpan(telemetryCanvas, Math.Max(1, hostGrid.RowDefinitions.Count));
+            Grid.SetColumnSpan(telemetryCanvas, Math.Max(1, hostGrid.ColumnDefinitions.Count));
+        }
+
         var dialogTitle = dialog.Title switch
         {
             string titleText => titleText,
@@ -1106,10 +1113,6 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
-        // Do not force a minimum dialog height here. ContentDialog constrains its
-        // content presenter independently, so MinHeight on this wrapper did not
-        // reliably change the visible dialog size. Telemetry now fits the actual
-        // measured content viewport using non-overlapping, four-column positions.
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
@@ -1120,13 +1123,12 @@ public partial class App : Application
         };
         telemetryCanvas.Children.Add(telemetryBackdrop);
 
-        // A Canvas has no desired size of its own, so Stretch alignment alone is
-        // not a reliable guarantee that its child receives the dialog body's full
-        // viewport. Explicitly synchronize both overlay layers to the content Grid.
+        // Size the same telemetry layer to the full dialog template surface, including
+        // the title/header, rather than only the shorter ContentDialog content presenter.
         void LayoutTelemetryOverlay()
         {
-            var width = overlayGrid.ActualWidth;
-            var height = overlayGrid.ActualHeight;
+            var width = overlayHost.ActualWidth;
+            var height = overlayHost.ActualHeight;
             if (width <= 0 || height <= 0)
             {
                 return;
@@ -1135,20 +1137,18 @@ public partial class App : Application
             telemetryCanvas.Width = width;
             telemetryCanvas.Height = height;
             telemetryBackdrop.Width = width;
-            // Keep the dialog at its natural size and size the backdrop to the
-            // actual content viewport. Word coordinates are distributed by the
-            // backdrop itself; scaling the whole control would squash the glyphs.
             telemetryBackdrop.Height = height;
             telemetryBackdrop.ClearValue(UIElement.RenderTransformProperty);
         }
 
-        overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
-        overlayGrid.Loaded += (_, _) => LayoutTelemetryOverlay();
+        overlayHost.SizeChanged += (_, _) => LayoutTelemetryOverlay();
+        overlayHost.Loaded += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.SizeChanged += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.Loaded += (_, _) => LayoutTelemetryOverlay();
 
-        // Put the canvas behind all existing content without affecting measure.
-        overlayGrid.Children.Insert(0, telemetryCanvas);
+        // Insert the transparent words at the back of the dialog template, beneath
+        // title, body controls, and footer buttons; leave the existing image brush alone.
+        overlayHost.Children.Insert(0, telemetryCanvas);
         LayoutTelemetryOverlay();
     }
 
