@@ -344,31 +344,53 @@ public sealed partial class SettingsWindow : Window
         });
     }
 
-    // Section headings are created dynamically as General and Updates content is
-    // rebuilt. Reapply one explicit FA Light style after the broader typography pass
-    // so every sub-heading stays visually consistent.
+    // The General and Updates section headings are direct children of the
+    // dynamically rebuilt category content. Match their explicit text instead of
+    // relying on FontWeight or visual-tree discovery, which can vary before Loaded.
     private void ApplyFrutigerAeroSettingsSectionHeaderStyle()
     {
-        if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+        if (App.Settings.Current.VisualStyle != WintaniumVisualStyle.FrutigerAero
             || App.IsDarkThemeActive)
         {
             return;
         }
 
-        var font = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
-        var foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
         foreach (var child in _categoryContent.Children)
         {
-            if (child is not TextBlock header
-                || header.FontWeight.Weight < Microsoft.UI.Text.FontWeights.SemiBold.Weight)
+            if (child is TextBlock header)
             {
-                continue;
+                ApplyFrutigerAeroSettingsSectionHeaderStyle(header);
             }
+        }
+    }
 
-            header.FontFamily = font;
-            header.Foreground = foreground;
-            header.FontSize = 16;
-            header.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
+    private static bool IsFrutigerAeroSettingsSectionHeader(string? text) =>
+        text is "Startup"
+            or "Application Behavior"
+            or "Update Checking"
+            or "Automatic Updates"
+            or "Notifications";
+
+    private void ApplyFrutigerAeroSettingsSectionHeaderStyle(TextBlock header)
+    {
+        if (App.Settings.Current.VisualStyle != WintaniumVisualStyle.FrutigerAero
+            || App.IsDarkThemeActive
+            || !IsFrutigerAeroSettingsSectionHeader(header.Text))
+        {
+            return;
+        }
+
+        header.FontFamily = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
+        header.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
+        header.FontSize = 16;
+        header.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
+    }
+
+    private void FrutigerAeroSettingsSectionHeader_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBlock header)
+        {
+            ApplyFrutigerAeroSettingsSectionHeaderStyle(header);
         }
     }
 
@@ -682,7 +704,12 @@ public sealed partial class SettingsWindow : Window
             header.FontFamily = new FontFamily("ms-appx:///Horatio%20D%20Regular.ttf#Horatio D");
             header.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0x17, 0x4F, 0x67));
         }
+        // Reassert FA Light styling when the heading is created and again when
+        // WinUI finishes loading it, after any queued broad typography pass.
+        header.Loaded -= FrutigerAeroSettingsSectionHeader_Loaded;
+        header.Loaded += FrutigerAeroSettingsSectionHeader_Loaded;
         _categoryContent.Children.Add(header);
+        ApplyFrutigerAeroSettingsSectionHeaderStyle(header);
     }
 
     private void AddAppearanceControls()
