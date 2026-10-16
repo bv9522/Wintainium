@@ -1531,11 +1531,21 @@ public partial class App : Application
                 break;
         }
 
-        // ComboBox items may be detached from the visual tree while a popup is closed.
+        // ToggleSwitch.Header is a separate content object and is not reliably
+        // exposed as a visual-tree child. Settings headers are TextBlocks created
+        // before the theme pass, so explicitly style them or they retain the
+        // default WinUI foreground instead of the Frutiger Aero palette.
+        if (element is ToggleSwitch toggleSwitch
+            && toggleSwitch.Header is FrameworkElement toggleHeaderElement)
+        {
+            ApplyFrutigerAeroTypographyCore(
+                toggleHeaderElement, font, textBrush, visited, false);
+        }
+
+        // ComboBox headers and items may also be detached from the visual tree
+        // while a popup is closed, so style them explicitly as well.
         if (element is ComboBox comboBox)
         {
-            // ComboBox headers and item elements can be outside the visual tree
-            // while a popup is closed, so style them explicitly as well.
             if (comboBox.Header is FrameworkElement headerElement)
             {
                 ApplyFrutigerAeroTypographyCore(headerElement, font, textBrush, visited, false);
