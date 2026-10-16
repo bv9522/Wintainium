@@ -296,10 +296,16 @@ public partial class App : Application
             return;
         }
 
-        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
-            && !IsDarkThemeActive)
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero)
         {
-            ApplyFrutigerAeroTitleBar(window, titleBar, titleText);
+            if (IsDarkThemeActive)
+            {
+                ApplyFrutigerMetroDarkTitleBar(window, titleBar, titleText);
+            }
+            else
+            {
+                ApplyFrutigerAeroTitleBar(window, titleBar, titleText);
+            }
             return;
         }
 
@@ -389,6 +395,59 @@ public partial class App : Application
         nativeTitleBar.ButtonPressedForegroundColor = textColor;
         nativeTitleBar.ButtonInactiveBackgroundColor = ColorHelper.FromArgb(18, 0xFF, 0xFF, 0xFF);
         nativeTitleBar.ButtonInactiveForegroundColor = textColor;
+    }
+
+    internal static void ApplyFrutigerMetroDarkTitleBar(Window window, Grid titleBar, TextBlock titleText)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
+            || !IsDarkThemeActive)
+        {
+            return;
+        }
+
+        if (!AppWindowTitleBar.IsCustomizationSupported())
+        {
+            titleBar.Visibility = Visibility.Collapsed;
+            window.SetTitleBar(null);
+            window.ExtendsContentIntoTitleBar = false;
+            window.AppWindow.TitleBar.ResetToDefault();
+            return;
+        }
+
+        titleText.Text = window.Title;
+        titleText.FontFamily = new FontFamily("ms-appx:///Themes/CutieTopRegular-VArx.ttf#Cutie Top");
+        titleText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28));
+        titleText.FontSize = Math.Max(titleText.FontSize, 16);
+        titleBar.Background = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+            GradientStops =
+            {
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x08, 0x04, 0x06), Offset = 0 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x39, 0x0A, 0x12), Offset = 0.42 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x18, 0x06, 0x0A), Offset = 0.78 },
+                new GradientStop { Color = ColorHelper.FromArgb(255, 0x08, 0x04, 0x06), Offset = 1 }
+            }
+        };
+        titleBar.Visibility = Visibility.Visible;
+        window.ExtendsContentIntoTitleBar = true;
+        window.SetTitleBar(titleBar);
+
+        var nativeTitleBar = window.AppWindow.TitleBar;
+        var gold = ColorHelper.FromArgb(255, 0xFF, 0xC9, 0x28);
+        nativeTitleBar.BackgroundColor = Colors.Transparent;
+        nativeTitleBar.ForegroundColor = gold;
+        nativeTitleBar.InactiveBackgroundColor = Colors.Transparent;
+        nativeTitleBar.InactiveForegroundColor = gold;
+        nativeTitleBar.ButtonBackgroundColor = Colors.Transparent;
+        nativeTitleBar.ButtonForegroundColor = gold;
+        nativeTitleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(255, 0x8B, 0x1A, 0x1A);
+        nativeTitleBar.ButtonHoverForegroundColor = gold;
+        nativeTitleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(255, 0xFF, 0x5A, 0x1F);
+        nativeTitleBar.ButtonPressedForegroundColor = Colors.Black;
+        nativeTitleBar.ButtonInactiveBackgroundColor = ColorHelper.FromArgb(80, 0x00, 0x00, 0x00);
+        nativeTitleBar.ButtonInactiveForegroundColor = gold;
     }
 
     internal static Brush GetFrutigerAeroTitleBarBrush()
