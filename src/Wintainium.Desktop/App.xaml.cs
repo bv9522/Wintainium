@@ -1077,7 +1077,14 @@ public partial class App : Application
             dialogRootPanel = templateRoot;
         }
 
-        var overlayHost = dialogRootPanel ?? overlayGrid;
+        // Wait until the ContentDialog template exists rather than falling back to the
+        // content-only grid; the Loaded callback retries and then spans the header too.
+        if (dialogRootPanel is null)
+        {
+            return;
+        }
+
+        var overlayHost = dialogRootPanel;
         if (overlayHost.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
         {
             return;
