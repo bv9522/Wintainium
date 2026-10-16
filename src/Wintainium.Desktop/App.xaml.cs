@@ -1150,91 +1150,83 @@ public partial class App : Application
             return;
         }
 
-        // Add only telemetry text to the existing title/header host. The one dialog
-        // background image (and its single W emblem) remains unchanged; no telemetry
-        // is added to the footer/button row.
-        Panel? headerHost = null;
-        FindHeaderHost(dialog, normalizedTitle!, ref headerHost);
-        if (headerHost is null
-            || headerHost.Children.OfType<Canvas>().Any(child => child.Name == "Y2KDarkHeaderTelemetryCanvas"))
+        // The header title is hosted by WinUI's private ContentDialog template, so
+        // inserting into a guessed title-parent panel is unreliable. Put a transparent,
+        // non-interactive text-only layer on the template's outer panel instead. Its
+        // labels are constrained to the top header band; it adds no artwork/W and puts
+        // nothing behind footer buttons.
+        if (dialog.FindName("Y2KDarkHeaderTelemetryCanvas") is Canvas)
         {
             return;
         }
 
-        var headerCanvas = new Canvas
+        var rootPanel = FindFirstTemplatePanel(dialog);
+        if (rootPanel is null
+            || rootPanel.Children.OfType<Canvas>().Any(child => child.Name == "Y2KDarkHeaderTelemetryCanvas"))
+        {
+            return;
+        }
+
+        var canvas = new Canvas
         {
             Name = "Y2KDarkHeaderTelemetryCanvas",
             IsHitTestVisible = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        var words = new[] { "W1NTA1N1UM", "M4NAGE", "1NSTALL", "UPD4TE" };
-        for (var index = 0; index < words.Length; index++)
+
+        var placements = new (string Text, double Left, double Top)[]
+        {
+            ("W1NTA1N1UM", 18, 10),
+            ("M4NAGE", 145, 10),
+            ("1NSTALL", 390, 10),
+            ("UPD4TE", 500, 10),
+            ("5OFTWARE", 28, 34),
+            ("V3R1FY", 445, 34)
+        };
+
+        foreach (var placement in placements)
         {
             var word = new TextBlock
             {
-                Text = words[index],
-                Foreground = new SolidColorBrush(ColorHelper.FromArgb(95, 0x39, 0xFF, 0x9A)),
+                Text = placement.Text,
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(78, 0x39, 0xFF, 0x9A)),
                 FontFamily = new FontFamily("Consolas"),
                 FontSize = 10,
                 CharacterSpacing = 100,
-                IsHitTestVisible = false,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
+                IsHitTestVisible = false
             };
-            Grid.SetColumn(word, index);
-            headerCanvas.Children.Add(word);
+            Canvas.SetLeft(word, placement.Left);
+            Canvas.SetTop(word, placement.Top);
+            canvas.Children.Add(word);
         }
 
-        var wordGrid = new Grid { IsHitTestVisible = false };
-        for (var index = 0; index < words.Length; index++)
-        {
-            wordGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        }
-        foreach (var child in headerCanvas.Children.OfType<FrameworkElement>().ToArray())
-        {
-            headerCanvas.Children.Remove(child);
-            wordGrid.Children.Add(child);
-        }
-        headerCanvas.Children.Add(wordGrid);
-        headerHost.Children.Insert(0, headerCanvas);
-
-        void SizeHeaderTelemetry()
-        {
-            headerCanvas.Width = headerHost.ActualWidth;
-            headerCanvas.Height = headerHost.ActualHeight;
-            wordGrid.Width = headerHost.ActualWidth;
-            wordGrid.Height = headerHost.ActualHeight;
-        }
-
-        headerHost.SizeChanged += (_, _) => SizeHeaderTelemetry();
-        headerHost.Loaded += (_, _) => SizeHeaderTelemetry();
-        SizeHeaderTelemetry();
+        rootPanel.Children.Add(canvas);
     }
 
-    private static void FindHeaderHost(FrameworkElement element, string title, ref Panel? headerHost)
+    private static Panel? FindFirstTemplatePanel(DependencyObject element)
     {
-        if (headerHost is not null)
-        {
-            return;
-        }
-
-        if (element is Panel panel
-            && panel.Children.OfType<TextBlock>().Any(textBlock =>
-                string.Equals(textBlock.Text?.Trim(), title, StringComparison.OrdinalIgnoreCase)))
-        {
-            headerHost = panel;
-            return;
-        }
-
         var childCount = VisualTreeHelper.GetChildrenCount(element);
         for (var index = 0; index < childCount; index++)
         {
-            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            if (VisualTreeHelper.GetChild(element, index) is not DependencyObject child)
             {
-                FindHeaderHost(child, title, ref headerHost);
+                continue;
+            }
+
+            if (child is Panel panel)
+            {
+                return panel;
+            }
+
+            var nestedPanel = FindFirstTemplatePanel(child);
+            if (nestedPanel is not null)
+            {
+                return nestedPanel;
             }
         }
+
+        return null;
     }
 
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
