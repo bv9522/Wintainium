@@ -1080,6 +1080,14 @@ public partial class App : Application
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
+        // This overlay is a sibling of the dialog's existing content inside its Grid.
+        // Without spanning that Grid's rows/columns, it is measured only in the first
+        // cell (often a short header row), compressing every telemetry coordinate into
+        // that small area even when the dialog itself is much taller and wider.
+        Grid.SetRow(telemetryCanvas, 0);
+        Grid.SetColumn(telemetryCanvas, 0);
+        Grid.SetRowSpan(telemetryCanvas, Math.Max(1, overlayGrid.RowDefinitions.Count));
+        Grid.SetColumnSpan(telemetryCanvas, Math.Max(1, overlayGrid.ColumnDefinitions.Count));
         // ContentDialog.Title can be either a string or a UI element. Read the
         // displayed text explicitly so custom telemetry layouts do not silently
         // fall back to the main-window layout when a title is a TextBlock.
