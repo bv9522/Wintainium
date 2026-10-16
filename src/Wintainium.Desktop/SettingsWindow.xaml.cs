@@ -321,7 +321,7 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
-    private static void QueueFrutigerAeroSettingsTypography(FrameworkElement root, int remainingPasses)
+    private void QueueFrutigerAeroSettingsTypography(FrameworkElement root, int remainingPasses)
     {
         if (remainingPasses <= 0
             || App.Settings.Current.VisualStyle != WintainiumVisualStyle.FrutigerAero
