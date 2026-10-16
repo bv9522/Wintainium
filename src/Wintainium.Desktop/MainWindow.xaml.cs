@@ -76,10 +76,7 @@ public sealed partial class MainWindow : Window
         if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && App.IsDarkThemeActive)
         {
-            Y2KTitleBar.Visibility = Visibility.Collapsed;
-            SetTitleBar(null);
-            AppWindow.TitleBar.ResetToDefault();
-            ExtendsContentIntoTitleBar = false;
+            App.ApplyFrutigerMetroDarkTitleBar(this, Y2KTitleBar, Y2KTitleBarText);
             ApplyFrutigerMetroDarkTypography();
             return;
         }
