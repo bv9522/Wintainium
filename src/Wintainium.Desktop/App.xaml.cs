@@ -610,18 +610,44 @@ public partial class App : Application
             return;
         }
 
-        // Keep the NYC artwork confined to the main dialog body. Explicitly
-        // clear the template overlay so the artwork/glass treatment appears above
-        // the command row rather than allowing the page backdrop to show through.
-        var dialogBackground = new ImageBrush
+        var dialogTitle = dialog.Title switch
         {
-            ImageSource = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
-            Stretch = Stretch.UniformToFill
+            string titleText => titleText,
+            TextBlock titleBlock => titleBlock.Text,
+            _ => dialog.Title?.ToString()
         };
-        dialog.Resources["ContentDialogBackground"] = dialogBackground;
-        dialog.Resources["ContentDialogTopOverlay"] =
-            new SolidColorBrush(ColorHelper.FromArgb(217, 255, 255, 255));
-        dialog.Background = dialogBackground;
+        var normalizedTitle = dialogTitle?.Trim();
+        var isSortAndFilterDialog =
+            string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase);
+        var isAddSoftwareDialog =
+            string.Equals(normalizedTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
+
+        if (isSortAndFilterDialog || isAddSoftwareDialog)
+        {
+            // These two utility dialogs should use the same soft aqua page surface
+            // as Settings, not the NYC artwork used by other Frutiger Aero dialogs.
+            // The opaque gradient also ensures the lower command area never shows
+            // transparency or artwork behind its buttons.
+            var surface = CreateFrutigerAeroDialogSurfaceBrush();
+            dialog.Resources["ContentDialogBackground"] = surface;
+            dialog.Resources["ContentDialogTopOverlay"] =
+                new SolidColorBrush(ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF));
+            dialog.Background = surface;
+        }
+        else
+        {
+            // Keep the scenic artwork for other Frutiger Aero Light dialogs.
+            var dialogBackground = new ImageBrush
+            {
+                ImageSource = new BitmapImage(new Uri("ms-appx:///Themes/Frutiger%20Aero%20NYC%20Skyline.png")),
+                Stretch = Stretch.UniformToFill
+            };
+            dialog.Resources["ContentDialogBackground"] = dialogBackground;
+            dialog.Resources["ContentDialogTopOverlay"] =
+                new SolidColorBrush(ColorHelper.FromArgb(217, 255, 255, 255));
+            dialog.Background = dialogBackground;
+        }
 
         // Reuse the proven dialog template style so body and footer use separate
         // surfaces. Do not modify the main window's own page background.
