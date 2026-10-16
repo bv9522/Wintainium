@@ -1053,7 +1053,10 @@ public partial class App : Application
             return;
         }
 
-        // Keep the content wrapper for dialogs whose Content is not already a Grid.
+        // Keep the telemetry in the dialog's actual content surface. The ContentDialog
+        // template can place opaque background elements over root-level children, which
+        // caused the words to disappear when we tried to extend them into the header.
+        // This single overlay stays in the body and never paints behind footer buttons.
         var overlayGrid = content as Grid ?? new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -1067,43 +1070,9 @@ public partial class App : Application
             dialog.Content = overlayGrid;
         }
 
-        // The ContentDialog title/header is outside dialog.Content. Place the SAME
-        // transparent telemetry layer on the dialog template's root panel so its
-        // existing words continue upward behind the title area. This adds no second
-        // backdrop image and therefore cannot create a duplicate W emblem.
-        Panel? dialogRootPanel = null;
-        if (VisualTreeHelper.GetChildrenCount(dialog) > 0
-            && VisualTreeHelper.GetChild(dialog, 0) is Panel templateRoot)
-        {
-            dialogRootPanel = templateRoot;
-        }
-
-        // Wait until the ContentDialog template exists rather than falling back to the
-        // content-only grid; the Loaded callback retries and then spans the header too.
-        if (dialogRootPanel is null)
+        if (overlayGrid.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
         {
             return;
-        }
-
-        var overlayHost = dialogRootPanel;
-        if (overlayHost.Children.OfType<Canvas>().Any(canvas => canvas.Name == "Y2KDarkTelemetryCanvas"))
-        {
-            return;
-        }
-
-        var telemetryCanvas = new Canvas
-        {
-            Name = "Y2KDarkTelemetryCanvas",
-            IsHitTestVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-        Grid.SetRow(telemetryCanvas, 0);
-        Grid.SetColumn(telemetryCanvas, 0);
-        if (overlayHost is Grid hostGrid)
-        {
-            Grid.SetRowSpan(telemetryCanvas, Math.Max(1, hostGrid.RowDefinitions.Count));
-            Grid.SetColumnSpan(telemetryCanvas, Math.Max(1, hostGrid.ColumnDefinitions.Count));
         }
 
         var dialogTitle = dialog.Title switch
@@ -1121,6 +1090,13 @@ public partial class App : Application
                     ? "Sort and Filter"
                     : null;
 
+        var telemetryCanvas = new Canvas
+        {
+            Name = "Y2KDarkTelemetryCanvas",
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         var telemetryBackdrop = new Y2KDarkTelemetryBackdrop
         {
             DialogTitle = telemetryLayoutTitle,
@@ -1131,54 +1107,15 @@ public partial class App : Application
         };
         telemetryCanvas.Children.Add(telemetryBackdrop);
 
-        // Extend the existing telemetry words upward behind the title/header, but
-        // stop the overlay at the top edge of the footer button area. This keeps the
-        // footer buttons and their background free of telemetry.
-        void CollectDialogButtons(DependencyObject parent, List<Button> buttons)
-        {
-            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, index);
-                if (child is Button button)
-                {
-                    buttons.Add(button);
-                }
-
-                CollectDialogButtons(child, buttons);
-            }
-        }
-
         void LayoutTelemetryOverlay()
         {
-            var width = overlayHost.ActualWidth;
-            var fullHeight = overlayHost.ActualHeight;
-            if (width <= 0 || fullHeight <= 0)
+            var width = overlayGrid.ActualWidth;
+            var height = overlayGrid.ActualHeight;
+            if (width <= 0 || height <= 0)
             {
                 return;
             }
 
-            var footerTop = fullHeight;
-            var dialogButtons = new List<Button>();
-            CollectDialogButtons(dialog, dialogButtons);
-            foreach (var button in dialogButtons)
-            {
-                try
-                {
-                    var buttonTop = button.TransformToVisual(overlayHost).TransformPoint(new Point(0, 0)).Y;
-                    if (buttonTop > 0 && buttonTop < footerTop)
-                    {
-                        footerTop = buttonTop;
-                    }
-                }
-                catch (InvalidOperationException)
-                {
-                    // A button may not yet be connected to the template visual tree.
-                }
-            }
-
-            // Leave a small safety gap before the first footer button so no telemetry
-            // glyph can sit beneath the button row. Header and content remain covered.
-            var height = Math.Max(0, Math.Min(fullHeight, footerTop - 8));
             telemetryCanvas.Width = width;
             telemetryCanvas.Height = height;
             telemetryBackdrop.Width = width;
@@ -1186,15 +1123,14 @@ public partial class App : Application
             telemetryBackdrop.ClearValue(UIElement.RenderTransformProperty);
         }
 
-        overlayHost.SizeChanged += (_, _) => LayoutTelemetryOverlay();
-        overlayHost.Loaded += (_, _) => LayoutTelemetryOverlay();
+        overlayGrid.SizeChanged += (_, _) => LayoutTelemetryOverlay();
+        overlayGrid.Loaded += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.SizeChanged += (_, _) => LayoutTelemetryOverlay();
         telemetryCanvas.Loaded += (_, _) => LayoutTelemetryOverlay();
 
-        // Place telemetry immediately above the template's background surface (often
-        // the first child), but below the title, body controls, and footer buttons.
-        // Inserting at index 0 can put the words behind an opaque background element.
-        overlayHost.Children.Insert(Math.Min(1, overlayHost.Children.Count), telemetryCanvas);
+        // Insert behind all dialog content controls. Since this is the body grid,
+        // the telemetry cannot extend into the header or footer button row.
+        overlayGrid.Children.Insert(0, telemetryCanvas);
         LayoutTelemetryOverlay();
     }
 
