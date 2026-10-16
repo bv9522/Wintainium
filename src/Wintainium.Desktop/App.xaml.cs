@@ -1136,11 +1136,6 @@ public partial class App : Application
 
     private static void EnsureY2KDarkDialogHeaderTelemetryOverlay(ContentDialog dialog)
     {
-        if (dialog.Content is not FrameworkElement content)
-        {
-            return;
-        }
-
         var title = dialog.Title switch
         {
             string titleText => titleText,
@@ -1159,7 +1154,7 @@ public partial class App : Application
         // background image (and its single W emblem) remains unchanged; no telemetry
         // is added to the footer/button row.
         Panel? headerHost = null;
-        FindHeaderHost(content, normalizedTitle!, ref headerHost);
+        FindHeaderHost(dialog, normalizedTitle!, ref headerHost);
         if (headerHost is null
             || headerHost.Children.OfType<Canvas>().Any(child => child.Name == "Y2KDarkHeaderTelemetryCanvas"))
         {
