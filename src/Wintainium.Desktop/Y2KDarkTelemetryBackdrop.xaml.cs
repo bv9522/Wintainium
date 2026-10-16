@@ -114,6 +114,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
         };
         var visibleCount = isAddSoftware ? 24 : 20;
+        var layoutRowCount = visibleCount / 2;
 
         var dialogCanvas = new Canvas
         {
@@ -159,7 +160,7 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             dialogCanvas.Width = width;
             dialogCanvas.Height = height;
             var cellWidth = width / 4.0;
-            var cellHeight = height / 12.0;
+            var cellHeight = height / layoutRowCount;
             for (var i = 0; i < visibleCount; i++)
             {
                 var label = readouts[i];
