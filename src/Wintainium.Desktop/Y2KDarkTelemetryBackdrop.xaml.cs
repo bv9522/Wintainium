@@ -101,8 +101,9 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         }
 
         var isAddSoftware = string.Equals(_dialogTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
-        // Two words per row, staggered across the four columns for even coverage
-        // from the top to the bottom of the dialog. Sort & Filter shows the first 20.
+        // Add Software leaves the five header terms out of the body and uses a quieter
+        // 16-word field, reducing clutter around the central W. Sort & Filter retains
+        // its existing 20-word treatment.
         int[] rows =
         {
             0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5,
@@ -113,7 +114,10 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3,
             0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
         };
-        var visibleCount = isAddSoftware ? 24 : 20;
+        int[] visibleIndices = isAddSoftware
+            ? new[] { 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 }
+            : new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+        var visibleCount = visibleIndices.Length;
         var layoutRowCount = visibleCount / 2;
 
         var dialogCanvas = new Canvas
@@ -128,20 +132,13 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
         {
             TelemetryGrid.Children.Remove(readouts[i]);
             dialogCanvas.Children.Add(readouts[i]);
-            if (i >= visibleCount)
+            if (!visibleIndices.Contains(i))
             {
                 readouts[i].Visibility = Visibility.Collapsed;
                 continue;
             }
 
-            readouts[i].Width = Math.Min(
-                Math.Max(40, (readouts[i].Text?.Length ?? 0) * 6.5 + 8),
-                190);
-            readouts[i].HorizontalAlignment = HorizontalAlignment.Left;
-            readouts[i].VerticalAlignment = VerticalAlignment.Top;
             readouts[i].Visibility = Visibility.Visible;
-            Canvas.SetLeft(readouts[i], columns[i] * 100.0);
-            Canvas.SetTop(readouts[i], rows[i] * 10.0 + (i % 2 == 0 ? 1 : 4));
         }
 
         TelemetryGrid.Children.Add(dialogCanvas);
@@ -161,18 +158,15 @@ public sealed partial class Y2KDarkTelemetryBackdrop : UserControl
             dialogCanvas.Height = height;
             var cellWidth = width / 4.0;
             var cellHeight = height / layoutRowCount;
-            for (var i = 0; i < visibleCount; i++)
+            for (var slot = 0; slot < visibleCount; slot++)
             {
-                var label = readouts[i];
-                var left = columns[i] * cellWidth;
-                // Distribute words across fourteen vertical bands spanning the actual
-                // measured content height, from the top through the bottom of the body.
-                var top = rows[i] * cellHeight + (i % 2 == 0 ? 2 : cellHeight * 0.12);
+                var index = visibleIndices[slot];
+                var label = readouts[index];
+                var left = columns[slot] * cellWidth;
+                var top = rows[slot] * cellHeight + (slot % 2 == 0 ? 2 : cellHeight * 0.12);
                 var widthRemaining = Math.Max(0, width - left - 4);
                 var desiredLabelWidth = Math.Max(40, (label.Text?.Length ?? 0) * 6.5 + 8);
-                // Keep labels within their own column. The six-column layout allowed
-                // long strings to overlap adjacent words even when their coordinates
-                // were distinct.
+                // Keep labels within their own column to prevent neighboring words colliding.
                 label.Width = Math.Min(
                     desiredLabelWidth,
                     Math.Min(widthRemaining, Math.Max(40, cellWidth - 8)));
