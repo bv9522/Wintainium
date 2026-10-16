@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
 using Windows.UI.ViewManagement;
 using Wintainium.Desktop.Settings;
+using System.Collections.Generic;
 
 namespace Wintainium.Desktop;
 
@@ -1130,17 +1131,54 @@ public partial class App : Application
         };
         telemetryCanvas.Children.Add(telemetryBackdrop);
 
-        // Size the same telemetry layer to the full dialog template surface, including
-        // the title/header, rather than only the shorter ContentDialog content presenter.
+        // Extend the existing telemetry words upward behind the title/header, but
+        // stop the overlay at the top edge of the footer button area. This keeps the
+        // footer buttons and their background free of telemetry.
+        void CollectDialogButtons(DependencyObject parent, List<Button> buttons)
+        {
+            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, index);
+                if (child is Button button)
+                {
+                    buttons.Add(button);
+                }
+
+                CollectDialogButtons(child, buttons);
+            }
+        }
+
         void LayoutTelemetryOverlay()
         {
             var width = overlayHost.ActualWidth;
-            var height = overlayHost.ActualHeight;
-            if (width <= 0 || height <= 0)
+            var fullHeight = overlayHost.ActualHeight;
+            if (width <= 0 || fullHeight <= 0)
             {
                 return;
             }
 
+            var footerTop = fullHeight;
+            var dialogButtons = new List<Button>();
+            CollectDialogButtons(dialog, dialogButtons);
+            foreach (var button in dialogButtons)
+            {
+                try
+                {
+                    var buttonTop = button.TransformToVisual(overlayHost).TransformPoint(new Point(0, 0)).Y;
+                    if (buttonTop > 0 && buttonTop < footerTop)
+                    {
+                        footerTop = buttonTop;
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // A button may not yet be connected to the template visual tree.
+                }
+            }
+
+            // Leave a small safety gap before the first footer button so no telemetry
+            // glyph can sit beneath the button row. Header and content remain covered.
+            var height = Math.Max(0, Math.Min(fullHeight, footerTop - 8));
             telemetryCanvas.Width = width;
             telemetryCanvas.Height = height;
             telemetryBackdrop.Width = width;
