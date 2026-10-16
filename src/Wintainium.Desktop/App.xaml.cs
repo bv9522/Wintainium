@@ -1169,7 +1169,7 @@ public partial class App : Application
             MinHeight = 62,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Background = TransparentDialogBrush,
-            IsHitTestVisible = true
+            IsHitTestVisible = false
         };
 
         var telemetryCanvas = new Canvas
@@ -1209,11 +1209,12 @@ public partial class App : Application
             telemetryCanvas.Children.Add(word);
         }
 
+        var displayTitle = string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+            ? "Sort & Filter"
+            : normalizedTitle ?? string.Empty;
         var titleLabel = new TextBlock
         {
-            Text = normalizedTitle.Equals("Sort and Filter", StringComparison.OrdinalIgnoreCase)
-                ? "Sort & Filter"
-                : normalizedTitle,
+            Text = displayTitle,
             FontFamily = GetY2KDisplayFont(),
             Foreground = GetY2KTextBrush(),
             FontSize = 18,
