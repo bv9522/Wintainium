@@ -1134,6 +1134,114 @@ public partial class App : Application
         LayoutTelemetryOverlay();
     }
 
+    private static void EnsureY2KDarkDialogHeaderTelemetryOverlay(ContentDialog dialog)
+    {
+        if (dialog.Content is not FrameworkElement content)
+        {
+            return;
+        }
+
+        var title = dialog.Title switch
+        {
+            string titleText => titleText,
+            TextBlock titleBlock => titleBlock.Text,
+            _ => dialog.Title?.ToString()
+        };
+        var normalizedTitle = title?.Trim();
+        if (!string.Equals(normalizedTitle, "Add Software", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        // Add only telemetry text to the existing title/header host. The one dialog
+        // background image (and its single W emblem) remains unchanged; no telemetry
+        // is added to the footer/button row.
+        Panel? headerHost = null;
+        FindHeaderHost(content, normalizedTitle!, ref headerHost);
+        if (headerHost is null
+            || headerHost.Children.OfType<Canvas>().Any(child => child.Name == "Y2KDarkHeaderTelemetryCanvas"))
+        {
+            return;
+        }
+
+        var headerCanvas = new Canvas
+        {
+            Name = "Y2KDarkHeaderTelemetryCanvas",
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        var words = new[] { "W1NTA1N1UM", "M4NAGE", "1NSTALL", "UPD4TE" };
+        for (var index = 0; index < words.Length; index++)
+        {
+            var word = new TextBlock
+            {
+                Text = words[index],
+                Foreground = new SolidColorBrush(ColorHelper.FromArgb(95, 0x39, 0xFF, 0x9A)),
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 10,
+                CharacterSpacing = 100,
+                IsHitTestVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            Grid.SetColumn(word, index);
+            headerCanvas.Children.Add(word);
+        }
+
+        var wordGrid = new Grid { IsHitTestVisible = false };
+        for (var index = 0; index < words.Length; index++)
+        {
+            wordGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        }
+        foreach (var child in headerCanvas.Children.OfType<FrameworkElement>().ToArray())
+        {
+            headerCanvas.Children.Remove(child);
+            wordGrid.Children.Add(child);
+        }
+        headerCanvas.Children.Add(wordGrid);
+        headerHost.Children.Insert(0, headerCanvas);
+
+        void SizeHeaderTelemetry()
+        {
+            headerCanvas.Width = headerHost.ActualWidth;
+            headerCanvas.Height = headerHost.ActualHeight;
+            wordGrid.Width = headerHost.ActualWidth;
+            wordGrid.Height = headerHost.ActualHeight;
+        }
+
+        headerHost.SizeChanged += (_, _) => SizeHeaderTelemetry();
+        headerHost.Loaded += (_, _) => SizeHeaderTelemetry();
+        SizeHeaderTelemetry();
+    }
+
+    private static void FindHeaderHost(FrameworkElement element, string title, ref Panel? headerHost)
+    {
+        if (headerHost is not null)
+        {
+            return;
+        }
+
+        if (element is Panel panel
+            && panel.Children.OfType<TextBlock>().Any(textBlock =>
+                string.Equals(textBlock.Text?.Trim(), title, StringComparison.OrdinalIgnoreCase)))
+        {
+            headerHost = panel;
+            return;
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                FindHeaderHost(child, title, ref headerHost);
+            }
+        }
+    }
+
     private static void Y2KContentDialog_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is ContentDialog dialog && Settings.Current.VisualStyle == WintainiumVisualStyle.Y2K)
@@ -1146,6 +1254,7 @@ public partial class App : Application
                 // background surface but beneath the dialog controls.
                 EnsureY2KDarkTelemetryDialogBackdrop(dialog);
                 EnsureY2KDarkDialogTelemetryOverlay(dialog);
+                EnsureY2KDarkDialogHeaderTelemetryOverlay(dialog);
                 ApplyY2KDarkDialogFooterSurface(dialog);
                 ClearY2KDialogInputBorders(dialog);
             }
