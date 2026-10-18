@@ -382,6 +382,12 @@ public partial class App : Application
             customTitleBar.Visibility = Visibility.Collapsed;
         }
 
+        if (!AppWindowTitleBar.IsCustomizationSupported())
+        {
+            window.AppWindow.TitleBar.ResetToDefault();
+            return;
+        }
+
         var titleBar = window.AppWindow.TitleBar;
         var background = IsDarkThemeActive
             ? ColorHelper.FromArgb(255, 0x20, 0x20, 0x20)
