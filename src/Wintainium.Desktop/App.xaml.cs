@@ -60,7 +60,7 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(window);
 
         var windowId = window.AppWindow.Id;
-        var iconPath = Path.Combine(AppContext.BaseDirectory, "Wintainium.ico");
+        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Wintainium.ico");
         if (File.Exists(iconPath))
         {
             window.AppWindow.SetIcon(iconPath);
