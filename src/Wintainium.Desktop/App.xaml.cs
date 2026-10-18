@@ -819,7 +819,7 @@ public partial class App : Application
         bool isUtilityDialog)
     {
         if (isUtilityDialog
-            && element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+            && (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host"))
         {
             // A calm, opaque blue-white footer separates the command buttons from
             // the saturated aqua content gradient without introducing artwork.
