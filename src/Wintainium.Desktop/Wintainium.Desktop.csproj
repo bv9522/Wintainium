@@ -46,7 +46,7 @@
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.6" />
   </ItemGroup>
 
-  <Target Name="GenerateWintainiumApplicationIcon" BeforeTargets="GenerateWin32Resources;CoreCompile">
+  <Target Name="GenerateWintainiumApplicationIcon" BeforeTargets="PrepareForBuild;GenerateWin32Resources;CoreCompile">
     <MakeDir Directories="$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)" />
     <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)\..\..\tools\Wintainium.IconGenerator\Wintainium.IconGenerator.csproj&quot; --configuration $(Configuration) --no-launch-profile -- &quot;$(MSBuildProjectDirectory)\Themes\Glossy Blue W Arrow Emblem.png&quot; &quot;$(ApplicationIcon)&quot;" />
   </Target>
