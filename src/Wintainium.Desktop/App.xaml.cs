@@ -684,10 +684,9 @@ public partial class App : Application
 
         if (isSortAndFilterDialog || isAddSoftwareDialog)
         {
-            // These two utility dialogs should use the same soft aqua page surface
-            // as Settings, not the NYC artwork used by other Frutiger Aero dialogs.
-            // The opaque gradient also ensures the lower command area never shows
-            // transparency or artwork behind its buttons.
+            // These two utility dialogs use the soft aqua page surface in the
+            // content area, not the NYC artwork. The footer is styled separately
+            // with an opaque neutral surface in FrutigerAeroContentDialog_Loaded.
             var surface = CreateFrutigerAeroDialogSurfaceBrush();
             dialog.Resources["ContentDialogBackground"] = surface;
             dialog.Resources["ContentDialogTopOverlay"] =
@@ -781,13 +780,60 @@ public partial class App : Application
         {
             ApplyFrutigerAeroTypography(dialog);
 
-            // Use the main Frutiger Aero artwork on the dialog surface, following
-            // the working Y2K Light ContentDialogBackground ImageBrush pattern.
+            // Utility dialogs use a clean aqua content surface; their command row
+            // gets a separate opaque neutral footer so the gradient stops above it.
             EnsureFrutigerAeroLightDialogBackdrop(dialog);
+            ApplyFrutigerAeroLightDialogFooterSurface(dialog);
             if (dialog.Content is FrameworkElement contentRoot)
             {
-                // Do not paint opaque container gradients over the backdrop.
+                // Do not paint opaque container gradients over the scenic backdrop
+                // used by other Frutiger Aero Light ContentDialogs.
                 QueueFrutigerAeroDialogTypography(contentRoot, 8);
+            }
+        }
+    }
+
+    private static void ApplyFrutigerAeroLightDialogFooterSurface(FrameworkElement element)
+    {
+        var dialogTitle = element is ContentDialog dialog
+            ? dialog.Title switch
+            {
+                string titleText => titleText,
+                TextBlock titleBlock => titleBlock.Text,
+                _ => dialog.Title?.ToString()
+            }
+            : null;
+        var normalizedTitle = dialogTitle?.Trim();
+        var isSortAndFilterDialog =
+            string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalizedTitle, "Sort and Filter", StringComparison.OrdinalIgnoreCase);
+        var isAddSoftwareDialog =
+            string.Equals(normalizedTitle, "Add Software", StringComparison.OrdinalIgnoreCase);
+
+        if (isSortAndFilterDialog || isAddSoftwareDialog)
+        {
+            // A calm, opaque blue-white footer separates the command buttons from
+            // the saturated aqua content gradient without introducing artwork.
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xF0, 0xF6, 0xF6));
+            if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+            {
+                if (element is Panel panel)
+                {
+                    panel.Background = footerBrush;
+                }
+                else if (element is Border border)
+                {
+                    border.Background = footerBrush;
+                }
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyFrutigerAeroLightDialogFooterSurface(child);
             }
         }
     }
