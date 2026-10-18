@@ -160,26 +160,26 @@
                                            FontWeight="SemiBold"
                                            TextWrapping="Wrap"
                                            HorizontalAlignment="Stretch" />
-                                <WrapGrid Orientation="Horizontal" HorizontalAlignment="Left">
-                                    <Border Margin="0,0,6,6" Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" MaxWidth="206">
+                                <StackPanel Spacing="6">
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                         <TextBlock Text="{Binding InstallationStateText}" TextWrapping="Wrap" />
                                     </Border>
-                                    <Border Margin="0,0,6,6" Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" MaxWidth="206">
+                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                         <TextBlock Text="{Binding UpdateStatusText}" TextWrapping="Wrap" />
                                     </Border>
-                                </WrapGrid>
-                                <Grid>
+                                </StackPanel>
+                                <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Spacing="2">
-                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" />
-                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" />
+                                    <StackPanel Spacing="2" MinWidth="0">
+                                        <TextBlock Text="Installed" FontSize="11" Opacity="0.55" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding InstalledVersionText}" FontWeight="SemiBold" TextWrapping="Wrap" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" HorizontalAlignment="Right" />
-                                        <TextBlock Text="{Binding AvailableVersionText}" HorizontalAlignment="Right" Opacity="0.78" />
+                                    <StackPanel Grid.Column="1" Spacing="2" MinWidth="0">
+                                        <TextBlock Text="Available" FontSize="11" Opacity="0.55" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding AvailableVersionText}" Opacity="0.78" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
