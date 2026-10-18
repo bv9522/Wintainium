@@ -158,16 +158,16 @@
                                 <TextBlock Text="{Binding DisplayName}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis"
-                                           MaxLines="2" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                        <TextBlock Text="{Binding InstallationStateText}" />
+                                           TextWrapping="Wrap"
+                                           HorizontalAlignment="Stretch" />
+                                <WrapGrid Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <Border Margin="0,0,6,6" Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" MaxWidth="206">
+                                        <TextBlock Text="{Binding InstallationStateText}" TextWrapping="Wrap" />
                                     </Border>
-                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                        <TextBlock Text="{Binding UpdateStatusText}" />
+                                    <Border Margin="0,0,6,6" Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" MaxWidth="206">
+                                        <TextBlock Text="{Binding UpdateStatusText}" TextWrapping="Wrap" />
                                     </Border>
-                                </StackPanel>
+                                </WrapGrid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
