@@ -793,16 +793,14 @@ public partial class App : Application
         }
     }
 
-    private static void ApplyFrutigerAeroLightDialogFooterSurface(FrameworkElement element)
+    private static void ApplyFrutigerAeroLightDialogFooterSurface(ContentDialog dialog)
     {
-        var dialogTitle = element is ContentDialog dialog
-            ? dialog.Title switch
-            {
-                string titleText => titleText,
-                TextBlock titleBlock => titleBlock.Text,
-                _ => dialog.Title?.ToString()
-            }
-            : null;
+        var dialogTitle = dialog.Title switch
+        {
+            string titleText => titleText,
+            TextBlock titleBlock => titleBlock.Text,
+            _ => dialog.Title?.ToString()
+        };
         var normalizedTitle = dialogTitle?.Trim();
         var isSortAndFilterDialog =
             string.Equals(normalizedTitle, "Sort & Filter", StringComparison.OrdinalIgnoreCase)
@@ -812,19 +810,27 @@ public partial class App : Application
 
         if (isSortAndFilterDialog || isAddSoftwareDialog)
         {
+            ApplyFrutigerAeroLightDialogFooterSurfaceRecursive(dialog, true);
+        }
+    }
+
+    private static void ApplyFrutigerAeroLightDialogFooterSurfaceRecursive(
+        FrameworkElement element,
+        bool isUtilityDialog)
+    {
+        if (isUtilityDialog
+            && element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+        {
             // A calm, opaque blue-white footer separates the command buttons from
             // the saturated aqua content gradient without introducing artwork.
             var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xF0, 0xF6, 0xF6));
-            if (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host")
+            if (element is Panel panel)
             {
-                if (element is Panel panel)
-                {
-                    panel.Background = footerBrush;
-                }
-                else if (element is Border border)
-                {
-                    border.Background = footerBrush;
-                }
+                panel.Background = footerBrush;
+            }
+            else if (element is Border border)
+            {
+                border.Background = footerBrush;
             }
         }
 
@@ -833,7 +839,7 @@ public partial class App : Application
         {
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyFrutigerAeroLightDialogFooterSurface(child);
+                ApplyFrutigerAeroLightDialogFooterSurfaceRecursive(child, isUtilityDialog);
             }
         }
     }
