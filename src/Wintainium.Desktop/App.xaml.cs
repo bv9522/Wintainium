@@ -60,6 +60,12 @@ public partial class App : Application
         ArgumentNullException.ThrowIfNull(window);
 
         var windowId = window.AppWindow.Id;
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Wintainium.ico");
+        if (File.Exists(iconPath))
+        {
+            window.AppWindow.SetIcon(iconPath);
+        }
+
         ActiveWindows[windowId] = window;
         window.Closed += (_, _) =>
         {
@@ -309,6 +315,12 @@ public partial class App : Application
             return;
         }
 
+        if (Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11)
+        {
+            ApplyWindows11TitleBar(window);
+            return;
+        }
+
         if (Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K ||
             !AppWindowTitleBar.IsCustomizationSupported())
         {
@@ -353,6 +365,40 @@ public partial class App : Application
         nativeTitleBar.ButtonPressedForegroundColor = textColor;
         nativeTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
         nativeTitleBar.ButtonInactiveForegroundColor = textColor;
+    }
+
+    internal static void ApplyWindows11TitleBar(Window window)
+    {
+        if (Settings.Current.VisualStyle != WintainiumVisualStyle.Windows11)
+        {
+            return;
+        }
+
+        window.ExtendsContentIntoTitleBar = false;
+        window.SetTitleBar(null);
+
+        var titleBar = window.AppWindow.TitleBar;
+        var background = IsDarkThemeActive
+            ? ColorHelper.FromArgb(255, 0x20, 0x20, 0x20)
+            : ColorHelper.FromArgb(255, 0xF3, 0xF3, 0xF3);
+        var foreground = IsDarkThemeActive
+            ? ColorHelper.FromArgb(255, 0xF9, 0xF9, 0xF9)
+            : ColorHelper.FromArgb(255, 0x1A, 0x1A, 0x1A);
+        var hover = ColorHelper.FromArgb(28, foreground.R, foreground.G, foreground.B);
+        var pressed = ColorHelper.FromArgb(52, foreground.R, foreground.G, foreground.B);
+
+        titleBar.BackgroundColor = background;
+        titleBar.ForegroundColor = foreground;
+        titleBar.InactiveBackgroundColor = background;
+        titleBar.InactiveForegroundColor = foreground;
+        titleBar.ButtonBackgroundColor = background;
+        titleBar.ButtonForegroundColor = foreground;
+        titleBar.ButtonHoverBackgroundColor = hover;
+        titleBar.ButtonHoverForegroundColor = foreground;
+        titleBar.ButtonPressedBackgroundColor = pressed;
+        titleBar.ButtonPressedForegroundColor = foreground;
+        titleBar.ButtonInactiveBackgroundColor = background;
+        titleBar.ButtonInactiveForegroundColor = foreground;
     }
 
     internal static void ApplyFrutigerAeroTitleBar(Window window, Grid titleBar, TextBlock titleText)
@@ -821,9 +867,9 @@ public partial class App : Application
         if (isUtilityDialog
             && (element.Name is "CommandSpace" or "Button1Host" or "Button2Host" or "Button3Host"))
         {
-            // A calm, opaque blue-white footer separates the command buttons from
-            // the saturated aqua content gradient without introducing artwork.
-            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xF0, 0xF6, 0xF6));
+            // A soft sky-blue footer separates the command buttons from the aqua
+            // content surface without introducing artwork.
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xD6, 0xF0, 0xFF));
             if (element is Panel panel)
             {
                 panel.Background = footerBrush;
