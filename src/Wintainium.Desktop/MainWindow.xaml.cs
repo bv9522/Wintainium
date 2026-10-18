@@ -88,6 +88,13 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        if (App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11)
+        {
+            Y2KTitleBar.Visibility = Visibility.Collapsed;
+            App.ApplyWindows11TitleBar(this);
+            return;
+        }
+
         if (App.Settings.Current.VisualStyle != WintainiumVisualStyle.Y2K)
         {
             Y2KTitleBar.Visibility = Visibility.Collapsed;
