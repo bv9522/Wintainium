@@ -376,6 +376,11 @@ public partial class App : Application
 
         window.ExtendsContentIntoTitleBar = false;
         window.SetTitleBar(null);
+        if (window.Content is FrameworkElement content
+            && content.FindName("Y2KTitleBar") is FrameworkElement customTitleBar)
+        {
+            customTitleBar.Visibility = Visibility.Collapsed;
+        }
 
         var titleBar = window.AppWindow.TitleBar;
         var background = IsDarkThemeActive
