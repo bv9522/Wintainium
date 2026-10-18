@@ -161,9 +161,7 @@
                                            TextWrapping="Wrap"
                                            HorizontalAlignment="Stretch" />
                                 <StackPanel Spacing="6">
-                                    <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                        <TextBlock Text="{Binding InstallationStateText}" TextWrapping="Wrap" />
-                                    </Border>
+                                    <TextBlock Text="{Binding InstallationStateText}" TextWrapping="Wrap" />
                                     <Border Padding="8,4" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                         <TextBlock Text="{Binding UpdateStatusText}" TextWrapping="Wrap" />
                                     </Border>
