@@ -66,12 +66,16 @@ public sealed partial class SettingsWindow : Window
 
         if (Content is FrameworkElement root)
         {
+            var isFrutigerAeroLight = _settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
+                && !App.IsDarkThemeActive;
             var isMetroDark = _settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
                 && App.IsDarkThemeActive;
             if (!isMetroDark)
             {
                 App.ClearFrutigerMetroDarkAppearance(root);
             }
+
+            ApplyFrutigerAeroSettingsSurface(root, isFrutigerAeroLight);
 
             if (root.FindName("CategoryNavigationChrome") is Border navigation)
             {
@@ -323,6 +327,71 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
+    private static void ApplyFrutigerAeroSettingsSurface(FrameworkElement root, bool enabled)
+    {
+        if (root is Panel rootPanel)
+        {
+            if (enabled)
+            {
+                // Set the same bluish-white Frutiger Aero page gradient directly so
+                // Settings repaints immediately when switching from Frutiger Metro.
+                rootPanel.Background = new LinearGradientBrush
+                {
+                    StartPoint = new Windows.Foundation.Point(0, 0),
+                    EndPoint = new Windows.Foundation.Point(0, 1),
+                    GradientStops =
+                    {
+                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
+                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
+                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
+                        new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
+                    }
+                };
+            }
+            else
+            {
+                rootPanel.ClearValue(Panel.BackgroundProperty);
+            }
+        }
+
+        var transparent = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+        ApplyFrutigerAeroSettingsInputSurface(root, enabled, transparent);
+    }
+
+    private static void ApplyFrutigerAeroSettingsInputSurface(
+        FrameworkElement element,
+        bool enabled,
+        Brush transparent)
+    {
+        if (element is TextBox or ComboBox)
+        {
+            if (element is Control control)
+            {
+                if (enabled)
+                {
+                    // Remove the leftover white FM outline; FA input fields blend
+                    // into the light aqua Settings surface instead.
+                    control.BorderBrush = transparent;
+                    control.BorderThickness = new Thickness(0);
+                }
+                else
+                {
+                    control.ClearValue(Control.BorderBrushProperty);
+                    control.ClearValue(Control.BorderThicknessProperty);
+                }
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(element);
+        for (var index = 0; index < childCount; index++)
+        {
+            if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
+            {
+                ApplyFrutigerAeroSettingsInputSurface(child, enabled, transparent);
+            }
+        }
+    }
+
     private void QueueFrutigerAeroSettingsTypography(FrameworkElement root, int remainingPasses)
     {
         if (remainingPasses <= 0
@@ -342,6 +411,7 @@ public sealed partial class SettingsWindow : Window
 
             App.ApplyFrutigerAeroTypography(root);
             ApplyFrutigerAeroSettingsSectionHeaderStyle();
+            ApplyFrutigerAeroSettingsSurface(root, true);
             QueueFrutigerAeroSettingsTypography(root, remainingPasses - 1);
         });
     }
