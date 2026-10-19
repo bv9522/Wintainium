@@ -279,6 +279,11 @@ public sealed partial class ApplicationDetailsWindow : Window
             return;
         }
 
+        if (!await ConfirmInstallOrUpdateAsync("Install"))
+        {
+            return;
+        }
+
         _operationCancellation?.Dispose();
         _operationCancellation = new CancellationTokenSource();
         if (_onApplicationOperationStarted is not null)
@@ -376,6 +381,29 @@ public sealed partial class ApplicationDetailsWindow : Window
             }
             UpdateActionButtons();
         }
+    }
+
+    private async Task<bool> ConfirmInstallOrUpdateAsync(string operation)
+    {
+        if (!App.Settings.Current.ConfirmBeforeInstallOrUpdate)
+        {
+            return true;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = $"{operation} {_application.DisplayName}?",
+            Content = operation == "Install"
+                ? "Wintainium will start the Core-owned installation lifecycle. The native installer may request Windows elevation."
+                : "Wintainium will start the Core-owned update lifecycle. The native installer may request Windows elevation.",
+            PrimaryButtonText = operation,
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close
+        };
+        App.ApplyThemeToElement(dialog);
+
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
     private async void CheckForUpdatesButton_Click(object sender, RoutedEventArgs e)
@@ -523,6 +551,11 @@ public sealed partial class ApplicationDetailsWindow : Window
         if (string.IsNullOrWhiteSpace(_application.ManifestPath))
         {
             ShowDetailsError("The application's manifest path is not available, so the update cannot be requested.");
+            return;
+        }
+
+        if (!await ConfirmInstallOrUpdateAsync("Update"))
+        {
             return;
         }
 
