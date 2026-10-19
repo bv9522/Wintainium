@@ -385,6 +385,20 @@ public sealed partial class SettingsWindow : Window
                 }
             }
 
+            if (root.FindName("CategoryNavigationChrome") is Border navigation)
+            {
+                navigation.ClearValue(Border.BackgroundProperty);
+                navigation.ClearValue(Border.BorderBrushProperty);
+                navigation.BorderThickness = new Thickness(1);
+            }
+
+            if (root.FindName("SettingsContentChrome") is Border contentChrome)
+            {
+                contentChrome.ClearValue(Border.BackgroundProperty);
+                contentChrome.ClearValue(Border.BorderBrushProperty);
+                contentChrome.BorderThickness = new Thickness(1);
+            }
+
             foreach (var key in new[]
             {
                 "TextControlBorderBrush",
