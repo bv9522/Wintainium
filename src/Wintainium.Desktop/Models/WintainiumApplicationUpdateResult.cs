@@ -22,4 +22,5 @@ internal sealed record WintainiumApplicationUpdateStageModel(
     string? Reason,
     bool IsSuccessful,
     bool WasCancelled,
+    long? ElapsedMilliseconds,
     WintainiumOperationDiagnostic? Error);
