@@ -89,6 +89,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             Reason = $reason
             IsSuccessful = $stageSuccessful
             WasCancelled = $stageCancelled
+            ElapsedMilliseconds = if ($null -ne $execution -and $execution.PSObject.Properties['ElapsedMilliseconds']) { [long]$execution.ElapsedMilliseconds } elseif ($null -ne $result -and $result.PSObject.Properties['ElapsedMilliseconds']) { [long]$result.ElapsedMilliseconds } else { $null }
             Error = $stageError
         })
 
