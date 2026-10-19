@@ -71,21 +71,21 @@ Describe 'New-WintainiumInstallationResult' {
     It 'preserves identifiers, duration, and process failure diagnostics' {
         $invocation = [pscustomobject]@{ OperationId='op-5'; DownloadOperationId='dl-5'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Failed'; FailureKind='ProcessStart'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=3; ErrorMessage='access denied' }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
         $result.OperationId | Should -Be 'op-5'; $result.DownloadOperationId | Should -Be 'dl-5'; $result.PluginId | Should -Be 'installer.test'; $result.DurationMilliseconds | Should -Be 3; $result.ErrorMessage | Should -Be 'access denied'; $result.Error.Message | Should -Match 'access denied'
     }
 
     It 'does not treat an unknown process status as success' {
         $invocation = [pscustomobject]@{ OperationId='op-6'; DownloadOperationId='dl-6'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Unknown'; FailureKind=$null; ExitCode=0; StandardOutput=''; StandardError=''; DurationMilliseconds=4; ErrorMessage='unrecognized status' }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
         $result.Status | Should -Be 'Failed'; $result.FailureKind | Should -Be 'ProcessFailed'; $result.ExitCode | Should -Be 0
     }
 
     It 'does not treat a completed process with a missing exit code as success' {
         $invocation = [pscustomobject]@{ OperationId='op-7'; DownloadOperationId='dl-7'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Completed'; FailureKind=$null; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=5; ErrorMessage=$null }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
         $result.Status | Should -Be 'Failed'; $result.FailureKind | Should -Be 'ProcessFailed'; $result.ExitCode | Should -Be $null
     }
 
@@ -99,7 +99,7 @@ Describe 'New-WintainiumInstallationResult' {
     It 'preserves successful stderr as process diagnostics while clearing the result error' {
         $invocation = [pscustomobject]@{ OperationId='op-9'; DownloadOperationId='dl-9'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Completed'; FailureKind=''; ExitCode=0; StandardOutput='installed'; StandardError='warning: restart recommended'; DurationMilliseconds=7; ErrorMessage='stale error' }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
         $result.Status | Should -Be 'Completed'; $result.FailureKind | Should -Be $null; $result.StandardError | Should -Be 'warning: restart recommended'; $result.ErrorMessage | Should -Be $null; $result.Error | Should -Be $null
     }
 
@@ -113,7 +113,7 @@ Describe 'New-WintainiumInstallationResult' {
     It 'does not treat a string zero exit code as successful installation' {
         $invocation = [pscustomobject]@{ OperationId='op-11'; DownloadOperationId='dl-11'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Completed'; FailureKind=$null; ExitCode='0'; StandardOutput='installed'; StandardError=''; DurationMilliseconds=9; ErrorMessage=$null }
-        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$ProcessResult } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
         $result.Status | Should -Be 'Failed'; $result.FailureKind | Should -Be 'ProcessFailed'; $result.ExitCode | Should -Be '0'
     }
 
