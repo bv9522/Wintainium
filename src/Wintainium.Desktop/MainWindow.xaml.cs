@@ -190,6 +190,8 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private const byte SoftwareCardBackgroundAlpha = 179; // 70% opacity, shared by Grid and List cards.
+
     private void RefreshSoftwareCardBackgrounds()
     {
         var useFrutigerMetroBackground =
@@ -198,9 +200,26 @@ public sealed partial class MainWindow : Window
 
         foreach (var entry in _softwareCardOriginalBackgrounds)
         {
-            entry.Key.Background = useFrutigerMetroBackground
-                ? new SolidColorBrush(ColorHelper.FromArgb(210, 38, 8, 13))
-                : entry.Value;
+            if (useFrutigerMetroBackground)
+            {
+                entry.Key.Background = new SolidColorBrush(
+                    ColorHelper.FromArgb(SoftwareCardBackgroundAlpha, 38, 8, 13));
+            }
+            else if (entry.Value is SolidColorBrush originalBrush)
+            {
+                var originalColor = originalBrush.Color;
+                entry.Key.Background = new SolidColorBrush(
+                    ColorHelper.FromArgb(
+                        SoftwareCardBackgroundAlpha,
+                        originalColor.R,
+                        originalColor.G,
+                        originalColor.B));
+            }
+            else
+            {
+                // Preserve any non-solid theme brush rather than replacing its intended artwork.
+                entry.Key.Background = entry.Value;
+            }
         }
     }
 
