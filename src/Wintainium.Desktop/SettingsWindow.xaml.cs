@@ -682,98 +682,26 @@ public sealed partial class SettingsWindow : Window
 
     private void AddGeneralControls()
     {
-        AddSectionHeader("Startup");
-        AddToggle(
-            "Launch Wintainium when I sign in",
-            "Start Wintainium automatically when you sign in to Windows.",
-            _settings.Current.LaunchAtSignIn,
-            value => _settings.SetLaunchAtSignIn(value));
-
         AddSectionHeader("Application Behavior");
         AddToggle(
             "Confirm before installing or updating software",
-            "Ask for confirmation before Wintainium begins an install or update operation.",
+            "Ask before Wintainium starts an install or update operation.",
             _settings.Current.ConfirmBeforeInstallOrUpdate,
             value => _settings.SetConfirmBeforeInstallOrUpdate(value));
         AddToggle(
             "Confirm before removing software",
-            "Ask for confirmation before Wintainium removes software from your collection.",
+            "Ask before Wintainium removes software from your collection. This does not uninstall it from Windows.",
             _settings.Current.ConfirmBeforeRemove,
             value => _settings.SetConfirmBeforeRemove(value));
-        AddToggle(
-            "Close Wintainium after an operation completes",
-            "Close Wintainium when an install, update, or removal operation reaches its final state.",
-            _settings.Current.CloseAfterOperation,
-            value => _settings.SetCloseAfterOperation(value));
 
-        AddSectionHeader("Notifications");
-        AddToggle(
-            "Show operation notifications",
-            "Show user-facing notifications when Wintainium operations complete or fail.",
-            _settings.Current.ShowOperationNotifications,
-            value => _settings.SetShowOperationNotifications(value));
+        AddSectionHeader("Not available yet");
+        AddPlaceholder("Launch at sign-in, close-after-operation, and notification delivery are deferred until their underlying startup and notification integrations exist.");
     }
 
     private void AddUpdateControls()
     {
-        AddSectionHeader("Update Checking");
-        var automaticChecking = AddToggle(
-            "Automatically check for updates",
-            "Periodically check your managed software for available updates.",
-            _settings.Current.AutomaticallyCheckForUpdates,
-            value => _settings.SetAutomaticallyCheckForUpdates(value));
-
-        automaticChecking.Toggled += (_, _) =>
-            UpdateFrequencyState(automaticChecking, automaticChecking.IsOn);
-
-        var frequency = new ComboBox
-        {
-            Header = CreateY2KTextBlock("Check frequency"),
-            Width = 360,
-            ItemsSource = new[]
-            {
-                CreateY2KTextBlock("Every day"),
-                CreateY2KTextBlock("Every week"),
-                CreateY2KTextBlock("Every two weeks"),
-                CreateY2KTextBlock("Every month")
-            },
-            SelectedIndex = (int)_settings.Current.UpdateCheckFrequency,
-            IsEnabled = _settings.Current.AutomaticallyCheckForUpdates
-        };
-        frequency.SelectionChanged += (_, _) =>
-        {
-            if (frequency.SelectedIndex >= 0)
-            {
-                _settings.SetUpdateCheckFrequency(
-                    (WintainiumUpdateCheckFrequency)frequency.SelectedIndex);
-            }
-        };
-        ApplyY2KControlTypography(frequency);
-        _categoryContent.Children.Add(frequency);
-
-        AddSectionHeader("Automatic Updates");
-        AddToggle(
-            "Automatically install available updates",
-            "Install available updates without waiting for you to start each operation. Application-specific policy will take precedence when that policy is introduced.",
-            _settings.Current.AutomaticallyInstallUpdates,
-            value => _settings.SetAutomaticallyInstallUpdates(value));
-
-        AddSectionHeader("Notifications");
-        AddToggle(
-            "Notify me when updates are available",
-            "Notify you when Wintainium discovers an available software update.",
-            _settings.Current.NotifyWhenUpdatesAvailable,
-            value => _settings.SetNotifyWhenUpdatesAvailable(value));
-        AddToggle(
-            "Notify me when updates are installed",
-            "Notify you when an automatic or user-started update completes successfully.",
-            _settings.Current.NotifyWhenUpdatesInstalled,
-            value => _settings.SetNotifyWhenUpdatesInstalled(value));
-        AddToggle(
-            "Notify me when an update fails",
-            "Notify you when an update operation cannot be completed.",
-            _settings.Current.NotifyWhenUpdateFails,
-            value => _settings.SetNotifyWhenUpdateFails(value));
+        AddSectionHeader("Update automation");
+        AddPlaceholder("Automatic update checks, check frequency, automatic installation, and update notifications are deferred until Wintainium has a durable scheduler and the corresponding lifecycle/notification behavior. These options are not exposed as active settings yet.");
     }
 
     private ToggleSwitch AddToggle(
