@@ -63,6 +63,8 @@ Describe 'Invoke-WintainiumOrchestrationStage' {
         $result.StageName | Should -Be 'ManifestValidation'
         $result.Result.Value | Should -Be 'fixture'
         $result.Result.Cancelled | Should -BeFalse
+        $result.ElapsedMilliseconds | Should -BeGreaterOrEqual 0
+        $result.Result.ElapsedMilliseconds | Should -BeGreaterOrEqual 0
         $result.Error | Should -BeNullOrEmpty
     }
 
