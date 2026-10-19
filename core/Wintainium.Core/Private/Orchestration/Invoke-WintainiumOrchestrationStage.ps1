@@ -136,8 +136,14 @@ function Invoke-WintainiumOrchestrationStage {
         return & $newFailure 'OrchestrationStageCancelledBeforeExecution' 'The stage was cancelled before execution began.' $true
     }
 
+    $stageStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     try {
         $stageResult = & $StageExecutor -StageInput $StageInput -CancellationToken $token
+        $stageStopwatch.Stop()
+        $elapsedMilliseconds = [long]$stageStopwatch.ElapsedMilliseconds
+        if ($null -ne $stageResult) {
+            $stageResult | Add-Member -NotePropertyName ElapsedMilliseconds -NotePropertyValue $elapsedMilliseconds -Force
+        }
 
         return [pscustomobject][ordered]@{
             IsSuccessful = $true
@@ -145,11 +151,14 @@ function Invoke-WintainiumOrchestrationStage {
             OperationId = [string]$operationId
             StageSequence = $StageSequence
             StageName = $StageName
+            ElapsedMilliseconds = $elapsedMilliseconds
             Result = $stageResult
             Error = $null
         }
     }
     catch {
+        $stageStopwatch.Stop()
+        $elapsedMilliseconds = [long]$stageStopwatch.ElapsedMilliseconds
         $detail = if ($null -ne $_.Exception -and -not [string]::IsNullOrWhiteSpace($_.Exception.Message)) { [string]$_.Exception.Message } else { 'No exception detail was provided.' }
         return [pscustomobject][ordered]@{
             IsSuccessful = $false
@@ -157,6 +166,7 @@ function Invoke-WintainiumOrchestrationStage {
             OperationId = [string]$operationId
             StageSequence = $StageSequence
             StageName = $StageName
+            ElapsedMilliseconds = $elapsedMilliseconds
             Result = $null
             Error = [pscustomobject][ordered]@{
                 Code = 'OrchestrationStageExecutorError'
