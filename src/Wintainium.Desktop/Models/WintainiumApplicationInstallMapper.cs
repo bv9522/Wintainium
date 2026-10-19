@@ -30,20 +30,24 @@ internal static class WintainiumApplicationInstallMapper
     private static WintainiumApplicationInstallStageModel MapStage(PSObject stage)
     {
         var isSuccessful = Boolean(stage, "IsSuccessful");
+        var wasCancelled = Boolean(stage, "WasCancelled");
         return new(
             Sequence: Integer(stage, "Sequence"),
             Name: Nullable(stage, "Name"),
-            Status: PresentationStatus(stage, isSuccessful),
+            Status: PresentationStatus(stage, isSuccessful, wasCancelled),
             ReasonCode: Nullable(stage, "ReasonCode"),
             Reason: Nullable(stage, "Reason"),
             IsSuccessful: isSuccessful,
-            WasCancelled: Boolean(stage, "WasCancelled"),
+            WasCancelled: wasCancelled,
             ElapsedMilliseconds: NullableInt64(stage, "ElapsedMilliseconds"),
             Error: Diagnostic(stage, "Error"));
     }
 
-    private static string? PresentationStatus(PSObject stage, bool isSuccessful)
+    private static string? PresentationStatus(PSObject stage, bool isSuccessful, bool wasCancelled)
     {
+        if (wasCancelled)
+            return "Cancelled";
+
         var status = Nullable(stage, "Status");
         if (isSuccessful)
             return null;
