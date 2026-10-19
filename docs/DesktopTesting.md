@@ -38,6 +38,58 @@ The 11J checkpoint covers:
 10. Close an application Details window during an active operation and confirm the window closes cleanly without leaving the application in a broken state.
 11. Close the main window and confirm child Details/Settings windows do not remain orphaned.
 
+## Phase 14F — Install/update and settings acceptance
+
+Run this checkpoint against the current Release build after pulling the latest
+`phase-14-gui-productization` branch. Use a disposable/test application where
+possible; do not cancel an installer on a machine where interruption could
+damage important work.
+
+### Confirmation preferences
+
+1. In Settings > General, leave "Confirm before installing or updating software"
+   enabled. Start an install and verify the confirmation dialog appears before
+   lifecycle activity begins. Choose Cancel and verify no operation starts.
+2. Repeat for Run Update: the same preference must gate the operation before
+   lifecycle activity begins.
+3. Disable that preference, repeat an available install/update action, and verify
+   the confirmation dialog is skipped.
+4. Enable "Confirm before removing software", choose Remove Software, and verify
+   the dialog explains that this removes the app from Wintainium's collection
+   rather than uninstalling it from Windows. Cancel and verify the collection is
+   unchanged.
+5. Disable removal confirmation and verify removal proceeds without that dialog.
+   Use only a test collection entry.
+
+### Authoritative state and cancellation
+
+6. Complete a normal install and verify Details reports the Core result, then
+   reports authoritative installed state. Verify Dashboard reflects the same
+   installation state/version.
+7. Complete a normal update and verify Details and Dashboard agree on the
+   reconciled version/update state.
+8. If a safe cancellable test operation is available, cancel during lifecycle
+   execution. Verify the operation result says cancelled, but Wintainium still
+   attempts authoritative state refresh and reports the resulting state rather
+   than assuming no machine changes occurred.
+9. If a controlled failure can be induced safely, verify the operation error
+   remains visible and the application still attempts authoritative state refresh.
+10. Confirm native installer/UAC UI remains owned by Windows/the installer and
+    Wintainium does not display invented installer-progress percentages.
+
+### Settings honesty and theme regression
+
+11. Settings > General and Updates should expose the two implemented confirmation
+    preferences; startup, close-after-operation, notification, automatic-check,
+    and automatic-install options should be clearly marked as not available yet,
+    not presented as functioning toggles.
+12. Switch among the existing visual styles and verify the settings changes did
+    not alter theme assets, fonts, title bars, or dialog styling. Report any
+    reproducible cross-theme bleed separately.
+
+Record which cases were run and any observed mismatch. Do not use a failed or
+unavailable test as evidence that the corresponding behavior passed.
+
 ## Regression boundary
 
 PowerShell/Pester remains authoritative for the Core engine. No Pester run is required for 11J unless desktop hardening exposes a defect that requires a Core/PowerShell change.
