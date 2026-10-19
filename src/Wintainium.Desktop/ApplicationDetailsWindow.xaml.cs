@@ -346,13 +346,14 @@ public sealed partial class ApplicationDetailsWindow : Window
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
 
-            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         catch (OperationCanceledException)
         {
             UpdateResultStatusText.Text = "Installation was cancelled.";
-            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed because the installation was cancelled.";
             OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
+            InstalledStateRefreshStatusText.Text = "Checking authoritative installed state after cancellation…";
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         catch (Exception exception)
         {
@@ -586,13 +587,14 @@ public sealed partial class ApplicationDetailsWindow : Window
                     result.Errors.Select(static error => error.Message ?? error.Code ?? "Unknown error.")));
             }
 
-            await RefreshAuthoritativeInstalledStateAsync(_operationCancellation.Token);
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         catch (OperationCanceledException)
         {
             UpdateResultStatusText.Text = "Update was cancelled.";
-            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed because the update was cancelled.";
             OperationStateText.Text = WintainiumOperationState.Cancelled.ToString();
+            InstalledStateRefreshStatusText.Text = "Checking authoritative installed state after cancellation…";
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         catch (Exception exception)
         {
@@ -628,7 +630,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             if (!stateResult.IsSuccessful)
             {
                 var message = stateResult.Errors.Count == 0
-                    ? "The update result was received, but authoritative installed state could not be refreshed."
+                    ? "The operation result was received, but authoritative installed state could not be refreshed."
                     : string.Join(Environment.NewLine, stateResult.Errors.Select(FormatDiagnostic));
 
                 InstalledStateRefreshStatusText.Text = "Authoritative installed-state refresh failed.";
@@ -667,7 +669,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         catch (Exception exception)
         {
             InstalledStateRefreshStatusText.Text = "Authoritative installed-state refresh failed.";
-            ShowDetailsError($"The update result was received, but authoritative installed state could not be refreshed.{Environment.NewLine}{exception.Message}");
+            ShowDetailsError($"The operation result was received, but authoritative installed state could not be refreshed.{Environment.NewLine}{exception.Message}");
         }
     }
 
