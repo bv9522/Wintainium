@@ -358,8 +358,9 @@ public sealed partial class ApplicationDetailsWindow : Window
         catch (Exception exception)
         {
             UpdateResultStatusText.Text = "Installation failed before a structured result could be presented.";
-            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed.";
+            InstalledStateRefreshStatusText.Text = "Checking authoritative installed state after the operation error…";
             ShowDetailsError($"Installation could not be completed.{Environment.NewLine}{exception.Message}");
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         finally
         {
@@ -599,8 +600,9 @@ public sealed partial class ApplicationDetailsWindow : Window
         catch (Exception exception)
         {
             UpdateResultStatusText.Text = "Update failed before a structured result could be presented.";
-            InstalledStateRefreshStatusText.Text = "Authoritative installed state was not refreshed.";
+            InstalledStateRefreshStatusText.Text = "Checking authoritative installed state after the operation error…";
             ShowDetailsError($"Update could not be completed.{Environment.NewLine}{exception.Message}");
+            await RefreshAuthoritativeInstalledStateAsync(CancellationToken.None);
         }
         finally
         {
