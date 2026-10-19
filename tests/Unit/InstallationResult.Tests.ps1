@@ -27,6 +27,28 @@ Describe 'New-WintainiumInstallationResult' {
         }
     }
 
+    It 'classifies MSI exit code 1602 as user cancellation' {
+        $invocation = [pscustomobject]@{ OperationId='op-msi-cancel'; DownloadOperationId='dl-msi-cancel'; PluginId='Wintainium.installer.msi'; ArtifactFormat='msi' }
+        $process = [pscustomobject]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=1602; StandardOutput=''; StandardError=''; DurationMilliseconds=11700; ErrorMessage='The installer process exited with code 1602.' }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'Cancelled'
+        $result.WasCancelled | Should -BeTrue
+        $result.ExitCode | Should -Be 1602
+        $result.Error.Code | Should -Be 'Cancelled'
+        $result.ErrorMessage | Should -Match 'user cancelled'
+    }
+
+    It 'does not classify exit code 1602 from a non-MSI installer as cancellation' {
+        $invocation = [pscustomobject]@{ OperationId='op-exe-1602'; DownloadOperationId='dl-exe-1602'; PluginId='installer.test'; ArtifactFormat='exe' }
+        $process = [pscustomobject]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=1602; StandardOutput=''; StandardError=''; DurationMilliseconds=12; ErrorMessage='The installer process exited with code 1602.' }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } { New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'NonZeroExit'
+        $result.WasCancelled | Should -BeFalse
+        $result.ExitCode | Should -Be 1602
+    }
+
     It 'does not treat a nonzero process result as a successful installation' {
         $invocation = [pscustomobject]@{ OperationId='op-3'; DownloadOperationId='dl-3'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Completed'; FailureKind='Unexpected'; ExitCode=5; StandardOutput=''; StandardError=''; DurationMilliseconds=1; ErrorMessage='unexpected' }
