@@ -38,6 +38,7 @@ internal static class WintainiumApplicationUpdateMapper
             Reason: Nullable(stage, "Reason"),
             IsSuccessful: isSuccessful,
             WasCancelled: Boolean(stage, "WasCancelled"),
+            ElapsedMilliseconds: NullableInt64(stage, "ElapsedMilliseconds"),
             Error: Diagnostic(stage, "Error"));
     }
 
@@ -97,6 +98,9 @@ internal static class WintainiumApplicationUpdateMapper
     private static bool Boolean(PSObject source, string name) =>
         source.Properties[name]?.Value is not null &&
         Convert.ToBoolean(source.Properties[name]!.Value);
+
+    private static long? NullableInt64(PSObject source, string name) =>
+        source.Properties[name]?.Value is null ? null : Convert.ToInt64(source.Properties[name]!.Value);
 
     private static int Integer(PSObject source, string name) =>
         source.Properties[name]?.Value is null
