@@ -87,6 +87,12 @@ function New-WintainiumInstallationResult {
     }
 
     $resolvedFailureKind = if ([string]::IsNullOrWhiteSpace([string]$failureKind)) { 'ProcessFailed' } else { [string]$failureKind }
+    if ([string]::Equals($artifactFormat, 'msi', [System.StringComparison]::OrdinalIgnoreCase) -and
+        $exitCode -is [int] -and $exitCode -eq 1602 -and $resolvedFailureKind -eq 'NonZeroExit') {
+        $resolvedFailureKind = 'Cancelled'
+        $errorMessage = 'The user cancelled the Windows Installer operation (MSI exit code 1602).'
+    }
+    $wasCancelled = $resolvedFailureKind -eq 'Cancelled'
     $diagnosticMessage = @(
         "Installer execution failed."
         "FailureKind: $resolvedFailureKind"
@@ -108,6 +114,7 @@ function New-WintainiumInstallationResult {
     [pscustomobject][ordered]@{
         Status='Failed'
         FailureKind=$resolvedFailureKind
+        WasCancelled=$wasCancelled
         OperationId=$operationId
         DownloadOperationId=$downloadOperationId
         PluginId=$pluginId
