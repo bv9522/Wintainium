@@ -114,7 +114,7 @@ are not a claim that those suites have been rerun at the current branch head.
 
 ### 14F — Update Experience
 
-**Current engineering focus.**
+**Current engineering focus — implementation in progress; build/runtime validation pending.**
 
 - present Core lifecycle activity before/after native installer execution
 - clearly communicate native installer/elevation transitions
@@ -125,18 +125,23 @@ are not a claim that those suites have been rerun at the current branch head.
 - make update state/action availability reflect real Core state
 - verify Dashboard and Details refresh consistency
 - confirm operation cancellation does not cancel the follow-up reconciliation
+- install/update reconciliation now uses an independent cancellation token, and
+  cancellation/exception paths attempt a follow-up refresh; Windows build and
+  runtime validation remain outstanding
 
 ### 14G — Settings Productization
 
-- audit existing General, Appearance, Updates, Sources, and Advanced categories
-- keep Appearance controls connected to the existing visual-style/theme system
-- connect only settings with a real, observable consumer
-- verify confirmation settings against actual install/update/remove flows
-- defer launch-at-sign-in until startup integration exists
-- defer automatic checking/frequency and auto-install until durable scheduling
-  and lifecycle policy are implemented
-- defer notifications unless the corresponding notification behavior exists
-- keep Sources/Advanced explicit about unavailable capabilities; no fake controls
+**Focused settings audit underway.**
+
+- Appearance remains connected to the existing visual-style/theme system
+- confirmation before install/update and confirmation before removal are now
+  wired to their actual operation paths
+- launch-at-sign-in, close-after-operation, and notification delivery are
+  explicitly deferred in the UI until their integrations exist
+- automatic checking/frequency, automatic installation, and update
+  notifications are explicitly deferred until scheduling and lifecycle behavior
+  exist
+- Sources/Advanced remain explicit about unavailable capabilities; no fake controls
 
 ### 14H — Visual System
 
