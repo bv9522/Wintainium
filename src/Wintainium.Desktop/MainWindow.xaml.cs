@@ -191,26 +191,30 @@ public sealed partial class MainWindow : Window
     }
 
     private const byte SoftwareCardBackgroundAlpha = 179; // 70% opacity, shared by Grid and List cards.
+    private const byte Windows11SoftwareCardBackgroundAlpha = 105; // 41% opacity lets the Bliss backdrop remain visible.
 
     private void RefreshSoftwareCardBackgrounds()
     {
         var useFrutigerMetroBackground =
             App.Settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
             && App.IsDarkThemeActive;
+        var cardBackgroundAlpha = App.Settings.Current.VisualStyle == WintainiumVisualStyle.Windows11
+            ? Windows11SoftwareCardBackgroundAlpha
+            : SoftwareCardBackgroundAlpha;
 
         foreach (var entry in _softwareCardOriginalBackgrounds)
         {
             if (useFrutigerMetroBackground)
             {
                 entry.Key.Background = new SolidColorBrush(
-                    ColorHelper.FromArgb(SoftwareCardBackgroundAlpha, 38, 8, 13));
+                    ColorHelper.FromArgb(cardBackgroundAlpha, 38, 8, 13));
             }
             else if (entry.Value is SolidColorBrush originalBrush)
             {
                 var originalColor = originalBrush.Color;
                 entry.Key.Background = new SolidColorBrush(
                     ColorHelper.FromArgb(
-                        SoftwareCardBackgroundAlpha,
+                        cardBackgroundAlpha,
                         originalColor.R,
                         originalColor.G,
                         originalColor.B));
