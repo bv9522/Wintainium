@@ -739,6 +739,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.Status,
             stage.IsSuccessful,
             stage.WasCancelled,
+            stage.ElapsedMilliseconds,
             stage.Error);
     }
 
@@ -750,6 +751,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.Status,
             stage.IsSuccessful,
             stage.WasCancelled,
+            stage.ElapsedMilliseconds,
             stage.Error);
     }
 
@@ -759,6 +761,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         string? status,
         bool isSuccessful,
         bool wasCancelled,
+        long? elapsedMilliseconds,
         WintainiumOperationDiagnostic? error)
     {
         var outcome = wasCancelled
@@ -768,8 +771,11 @@ public sealed partial class ApplicationDetailsWindow : Window
                 : "Failed";
 
         var statusText = string.IsNullOrWhiteSpace(status) ? string.Empty : $" — {status}";
+        var elapsedText = elapsedMilliseconds is long elapsed
+            ? elapsed >= 1000 ? $" — {(elapsed / 1000d):0.0} s" : $" — {elapsed} ms"
+            : string.Empty;
         var errorText = error is null ? string.Empty : $" — {FormatDiagnostic(error)}";
-        return $"{sequence}. {name ?? "Unnamed stage"}: {outcome}{statusText}{errorText}";
+        return $"{sequence}. {name ?? "Unnamed stage"}: {outcome}{statusText}{elapsedText}{errorText}";
     }
 
     private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
