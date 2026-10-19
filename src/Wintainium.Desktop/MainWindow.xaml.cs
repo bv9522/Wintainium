@@ -446,20 +446,23 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var confirmation = new ContentDialog
+        if (App.Settings.Current.ConfirmBeforeRemove)
         {
-            XamlRoot = Content.XamlRoot,
-            Title = $"Remove {application.DisplayName}?",
-            Content = "This removes the software from your Wintainium collection. It does not uninstall the application from Windows.",
-            PrimaryButtonText = "Remove",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Close
-        };
-        App.ApplyThemeToElement(confirmation);
+            var confirmation = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = $"Remove {application.DisplayName}?",
+                Content = "This removes the software from your Wintainium collection. It does not uninstall the application from Windows.",
+                PrimaryButtonText = "Remove",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close
+            };
+            App.ApplyThemeToElement(confirmation);
 
-        if (await confirmation.ShowAsync() != ContentDialogResult.Primary)
-        {
-            return;
+            if (await confirmation.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
         }
 
         try
