@@ -880,7 +880,7 @@ public partial class App : Application
         {
             // A soft sky-blue footer separates the command buttons from the aqua
             // content surface without introducing artwork.
-            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xD6, 0xF0, 0xFF));
+            var footerBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 0xA8, 0xDD, 0xF7));
             if (element is Panel panel)
             {
                 panel.Background = footerBrush;
