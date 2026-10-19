@@ -46,7 +46,7 @@ internal static class WintainiumApplicationUpdateMapper
     private static string? PresentationStatus(PSObject stage, bool isSuccessful, bool wasCancelled)
     {
         if (wasCancelled)
-            return "Cancelled";
+            return null;
 
         var status = Nullable(stage, "Status");
         if (isSuccessful)
