@@ -116,9 +116,13 @@ that cancellation proves no machine changes occurred.
 
 1. 14C/14D: focused Dashboard and Details acceptance; fix only demonstrated gaps.
 2. 14F: update/install lifecycle presentation, cancellation, reconciliation, and
-   refresh consistency.
-3. 14G: audit every Settings control for a real, observable consumer; defer
-   controls whose underlying capability does not yet exist.
+   refresh consistency. Install/update now attempt post-operation reconciliation
+   with an independent token, including cancellation and exception paths; build
+   and runtime validation are still required.
+3. 14G: the install/update and remove confirmation preferences are wired to
+   their operation paths. Startup, close-after-operation, automatic scheduling,
+   automatic installation, and notification options are deferred in the UI until
+   their real integrations exist.
 4. 14I: keyboard, focus, automation/accessibility, resizing, DPI, dialog, UAC,
    cancellation, and error-state audit.
 5. 14J: full desktop/Core regression, real onboarding/install/update evidence,
