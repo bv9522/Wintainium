@@ -42,7 +42,10 @@ implement.
 - Phase 13: GUI productization foundation complete/superseded.
 - Phase 13.5: production installers/package formats complete and locked.
 - **Phase 14: GUI Productization is current and in progress.**
-- **Phase 14.5: First-Install Capability is the current engineering sub-phase.**
+- **Phase 14.5: First-Install Capability is complete and locked.**
+- Phase 14E onboarding and 14H visual system are complete; the visual system is
+  frozen except for reproducible defects.
+- **Phase 14F: Update Experience is the current engineering focus.**
 
 The real 7-Zip update is the reference end-to-end validation of the architecture:
 Wintainium discovers the release, makes the update decision, downloads and
@@ -58,13 +61,13 @@ The production desktop client currently has:
 - Add Software source URL onboarding
 - structured onboarding outcomes and recovery
 - Application Details
-- Check for Updates / Run Updates
+- Install / Check for Updates / Run Updates
 - operation status, lifecycle stages, errors, warnings, release information,
   and notes
 - automatic application icons
 - user-selected icon overrides with reset-to-automatic behavior
 - Remove Software from the Wintainium collection
-- authoritative collection refresh after successful operations
+- authoritative collection refresh after relevant operations
 
 The Dashboard context menu intentionally contains only **Remove Software**.
 Do not reintroduce context-menu actions that simply open Details; left-click
@@ -100,6 +103,30 @@ Do not create a fake Wintainium installer progress bar. Native installers own
 their own UI/progress when Wintainium launches them. Wintainium may show
 lifecycle/activity before and after native installer execution and must
 reconcile authoritative installed state afterward.
+
+Cancellation of the desktop operation token must not automatically cancel
+post-operation reconciliation. An installer can have changed machine state
+before cancellation is observed. After a structured install/update result—or
+when cancellation interrupts the operation before a result is returned—the
+desktop should attempt authoritative reconciliation with an independent token.
+If reconciliation fails, present that failure clearly rather than implying
+that cancellation proves no machine changes occurred.
+
+## Phase 14 working order
+
+1. 14C/14D: focused Dashboard and Details acceptance; fix only demonstrated gaps.
+2. 14F: update/install lifecycle presentation, cancellation, reconciliation, and
+   refresh consistency.
+3. 14G: audit every Settings control for a real, observable consumer; defer
+   controls whose underlying capability does not yet exist.
+4. 14I: keyboard, focus, automation/accessibility, resizing, DPI, dialog, UAC,
+   cancellation, and error-state audit.
+5. 14J: full desktop/Core regression, real onboarding/install/update evidence,
+   architecture/UX audit, cleanup, and phase lock.
+
+Do not reopen completed onboarding or frozen visual styling without a
+reproducible defect. Historical test counts are historical evidence only and
+must not be described as rerun at the current commit unless they actually were.
 
 ## Public Core surface
 
