@@ -348,6 +348,12 @@ public sealed partial class SettingsWindow : Window
                     }
                 };
             }
+            else if (root.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var pageBackground)
+                && pageBackground is Brush pageBrush)
+            {
+                // Restore the active visual style's page surface after leaving FA Light.
+                rootPanel.Background = pageBrush;
+            }
             else
             {
                 rootPanel.ClearValue(Panel.BackgroundProperty);
