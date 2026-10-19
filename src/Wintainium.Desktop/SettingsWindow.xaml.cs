@@ -88,8 +88,9 @@ public sealed partial class SettingsWindow : Window
                 else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
                     && !App.IsDarkThemeActive)
                 {
-                    navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
-                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                    navigation.Background = CreateFrutigerAeroSettingsBackground();
+                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+                    navigation.BorderThickness = new Thickness(0);
                 }
                 else if (isMetroDark)
                 {
@@ -114,8 +115,9 @@ public sealed partial class SettingsWindow : Window
                 else if (_settings.Current.VisualStyle == WintainiumVisualStyle.FrutigerAero
                     && !App.IsDarkThemeActive)
                 {
-                    contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
-                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                    contentChrome.Background = CreateFrutigerAeroSettingsBackground();
+                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+                    contentChrome.BorderThickness = new Thickness(0);
                 }
                 else if (isMetroDark)
                 {
@@ -329,40 +331,78 @@ public sealed partial class SettingsWindow : Window
 
     private static void ApplyFrutigerAeroSettingsSurface(FrameworkElement root, bool enabled)
     {
-        if (root is Panel rootPanel)
+        var transparent = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
+        if (enabled)
         {
-            if (enabled)
+            var surface = CreateFrutigerAeroSettingsBackground();
+
+            // The Settings window is one continuous FA surface: do not leave the
+            // old FM-dark or default white panes visible over the gradient.
+            if (root is Panel rootPanel)
             {
-                // Apply the FA page surface directly to the Settings root. ThemeResource
-                // updates alone are not sufficient when the window is coming from FM Dark.
-                rootPanel.Background = CreateFrutigerAeroSettingsBackground();
+                rootPanel.Background = surface;
+            }
 
-                // Keep the two intentional glass panes translucent over the aqua surface.
-                if (root.FindName("CategoryNavigationChrome") is Border navigation)
+            if (root.FindName("CategoryNavigationChrome") is Border navigation)
+            {
+                navigation.Background = surface;
+                navigation.BorderBrush = transparent;
+                navigation.BorderThickness = new Thickness(0);
+            }
+
+            if (root.FindName("SettingsContentChrome") is Border contentChrome)
+            {
+                contentChrome.Background = surface;
+                contentChrome.BorderBrush = transparent;
+                contentChrome.BorderThickness = new Thickness(0);
+            }
+
+            // WinUI input templates draw their own outlines from theme resources;
+            // changing Control.BorderBrush alone does not reliably remove them.
+            root.Resources["TextControlBorderBrush"] = transparent;
+            root.Resources["TextControlBorderBrushPointerOver"] = transparent;
+            root.Resources["TextControlBorderBrushFocused"] = transparent;
+            root.Resources["TextControlBorderBrushDisabled"] = transparent;
+            root.Resources["ComboBoxBorderBrush"] = transparent;
+            root.Resources["ComboBoxBorderBrushPointerOver"] = transparent;
+            root.Resources["ComboBoxBorderBrushPressed"] = transparent;
+            root.Resources["ComboBoxBorderBrushFocused"] = transparent;
+            root.Resources["ComboBoxBorderBrushDisabled"] = transparent;
+            root.Resources["ComboBoxBorderThickness"] = new Thickness(0);
+        }
+        else
+        {
+            if (root is Panel rootPanel)
+            {
+                if (root.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var pageBackground)
+                    && pageBackground is Brush pageBrush)
                 {
-                    navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
-                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                    rootPanel.Background = pageBrush;
                 }
-
-                if (root.FindName("SettingsContentChrome") is Border contentChrome)
+                else
                 {
-                    contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
-                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                    rootPanel.ClearValue(Panel.BackgroundProperty);
                 }
             }
-            else if (root.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var pageBackground)
-                && pageBackground is Brush pageBrush)
+
+            foreach (var key in new[]
             {
-                // Restore the active visual style's page surface after leaving FA Light.
-                rootPanel.Background = pageBrush;
-            }
-            else
+                "TextControlBorderBrush",
+                "TextControlBorderBrushPointerOver",
+                "TextControlBorderBrushFocused",
+                "TextControlBorderBrushDisabled",
+                "ComboBoxBorderBrush",
+                "ComboBoxBorderBrushPointerOver",
+                "ComboBoxBorderBrushPressed",
+                "ComboBoxBorderBrushFocused",
+                "ComboBoxBorderBrushDisabled",
+                "ComboBoxBorderThickness"
+            })
             {
-                rootPanel.ClearValue(Panel.BackgroundProperty);
+                root.Resources.Remove(key);
             }
         }
 
-        var transparent = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
         ApplyFrutigerAeroSettingsInputSurface(root, enabled, transparent, insideInputTemplate: false);
     }
 
