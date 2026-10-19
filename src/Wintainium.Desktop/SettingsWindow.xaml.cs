@@ -333,20 +333,22 @@ public sealed partial class SettingsWindow : Window
         {
             if (enabled)
             {
-                // Set the same bluish-white Frutiger Aero page gradient directly so
-                // Settings repaints immediately when switching from Frutiger Metro.
-                rootPanel.Background = new LinearGradientBrush
+                // Apply the FA page surface directly to the Settings root. ThemeResource
+                // updates alone are not sufficient when the window is coming from FM Dark.
+                rootPanel.Background = CreateFrutigerAeroSettingsBackground();
+
+                // Keep the two intentional glass panes translucent over the aqua surface.
+                if (root.FindName("CategoryNavigationChrome") is Border navigation)
                 {
-                    StartPoint = new Windows.Foundation.Point(0, 0),
-                    EndPoint = new Windows.Foundation.Point(0, 1),
-                    GradientStops =
-                    {
-                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
-                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
-                        new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
-                        new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
-                    }
-                };
+                    navigation.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
+                    navigation.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                }
+
+                if (root.FindName("SettingsContentChrome") is Border contentChrome)
+                {
+                    contentChrome.Background = new SolidColorBrush(ColorHelper.FromArgb(190, 255, 255, 255));
+                    contentChrome.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(225, 255, 255, 255));
+                }
             }
             else if (root.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var pageBackground)
                 && pageBackground is Brush pageBrush)
@@ -361,31 +363,50 @@ public sealed partial class SettingsWindow : Window
         }
 
         var transparent = new SolidColorBrush(ColorHelper.FromArgb(0, 255, 255, 255));
-        ApplyFrutigerAeroSettingsInputSurface(root, enabled, transparent);
+        ApplyFrutigerAeroSettingsInputSurface(root, enabled, transparent, insideInputTemplate: false);
     }
+
+    private static LinearGradientBrush CreateFrutigerAeroSettingsBackground() => new()
+    {
+        StartPoint = new Windows.Foundation.Point(0, 0),
+        EndPoint = new Windows.Foundation.Point(0, 1),
+        GradientStops =
+        {
+            new GradientStop { Color = ColorHelper.FromArgb(255, 0xBD, 0xEE, 0xFF), Offset = 0 },
+            new GradientStop { Color = ColorHelper.FromArgb(255, 0xEA, 0xFB, 0xFF), Offset = 0.42 },
+            new GradientStop { Color = ColorHelper.FromArgb(255, 0xB4, 0xE7, 0xE5), Offset = 0.76 },
+            new GradientStop { Color = ColorHelper.FromArgb(255, 0x72, 0xC8, 0xC5), Offset = 1 }
+        }
+    };
 
     private static void ApplyFrutigerAeroSettingsInputSurface(
         FrameworkElement element,
         bool enabled,
-        Brush transparent)
+        Brush transparent,
+        bool insideInputTemplate)
     {
-        if (element is TextBox or ComboBox)
+        var isInput = element is TextBox or ComboBox;
+        if (element is Control control && isInput)
         {
-            if (element is Control control)
+            if (enabled)
             {
-                if (enabled)
-                {
-                    // Remove the leftover white FM outline; FA input fields blend
-                    // into the light aqua Settings surface instead.
-                    control.BorderBrush = transparent;
-                    control.BorderThickness = new Thickness(0);
-                }
-                else
-                {
-                    control.ClearValue(Control.BorderBrushProperty);
-                    control.ClearValue(Control.BorderThicknessProperty);
-                }
+                // Override the control itself and its template border: FM's local
+                // orange/dark styling and WinUI's light outline can both survive a
+                // theme-resource swap, so clear the entire input outline explicitly.
+                control.BorderBrush = transparent;
+                control.BorderThickness = new Thickness(0);
             }
+            else
+            {
+                control.ClearValue(Control.BorderBrushProperty);
+                control.ClearValue(Control.BorderThicknessProperty);
+            }
+        }
+
+        if (insideInputTemplate && enabled && element is Border templateBorder)
+        {
+            templateBorder.BorderBrush = transparent;
+            templateBorder.BorderThickness = new Thickness(0);
         }
 
         var childCount = VisualTreeHelper.GetChildrenCount(element);
@@ -393,7 +414,8 @@ public sealed partial class SettingsWindow : Window
         {
             if (VisualTreeHelper.GetChild(element, index) is FrameworkElement child)
             {
-                ApplyFrutigerAeroSettingsInputSurface(child, enabled, transparent);
+                ApplyFrutigerAeroSettingsInputSurface(
+                    child, enabled, transparent, insideInputTemplate || isInput);
             }
         }
     }
