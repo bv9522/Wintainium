@@ -81,9 +81,9 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     }
 
     $operationsRoot = Join-Path $root 'operations'
-    # Reserve one retention slot for the current failed/cancelled operation so
-    # the bound remains true immediately after this cleanup pass.
-    $operationRetentionLimit = if ($Outcome -ne 'Completed') { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
+    # Failed artifacts may be retained for troubleshooting. Cancelled artifacts
+    # are always removed, so only failed operations need a reserved retention slot.
+    $operationRetentionLimit = if ($Outcome -eq 'Failed') { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
     $purgedOperations = [System.Collections.Generic.List[string]]::new()
     $purgedLegacyArtifacts = [System.Collections.Generic.List[string]]::new()
 
@@ -109,8 +109,9 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         # Maintenance failure is intentionally non-authoritative.
     }
 
-    # Failed/cancelled artifacts are useful for troubleshooting, but retention is
-    # temporary and bounded so repeated failures cannot consume the user's disk.
+    # Failed artifacts are useful for troubleshooting, but retention is temporary
+    # and bounded so repeated failures cannot consume the user's disk. Cancelled
+    # artifacts are removed below rather than retained.
     if (Test-Path -LiteralPath $operationsRoot -PathType Container) {
         $nowUtc = [DateTime]::UtcNow
         $cutoffUtc = $nowUtc.AddDays(-$RetentionDays)
@@ -190,7 +191,7 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         }
     }
 
-    if ($Outcome -ne 'Completed') {
+    if ($Outcome -eq 'Failed') {
         $artifactExists = Test-Path -LiteralPath $destination
         $metadataPath = $null
         $metadataWritten = $false
@@ -307,7 +308,7 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         DirectoryRemoved = $directoryRemoved
         PurgedOperations = @($purgedOperations)
         PurgedLegacyArtifacts = @($purgedLegacyArtifacts)
-        ReasonCode = 'ArtifactRemovedAfterSuccessfulUpdate'
+        ReasonCode = if ($Outcome -eq 'Cancelled') { 'ArtifactRemovedAfterCancelledOperation' } else { 'ArtifactRemovedAfterSuccessfulUpdate' }
         Error = $null
     }
 }
