@@ -73,71 +73,79 @@ The objective is to turn the existing desktop client into a coherent,
 production-quality Wintainium application without moving engine authority into
 WinUI.
 
+### 14C — Navigation & Presentation Acceptance
+
+Focused acceptance of the existing Dashboard rather than a presentation rewrite:
+
+- list/grid presentation and sort/filter behavior
+- selection and navigation into Details
+- empty states and application identity/state
+- installed/update status and version presentation without clipping
+- Remove Software semantics: remove from Wintainium's collection, not uninstall
+
+### 14D — Application Details Acceptance
+
+Focused acceptance of the existing Details window:
+
+- identity, icon, installation/update state, and release information
+- install, update-check, and update action availability from authoritative state
+- lifecycle stages, results, warnings, failures, cancellation, and diagnostics
+- authoritative installed-state reconciliation and Dashboard refresh
+- cancellation must not suppress post-operation reconciliation
+
 ### 14E — Add Software / Onboarding UX
 
-- polish source URL entry
-- present source-resolution activity and results clearly
-- handle unsupported, ambiguous, unavailable, interactive, authentication,
-  and failure states
-- provide useful recovery actions
-- preserve correct discovered application identity/display name
-- transition naturally into the Dashboard collection
-- keep provider/Core internals out of the UX
-- avoid implying that the source page itself must contain all verification
-  evidence
+**Complete.** Source URL onboarding presents resolution outcomes and recovery
+paths, handles unsupported/ambiguous/unavailable/interactive/authentication and
+failure states, preserves discovered identity, transitions into the collection,
+and keeps provider/Core internals out of the UX. Verification evidence may be
+discovered independently of the supplied source page.
 
 ### Phase 14.5 — First-Install Capability
 
-**Current engineering sub-phase — 14.5A in progress.**
+**Complete and locked.** The public Core install operation, artifact selection,
+shared lifecycle orchestration, native installer/elevation handling, structured
+results, authoritative reconciliation, and desktop Install action are integrated.
+The implementation reuses the existing lifecycle engine; it does not create a
+parallel installer architecture.
 
-Extend Wintainium from update execution to first-install execution by integrating
-with the existing lifecycle engine rather than creating a second installer
-architecture.
-
-#### 14.5A — Core Install Operation
-- expose `Invoke-WintainiumApplicationInstall`
-- reuse the existing lifecycle execution stages
-- establish a structured first-install result contract
-- preserve Core-owned cancellation, diagnostics, installer invocation, and authoritative reconciliation
-
-#### 14.5B — Initial Release & Artifact Selection
-- deterministic selection of an installable release
-- architecture/platform compatibility
-- artifact eligibility and installer compatibility
-- ambiguous or indeterminate selection handling
-
-#### 14.5C — Installation Orchestration
-- download
-- verification
-- installer selection
-- elevation/native installer execution
-- authoritative reconciliation
-- failure and cancellation semantics
-
-#### 14.5D — Real-World Installation Validation
-- real uninstalled application installation
-- UAC/elevation
-- authoritative post-install state
-- subsequent update detection
-
-#### 14.5E — Desktop Integration
-- Install action
-- lifecycle presentation
-- refresh after reconciliation
-- action availability based on Core state
-
-#### 14.5F — 14.5 Lock
-- Core regression
-- real installation proof
-- architecture audit
-- transition back to Phase 14 GUI productization
-
-### 14.5 exit criteria
-- a first-install operation exists as a public Core boundary
-- install and update share the same download, verification, installer, and reconciliation execution path
-- no parallel installer engine or GUI-owned lifecycle logic is introduced
+The historical installer and artifact test counts recorded in commit-era reports
+are not a claim that those suites have been rerun at the current branch head.
 
 ### 14F — Update Experience
+
+**Current engineering focus.**
+
+- present Core lifecycle activity before/after native installer execution
+- clearly communicate native installer/elevation transitions
+- present lifecycle results, errors, warnings, and cancellation
+- do not invent Wintanium-owned installer progress percentages
+- reconcile authoritative installed state after install/update, including
+  cancellation paths where an operation may already have changed the machine
+- make update state/action availability reflect real Core state
+- verify Dashboard and Details refresh consistency
+- confirm operation cancellation does not cancel the follow-up reconciliation
+
+### 14G — Settings Productization
+
+- audit existing General, Appearance, Updates, Sources, and Advanced categories
+- keep Appearance controls connected to the existing visual-style/theme system
+- connect only settings with a real, observable consumer
+- verify confirmation settings against actual install/update/remove flows
+- defer launch-at-sign-in until startup integration exists
+- defer automatic checking/frequency and auto-install until durable scheduling
+  and lifecycle policy are implemented
+- defer notifications unless the corresponding notification behavior exists
+- keep Sources/Advanced explicit about unavailable capabilities; no fake controls
+
+### 14H — Visual System
+
+**Complete and frozen.** Windows 11 Bliss Light/Dark, Y2K Light/Dark, Frutiger
+Aero Light/Dark (including Frutiger Metro), typography, backgrounds, title bars,
+dialogs, icons, and theme isolation have been implemented. Reopen only for a
+reproducible defect; do not make aesthetic changes or allow cross-theme bleed.
+
+
 
 - present Core lifecycle activity before/after native installer execution
 - clearly communicate native installer/elevation transitions
