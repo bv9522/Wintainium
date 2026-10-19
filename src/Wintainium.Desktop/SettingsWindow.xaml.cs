@@ -403,10 +403,19 @@ public sealed partial class SettingsWindow : Window
             }
         }
 
-        if (insideInputTemplate && enabled && element is Border templateBorder)
+        if (insideInputTemplate && element is Border templateBorder)
         {
-            templateBorder.BorderBrush = transparent;
-            templateBorder.BorderThickness = new Thickness(0);
+            if (enabled)
+            {
+                templateBorder.BorderBrush = transparent;
+                templateBorder.BorderThickness = new Thickness(0);
+            }
+            else
+            {
+                // Do not let FA's template-level override leak into another visual style.
+                templateBorder.ClearValue(Border.BorderBrushProperty);
+                templateBorder.ClearValue(Border.BorderThicknessProperty);
+            }
         }
 
         var childCount = VisualTreeHelper.GetChildrenCount(element);
