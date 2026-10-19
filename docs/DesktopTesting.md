@@ -40,9 +40,11 @@ The 11J checkpoint covers:
 
 ## Install launch responsiveness and card transparency follow-up
 
+- [ ] After confirming an install, inspect the Operation Status stage list for elapsed times. The Installation stage duration, when cancelling as soon as the native installer window appears, approximates the pre-window delay; compare ReleaseDiscovery, Download, Verification, and InstallerSelection to identify the actual bottleneck.
+- [ ] Confirm elapsed-time reporting is present for successful and failed stages and does not change cancellation or authoritative-state reconciliation behavior.
 - [ ] On a fresh install using a GitHub Releases provider, verify that the official installer opens promptly after confirmation. The install lifecycle now defaults to one newest-first release page for that provider; an explicit manifest `source.settings.maxPages` value remains respected.
 - [ ] Confirm that the selected release still contains a compatible artifact for the machine architecture and declared artifact formats. If a project needs older release history to find a compatible artifact, set `maxPages` explicitly to a suitable value in its manifest.
-- [ ] Compare Grid and List cards in Windows 11 Light and Dark and in every other visual appearance. Card surfaces should have the same transparency in both layouts, preserve each theme's color palette, and keep text readable.
+- [ ] Compare Grid and List cards in Windows 11 Light and Dark and in every other visual appearance. Card surfaces should have the same transparency in both layouts, preserve each theme's color palette, and keep text readable. Windows 11 should now use a distinctly lower opacity than other themes.
 - [ ] Recheck Frutiger Metro's dark crimson card surface and all theme transitions to ensure the shared transparency does not bleed into other theme artwork or colors.
 
 ## Phase 14F — Install/update and settings acceptance
