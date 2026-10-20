@@ -145,14 +145,15 @@ Describe 'Wintainium application onboarding' {
         @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
-    It 'preserves provider status and identity in source-resolution log events on failure' {
+    It 'preserves provider status and identity in source-identification failure log events' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/unsupported' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
 
         $result.IsSuccessful | Should -Be $false
         @($result.LogEvents).Count | Should -BeGreaterThan 0
-        @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionCompleted').Count | Should -BeGreaterThan 0
-        @($result.LogEvents | Where-Object { $_.Component -eq 'SourceResolution' -and $_.Context.ProviderId }).Count | Should -BeGreaterThan 0
-        @($result.LogEvents | Where-Object { $_.Context.Status }).Count | Should -BeGreaterThan 0
+        $failureEvents = @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed')
+        $failureEvents.Count | Should -BeGreaterThan 0
+        @($failureEvents | Where-Object { $_.Component -eq 'SourceIdentification' -and $_.Context.ProviderId }).Count | Should -BeGreaterThan 0
+        @($failureEvents | Where-Object { $_.Context.Stage -eq 'SourceIdentification' -and $_.Context.Status }).Count | Should -BeGreaterThan 0
     }
 
     It 'propagates SourceUnsupported without creating application state' {
