@@ -109,8 +109,9 @@ function Invoke-WintainiumApplicationReconciliation {
     }
 
     $authoritativeLogEvents = @($authoritativeLogEvent)
-    if ($null -ne $authoritative.LogEvents) {
-        $authoritativeLogEvents += @($authoritative.LogEvents)
+    $authoritativeLogEventsProperty = $authoritative.PSObject.Properties['LogEvents']
+    if ($null -ne $authoritativeLogEventsProperty -and $null -ne $authoritativeLogEventsProperty.Value) {
+        $authoritativeLogEvents += @($authoritativeLogEventsProperty.Value)
     }
 
     if (-not [bool]$authoritative.IsSuccessful) {
