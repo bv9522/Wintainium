@@ -54,7 +54,7 @@ Describe 'Wintainium default application installer policy' {
 
         $result.IsSuccessful | Should -Be $true
         $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.exe'
-        @($result.Policy.Artifact.Formats) | Should -Be @('exe')
+        @($result.Policy.Artifact.Formats) | Should -Be @('exe','msi','msix','zip')
     }
 
     It 'falls back from EXE to MSI when no EXE installer is registered' {
@@ -89,7 +89,7 @@ Describe 'Wintainium default application installer policy' {
 
         $result.IsSuccessful | Should -Be $true
         $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.msi'
-        @($result.Policy.Artifact.Formats) | Should -Be @('msi')
+        @($result.Policy.Artifact.Formats) | Should -Be @('msi','msix','zip')
     }
 
     It 'falls back to MSIX before portable ZIP' {
@@ -117,7 +117,7 @@ Describe 'Wintainium default application installer policy' {
 
         $result.IsSuccessful | Should -Be $true
         $result.Policy.Installer.PluginId | Should -Be 'Wintainium.installer.msix'
-        @($result.Policy.Artifact.Formats) | Should -Be @('msix')
+        @($result.Policy.Artifact.Formats) | Should -Be @('msix','zip')
     }
 
     It 'uses portable ZIP when it is the only supported default mechanism' {
