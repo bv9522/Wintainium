@@ -16,7 +16,7 @@ Describe 'Test-WintainiumApplicationDefinition public contract' {
 
         $result.IsValid | Should -Be $true
         $result.OperationId | Should -Be $operationId
-        @($result.LogEvents).OperationId | Should -All -Be $operationId
+        @($result.LogEvents | Where-Object { $_.OperationId -ne $operationId }) | Should -BeNullOrEmpty
         $result.ReconciliationPlugin.PluginId | Should -Be 'Wintainium.reconciliation.valid-fixture'
     }
 
