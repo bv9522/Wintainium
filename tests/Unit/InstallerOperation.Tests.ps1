@@ -107,7 +107,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $pluginRoot = Join-Path $TestDrive 'NonStringArguments'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
         $modulePath = Join-Path $pluginRoot 'invalid.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
     param([psobject]`$Invocation)
@@ -130,7 +130,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $workingDirectory = Join-Path $pluginRoot 'Work'
         New-Item -ItemType Directory -Path $workingDirectory -Force | Out-Null
         $modulePath = Join-Path $pluginRoot 'inputs.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         $script = 'Write-Output (($args -join "<SEP>") + "<SEP>" + $env:WINTAINIUM_TEST_VALUE + "<SEP>" + (Get-Location).Path)'
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
@@ -159,7 +159,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $pluginRoot = Join-Path $TestDrive 'InvalidWorkingDirectory'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
         $modulePath = Join-Path $pluginRoot 'invalid-working-directory.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         $missingDirectory = Join-Path $pluginRoot 'missing'
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
@@ -182,7 +182,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $pluginRoot = Join-Path $TestDrive 'InvalidEnvironment'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
         $modulePath = Join-Path $pluginRoot 'invalid-environment.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
     param([psobject]`$Invocation)
@@ -204,7 +204,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $pluginRoot = Join-Path $TestDrive 'MultipleResults'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
         $modulePath = Join-Path $pluginRoot 'multiple-results.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
     param([psobject]`$Invocation)
@@ -249,7 +249,7 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
         $pluginRoot = Join-Path $TestDrive 'Lifecycle'
         New-Item -ItemType Directory -Path $pluginRoot | Out-Null
         $modulePath = Join-Path $pluginRoot 'lifecycle.psm1'
-        $pwshPath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $pwshPath = (Get-Process -Id $PID).Path
         Set-Content -LiteralPath $modulePath -Value @"
 function Invoke-WintainiumInstaller {
     param([psobject]`$Invocation)
