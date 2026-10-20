@@ -164,7 +164,7 @@ internal sealed class WintainiumApplicationOnboardingService
             foreach (DictionaryEntry entry in dictionary)
             {
                 var key = Convert.ToString(entry.Key);
-                if (key is null || entry.Value is null || key is not ("ProviderId" or "Status" or "Capability" or "Host"))
+                if (key is null || entry.Value is null || key is not ("ProviderId" or "Status" or "Capability" or "Host" or "Stage" or "ErrorCode"))
                     continue;
                 details.Add($"{key}={entry.Value}");
             }
