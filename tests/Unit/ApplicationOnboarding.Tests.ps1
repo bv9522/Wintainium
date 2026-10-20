@@ -61,7 +61,8 @@ Describe 'Wintainium application onboarding' {
 
     It 'uses the Core-owned default policy when the caller supplies no policy' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot
-        $result.IsSuccessful | Should -Be $true
+        $failureDetails = @($result.Errors | ForEach-Object { "$($_.Code): $($_.Message)" }) -join '; '
+        $result.IsSuccessful | Should -Be $true -Because "Onboarding status was '$($result.Status)'. Errors: $failureDetails"
         $result.Status | Should -Be 'Resolved'
         $result.ApplicationDefinition.Installer.pluginId | Should -Be 'Wintainium.installer.portable-zip'
         $result.ApplicationDefinition.Reconciliation.pluginId | Should -Be 'Wintainium.reconciliation.valid-fixture'
