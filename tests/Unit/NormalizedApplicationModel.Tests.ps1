@@ -16,7 +16,7 @@ Describe 'Wintainium normalized application model' {
             Installer=[pscustomobject]@{ PluginId='Wintainium.installer.valid-fixture'; RequiredContractVersion='1'; Settings=@{} }
             Reconciliation=[pscustomobject]@{ PluginId='Wintainium.reconciliation.valid-fixture'; RequiredContractVersion='1'; Settings=@{} }
             Release=[pscustomobject]@{ Channel='stable' }
-            Artifact=[pscustomobject]@{ Formats=@('exe','msi','zip'); Architectures=@('x64','x86','arm64','neutral'); AllowUnknownArchitecture=$true }
+            Artifact=[pscustomobject]@{ Formats=@('exe','msi','zip'); Architectures=@('x64','x86','neutral'); AllowUnknownArchitecture=$true }
         }
     }
 
