@@ -74,8 +74,11 @@ function Invoke-WintainiumInstallerOperation {
     }
 
     $executablePath = [string]$spec.ExecutablePath
-    if ([string]::IsNullOrWhiteSpace($executablePath) -or -not [System.IO.Path]::IsPathFullyQualified($executablePath) -or -not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
-        return & $failure 'InstallerProcessSpecificationInvalid' 'Installer process specification requires an existing absolute executable path.'
+    $executablePathIsAbsolute = -not [string]::IsNullOrWhiteSpace($executablePath) -and [System.IO.Path]::IsPathFullyQualified($executablePath)
+    $executablePathExists = -not [string]::IsNullOrWhiteSpace($executablePath) -and (Test-Path -LiteralPath $executablePath -PathType Leaf)
+    if (-not $executablePathIsAbsolute -or -not $executablePathExists) {
+        $reportedExecutablePath = if ([string]::IsNullOrWhiteSpace($executablePath)) { '<empty>' } else { $executablePath }
+        return & $failure 'InstallerProcessSpecificationInvalid' ("Installer process specification requires an existing absolute executable path. ActualPath='{0}'; IsAbsolute={1}; ExistsAsFile={2}." -f $reportedExecutablePath, $executablePathIsAbsolute, $executablePathExists)
     }
     $executablePath = [System.IO.Path]::GetFullPath($executablePath)
 
