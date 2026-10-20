@@ -67,7 +67,7 @@ Describe 'Production EXE installer composition' {
             New-WintainiumInstallerRequest -DownloadResult $DownloadResult -Manifest $Manifest -OperationId $OperationId
         }
 
-        $requestResult.IsValid | Should -Be $true
+        $requestResult.IsValid | Should -Be $true -Because (@($requestResult.Errors | ForEach-Object { "$($_.Code): $($_.Message)" }) -join '; ')
 
         $invocationResult = InModuleScope Wintainium.Core -Parameters @{
             Selection = $selection
