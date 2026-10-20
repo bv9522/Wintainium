@@ -39,7 +39,7 @@ Describe 'Invoke-WintainiumInstallerOperation' {
             Invoke-WintainiumInstallerOperation -Invocation $Invocation -TimeoutMilliseconds 10000
         }
 
-        $result.Status | Should -Be 'Completed'
+        $result.Status | Should -Be 'Completed' -Because ("FailureKind={0}; ErrorMessage={1}; ExitCode={2}; StandardError={3}" -f $result.FailureKind, $result.ErrorMessage, $result.ExitCode, $result.StandardError)
         $result.FailureKind | Should -Be $null
         $result.OperationId | Should -Be 'op-installer-1'
         $result.DownloadOperationId | Should -Be 'dl-installer-1'
