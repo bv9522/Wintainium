@@ -130,7 +130,7 @@ The Add Software dialog's **Diagnostics and Troubleshooting** expander presents 
 
 A report with no provider/resolver events may indicate that resolution failed before a provider was invoked, no provider advertised the required capability, or the provider returned no additional events. It should not be interpreted as proof that the page itself was inspected successfully.
 
-For a provider-resolution failure, compare the provider event's `ProviderId` and `Status` with the structured error `Code` and `Message`. This distinguishes an unsupported host or page shape from an unavailable source, an invalid response, and an interactive/authentication requirement.
+For a provider-resolution failure, compare the provider event's `ProviderId`, `Stage`, `Status`, and `ErrorCode` with the structured error `Code` and `Message`. A failed provider attempt emits a `ProviderSourceResolutionFailed` event with `Stage=SourceIdentification`; its `Host` field contains only the normalized hostname, never the full source URL. This preserves a per-provider explanation even when multiple providers decline and no single `SourceResolution` object can be selected. These events distinguish an unsupported host or page shape from an unavailable source, an invalid response, and an interactive/authentication requirement.
 
 ### Release discovery
 
