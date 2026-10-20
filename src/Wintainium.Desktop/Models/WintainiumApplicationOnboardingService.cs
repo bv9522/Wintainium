@@ -49,6 +49,8 @@ internal sealed class WintainiumApplicationOnboardingService
             ManifestPath: Nullable(result, "ManifestPath"),
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
+            SourceResolutionStatus: NestedNullable(result, "SourceResolution", "Status"),
+            LogEvents: LogEvents(result),
             OperationState: WintainiumOperationStateMapper.Map(result).State);
     }
 
@@ -117,6 +119,68 @@ internal sealed class WintainiumApplicationOnboardingService
             Nullable(item, "Code"),
             Nullable(item, "Path"),
             Nullable(item, "Message"))];
+    }
+
+    private static string? NestedNullable(PSObject source, string parentName, string propertyName)
+    {
+        var parent = source.Properties[parentName]?.Value;
+        return parent is null || parent is PSObject { BaseObject: null }
+            ? null
+            : Nullable(PSObject.AsPSObject(parent), propertyName);
+    }
+
+    private static IReadOnlyList<WintainiumOperationDiagnostic> LogEvents(PSObject source)
+    {
+        var value = source.Properties["LogEvents"]?.Value;
+        if (value is null)
+            return [];
+
+        var events = value is IEnumerable enumerable and not string
+            ? enumerable.Cast<object>().Select(PSObject.AsPSObject)
+            : [PSObject.AsPSObject(value)];
+
+        return events.Select(item =>
+        {
+            var context = ContextDetails(item.Properties["Context"]?.Value);
+            var message = Nullable(item, "Message");
+            if (!string.IsNullOrWhiteSpace(context))
+                message = string.IsNullOrWhiteSpace(message) ? context : $"{message} ({context})";
+
+            return new WintainiumOperationDiagnostic(
+                Nullable(item, "EventName") ?? Nullable(item, "Code") ?? Nullable(item, "Severity") ?? "LogEvent",
+                Nullable(item, "Component"),
+                message);
+        }).ToArray();
+    }
+
+    private static string? ContextDetails(object? value)
+    {
+        if (value is null)
+            return null;
+
+        var details = new List<string>();
+        if (value is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                var key = Convert.ToString(entry.Key);
+                if (key is null || entry.Value is null || key is not ("ProviderId" or "Status" or "Capability" or "Host"))
+                    continue;
+                details.Add($"{key}={entry.Value}");
+            }
+        }
+        else
+        {
+            var context = PSObject.AsPSObject(value);
+            foreach (var key in new[] { "ProviderId", "Status", "Capability", "Host" })
+            {
+                var detail = Nullable(context, key);
+                if (!string.IsNullOrWhiteSpace(detail))
+                    details.Add($"{key}={detail}");
+            }
+        }
+
+        return details.Count == 0 ? null : string.Join(", ", details);
     }
 
     private static string Required(PSObject source, string name)
