@@ -172,7 +172,7 @@ internal sealed class WintainiumApplicationOnboardingService
         else
         {
             var context = PSObject.AsPSObject(value);
-            foreach (var key in new[] { "ProviderId", "Status", "Capability", "Host" })
+            foreach (var key in new[] { "ProviderId", "Status", "Capability", "Host", "Stage", "ErrorCode" })
             {
                 var detail = Nullable(context, key);
                 if (!string.IsNullOrWhiteSpace(detail))
