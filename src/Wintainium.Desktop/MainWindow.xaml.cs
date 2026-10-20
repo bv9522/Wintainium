@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Windowing;
 using Windows.System;
+using Windows.ApplicationModel.DataTransfer;
 using Wintainium.Desktop.Models;
 using Wintainium.Desktop.Settings;
 
@@ -797,6 +798,39 @@ public sealed partial class MainWindow : Window
             Visibility = Visibility.Collapsed
         };
 
+        var diagnosticsText = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            IsTextSelectionEnabled = true,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas")
+        };
+
+        var copyDiagnosticsButton = new Button
+        {
+            Content = "Copy Diagnostics",
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+
+        copyDiagnosticsButton.Click += (_, _) =>
+        {
+            var package = new DataPackage();
+            package.SetText(diagnosticsText.Text);
+            Clipboard.SetContent(package);
+            copyDiagnosticsButton.Content = "Diagnostics Copied";
+        };
+
+        var diagnosticsExpander = new Expander
+        {
+            Header = "Diagnostics and Troubleshooting",
+            IsExpanded = false,
+            Visibility = Visibility.Collapsed,
+            Content = new StackPanel
+            {
+                Spacing = 8,
+                Children = { diagnosticsText, copyDiagnosticsButton }
+            }
+        };
+
         Grid.SetColumn(statusText, 1);
 
         var recoveryButton = new Button
@@ -824,7 +858,8 @@ public sealed partial class MainWindow : Window
                         statusText
                     }
                 },
-                recoveryButton
+                recoveryButton,
+                diagnosticsExpander
             }
         };
 
@@ -900,14 +935,13 @@ public sealed partial class MainWindow : Window
                     if (!result.IsSuccessful)
                     {
                         var (_, message, canOpenSource) = GetOnboardingFailurePresentation(result);
-                        var diagnostics = result.Errors.Count == 0
-                            ? string.Empty
-                            : string.Join(Environment.NewLine, result.Errors.Select(FormatDiagnostic));
 
-                        statusText.Text = string.IsNullOrWhiteSpace(diagnostics)
-                            ? message
-                            : $"{message}{Environment.NewLine}{Environment.NewLine}{diagnostics}";
+                        statusText.Text = message;
                         statusText.Visibility = Visibility.Visible;
+                        diagnosticsText.Text = BuildOnboardingDiagnostics(result, sourceUri);
+                        diagnosticsExpander.Visibility = Visibility.Visible;
+                        diagnosticsExpander.IsExpanded = result.Errors.Count > 0 || result.LogEvents.Count > 0;
+                        copyDiagnosticsButton.Content = "Copy Diagnostics";
                         recoveryButton.Visibility = canOpenSource ? Visibility.Visible : Visibility.Collapsed;
                         sourceTextBox.IsEnabled = true;
                         dialog.IsPrimaryButtonEnabled = true;
@@ -952,6 +986,54 @@ public sealed partial class MainWindow : Window
         };
 
         await dialog.ShowAsync();
+    }
+
+    private static string BuildOnboardingDiagnostics(
+        WintainiumApplicationOnboardingResult result,
+        string sourceUri)
+    {
+        var builder = new System.Text.StringBuilder();
+        builder.AppendLine("Wintainium Source Resolution Diagnostics");
+        builder.AppendLine($"Operation ID: {result.OperationId}");
+        builder.AppendLine($"Overall Status: {result.Status ?? "Unknown"}");
+        builder.AppendLine($"Source Resolution Status: {result.SourceResolutionStatus ?? "Not provided"}");
+
+        if (Uri.TryCreate(sourceUri, UriKind.Absolute, out var uri))
+            builder.AppendLine($"Source Host: {uri.Host}");
+
+        if (result.Errors.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Errors:");
+            foreach (var diagnostic in result.Errors)
+                builder.AppendLine(FormatDiagnostic(diagnostic));
+        }
+
+        if (result.Warnings.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Warnings:");
+            foreach (var diagnostic in result.Warnings)
+                builder.AppendLine(FormatDiagnostic(diagnostic));
+        }
+
+        if (result.LogEvents.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Provider / Resolver Events:");
+            foreach (var diagnostic in result.LogEvents)
+                builder.AppendLine(FormatDiagnostic(diagnostic));
+        }
+        else
+        {
+            builder.AppendLine();
+            builder.AppendLine("Provider / Resolver Events:");
+            builder.AppendLine("No provider-level log events were returned. The failure may have occurred before a provider ran, or the provider did not emit additional events.");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("No application was added unless onboarding reported success.");
+        return builder.ToString().TrimEnd();
     }
 
     private static (string Title, string Message, bool CanOpenSource) GetOnboardingFailurePresentation(
