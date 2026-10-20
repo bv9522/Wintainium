@@ -1,6 +1,7 @@
 BeforeAll {
     $script:testRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
     $script:pluginPath = Join-Path -Path $script:testRoot -ChildPath 'plugins/Wintainium.provider.github-releases/Wintainium.provider.github-releases.psm1'
+    Remove-Module -Name 'Wintainium.provider.github-releases' -Force -ErrorAction SilentlyContinue
     Import-Module $script:pluginPath -Force
 }
 
