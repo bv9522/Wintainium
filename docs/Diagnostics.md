@@ -115,6 +115,23 @@ If validation fails:
 
 A valid application definition does not establish that an update is available.
 
+### Add Software / source resolution
+
+When Add Software cannot resolve a URL, do not stop at the user-facing status such as
+`SourceUnsupported` or `SourceResponseInvalid`. Inspect the complete onboarding result:
+
+- `Status` — the overall terminal onboarding status.
+- `SourceResolution.Status` — the selected source resolver's status when a single resolver result is available. This may be absent when multiple providers declined or when resolution failed before a provider result could be selected.
+- `Errors` and `Warnings` — structured provider and Core diagnostics, including stable error codes.
+- `LogEvents` — correlated provider/resolver events. Source-resolution completion events include provider identity and the provider's status in their context.
+- `OperationId` — the correlation identifier to preserve when collecting or sharing diagnostics.
+
+The Add Software dialog's **Diagnostics and Troubleshooting** expander presents these fields in a copyable report. It intentionally displays the source host rather than echoing the complete URL, because query strings or path segments can contain sensitive tokens.
+
+A report with no provider/resolver events may indicate that resolution failed before a provider was invoked, no provider advertised the required capability, or the provider returned no additional events. It should not be interpreted as proof that the page itself was inspected successfully.
+
+For a provider-resolution failure, compare the provider event's `ProviderId` and `Status` with the structured error `Code` and `Message`. This distinguishes an unsupported host or page shape from an unavailable source, an invalid response, and an interactive/authentication requirement.
+
 ### Release discovery
 
 If release discovery fails:
