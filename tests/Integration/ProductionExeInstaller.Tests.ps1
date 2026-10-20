@@ -8,7 +8,7 @@ BeforeAll {
 
 Describe 'Production EXE installer composition' {
     It 'flows from registry selection through invocation and controlled process execution' {
-        $pwshPath = (Get-Command pwsh -CommandType Application).Source
+        $pwshPath = Get-Command pwsh -CommandType Application | Where-Object { Test-Path -LiteralPath $_.Source -PathType Leaf } | Select-Object -First 1 -ExpandProperty Source
         # Use the installed PowerShell apphost directly. Renaming a .NET apphost can
         # change the adjacent runtime/dll resolution behavior, so the test artifact
         # remains the real executable while still exercising the production EXE path.
