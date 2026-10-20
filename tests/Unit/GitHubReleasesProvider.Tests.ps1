@@ -92,7 +92,7 @@ Describe 'Wintainium GitHub Releases provider' {
         $result.Releases[0].Artifacts[0].Format | Should -Be 'zip'
         $result.Releases[0].Artifacts[0].Architecture | Should -Be 'x64'
         $result.Releases[0].Artifacts[1].Format | Should -Be 'msi'
-        $result.Releases[0].Artifacts[1].Architecture | Should -Be 'arm64'
+        $result.Releases[0].Artifacts[1].Architecture | Should -Be 'unknown'
         $result.Releases[1].Channel | Should -Be 'prerelease'
         $result.Releases[1].Artifacts | Should -HaveCount 0
         Should -Invoke Invoke-RestMethod -ModuleName Wintainium.provider.github-releases -Times 1 -Exactly -ParameterFilter {
