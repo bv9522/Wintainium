@@ -4,8 +4,28 @@ function Invoke-WintainiumCoreProviderSourceResolution {
 
     $operationId=[string]$Request.OperationId
     $logEvents=[System.Collections.Generic.List[object]]::new()
+    $sourceHost=$null
+    try {
+        $candidateSourceUri=[Uri]([string]$Request.SourceUri)
+        if ($candidateSourceUri.IsAbsoluteUri -and $candidateSourceUri.Scheme -in @('http','https')) {
+            $sourceHost=$candidateSourceUri.DnsSafeHost.ToLowerInvariant()
+        }
+    } catch {}
     $baseResult={
         param([bool]$IsSuccessful,[string]$Status,[object]$Source=$null,[object[]]$Errors=@(),[object[]]$Warnings=@())
+        if (-not $IsSuccessful) {
+            $context=@{Stage='SourceIdentification';Status=$Status}
+            if ($Provider.PSObject.Properties['PluginId'] -and -not [string]::IsNullOrWhiteSpace([string]$Provider.PluginId)) {
+                $context.ProviderId=[string]$Provider.PluginId
+            }
+            if (-not [string]::IsNullOrWhiteSpace($sourceHost)) {
+                $context.Host=$sourceHost
+            }
+            if (@($Errors).Count -gt 0 -and $Errors[0].PSObject.Properties['Code']) {
+                $context.ErrorCode=[string]$Errors[0].Code
+            }
+            $logEvents.Add((New-WintainiumLogEvent -Severity Warning -OperationId $operationId -Component 'SourceIdentification' -EventName 'ProviderSourceResolutionFailed' -Message 'Provider source-identification attempt failed.' -Context $context))
+        }
         [pscustomobject][ordered]@{
             OperationId=$operationId; IsSuccessful=$IsSuccessful; Status=$Status
             Source=$Source; Errors=@($Errors); Warnings=@($Warnings); LogEvents=$logEvents.ToArray()
@@ -116,6 +136,8 @@ function Invoke-WintainiumCoreProviderSourceResolution {
         }
     }
 
-    $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'SourceResolution' -EventName 'SourceResolutionCompleted' -Message 'Source resolution completed.' -Context @{ProviderId=$Provider.PluginId;Status=[string]$resolverResult.Status}))
+    if ([bool]$resolverResult.IsSuccessful) {
+        $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'SourceIdentification' -EventName 'SourceResolutionCompleted' -Message 'Provider source identification completed.' -Context @{ProviderId=$Provider.PluginId;Status=[string]$resolverResult.Status;Stage='SourceIdentification';Host=$sourceHost}))
+    }
     & $baseResult ([bool]$resolverResult.IsSuccessful) ([string]$resolverResult.Status) $resolverResult.Source @($resolverResult.Errors) @($resolverResult.Warnings)
 }
