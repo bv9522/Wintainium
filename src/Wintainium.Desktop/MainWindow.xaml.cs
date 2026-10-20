@@ -954,6 +954,17 @@ public sealed partial class MainWindow : Window
 
                     await RefreshApplicationCollectionAsync();
 
+                    // Keep source-resolution diagnostics available even when onboarding succeeds.
+                    // A provider may fail to identify a source while the overall onboarding flow
+                    // still completes, so success must not hide the resolver's diagnostic events.
+                    diagnosticsText.Text = BuildOnboardingDiagnostics(result, sourceUri);
+                    diagnosticsExpander.Visibility = Visibility.Visible;
+                    diagnosticsExpander.IsExpanded =
+                        result.Errors.Count > 0 ||
+                        result.Warnings.Count > 0 ||
+                        result.LogEvents.Count > 0;
+                    copyDiagnosticsButton.Content = "Copy Diagnostics";
+
                     onboardingComplete = true;
                     sourceTextBox.Visibility = Visibility.Collapsed;
                     recoveryButton.Visibility = Visibility.Collapsed;
@@ -1028,11 +1039,13 @@ public sealed partial class MainWindow : Window
         {
             builder.AppendLine();
             builder.AppendLine("Provider / Resolver Events:");
-            builder.AppendLine("No provider-level log events were returned. The failure may have occurred before a provider ran, or the provider did not emit additional events.");
+            builder.AppendLine("No provider/resolver log events were returned for this attempt.");
         }
 
         builder.AppendLine();
-        builder.AppendLine("No application was added unless onboarding reported success.");
+        builder.AppendLine(result.IsSuccessful
+            ? "Onboarding reported success. Review the source-resolution status and events above to confirm how the source was identified."
+            : "Onboarding did not report success; no application was added.");
         return builder.ToString().TrimEnd();
     }
 
