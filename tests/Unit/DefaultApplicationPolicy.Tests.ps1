@@ -270,7 +270,7 @@ Describe 'Wintainium default application installer policy' {
             Get-WintainiumDefaultApplicationPolicy -PluginRegistry $Registry
         }
 
-        @($result.Policy.Artifact.Architectures) | Should -Be @('x64','x86','arm64','neutral')
+        @($result.Policy.Artifact.Architectures) | Should -Be @('x64','x86','neutral')
         $result.Policy.Artifact.AllowUnknownArchitecture | Should -Be $false
     }
 }
