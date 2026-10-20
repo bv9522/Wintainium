@@ -114,6 +114,15 @@ Describe 'Wintainium source resolution contract' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceUnsupported'
         @($result.Errors.Code) | Should -Contain 'SourceResolutionCapabilityUnsupported'
+        @($result.LogEvents.EventName) | Should -Contain 'ProviderSourceResolutionFailed'
+        $failureEvent = @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed')[0]
+        $failureEvent.OperationId | Should -Be 'source-test-5'
+        $failureEvent.Component | Should -Be 'SourceIdentification'
+        $failureEvent.Context.Stage | Should -Be 'SourceIdentification'
+        $failureEvent.Context.ProviderId | Should -Be 'Wintainium.provider.github-releases'
+        $failureEvent.Context.Host | Should -Be 'github.com'
+        $failureEvent.Context.ContainsKey('ErrorCode') | Should -Be $true
+        $failureEvent.Context.ContainsKey('SourceUri') | Should -Be $false
     }
 
     It 'rejects a source resolver result that omits normalized source facts' {
