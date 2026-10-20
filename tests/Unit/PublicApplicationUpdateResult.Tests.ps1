@@ -107,6 +107,7 @@ Describe 'Wintainium public application update result' {
                 'Errors'
                 'Warnings'
                 'LogEvents'
+                'TroubleshootingDiagnostics'
                 'Error'
             )
             $result.Status | Should -Be 'Completed'
@@ -182,6 +183,7 @@ Describe 'Wintainium public application update result' {
                 'Reason'
                 'IsSuccessful'
                 'WasCancelled'
+                'ElapsedMilliseconds'
                 'Error'
             )
             $result.Stages[1].ReasonCode | Should -Be 'ApplicationNotInstalled'
