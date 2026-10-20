@@ -136,8 +136,8 @@ internal sealed class WintainiumApplicationOnboardingService
             return [];
 
         var events = value is IEnumerable enumerable and not string
-            ? enumerable.Cast<object>().Select(PSObject.AsPSObject)
-            : [PSObject.AsPSObject(value)];
+            ? enumerable.Cast<object>().Select(PSObject.AsPSObject).ToArray()
+            : new[] { PSObject.AsPSObject(value) };
 
         return events.Select(item =>
         {
