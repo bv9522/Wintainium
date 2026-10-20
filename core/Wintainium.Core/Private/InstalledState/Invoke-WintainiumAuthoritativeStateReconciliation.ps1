@@ -63,7 +63,7 @@ function Invoke-WintainiumAuthoritativeStateReconciliation {
             Path = '$.Evidence'
             Message = 'Reconciliation completed without installed-state evidence. The prior state was preserved and no state was persisted.'
         }
-        return & $base $true 'Preserved' $PriorState $false 'EvidenceUnavailable' @() @($ReconciliationResult.Warnings) + @($warning)
+        return & $base $true 'Preserved' $PriorState $false 'EvidenceUnavailable' @() (@($ReconciliationResult.Warnings) + @($warning))
     }
 
     try {
