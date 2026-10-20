@@ -130,9 +130,14 @@ function Invoke-WintainiumDownloadArtifactCleanup {
                 try {
                     $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
                     if ($metadata.RetainedAtUtc) {
-                        $parsed = [DateTime]::MinValue
-                        if ([DateTime]::TryParse([string]$metadata.RetainedAtUtc, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$parsed)) {
-                            $retainedAtUtc = $parsed.ToUniversalTime()
+                        $parsed = [DateTimeOffset]::MinValue
+                        if ([DateTimeOffset]::TryParse(
+                            [string]$metadata.RetainedAtUtc,
+                            [Globalization.CultureInfo]::InvariantCulture,
+                            [Globalization.DateTimeStyles]::AssumeUniversal -bor [Globalization.DateTimeStyles]::AdjustToUniversal,
+                            [ref]$parsed
+                        )) {
+                            $retainedAtUtc = $parsed.UtcDateTime
                         }
                     }
                 }
