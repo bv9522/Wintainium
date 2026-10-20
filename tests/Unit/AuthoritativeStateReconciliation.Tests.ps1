@@ -57,6 +57,8 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
             $result.IsSuccessful | Should -BeTrue
             $result.Persisted | Should -BeFalse
             $result.ReasonCode | Should -Be 'UnknownEvidencePreserved'
+            $result.Persisted | Should -BeFalse
+            @($result.Warnings | Where-Object Code -eq 'UnknownEvidencePreserved').Count | Should -Be 1
             $result.State.Version | Should -Be '2.0.0'
             (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').Version | Should -Be '2.0.0'
         }
@@ -75,6 +77,8 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
             $result.IsSuccessful | Should -BeTrue
             $result.Persisted | Should -BeFalse
             $result.State.InstallationState | Should -Be 'Unknown'
+            $result.ReasonCode | Should -Be 'UnknownEvidencePreserved'
+            @($result.Warnings | Where-Object Code -eq 'UnknownEvidencePreserved').Count | Should -Be 1
             Test-Path (Join-Path $stateRoot 'installed-state.json') | Should -BeFalse
         }
     }
@@ -264,4 +268,31 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
             Test-Path (Join-Path $stateRoot 'installed-state.json') | Should -BeFalse
         }
     }
+
+    It 'returns a reason and warning when successful reconciliation omits evidence' {
+        InModuleScope Wintainium.Core {
+            $stateRoot = Join-Path $TestDrive 'evidence-unavailable'
+            $operationId = [guid]::NewGuid().ToString()
+            $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0'
+            $reconciliation = [pscustomobject]@{
+                OperationId=$operationId
+                IsSuccessful=$true
+                Status='Reconciled'
+                Evidence=$null
+                Errors=@()
+                Warnings=@()
+                LogEvents=@()
+            }
+
+            $result = Invoke-WintainiumAuthoritativeStateReconciliation -StateRoot $stateRoot -OperationId $operationId -ApplicationId 'example.app' -ReconciliationResult $reconciliation -PriorState $priorState
+
+            $result.IsSuccessful | Should -BeTrue
+            $result.Persisted | Should -BeFalse
+            $result.ReasonCode | Should -Be 'EvidenceUnavailable'
+            @($result.Warnings | Where-Object Code -eq 'ReconciliationEvidenceUnavailable').Count | Should -Be 1
+            $result.State.Version | Should -Be '1.0.0'
+            Test-Path (Join-Path $stateRoot 'installed-state.json') | Should -BeFalse
+        }
+    }
+
 }
