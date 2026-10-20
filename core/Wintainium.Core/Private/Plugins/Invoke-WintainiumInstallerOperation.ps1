@@ -53,8 +53,14 @@ function Invoke-WintainiumInstallerOperation {
             $module = Import-Module -Name $modulePath -PassThru -ErrorAction Stop
         }
 
-        $command = Get-Command -Module $module.Name -Name 'Invoke-WintainiumInstaller' -CommandType Function -ErrorAction SilentlyContinue
-        if ($null -eq $command) {
+        # Resolve the operation from the exact module instance selected by path.
+        # Looking it up again by module name can select an ambiguous command when
+        # multiple loaded modules share the same name.
+        $command = $null
+        if ($null -ne $module -and $null -ne $module.ExportedCommands) {
+            $command = $module.ExportedCommands['Invoke-WintainiumInstaller']
+        }
+        if ($null -eq $command -or $command.CommandType -ne [System.Management.Automation.CommandTypes]::Function) {
             return & $failure 'InstallerOperationNotFound' "Installer '$pluginId' does not export Invoke-WintainiumInstaller."
         }
 
