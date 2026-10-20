@@ -5,7 +5,7 @@ function Invoke-WintainiumInstaller {
     )
 
     [pscustomobject][ordered]@{
-        ExecutablePath = (Join-Path -Path $PSHOME -ChildPath 'pwsh.exe')
+        ExecutablePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
         Arguments = @('-NoProfile', '-Command', "Write-Output 'fixture-installer-completed'")
         WorkingDirectory = $null
         EnvironmentVariables = @{}
