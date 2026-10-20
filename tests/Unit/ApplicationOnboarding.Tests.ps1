@@ -67,7 +67,7 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Installer.pluginId | Should -Be 'Wintainium.installer.portable-zip'
         $result.ApplicationDefinition.Reconciliation.pluginId | Should -Be 'Wintainium.reconciliation.valid-fixture'
         @($result.ApplicationDefinition.Artifact.formats) | Should -Be @('zip')
-        @($result.ApplicationDefinition.Artifact.architectures) | Should -Be @('x64','x86','arm64','neutral')
+        @($result.ApplicationDefinition.Artifact.architectures) | Should -Be @('x64','x86','neutral')
         $result.ApplicationDefinition.Release.channel | Should -Be 'stable'
     }
 
