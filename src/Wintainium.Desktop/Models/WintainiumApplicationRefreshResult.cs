@@ -11,6 +11,7 @@ internal sealed record WintainiumApplicationRefreshStage(
     string Name,
     string? OperationId,
     string Status,
+    string? ReasonCode,
     WintainiumInstallationState? StateBefore,
     WintainiumInstallationState? StateAfter,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
