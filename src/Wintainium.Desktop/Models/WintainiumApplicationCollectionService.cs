@@ -173,7 +173,7 @@ internal sealed class WintainiumApplicationCollectionService
                 []));
         }
 
-        return new WintainiumApplicationRefreshResult(withState, errors, warnings, operationId, stages);
+        return new WintainiumApplicationRefreshResult(withState, errors, warnings, operationId, stages, DateTimeOffset.UtcNow);
     }
 
     private static string GetMachineArchitecture() =>
