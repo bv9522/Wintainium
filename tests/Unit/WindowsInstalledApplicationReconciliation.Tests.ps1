@@ -69,24 +69,34 @@ Describe 'Windows installed-application reconciliation plugin' {
         }
         $candidate=[pscustomobject]@{ Scope='machine'; View='64'; SubKey='A'; DisplayName='Example Application'; DisplayVersion='1.0'; InstallLocation='C:\A' }
         $candidate2=[pscustomobject]@{ Scope='machine'; View='32'; SubKey='B'; DisplayName='Example Application'; DisplayVersion='2.0'; InstallLocation='C:\B' }
-        InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidates=@($candidate,$candidate2) } {
+        $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidates=@($candidate,$candidate2) } {
             Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
                 [pscustomobject]@{ IsSuccessful=$true; Candidates=$Candidates; Errors=@() }
             }
-            $r=Invoke-WintainiumReconciliation -Request $Request
-            $r.Evidence.InstallationState
-        } | Should -Be 'Unknown'
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+        $r.IsSuccessful | Should -BeTrue
+        $r.Status | Should -Be 'Unknown'
+        $r.Evidence.InstallationState | Should -Be 'Unknown'
+        @($r.Warnings | Where-Object Code -eq 'WindowsReconciliationAmbiguous').Count | Should -Be 1
+        $r.Warnings[0].Message | Should -Match 'Multiple uninstall registrations matched'
+        $r.Evidence.PSObject.Properties.Name | Should -Not -Contain 'Version'
     }
 
     It 'maps registry read failure to Unknown rather than NotInstalled' {
         $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-000000000204'; ApplicationId='example.application'; Manifest=$script:baseManifest }
-        InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+        $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
             Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
-                [pscustomobject]@{ IsSuccessful=$false; Candidates=@(); Errors=@([pscustomobject]@{ Code='WindowsRegistryLocationReadFailed'; Message='denied' }) }
+                [pscustomobject]@{ IsSuccessful=$false; Candidates=@(); Errors=@([pscustomobject]@{ Code='WindowsRegistryLocationReadFailed'; Message='denied'; Scope='machine'; View='64' }) }
             }
-            $r=Invoke-WintainiumReconciliation -Request $Request
-            $r.Evidence.InstallationState
-        } | Should -Be 'Unknown'
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+        $r.IsSuccessful | Should -BeTrue
+        $r.Status | Should -Be 'Unknown'
+        $r.Evidence.InstallationState | Should -Be 'Unknown'
+        @($r.Warnings | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count | Should -Be 1
+        $r.Warnings[0].OperationId | Should -Be $request.OperationId
+        $r.Warnings[0].Message | Should -Be 'denied'
     }
 
     It 'rejects missing settings as a structured configuration failure' {
