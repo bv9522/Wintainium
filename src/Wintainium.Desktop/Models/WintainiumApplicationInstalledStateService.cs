@@ -73,7 +73,34 @@ internal sealed class WintainiumApplicationInstalledStateService
             WintainiumApplicationModelMapper.MapInstalledStateResult(result),
             Diagnostics(result, "Errors"),
             Diagnostics(result, "Warnings"),
-            WintainiumOperationStateMapper.Map(result).State);
+            WintainiumOperationStateMapper.Map(result).State,
+            WintainiumOperationLogEventMapper.MapCollection(result),
+            MapReconciliation(result));
+    }
+
+    private static WintainiumReconciliationTrace? MapReconciliation(PSObject result)
+    {
+        var value = result.Properties["Reconciliation"]?.Value;
+        if (value is null)
+            return null;
+
+        var reconciliation = PSObject.AsPSObject(value);
+        var evidenceValue = reconciliation.Properties["Evidence"]?.Value;
+        var evidence = evidenceValue is null ? null : PSObject.AsPSObject(evidenceValue);
+        var events = WintainiumOperationLogEventMapper.MapCollection(reconciliation);
+        var authoritativeReason = WintainiumOperationLogEventMapper.MapCollection(result)
+            .LastOrDefault(item => string.Equals(item.Component, "InstalledState", StringComparison.OrdinalIgnoreCase))
+            ?.EventName;
+
+        return new WintainiumReconciliationTrace(
+            Nullable(reconciliation, "Status"),
+            Boolean(reconciliation, "IsSuccessful"),
+            evidence is null ? null : Nullable(evidence, "EvidenceSource"),
+            evidence is null ? null : Nullable(evidence, "InstallationState"),
+            authoritativeReason,
+            Diagnostics(reconciliation, "Errors"),
+            Diagnostics(reconciliation, "Warnings"),
+            events);
     }
 
     private static WintainiumInstalledStateObservation MapState(PSObject state) =>
