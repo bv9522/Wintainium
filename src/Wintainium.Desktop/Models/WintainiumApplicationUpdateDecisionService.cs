@@ -33,6 +33,38 @@ internal sealed class WintainiumApplicationUpdateDecisionService
             "Get-WintainiumApplicationUpdateStatus",
             cancellationToken);
 
-        return WintainiumApplicationUpdateDecisionMapper.Map(result);
+        return MapSafely(result);
+    }
+    private static WintainiumApplicationUpdateDecisionResult MapSafely(System.Management.Automation.PSObject result)
+    {
+        try
+        {
+            return WintainiumApplicationUpdateDecisionMapper.Map(result);
+        }
+        catch (Exception ex)
+        {
+            var diagnostic = new WintainiumOperationDiagnostic(
+                "DesktopUpdateDecisionMappingFailed", null,
+                $"The desktop could not map the Core update-decision result: {ex.Message}");
+            IReadOnlyList<WintainiumOperationDiagnostic> errors;
+            IReadOnlyList<WintainiumOperationDiagnostic> warnings;
+            try { errors = WintainiumOperationDiagnosticMapper.MapCollection(result, "Errors").Append(diagnostic).ToArray(); }
+            catch { errors = [diagnostic]; }
+            try { warnings = WintainiumOperationDiagnosticMapper.MapCollection(result, "Warnings"); }
+            catch { warnings = []; }
+
+            return new WintainiumApplicationUpdateDecisionResult(
+                result.Properties["OperationId"]?.Value is null
+                    ? "unavailable"
+                    : Convert.ToString(result.Properties["OperationId"]!.Value) ?? "unavailable",
+                false,
+                "DesktopMappingFailed",
+                null,
+                null,
+                errors,
+                warnings,
+                WintainiumOperationState.Failed,
+                []);
+        }
     }
 }
