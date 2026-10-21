@@ -758,6 +758,15 @@ public sealed partial class MainWindow : Window
                 IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
             {
                 WintainiumDesktopDiagnosticsStore.SetRefreshResult(application.ApplicationId, result);
+
+                // A Details window may have opened while the dashboard refresh was still running.
+                // Push the completed result into that window so its diagnostics and state facts
+                // do not remain stuck at their pre-refresh placeholders.
+                if (_applicationDetailsWindows.TryGetValue(application.ApplicationId, out var detailsWindow))
+                {
+                    detailsWindow.ApplyDashboardRefreshResult(result);
+                }
+
                 SetApplicationCollectionItem(result.Application);
             }
         }
