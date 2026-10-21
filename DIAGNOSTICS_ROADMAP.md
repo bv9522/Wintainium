@@ -45,6 +45,14 @@ Every stage should record a start/result marker or an explicit skipped reason, s
 - Add mapping/contract tests.
 - **Acceptance:** no relevant Core diagnostic is discarded between PowerShell output and the refresh result.
 
+D2 implementation notes:
+- Added a structured desktop log-event model retaining severity, operation ID, component, event name, message, and each context key/value.
+- Installed-state refresh results now retain Core log events and a mapped reconciliation sub-result (status, observed evidence, reason code, errors, warnings, and nested events).
+- Update-decision results retain Core log events.
+- Application refresh results now retain ordered per-stage results for reconciliation, persisted-state read, and update decision, including operation IDs, stage status, before/after installation states, and stage-scoped errors/warnings/events.
+- Existing aggregate errors/warnings remain available for compatibility; public Core result property sets were not changed.
+- Source-resolution diagnostics and theme/visual appearance files were not changed by D2.
+
 ### D3 — Produce a copyable refresh report
 - Add a deterministic plain-text diagnostic formatter for one application refresh.
 - Include operation/application identity, stage outcomes, state transitions, reason codes, errors, warnings, and concise event context.
@@ -67,7 +75,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] Located where authoritative reconciliation and desktop refresh results can lose explanatory detail.
 - [x] Defined the diagnostic stages and behavior guardrails.
 - [x] D1 — Preserve authoritative Core explanations (implementation committed; local verification pending).
-- [ ] D2 — Carry full structured results through the desktop.
+- [x] D2 — Carry full structured results through the desktop (implementation committed; local build/test verification pending).
 - [ ] D3 — Produce a copyable refresh report.
 - [ ] D4 — Validate end-to-end failure modes.
 - [ ] D5 — Diagnose the five real entries.
