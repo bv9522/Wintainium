@@ -79,7 +79,11 @@ Describe 'Windows installed-application reconciliation plugin' {
         $r.Status | Should -Be 'Unknown'
         $r.Evidence.InstallationState | Should -Be 'Unknown'
         @($r.Warnings | Where-Object Code -eq 'WindowsReconciliationAmbiguous').Count | Should -Be 1
-        $r.Warnings[0].Message | Should -Match 'Multiple uninstall registrations matched'
+        $ambiguity = @($r.Warnings | Where-Object Code -eq 'WindowsReconciliationAmbiguous')[0]
+        $ambiguity.Message | Should -Match 'Multiple uninstall registrations matched'
+        $ambiguity.CandidateCount | Should -Be 2
+        $ambiguity.MatchMode | Should -Be 'all'
+        $ambiguity.RegistryLocationCount | Should -Be 1
         $r.Evidence.PSObject.Properties.Name | Should -Not -Contain 'Version'
     }
 
@@ -95,8 +99,16 @@ Describe 'Windows installed-application reconciliation plugin' {
         $r.Status | Should -Be 'Unknown'
         $r.Evidence.InstallationState | Should -Be 'Unknown'
         @($r.Warnings | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count | Should -Be 1
-        $r.Warnings[0].OperationId | Should -Be $request.OperationId
-        $r.Warnings[0].Message | Should -Be 'denied'
+        $readFailure = @($r.Warnings | Where-Object Code -eq 'WindowsRegistryLocationReadFailed')[0]
+        $readFailure.OperationId | Should -Be $request.OperationId
+        $readFailure.Message | Should -Be 'denied'
+        $summary = @($r.Warnings | Where-Object Code -eq 'WindowsReconciliationEvidenceIncomplete')
+        $summary.Count | Should -Be 1
+        $summary[0].CandidateCount | Should -Be 0
+        $summary[0].MatchMode | Should -Be 'all'
+        $summary[0].RegistryLocationCount | Should -Be 1
+        $summary[0].RegistryReadFailureCount | Should -Be 1
+        $summary[0].Message | Should -Match 'cannot safely conclude'
     }
 
     It 'rejects missing settings as a structured configuration failure' {
