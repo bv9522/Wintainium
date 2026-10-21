@@ -72,11 +72,13 @@ D3 implementation notes:
 ### D4 — Validate the end-to-end failure modes
 - Strengthened the Windows reconciliation tests so ambiguous registrations and registry-read failures assert the structured reason survives alongside `Unknown` evidence, rather than asserting only the state value.
 - Strengthened the authoritative persistence-failure test to seed and re-read the prior persisted record, proving a failed write does not replace authoritative state.
+- Desktop installed-state and update-decision mappers now convert mapping exceptions into explicit failed result objects (`DesktopInstalledStateMappingFailed` / `DesktopUpdateDecisionMappingFailed`) instead of losing the structured stage result to the outer generic catch.
+- The refresh trace labels these as dedicated `DesktopInstalledStateMapping`, `DesktopPersistedStateMapping`, or `DesktopUpdateDecisionMapping` stages. Stage reason codes now fall back to the first structured error/warning code when Core provides no explicit reason; installation state remains unchanged when mapping fails.
 - Test `Installed`, confirmed `NotInstalled`, ambiguous evidence, registry-read failure, invalid/missing policy, missing persisted state, persistence failure, update-decision failure, and desktop mapping failure.
 - Assert the first stage where state becomes `Unknown` and verify that the reason survives to the report.
 - Build the desktop and run focused plus full Pester suites locally.
 - Reuse and strengthen existing focused coverage rather than duplicate the same assertions: authoritative transition/persistence tests cover Installed, NotInstalled, Unknown preservation, missing prior state, and persistence failure; Windows reconciliation tests cover ambiguous candidates, registry-read failure, and missing/invalid settings; public reconciliation tests cover policy-validation short-circuiting and reason/event propagation.
-- D4-specific remaining validation is the desktop boundary: confirm update-decision failures and mapping failures become visible, correctly ordered refresh stages, and that the copied report names the earliest uncertain/failed stage while retaining the reason code. Those paths require a local desktop run because the repository currently has no dedicated .NET desktop unit-test project.
+- D4-specific remaining validation is local desktop verification: confirm update-decision failures and the new dedicated mapping-failure stages appear in the copied report, the earliest uncertain/failed stage is correct, and positive controls remain unchanged. Those paths require a local desktop run because the repository currently has no dedicated .NET desktop unit-test project.
 - **Acceptance:** automated Core tests and local desktop scenario checks explain outcomes without altering state authority or existing behavior.
 
 ### D5 — Diagnose the five real entries
@@ -90,7 +92,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] D1 — Preserve authoritative Core explanations (focused authoritative/public reconciliation tests passed locally; Brian subsequently confirmed the desktop build and all tests passed).
 - [x] D2 — Carry full structured results through the desktop (Brian confirmed the Release build and all tests passed).
 - [x] D3 — Produce a copyable refresh report (Brian confirmed Release build succeeded and all 708/708 tests passed).
-- [ ] D4 — Validate end-to-end failure modes (targeted Core assertions committed; desktop report/runtime verification and local test results pending).
+- [ ] D4 — Validate end-to-end failure modes (targeted Core assertions and explicit desktop mapping-failure reporting committed; local build/runtime verification pending).
 - [ ] D5 — Diagnose the five real entries.
 
 ## D4 local desktop scenario checks
