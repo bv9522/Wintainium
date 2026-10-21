@@ -11,7 +11,8 @@ from the authoritative state boundary are preserved in the public result.
 
 .OUTPUTS
 A structured result containing OperationId, IsSuccessful, Status, ApplicationId,
-State, Reconciliation, Errors, Warnings, and LogEvents.
+State, Reconciliation, Errors, Warnings, and LogEvents. Detailed reason codes
+are included in structured log events and warnings rather than as new top-level fields.
 #>
 function Invoke-WintainiumApplicationReconciliation {
     [CmdletBinding()]
@@ -30,7 +31,7 @@ function Invoke-WintainiumApplicationReconciliation {
         return [pscustomobject][ordered]@{
             OperationId=$resolvedOperationId; IsSuccessful=$false; Status='ApplicationDefinitionInvalid'
             ApplicationId=if($null -ne $validation.Manifest){[string]$validation.Manifest.Id}else{$null}
-            State=$null; Reconciliation=$null; ReasonCode='ApplicationDefinitionInvalid'
+            State=$null; Reconciliation=$null
             Errors=@($validation.Errors); Warnings=@($validation.Warnings); LogEvents=@($validation.LogEvents)
         }
     }
@@ -41,7 +42,7 @@ function Invoke-WintainiumApplicationReconciliation {
     if ($null -eq $plugin) {
         return [pscustomobject][ordered]@{
             OperationId=$resolvedOperationId; IsSuccessful=$false; Status='ReconciliationUnavailable'
-            ApplicationId=$applicationId; State=$null; Reconciliation=$null; ReasonCode='ReconciliationPluginUnavailable'
+            ApplicationId=$applicationId; State=$null; Reconciliation=$null
             Errors=@([pscustomobject][ordered]@{
                 Code='ReconciliationPluginUnavailable'; Path='$.reconciliation.pluginId'
                 Message='The validated application manifest does not provide a resolvable reconciliation plugin.'
@@ -56,7 +57,7 @@ function Invoke-WintainiumApplicationReconciliation {
     catch {
         return [pscustomobject][ordered]@{
             OperationId=$resolvedOperationId; IsSuccessful=$false; Status='InstalledStateUnavailable'
-            ApplicationId=$applicationId; State=$null; Reconciliation=$null; ReasonCode='InstalledStateReadFailed'
+            ApplicationId=$applicationId; State=$null; Reconciliation=$null
             Errors=@([pscustomobject][ordered]@{
                 Code='InstalledStateReadFailed'; Path='$.StateRoot'; Message=$_.Exception.Message
             })
@@ -73,7 +74,6 @@ function Invoke-WintainiumApplicationReconciliation {
         return [pscustomobject][ordered]@{
             OperationId=$resolvedOperationId; IsSuccessful=$false; Status=[string]$reconciliation.Status
             ApplicationId=$applicationId; State=$priorState; Reconciliation=$reconciliation
-            ReasonCode='ReconciliationFailed'
             Errors=@($reconciliation.Errors)
             Warnings=@($validation.Warnings)+@($reconciliation.Warnings)
             LogEvents=@($validation.LogEvents)+@($reconciliation.LogEvents)
@@ -118,7 +118,6 @@ function Invoke-WintainiumApplicationReconciliation {
         return [pscustomobject][ordered]@{
             OperationId=$resolvedOperationId; IsSuccessful=$false; Status='AuthoritativeStateReconciliationFailed'
             ApplicationId=$applicationId; State=$authoritative.State; Reconciliation=$reconciliation
-            ReasonCode=$authoritativeReasonCode
             Errors=@($authoritative.Errors)
             Warnings=@($validation.Warnings)+@($reconciliation.Warnings)+@($authoritative.Warnings)
             LogEvents=@($validation.LogEvents)+@($reconciliation.LogEvents)+@($authoritativeLogEvents)
@@ -128,7 +127,6 @@ function Invoke-WintainiumApplicationReconciliation {
     [pscustomobject][ordered]@{
         OperationId=$resolvedOperationId; IsSuccessful=$true; Status=[string]$authoritative.Status
         ApplicationId=$applicationId; State=$authoritative.State; Reconciliation=$reconciliation
-        ReasonCode=$authoritativeReasonCode
         Errors=@(); Warnings=@($validation.Warnings)+@($reconciliation.Warnings)+@($authoritative.Warnings)
         LogEvents=@($validation.LogEvents)+@($reconciliation.LogEvents)+@($authoritativeLogEvents)
     }
