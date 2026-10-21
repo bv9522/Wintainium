@@ -97,8 +97,11 @@ internal sealed class WintainiumApplicationCollectionService
 
             errors.AddRange(refreshResult.Errors);
             warnings.AddRange(refreshResult.Warnings);
+            var reconciliationStageName = refreshResult.Status == "DesktopMappingFailed"
+                ? "DesktopInstalledStateMapping"
+                : currentStage;
             stages.Add(new WintainiumApplicationRefreshStage(
-                currentStage,
+                reconciliationStageName,
                 refreshResult.OperationId,
                 refreshResult.IsSuccessful ? (refreshResult.Status ?? "Completed") : (refreshResult.Status ?? "Failed"),
                 GetStageReasonCode(refreshResult.Reconciliation?.ReasonCode, refreshResult.Errors, refreshResult.Warnings),
@@ -120,8 +123,11 @@ internal sealed class WintainiumApplicationCollectionService
 
             errors.AddRange(installedStateResult.Errors);
             warnings.AddRange(installedStateResult.Warnings);
+            var persistedStateStageName = installedStateResult.Status == "DesktopMappingFailed"
+                ? "DesktopPersistedStateMapping"
+                : currentStage;
             stages.Add(new WintainiumApplicationRefreshStage(
-                currentStage,
+                persistedStateStageName,
                 installedStateResult.OperationId,
                 installedStateResult.IsSuccessful ? (installedStateResult.Status ?? "Completed") : (installedStateResult.Status ?? "Failed"),
                 GetStageReasonCode(null, installedStateResult.Errors, installedStateResult.Warnings),
@@ -142,8 +148,11 @@ internal sealed class WintainiumApplicationCollectionService
             withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(withState, decisionResult);
             errors.AddRange(decisionResult.Errors);
             warnings.AddRange(decisionResult.Warnings);
+            var updateDecisionStageName = decisionResult.Status == "DesktopMappingFailed"
+                ? "DesktopUpdateDecisionMapping"
+                : currentStage;
             stages.Add(new WintainiumApplicationRefreshStage(
-                currentStage,
+                updateDecisionStageName,
                 decisionResult.OperationId,
                 decisionResult.IsSuccessful ? (decisionResult.Status ?? "Completed") : (decisionResult.Status ?? "Failed"),
                 GetStageReasonCode(decisionResult.Decision?.ReasonCode, decisionResult.Errors, decisionResult.Warnings),
