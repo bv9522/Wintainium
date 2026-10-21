@@ -8,7 +8,19 @@ internal sealed record WintainiumApplicationInstalledStateResult(
     WintainiumInstalledStateObservation? State,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
-    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
+    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted,
+    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null,
+    WintainiumReconciliationTrace? Reconciliation = null);
+
+internal sealed record WintainiumReconciliationTrace(
+    string? Status,
+    bool IsSuccessful,
+    string? EvidenceSource,
+    string? ObservedInstallationState,
+    string? ReasonCode,
+    IReadOnlyList<WintainiumOperationDiagnostic> Errors,
+    IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
+    IReadOnlyList<WintainiumOperationLogEvent> LogEvents);
 
 internal sealed record WintainiumInstalledStateObservation(
     string ApplicationId,
