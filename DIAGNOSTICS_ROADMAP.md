@@ -108,6 +108,7 @@ For the desktop-only boundary checks, use a disposable test manifest/application
 After each relevant change, run focused Pester tests for reconciliation/state persistence and then the full suite:
 
 ```powershell
+Invoke-Pester .\tests\Unit\AuthoritativeStateReconciliation.Tests.ps1 -Output Detailed
 Invoke-Pester .\tests\Unit\PublicApplicationReconciliation.Tests.ps1 -Output Detailed
 Invoke-Pester .\tests\Unit\InstalledApplicationStatePersistence.Tests.ps1 -Output Detailed
 Invoke-Pester .\tests\Unit\WindowsInstalledApplicationReconciliation.Tests.ps1 -Output Detailed
