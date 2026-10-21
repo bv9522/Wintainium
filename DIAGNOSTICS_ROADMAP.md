@@ -74,6 +74,7 @@ D3 implementation notes:
 - Strengthened the authoritative persistence-failure test to seed and re-read the prior persisted record, proving a failed write does not replace authoritative state.
 - Desktop installed-state and update-decision mappers now convert mapping exceptions into explicit failed result objects (`DesktopInstalledStateMappingFailed` / `DesktopUpdateDecisionMappingFailed`) instead of losing the structured stage result to the outer generic catch.
 - The refresh trace labels these as dedicated `DesktopInstalledStateMapping`, `DesktopPersistedStateMapping`, or `DesktopUpdateDecisionMapping` stages. Stage reason codes now fall back to the first structured error/warning code when Core provides no explicit reason; installation state remains unchanged when mapping fails.
+- The application-model projection boundary is now covered too: an installed-state `ApplicationId` mismatch or malformed projection is classified as a dedicated desktop mapping failure rather than mislabeled as a Core reconciliation failure. The failure stage records identical before/after installation state.
 - Test `Installed`, confirmed `NotInstalled`, ambiguous evidence, registry-read failure, invalid/missing policy, missing persisted state, persistence failure, update-decision failure, and desktop mapping failure.
 - Assert the first stage where state becomes `Unknown` and verify that the reason survives to the report.
 - Build the desktop and run focused plus full Pester suites locally.
@@ -92,7 +93,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] D1 — Preserve authoritative Core explanations (focused authoritative/public reconciliation tests passed locally; Brian subsequently confirmed the desktop build and all tests passed).
 - [x] D2 — Carry full structured results through the desktop (Brian confirmed the Release build and all tests passed).
 - [x] D3 — Produce a copyable refresh report (Brian confirmed Release build succeeded and all 708/708 tests passed).
-- [ ] D4 — Validate end-to-end failure modes (targeted Core assertions and explicit desktop mapping-failure reporting committed; local build/runtime verification pending).
+- [ ] D4 — Validate end-to-end failure modes (targeted Core assertions and explicit desktop mapping-failure reporting committed; first Release build passed, newest projection-boundary change awaits build/runtime verification).
 - [ ] D5 — Diagnose the five real entries.
 
 ## D4 local desktop scenario checks
