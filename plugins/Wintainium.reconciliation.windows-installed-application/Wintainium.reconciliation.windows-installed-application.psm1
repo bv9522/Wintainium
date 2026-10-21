@@ -152,15 +152,49 @@ function Invoke-WintainiumReconciliation {
         $settings = if ($reconciliation -is [System.Collections.IDictionary]) { $reconciliation['settings'] } elseif ($null -ne $reconciliation.PSObject.Properties['settings']) { $reconciliation.settings } else { $null }
         if ($null -eq $settings) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
         $observation = Get-WintainiumWindowsInstalledApplicationCandidates -Settings $settings
-        $warnings = @($observation.Errors | ForEach-Object { [pscustomobject]@{Code=[string]$_.Code;Message=[string]$_.Message;OperationId=$operationId} })
-        if (@($observation.Candidates).Count -eq 0) {
-            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=if($observation.IsSuccessful){'NotInstalled'}else{'Unknown'};EvidenceSource='WindowsUninstallRegistry'}
-            $status=if($observation.IsSuccessful){'Reconciled'}else{'Unknown'}
+        $warnings = @($observation.Errors | ForEach-Object {
+            [pscustomobject]@{
+                Code = [string]$_.Code
+                Message = [string]$_.Message
+                OperationId = $operationId
+                Scope = if ($_.PSObject.Properties['Scope']) { [string]$_.Scope } else { $null }
+                View = if ($_.PSObject.Properties['View']) { [string]$_.View } else { $null }
+            }
+        })
+        $candidateCount = @($observation.Candidates).Count
+        $registry = Get-WintainiumWindowsSettingValue -Object $settings -Name 'registry'
+        $matchMode = [string](Get-WintainiumWindowsSettingValue -Object $registry -Name 'matchMode')
+        if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
+        $locationCount = @(Get-WintainiumWindowsSettingValue -Object $registry -Name 'locations').Count
+        $readFailureCount = @($observation.Errors | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count
+        if ($candidateCount -eq 0) {
+            $installationState = if ($observation.IsSuccessful) { 'NotInstalled' } else { 'Unknown' }
+            $status = if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }
+            if (-not $observation.IsSuccessful) {
+                $warnings += [pscustomobject]@{
+                    Code = 'WindowsReconciliationEvidenceIncomplete'
+                    Message = 'No matching uninstall registration was found, and one or more registry observations failed. Wintainium cannot safely conclude that the application is not installed.'
+                    OperationId = $operationId
+                    CandidateCount = $candidateCount
+                    MatchMode = $matchMode
+                    RegistryLocationCount = $locationCount
+                    RegistryReadFailureCount = $readFailureCount
+                }
+            }
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=$installationState;EvidenceSource='WindowsUninstallRegistry'}
             return & $base $true $status $evidence @() $warnings
         }
-        if (@($observation.Candidates).Count -gt 1) {
+        if ($candidateCount -gt 1) {
             $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
-            $ambiguity=[pscustomobject]@{Code='WindowsReconciliationAmbiguous';Message="Multiple uninstall registrations matched application '$applicationId'.";OperationId=$operationId}
+            $ambiguity=[pscustomobject]@{
+                Code = 'WindowsReconciliationAmbiguous'
+                Message = 'Multiple uninstall registrations matched the configured application identity; Wintainium did not choose one.'
+                OperationId = $operationId
+                CandidateCount = $candidateCount
+                MatchMode = $matchMode
+                RegistryLocationCount = $locationCount
+                RegistryReadFailureCount = $readFailureCount
+            }
             return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
         }
         $candidate=@($observation.Candidates)[0]
