@@ -8,7 +8,8 @@ internal sealed record WintainiumApplicationUpdateDecisionResult(
     WintainiumInstalledStateObservation? InstalledState,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
-    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted,\n    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null);
+    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted,
+    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null);
 
 internal sealed record WintainiumApplicationUpdateDecisionModel(
     bool? IsUpdateAvailable,
