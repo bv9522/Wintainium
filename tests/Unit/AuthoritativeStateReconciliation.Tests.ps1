@@ -235,6 +235,7 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
             $stateRoot = Join-Path $TestDrive 'persistence-failed'
             $operationId = [guid]::NewGuid().ToString()
             $priorState = New-WintainiumInstalledApplicationState -ApplicationId 'example.app' -InstallationState Installed -Version '1.0.0' -VersionSource 'Prior' -Architecture x64 -Channel stable
+            Set-WintainiumInstalledApplicationState -StateRoot $stateRoot -State $priorState | Out-Null
             $evidence = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled'; EvidenceSource='Fixture' }
             $reconciliation = [pscustomobject]@{ OperationId=$operationId; IsSuccessful=$true; Status='Reconciled'; Evidence=$evidence; Errors=@(); Warnings=@(); LogEvents=@() }
 
@@ -245,7 +246,11 @@ Describe 'Wintainium authoritative reconciliation state boundary' {
             $result.IsSuccessful | Should -BeFalse
             $result.Persisted | Should -BeFalse
             $result.ReasonCode | Should -Be 'InstalledStatePersistenceFailed'
-            $result.State | Should -Be $priorState
+            $result.State.InstallationState | Should -Be 'Installed'
+            $result.State.Version | Should -Be '1.0.0'
+            (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').InstallationState | Should -Be 'Installed'
+            (Get-WintainiumInstalledApplicationState -StateRoot $stateRoot -ApplicationId 'example.app').Version | Should -Be '1.0.0'
+            @($result.Errors | Where-Object Code -eq 'InstalledStatePersistenceFailed').Count | Should -Be 1
             Should -Invoke Set-WintainiumInstalledApplicationState -Times 1 -Exactly
         }
     }
