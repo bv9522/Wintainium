@@ -93,7 +93,7 @@ internal sealed class WintainiumApplicationCollectionService
             operationId ??= refreshResult.OperationId;
 
             if (refreshResult.IsSuccessful)
-                withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, refreshResult.State);
+                withState = ApplyInstalledStateForRefreshStage(withState, refreshResult.State, "DesktopInstalledStateMapping", "DesktopInstalledStateMappingFailed");
 
             errors.AddRange(refreshResult.Errors);
             warnings.AddRange(refreshResult.Warnings);
@@ -119,7 +119,7 @@ internal sealed class WintainiumApplicationCollectionService
             operationId ??= installedStateResult.OperationId;
 
             if (installedStateResult.IsSuccessful)
-                withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, installedStateResult.State);
+                withState = ApplyInstalledStateForRefreshStage(withState, installedStateResult.State, "DesktopPersistedStateMapping", "DesktopPersistedStateMappingFailed");
 
             errors.AddRange(installedStateResult.Errors);
             warnings.AddRange(installedStateResult.Warnings);
@@ -144,7 +144,7 @@ internal sealed class WintainiumApplicationCollectionService
                 cancellationToken).ConfigureAwait(false);
             operationId ??= decisionResult.OperationId;
 
-            withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, decisionResult.InstalledState);
+            withState = ApplyInstalledStateForRefreshStage(withState, decisionResult.InstalledState, "DesktopUpdateDecisionMapping", "DesktopUpdateDecisionMappingFailed");
             withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(withState, decisionResult);
             errors.AddRange(decisionResult.Errors);
             warnings.AddRange(decisionResult.Warnings);
@@ -165,6 +165,21 @@ internal sealed class WintainiumApplicationCollectionService
         catch (OperationCanceledException)
         {
             throw;
+        }
+        catch (DesktopRefreshMappingException ex)
+        {
+            var diagnostic = new WintainiumOperationDiagnostic(ex.ReasonCode, application.ManifestPath, ex.InnerException?.Message ?? ex.Message);
+            errors.Add(diagnostic);
+            stages.Add(new WintainiumApplicationRefreshStage(
+                ex.StageName,
+                operationId,
+                "Failed",
+                ex.ReasonCode,
+                withState.InstallationState,
+                withState.InstallationState,
+                [diagnostic],
+                [],
+                []));
         }
         catch (Exception ex)
         {
@@ -190,6 +205,35 @@ internal sealed class WintainiumApplicationCollectionService
         }
 
         return new WintainiumApplicationRefreshResult(withState, errors, warnings, operationId, stages, DateTimeOffset.UtcNow);
+    }
+
+    private static WintainiumApplicationModel ApplyInstalledStateForRefreshStage(
+        WintainiumApplicationModel application,
+        WintainiumInstalledStateObservation? state,
+        string stageName,
+        string reasonCode)
+    {
+        try
+        {
+            return WintainiumApplicationModelMapper.ApplyInstalledState(application, state);
+        }
+        catch (Exception ex)
+        {
+            throw new DesktopRefreshMappingException(stageName, reasonCode, ex);
+        }
+    }
+
+    private sealed class DesktopRefreshMappingException : Exception
+    {
+        public DesktopRefreshMappingException(string stageName, string reasonCode, Exception innerException)
+            : base($"Desktop mapping failed during {stageName}.", innerException)
+        {
+            StageName = stageName;
+            ReasonCode = reasonCode;
+        }
+
+        public string StageName { get; }
+        public string ReasonCode { get; }
     }
 
     private static string? GetStageReasonCode(
