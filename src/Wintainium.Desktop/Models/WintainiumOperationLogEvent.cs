@@ -23,7 +23,7 @@ internal static class WintainiumOperationLogEventMapper
         if (value is null) return [];
 
         var items = value is System.Collections.IEnumerable enumerable and not string
-            ? enumerable.Cast<object>().Select(System.Management.Automation.PSObject.AsPSObject)
+            ? enumerable.Cast<object>().Select(static item => System.Management.Automation.PSObject.AsPSObject(item))
             : new[] { System.Management.Automation.PSObject.AsPSObject(value) };
 
         return items.Select(Map).ToArray();
