@@ -75,6 +75,7 @@ D3 implementation notes:
 - Desktop installed-state and update-decision mappers now convert mapping exceptions into explicit failed result objects (`DesktopInstalledStateMappingFailed` / `DesktopUpdateDecisionMappingFailed`) instead of losing the structured stage result to the outer generic catch.
 - The refresh trace labels these as dedicated `DesktopInstalledStateMapping`, `DesktopPersistedStateMapping`, or `DesktopUpdateDecisionMapping` stages. Stage reason codes now fall back to the first structured error/warning code when Core provides no explicit reason; installation state remains unchanged when mapping fails.
 - The application-model projection boundary is now covered too: an installed-state `ApplicationId` mismatch or malformed projection is classified as a dedicated desktop mapping failure rather than mislabeled as a Core reconciliation failure. The failure stage records identical before/after installation state.
+- Brian confirmed the Release desktop build succeeded after the projection-boundary mapping change. Runtime verification of the copied report and state preservation remains outstanding; D4 is still open.
 - Test `Installed`, confirmed `NotInstalled`, ambiguous evidence, registry-read failure, invalid/missing policy, missing persisted state, persistence failure, update-decision failure, and desktop mapping failure.
 - Assert the first stage where state becomes `Unknown` and verify that the reason survives to the report.
 - Build the desktop and run focused plus full Pester suites locally.
