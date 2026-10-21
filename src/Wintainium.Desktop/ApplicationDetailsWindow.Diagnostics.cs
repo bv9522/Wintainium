@@ -41,6 +41,23 @@ public sealed partial class ApplicationDetailsWindow
         CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
     }
 
+    internal void ApplyDashboardRefreshResult(WintainiumApplicationRefreshResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (!string.Equals(
+            result.Application.ApplicationId,
+            _application.ApplicationId,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _application = result.Application;
+        PopulateApplicationFacts();
+        UpdateRefreshDiagnosticsPresentation();
+    }
+
     private void UpdateRefreshDiagnosticsPresentation()
     {
         var result = WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId);
@@ -50,6 +67,9 @@ public sealed partial class ApplicationDetailsWindow
 
         RefreshDiagnosticsItemsControl.ItemsSource = lines;
         RefreshDiagnosticsCard.Visibility = lines.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        InstalledStateRefreshStatusText.Text = result is null
+            ? "The dashboard installed-state refresh has not completed yet."
+            : $"Dashboard refresh completed. Final installed state: {result.Application.InstallationState}.";
         CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
     }
 
