@@ -42,7 +42,7 @@ Describe 'Wintainium public application reconciliation command' {
             $result.ApplicationId | Should -Be 'org.example.app'
             $result.State.InstallationState | Should -Be 'Installed'
             $result.State.Version | Should -Be '2.0.0'
-            $result.ReasonCode | Should -Be 'AuthoritativeEvidencePersisted'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'ReasonCode'
             @($result.LogEvents | Where-Object EventName -eq 'AuthoritativeEvidencePersisted').Count | Should -Be 1
             Should -Invoke Test-WintainiumApplicationDefinition -Times 1 -Exactly
             Should -Invoke Invoke-WintainiumReconciliationOperation -Times 1 -Exactly
@@ -111,7 +111,7 @@ Describe 'Wintainium public application reconciliation command' {
 
             $result.IsSuccessful | Should -BeTrue
             $result.Status | Should -Be 'Preserved'
-            $result.ReasonCode | Should -Be 'UnknownEvidencePreserved'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'ReasonCode'
             $result.State.InstallationState | Should -Be 'Installed'
             @($result.Warnings | Where-Object Code -eq 'UnknownEvidencePreserved').Count | Should -Be 1
             @($result.LogEvents | Where-Object EventName -eq 'UnknownEvidencePreserved').Count | Should -Be 1
