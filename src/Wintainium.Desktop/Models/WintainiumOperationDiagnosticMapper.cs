@@ -13,6 +13,7 @@ internal static class WintainiumOperationDiagnosticMapper
     {
         "ApplicationId", "Capability", "CandidateCount", "ErrorCode", "EvidenceSource",
         "Host", "InstallationState", "MatchMode", "ObservedInstallationState",
+        "RegistryLocationCount", "RegistryReadFailureCount",
         "OperationId", "Persisted", "PriorInstallationState", "ProviderId", "ReasonCode",
         "Scope", "Stage", "Status", "View"
     };
