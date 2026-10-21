@@ -746,7 +746,13 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            _applicationRefreshGenerations.TryGetValue(application.ApplicationId, out var generation);
+            if (!_applicationRefreshGenerations.TryGetValue(application.ApplicationId, out var generation))
+            {
+                // A normal dashboard refresh must be allowed to run even when no install/update
+                // operation has previously initialized this application's generation.
+                generation = 0;
+                _applicationRefreshGenerations[application.ApplicationId] = generation;
+            }
 
             if (!IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
                 return;
@@ -877,7 +883,15 @@ public sealed partial class MainWindow : Window
         {
             XamlRoot = Content.XamlRoot,
             Title = "Add Software",
-            Content = content,
+            // Source-resolution diagnostics can be long; keep the dialog usable by allowing
+            // the content to scroll rather than clipping the report below the visible area.
+            Content = new ScrollViewer
+            {
+                Content = content,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                MaxHeight = 560
+            },
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.None,
