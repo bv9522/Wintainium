@@ -79,38 +79,76 @@ internal sealed class WintainiumApplicationCollectionService
 
         var errors = new List<WintainiumOperationDiagnostic>();
         var warnings = new List<WintainiumOperationDiagnostic>();
+        var stages = new List<WintainiumApplicationRefreshStage>();
         var withState = application;
+        string currentStage = "InstalledStateReconciliation";
+        string? operationId = null;
 
         try
         {
+            var beforeReconciliation = withState.InstallationState;
             var refreshResult = await _installedState.RefreshAsync(
                 application.ManifestPath, WintainiumDesktopPaths.InstalledStateRoot,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+            operationId ??= refreshResult.OperationId;
 
             if (refreshResult.IsSuccessful)
                 withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, refreshResult.State);
 
             errors.AddRange(refreshResult.Errors);
             warnings.AddRange(refreshResult.Warnings);
+            stages.Add(new WintainiumApplicationRefreshStage(
+                currentStage,
+                refreshResult.OperationId,
+                refreshResult.IsSuccessful ? (refreshResult.Status ?? "Completed") : (refreshResult.Status ?? "Failed"),
+                beforeReconciliation,
+                withState.InstallationState,
+                refreshResult.Errors,
+                refreshResult.Warnings,
+                refreshResult.LogEvents ?? []));
 
+            currentStage = "PersistedInstalledStateRead";
+            var beforeStateRead = withState.InstallationState;
             var installedStateResult = await _installedState.GetAsync(
                 WintainiumDesktopPaths.InstalledStateRoot, application.ApplicationId,
                 cancellationToken).ConfigureAwait(false);
+            operationId ??= installedStateResult.OperationId;
 
             if (installedStateResult.IsSuccessful)
                 withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, installedStateResult.State);
 
             errors.AddRange(installedStateResult.Errors);
             warnings.AddRange(installedStateResult.Warnings);
+            stages.Add(new WintainiumApplicationRefreshStage(
+                currentStage,
+                installedStateResult.OperationId,
+                installedStateResult.IsSuccessful ? (installedStateResult.Status ?? "Completed") : (installedStateResult.Status ?? "Failed"),
+                beforeStateRead,
+                withState.InstallationState,
+                installedStateResult.Errors,
+                installedStateResult.Warnings,
+                installedStateResult.LogEvents ?? []));
 
+            currentStage = "UpdateDecision";
+            var beforeDecision = withState.InstallationState;
             var decisionResult = await _updateDecision.EvaluateAsync(
                 application.ManifestPath, GetMachineArchitecture(),
                 cancellationToken).ConfigureAwait(false);
+            operationId ??= decisionResult.OperationId;
 
             withState = WintainiumApplicationModelMapper.ApplyInstalledState(withState, decisionResult.InstalledState);
             withState = WintainiumApplicationModelMapper.ApplyUpdateDecision(withState, decisionResult);
             errors.AddRange(decisionResult.Errors);
             warnings.AddRange(decisionResult.Warnings);
+            stages.Add(new WintainiumApplicationRefreshStage(
+                currentStage,
+                decisionResult.OperationId,
+                decisionResult.IsSuccessful ? (decisionResult.Status ?? "Completed") : (decisionResult.Status ?? "Failed"),
+                beforeDecision,
+                withState.InstallationState,
+                decisionResult.Errors,
+                decisionResult.Warnings,
+                decisionResult.LogEvents ?? []));
         }
         catch (OperationCanceledException)
         {
@@ -118,10 +156,20 @@ internal sealed class WintainiumApplicationCollectionService
         }
         catch (Exception ex)
         {
-            errors.Add(new WintainiumOperationDiagnostic("ApplicationRefreshFailed", application.ManifestPath, ex.Message));
+            var diagnostic = new WintainiumOperationDiagnostic("ApplicationRefreshFailed", application.ManifestPath, ex.Message);
+            errors.Add(diagnostic);
+            stages.Add(new WintainiumApplicationRefreshStage(
+                currentStage,
+                operationId,
+                "Failed",
+                withState.InstallationState,
+                withState.InstallationState,
+                [diagnostic],
+                [],
+                []));
         }
 
-        return new WintainiumApplicationRefreshResult(withState, errors, warnings);
+        return new WintainiumApplicationRefreshResult(withState, errors, warnings, operationId, stages);
     }
 
     private static string GetMachineArchitecture() =>
