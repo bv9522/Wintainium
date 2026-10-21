@@ -757,6 +757,7 @@ public sealed partial class MainWindow : Window
             if (!cancellationToken.IsCancellationRequested &&
                 IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
             {
+                WintainiumDesktopDiagnosticsStore.SetRefreshResult(application.ApplicationId, result);
                 SetApplicationCollectionItem(result.Application);
             }
         }
