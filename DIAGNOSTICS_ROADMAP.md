@@ -76,7 +76,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] Confirmed that Add Software source-resolution diagnostics are a separate successful path.
 - [x] Located where authoritative reconciliation and desktop refresh results can lose explanatory detail.
 - [x] Defined the diagnostic stages and behavior guardrails.
-- [x] D1 — Preserve authoritative Core explanations (implementation committed; local verification pending).
+- [x] D1 — Preserve authoritative Core explanations (focused authoritative/public reconciliation tests passed locally; full suite and desktop build pending).
 - [x] D2 — Carry full structured results through the desktop (implementation committed; local build/test verification pending).
 - [ ] D3 — Produce a copyable refresh report.
 - [ ] D4 — Validate end-to-end failure modes.
