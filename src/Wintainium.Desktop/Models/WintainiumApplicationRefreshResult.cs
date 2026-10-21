@@ -5,7 +5,8 @@ internal sealed record WintainiumApplicationRefreshResult(
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
     string? OperationId = null,
-    IReadOnlyList<WintainiumApplicationRefreshStage>? Stages = null);
+    IReadOnlyList<WintainiumApplicationRefreshStage>? Stages = null,
+    DateTimeOffset? CapturedAtUtc = null);
 
 internal sealed record WintainiumApplicationRefreshStage(
     string Name,
