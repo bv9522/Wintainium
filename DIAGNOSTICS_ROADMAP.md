@@ -73,7 +73,9 @@ D3 implementation notes:
 - Test `Installed`, confirmed `NotInstalled`, ambiguous evidence, registry-read failure, invalid/missing policy, missing persisted state, persistence failure, update-decision failure, and desktop mapping failure.
 - Assert the first stage where state becomes `Unknown` and verify that the reason survives to the report.
 - Build the desktop and run focused plus full Pester suites locally.
-- **Acceptance:** diagnostic coverage explains outcomes without altering state authority or existing behavior.
+- Reuse and strengthen existing focused coverage rather than duplicate the same assertions: authoritative transition/persistence tests cover Installed, NotInstalled, Unknown preservation, missing prior state, and persistence failure; Windows reconciliation tests cover ambiguous candidates, registry-read failure, and missing/invalid settings; public reconciliation tests cover policy-validation short-circuiting and reason/event propagation.
+- D4-specific remaining validation is the desktop boundary: confirm update-decision failures and mapping failures become visible, correctly ordered refresh stages, and that the copied report names the earliest uncertain/failed stage while retaining the reason code. Those paths require a local desktop run because the repository currently has no dedicated .NET desktop unit-test project.
+- **Acceptance:** automated Core tests and local desktop scenario checks explain outcomes without altering state authority or existing behavior.
 
 ### D5 — Diagnose the five real entries
 Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CPU-Z, and Equalizer APO. Compare each entry's manifest policy, registry evidence, Core state, update decision, and dashboard projection. Only then implement a behavior fix supported by the evidence.
@@ -85,9 +87,19 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] Defined the diagnostic stages and behavior guardrails.
 - [x] D1 — Preserve authoritative Core explanations (focused authoritative/public reconciliation tests passed locally; Brian subsequently confirmed the desktop build and all tests passed).
 - [x] D2 — Carry full structured results through the desktop (Brian confirmed the Release build and all tests passed).
-- [x] D3 — Produce a copyable refresh report (implementation committed; local build/test verification pending).
+- [x] D3 — Produce a copyable refresh report (Brian confirmed Release build succeeded and all 708/708 tests passed).
 - [ ] D4 — Validate end-to-end failure modes.
 - [ ] D5 — Diagnose the five real entries.
+
+## D4 local desktop scenario checks
+
+For the desktop-only boundary checks, use a disposable test manifest/application fixture where practical. Do not change a real application's policy to force a result, and do not persist a guessed state.
+
+1. **Update-decision failure:** cause the update-decision operation to fail in a controlled fixture. Open that application's existing Details diagnostics and copy the report. Confirm the Update Decision stage carries the failure/reason and the report's first-attention stage points there unless an earlier stage already failed or became Unknown.
+2. **Desktop mapping failure:** use a controlled malformed Core-shaped result in a test-only fixture. Confirm mapping failure is recorded as a stage failure, the prior/unknown installation state is not converted into Installed/NotInstalled, and Copy Diagnostics retains the mapping reason.
+3. **Reason/report contract:** for ambiguous evidence and registry-read failure, confirm the first stage with an Unknown post-state is reported, the reason/event survives into the copied text, and safe-context filtering excludes raw registry subkeys and unrelated application names.
+4. **Positive controls:** verify confirmed Installed and confirmed NotInstalled transitions report the expected final state and do not flag a successful stage as the first failed/uncertain stage.
+5. **Missing state/policy:** verify the report distinguishes a missing persisted-state record (prior state Unknown) from invalid/missing policy (reconciliation does not run or returns its explicit validation failure).
 
 ## Local verification
 
