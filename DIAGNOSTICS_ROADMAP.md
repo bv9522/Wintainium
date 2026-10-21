@@ -62,6 +62,13 @@ D2 implementation notes:
 - Expose the report through the existing selected-application diagnostics/copy flow; do not auto-open windows or move source-resolution diagnostics out of Add Software.
 - **Acceptance:** a user can copy a single report that identifies the first failed or uncertain stage.
 
+D3 implementation notes:
+- Added a deterministic plain-text formatter for a single application's retained refresh trace, with capture timestamp, application/manifest identity, operation IDs, final state, ordered stages, before/after states, reason codes, errors, warnings, and relevant structured log events.
+- The report identifies the first failed or uncertain stage, including an Unknown post-stage state and explicit Unknown/evidence-unavailable reason codes.
+- Report event context is filtered through a safe allowlist; unrelated application entries and raw registry subkeys are not included.
+- Added an Installed-State Refresh section to the existing Application Details diagnostics experience. The existing Copy Diagnostics action includes the selected application's full refresh report, scoped by its application ID.
+- Source-resolution diagnostics remain in Add Software; no windows are opened automatically and no theme files were changed.
+
 ### D4 — Validate the end-to-end failure modes
 - Test `Installed`, confirmed `NotInstalled`, ambiguous evidence, registry-read failure, invalid/missing policy, missing persisted state, persistence failure, update-decision failure, and desktop mapping failure.
 - Assert the first stage where state becomes `Unknown` and verify that the reason survives to the report.
@@ -78,7 +85,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] Defined the diagnostic stages and behavior guardrails.
 - [x] D1 — Preserve authoritative Core explanations (focused authoritative/public reconciliation tests passed locally; full suite and desktop build pending).
 - [x] D2 — Carry full structured results through the desktop (implementation committed; local build/test verification pending).
-- [ ] D3 — Produce a copyable refresh report.
+- [x] D3 — Produce a copyable refresh report (implementation committed; local build/test verification pending).
 - [ ] D4 — Validate end-to-end failure modes.
 - [ ] D5 — Diagnose the five real entries.
 
