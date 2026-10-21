@@ -52,6 +52,7 @@ D2 implementation notes:
 - Application refresh results now retain ordered per-stage results for reconciliation, persisted-state read, and update decision, including operation IDs, stage status/reason codes, before/after installation states, and stage-scoped errors/warnings/events.
 - The current per-application refresh result is retained in a thread-safe desktop diagnostics store so the next step can surface it in the existing selected-application diagnostics experience.
 - Core diagnostic extra fields are preserved through a safe allowlist (including registry scope/view and stage/state context); raw subkeys and unrelated software names are excluded.
+- The Windows reconciliation plugin now emits an explicit `WindowsReconciliationEvidenceIncomplete` summary when zero registrations match and any configured registry observation failed. It reports safe counts (candidates, configured locations, failed reads) and match mode. Ambiguous evidence now includes candidate count, match mode, location count, and registry-read-failure count. These changes are committed but have not yet been run locally.
 - Existing aggregate errors/warnings remain available for compatibility; public Core result property sets were not changed.
 - Source-resolution diagnostics and theme/visual appearance files were not changed by D2.
 
@@ -84,8 +85,8 @@ D3 implementation notes:
 - D4-specific remaining validation is local desktop verification: confirm update-decision failures and the new dedicated mapping-failure stages appear in the copied report, the earliest uncertain/failed stage is correct, and positive controls remain unchanged. Those paths require a local desktop run because the repository currently has no dedicated .NET desktop unit-test project.
 - **Acceptance:** automated Core tests and local desktop scenario checks explain outcomes without altering state authority or existing behavior.
 
-### D5 — Diagnose the five real entries
-Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CPU-Z, and Equalizer APO. Compare each entry's manifest policy, registry evidence, Core state, update decision, and dashboard projection. Only then implement a behavior fix supported by the evidence.
+### D5 — Diagnose the eight entries still showing Unknown
+Brian reports that 10 applications were onboarded, with Audacity and 7-Zip recognized and the other eight showing `Unknown`. The five named earlier (AMD Drivers and Support, Attribute Changer, Core Temp, CPU-Z, and Equalizer APO) are examples, not the complete set. Compare all eight entries' manifest policy, registry evidence, Core state, update decision, and dashboard projection. Only then implement a behavior fix supported by the evidence.
 
 ## Current status
 
@@ -96,7 +97,7 @@ Use the report against AMD Drivers and Support, Attribute Changer, Core Temp, CP
 - [x] D2 — Carry full structured results through the desktop (Brian confirmed the Release build and all tests passed).
 - [x] D3 — Produce a copyable refresh report (Brian confirmed Release build succeeded and all 708/708 tests passed).
 - [ ] D4 — Validate end-to-end failure modes (targeted Core assertions and explicit desktop mapping-failure reporting committed; latest Release build confirmed by Brian; runtime report/state-preservation verification outstanding).
-- [ ] D5 — **Current priority:** identify why the real entries AMD Drivers and Support, Attribute Changer, Core Temp, CPU-Z, and Equalizer APO show `Unknown`. Inspect each installed manifest's reconciliation settings, live registry evidence/candidate count, prior persisted state, Core reconciliation result, update-decision result, and desktop model projection. Do not change reconciliation policy or state authority until evidence identifies the cause. D4 diagnostics work is supporting infrastructure, not completion of this goal.
+- [ ] D5 — **Current priority:** identify why eight of the ten onboarded apps show `Unknown` (Audacity and 7-Zip are recognized; the five named examples are not the full set). The first code inspection confirms the Windows reconciler returns `Unknown` when multiple registry entries match, or when no entries match and one or more registry locations failed to read. It returns `NotInstalled` when the registry scan succeeds with zero matches. This narrows the likely cause but does not prove which branch affects Brian's eight apps. New safe diagnostic summary fields have been added for candidate count, match mode, configured registry locations, and failed reads. After Brian builds/runs this change, use one affected app's copied Installed-State Refresh Report to determine the actual branch before changing behavior.
 
 ## D4 local desktop scenario checks
 
