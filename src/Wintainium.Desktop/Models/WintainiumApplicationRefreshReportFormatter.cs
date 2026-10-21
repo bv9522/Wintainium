@@ -87,10 +87,13 @@ internal static class WintainiumApplicationRefreshReportFormatter
     }
 
     private static bool IsFirstAttentionStage(WintainiumApplicationRefreshStage stage) =>
-        (!string.Equals(stage.Status, "Completed", StringComparison.OrdinalIgnoreCase) &&
-         !string.Equals(stage.Status, "Succeeded", StringComparison.OrdinalIgnoreCase)) ||
+        stage.Status.Contains("Failed", StringComparison.OrdinalIgnoreCase) ||
+        stage.Status.Contains("Error", StringComparison.OrdinalIgnoreCase) ||
+        stage.Status.Contains("Cancelled", StringComparison.OrdinalIgnoreCase) ||
         stage.Errors.Count > 0 ||
-        stage.StateAfter == WintainiumInstallationState.Unknown;
+        stage.StateAfter == WintainiumInstallationState.Unknown ||
+        (stage.ReasonCode?.Contains("Unknown", StringComparison.OrdinalIgnoreCase) ?? false) ||
+        (stage.ReasonCode?.Contains("EvidenceUnavailable", StringComparison.OrdinalIgnoreCase) ?? false);
 
     private static void AppendStageDiagnostics(
         StringBuilder builder,
