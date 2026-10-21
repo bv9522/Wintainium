@@ -33,7 +33,7 @@ internal sealed class WintainiumApplicationInstalledStateService
             "Get-WintainiumApplicationInstalledState",
             cancellationToken);
 
-        return Map(result);
+        return MapSafely(result);
     }
 
     public async Task<WintainiumApplicationInstalledStateResult> RefreshAsync(
@@ -61,6 +61,38 @@ internal sealed class WintainiumApplicationInstalledStateService
             cancellationToken);
 
         return Map(result);
+    }
+
+    private static WintainiumApplicationInstalledStateResult MapSafely(PSObject result)
+    {
+        try
+        {
+            return Map(result);
+        }
+        catch (Exception ex)
+        {
+            var diagnostic = new WintainiumOperationDiagnostic(
+                "DesktopInstalledStateMappingFailed", null,
+                $"The desktop could not map the Core installed-state result: {ex.Message}");
+            IReadOnlyList<WintainiumOperationDiagnostic> errors;
+            IReadOnlyList<WintainiumOperationDiagnostic> warnings;
+            try { errors = Diagnostics(result, "Errors").Append(diagnostic).ToArray(); }
+            catch { errors = [diagnostic]; }
+            try { warnings = Diagnostics(result, "Warnings"); }
+            catch { warnings = []; }
+
+            return new WintainiumApplicationInstalledStateResult(
+                Nullable(result, "OperationId") ?? "unavailable",
+                Nullable(result, "ApplicationId") ?? "unavailable",
+                false,
+                "DesktopMappingFailed",
+                null,
+                errors,
+                warnings,
+                WintainiumOperationState.Failed,
+                [],
+                null);
+        }
     }
 
     private static WintainiumApplicationInstalledStateResult Map(PSObject result)
