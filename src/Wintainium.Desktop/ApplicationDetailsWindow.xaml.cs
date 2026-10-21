@@ -86,6 +86,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         ErrorItemsControl.ItemsSource = Array.Empty<string>();
         WarningItemsControl.ItemsSource = Array.Empty<string>();
         StageItemsControl.ItemsSource = Array.Empty<string>();
+        RefreshDiagnosticsItemsControl.ItemsSource = Array.Empty<string>();
+        UpdateRefreshDiagnosticsPresentation();
     }
 
     private void PopulateApplicationFacts()
