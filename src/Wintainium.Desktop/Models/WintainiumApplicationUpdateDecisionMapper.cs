@@ -20,7 +20,8 @@ internal static class WintainiumApplicationUpdateDecisionMapper
             InstalledState: installedValue is null ? null : MapInstalledState(PSObject.AsPSObject(installedValue)),
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
-            OperationState: DetermineState(Boolean(result, "IsSuccessful")),\n            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result));
+            OperationState: DetermineState(Boolean(result, "IsSuccessful")),
+            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result));
     }
 
     private static WintainiumInstalledStateObservation MapInstalledState(PSObject source)
