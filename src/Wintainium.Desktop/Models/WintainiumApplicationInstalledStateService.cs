@@ -119,8 +119,7 @@ internal sealed class WintainiumApplicationInstalledStateService
             : throw new InvalidOperationException($"Core installed-state result returned unknown InstallationState '{value}'.");
 
     private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
-        Collection(source, name).Select(item => new WintainiumOperationDiagnostic(
-            Nullable(item, "Code"), Nullable(item, "Path"), Nullable(item, "Message"))).ToArray();
+        WintainiumOperationDiagnosticMapper.MapCollection(source, name);
 
     private static List<PSObject> Collection(PSObject source, string name)
     {
