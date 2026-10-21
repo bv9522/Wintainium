@@ -60,7 +60,7 @@ internal sealed class WintainiumApplicationInstalledStateService
             "Invoke-WintainiumApplicationReconciliation",
             cancellationToken);
 
-        return Map(result);
+        return MapSafely(result);
     }
 
     private static WintainiumApplicationInstalledStateResult MapSafely(PSObject result)
