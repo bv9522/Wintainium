@@ -261,6 +261,16 @@
                     </StackPanel>
                 </Border>
 
+                <Border x:Name="RefreshDiagnosticsCard" Padding="18" Visibility="Collapsed">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Installed-State Refresh" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" />
+                        <TextBlock Text="Per-stage refresh results for this application only. Copy Diagnostics includes the full structured report." Opacity="0.65" TextWrapping="Wrap" />
+                        <ItemsControl x:Name="RefreshDiagnosticsItemsControl" Loaded="DiagnosticItemsControl_Loaded">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button x:Name="CopyDiagnosticsButton" Content="Copy Diagnostics" Click="CopyDiagnosticsButton_Click" IsEnabled="False" />
                 </StackPanel>
