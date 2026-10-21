@@ -101,7 +101,7 @@ internal sealed class WintainiumApplicationCollectionService
                 currentStage,
                 refreshResult.OperationId,
                 refreshResult.IsSuccessful ? (refreshResult.Status ?? "Completed") : (refreshResult.Status ?? "Failed"),
-                refreshResult.Reconciliation?.ReasonCode,
+                GetStageReasonCode(refreshResult.Reconciliation?.ReasonCode, refreshResult.Errors, refreshResult.Warnings),
                 beforeReconciliation,
                 withState.InstallationState,
                 refreshResult.Errors,
@@ -124,7 +124,7 @@ internal sealed class WintainiumApplicationCollectionService
                 currentStage,
                 installedStateResult.OperationId,
                 installedStateResult.IsSuccessful ? (installedStateResult.Status ?? "Completed") : (installedStateResult.Status ?? "Failed"),
-                null,
+                GetStageReasonCode(null, installedStateResult.Errors, installedStateResult.Warnings),
                 beforeStateRead,
                 withState.InstallationState,
                 installedStateResult.Errors,
@@ -146,7 +146,7 @@ internal sealed class WintainiumApplicationCollectionService
                 currentStage,
                 decisionResult.OperationId,
                 decisionResult.IsSuccessful ? (decisionResult.Status ?? "Completed") : (decisionResult.Status ?? "Failed"),
-                decisionResult.Decision?.ReasonCode,
+                GetStageReasonCode(decisionResult.Decision?.ReasonCode, decisionResult.Errors, decisionResult.Warnings),
                 beforeDecision,
                 withState.InstallationState,
                 decisionResult.Errors,
@@ -159,13 +159,20 @@ internal sealed class WintainiumApplicationCollectionService
         }
         catch (Exception ex)
         {
-            var diagnostic = new WintainiumOperationDiagnostic("ApplicationRefreshFailed", application.ManifestPath, ex.Message);
+            var failureCode = currentStage switch
+            {
+                "InstalledStateReconciliation" => "InstalledStateReconciliationFailed",
+                "PersistedInstalledStateRead" => "PersistedInstalledStateReadFailed",
+                "UpdateDecision" => "UpdateDecisionFailed",
+                _ => "ApplicationRefreshFailed"
+            };
+            var diagnostic = new WintainiumOperationDiagnostic(failureCode, application.ManifestPath, ex.Message);
             errors.Add(diagnostic);
             stages.Add(new WintainiumApplicationRefreshStage(
                 currentStage,
                 operationId,
                 "Failed",
-                "ApplicationRefreshFailed",
+                failureCode,
                 withState.InstallationState,
                 withState.InstallationState,
                 [diagnostic],
@@ -174,6 +181,19 @@ internal sealed class WintainiumApplicationCollectionService
         }
 
         return new WintainiumApplicationRefreshResult(withState, errors, warnings, operationId, stages, DateTimeOffset.UtcNow);
+    }
+
+    private static string? GetStageReasonCode(
+        string? explicitReason,
+        IReadOnlyList<WintainiumOperationDiagnostic> errors,
+        IReadOnlyList<WintainiumOperationDiagnostic> warnings)
+    {
+        if (!string.IsNullOrWhiteSpace(explicitReason))
+            return explicitReason;
+
+        return errors.Select(item => item.Code)
+                   .Concat(warnings.Select(item => item.Code))
+                   .FirstOrDefault(code => !string.IsNullOrWhiteSpace(code));
     }
 
     private static string GetMachineArchitecture() =>
