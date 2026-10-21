@@ -24,7 +24,7 @@ internal static class WintainiumApplicationRefreshReportFormatter
         var app = result.Application;
 
         builder.AppendLine("Wintainium Installed-State Refresh Report");
-        builder.AppendLine($"Captured (UTC): {(result.CapturedAtUtc ?? DateTimeOffset.UtcNow).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture)}");
+        builder.AppendLine($"Captured (UTC): {FormatTimestamp(result.CapturedAtUtc)}");
         builder.AppendLine($"Application: {app.DisplayName}");
         builder.AppendLine($"Application ID: {app.ApplicationId}");
         if (!string.IsNullOrWhiteSpace(app.ManifestPath))
@@ -71,7 +71,7 @@ internal static class WintainiumApplicationRefreshReportFormatter
         ArgumentNullException.ThrowIfNull(result);
         var lines = new List<string>
         {
-            $"Captured: {(result.CapturedAtUtc ?? DateTimeOffset.UtcNow).ToUniversalTime():O}",
+            $"Captured: {FormatTimestamp(result.CapturedAtUtc)}",
             $"Final state: {result.Application.InstallationState}",
             $"Refresh operation: {Value(result.OperationId)}"
         };
@@ -137,6 +137,9 @@ internal static class WintainiumApplicationRefreshReportFormatter
         var text = string.Join(": ", parts);
         return string.IsNullOrWhiteSpace(text) ? "Unspecified diagnostic." : text;
     }
+
+    private static string FormatTimestamp(DateTimeOffset? value) =>
+        value is null ? "unavailable" : value.Value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
 
     private static string Value(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "unavailable" : value.Trim();
