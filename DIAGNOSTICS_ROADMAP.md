@@ -49,7 +49,9 @@ D2 implementation notes:
 - Added a structured desktop log-event model retaining severity, operation ID, component, event name, message, and each context key/value.
 - Installed-state refresh results now retain Core log events and a mapped reconciliation sub-result (status, observed evidence, reason code, errors, warnings, and nested events).
 - Update-decision results retain Core log events.
-- Application refresh results now retain ordered per-stage results for reconciliation, persisted-state read, and update decision, including operation IDs, stage status, before/after installation states, and stage-scoped errors/warnings/events.
+- Application refresh results now retain ordered per-stage results for reconciliation, persisted-state read, and update decision, including operation IDs, stage status/reason codes, before/after installation states, and stage-scoped errors/warnings/events.
+- The current per-application refresh result is retained in a thread-safe desktop diagnostics store so the next step can surface it in the existing selected-application diagnostics experience.
+- Core diagnostic extra fields are preserved through a safe allowlist (including registry scope/view and stage/state context); raw subkeys and unrelated software names are excluded.
 - Existing aggregate errors/warnings remain available for compatibility; public Core result property sets were not changed.
 - Source-resolution diagnostics and theme/visual appearance files were not changed by D2.
 
