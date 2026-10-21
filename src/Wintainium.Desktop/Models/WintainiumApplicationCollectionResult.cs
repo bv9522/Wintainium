@@ -17,4 +17,5 @@ internal sealed record WintainiumApplicationCollectionResult(
 internal sealed record WintainiumOperationDiagnostic(
     string? Code,
     string? Path,
-    string? Message);
+    string? Message,
+    IReadOnlyDictionary<string, string?>? Details = null);
