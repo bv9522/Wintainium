@@ -35,7 +35,21 @@ public sealed partial class ApplicationDetailsWindow
             WarningsHeaderText.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
         else if (itemsControl == TroubleshootingDiagnosticsItemsControl)
             TroubleshootingDiagnosticsCard.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
+        else if (itemsControl == RefreshDiagnosticsItemsControl)
+            RefreshDiagnosticsCard.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
 
+        CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
+    }
+
+    private void UpdateRefreshDiagnosticsPresentation()
+    {
+        var result = WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId);
+        var lines = result is null
+            ? Array.Empty<string>()
+            : WintainiumApplicationRefreshReportFormatter.FormatSummaryLines(result).ToArray();
+
+        RefreshDiagnosticsItemsControl.ItemsSource = lines;
+        RefreshDiagnosticsCard.Visibility = lines.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
     }
 
@@ -74,6 +88,8 @@ public sealed partial class ApplicationDetailsWindow
                ErrorItemsControl.Items.Count > 0 ||
                WarningItemsControl.Items.Count > 0 ||
                TroubleshootingDiagnosticsItemsControl.Items.Count > 0 ||
+               RefreshDiagnosticsItemsControl.Items.Count > 0 ||
+               WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId) is not null ||
                StageItemsControl.Items.Count > 0;
     }
 
@@ -94,6 +110,13 @@ public sealed partial class ApplicationDetailsWindow
         AppendItems(builder, "Errors", ErrorItemsControl.Items);
         AppendItems(builder, "Warnings", WarningItemsControl.Items);
         AppendItems(builder, "Troubleshooting", TroubleshootingDiagnosticsItemsControl.Items);
+
+        var refreshResult = WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId);
+        if (refreshResult is not null)
+        {
+            builder.AppendLine();
+            builder.AppendLine(WintainiumApplicationRefreshReportFormatter.Format(refreshResult));
+        }
 
         var updateLogs = WintainiumDesktopDiagnosticsStore.LastUpdateResult?.LogEvents;
         if (updateLogs is not null)
