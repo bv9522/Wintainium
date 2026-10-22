@@ -50,7 +50,7 @@ function Invoke-WintainiumCoreProviderSourceResolution {
 
     try { $sourceUri=[Uri]([string]$Request.SourceUri) }
     catch {
-        $error=[pscustomobject]@{Code='SourceResolutionUriInvalid';Message="SourceUri '$($Request.SourceUri)' is not a valid absolute URI."}
+        $error=[pscustomobject]@{Code='SourceResolutionUriInvalid';Message='SourceUri could not be parsed as an absolute URI.'}
         return & $baseResult $false 'SourceInvalid' $null @($error) @()
     }
     if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
