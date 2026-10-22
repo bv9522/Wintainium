@@ -106,10 +106,13 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         }
 
         if ($null -ne $stageError) { $errors.Add($stageError) }
-        if ($stageStatus -in @('DecisionIndeterminate','NoInstallableRelease','ProviderDiscoveryUnsuccessful') -and (-not [string]::IsNullOrWhiteSpace($reasonCode) -or -not [string]::IsNullOrWhiteSpace($reason))) {
+        # NoInstallableRelease is already explained by the dedicated install-decision
+        # troubleshooting item. Do not repeat the same sentence as an aggregate warning.
+        if ($stageStatus -in @('DecisionIndeterminate','ProviderDiscoveryUnsuccessful') -and (-not [string]::IsNullOrWhiteSpace($reasonCode) -or -not [string]::IsNullOrWhiteSpace($reason))) {
+            $warningReason = if (-not [string]::IsNullOrWhiteSpace($reason)) { ([string]$reason).Trim().TrimEnd('.', ';', ' ') } else { "$name reported status '$stageStatus'" }
             $warnings.Add([pscustomobject][ordered]@{
                 Code = if (-not [string]::IsNullOrWhiteSpace($reasonCode)) { $reasonCode } else { 'LifecycleDecisionDiagnostic' }
-                Message = if (-not [string]::IsNullOrWhiteSpace($reason)) { "$name`: $reason" } else { "$name reported status '$stageStatus'." }
+                Message = ($name + ': ' + $warningReason + '.')
             })
         }
     }
@@ -131,6 +134,27 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     $releaseCount = if ($result.PSObject.Properties['Releases']) { @($result.Releases).Count } else { 0 }
                     $message = if ([string]::IsNullOrWhiteSpace($providerId)) { "Release Discovery: $releaseCount release(s) reported." } else { "Release Discovery: provider '$providerId' reported $releaseCount release(s)." }
                     $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.ReleaseDiscovery'; Message=$message })
+
+                    # Surface the provider's bounded, structured trace in the install report.
+                    # Providers without trace events remain valid and need no HTML-specific fields.
+                    foreach ($traceEvent in @($result.LogEvents | Where-Object {
+                        $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')
+                    })) {
+                        $traceParts = [System.Collections.Generic.List[string]]::new()
+                        $traceParts.Add([string]$traceEvent.EventName)
+                        if (-not [string]::IsNullOrWhiteSpace([string]$traceEvent.Message)) { $traceParts.Add(([string]$traceEvent.Message).Trim().TrimEnd('.', ';', ' ')) }
+                        $context = $traceEvent.Context
+                        if ($null -ne $context) {
+                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','DurationMilliseconds','ExceptionType')) {
+                                $value = if ($context -is [System.Collections.IDictionary] -and $context.Contains($key)) { [string]$context[$key] } elseif ($null -ne $context.PSObject.Properties[$key]) { [string]$context.$key } else { $null }
+                                if (-not [string]::IsNullOrWhiteSpace($value)) { $traceParts.Add($key + '=' + $value) }
+                            }
+                        }
+                        $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                            Code = 'InstallDiagnostic.ReleaseDiscoveryTrace'
+                            Message = ('Discovery trace: ' + ($traceParts -join '; ') + '.')
+                        })
+                    }
                 }
                 'UpdateDecision' {
                     $selectedRelease = if ($result.PSObject.Properties['SelectedRelease']) { $result.SelectedRelease } else { $null }
