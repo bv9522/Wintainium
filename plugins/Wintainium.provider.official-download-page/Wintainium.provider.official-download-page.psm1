@@ -273,7 +273,24 @@ function Invoke-WintainiumProviderReleaseDiscovery {
 
     $stopwatch.Stop()
     $outcome=if($releases.Count -gt 0){'ReleasesParsed'}elseif($sectionMatches.Count -eq 0){'NoReleaseSectionCandidates'}elseif($downloadArtifactCandidateCount -eq 0){'NoSupportedDownloadLinks'}else{'ReleaseSectionsProducedNoArtifacts'}
-    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message 'Official download page parsing completed.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;SectionCandidateCount=$sectionMatches.Count;DownloadArtifactCandidateCount=$downloadArtifactCandidateCount;ParsedArtifactCount=$parsedArtifactCount;ParsedReleaseCount=$releases.Count;Outcome=$outcome;FailureStage=if($releases.Count -eq 0){'Parsing'}else{'None'};DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity $(if($releases.Count -eq 0){'Warning'}else{'Information'}))
+    $failureStage = if ($releases.Count -eq 0) { 'Parsing' } else { 'None' }
+    $traceSeverity = if ($releases.Count -eq 0) { 'Warning' } else { 'Information' }
+    $traceContext = @{
+        RequestedUrl=$safeRequestedUri
+        FinalUrl=$safeFinalUri
+        HttpStatusCode=$httpStatus
+        ContentType=$contentType
+        HtmlLength=$html.Length
+        SectionCandidateCount=$sectionMatches.Count
+        DownloadArtifactCandidateCount=$downloadArtifactCandidateCount
+        ParsedArtifactCount=$parsedArtifactCount
+        ParsedReleaseCount=$releases.Count
+        Outcome=$outcome
+        FailureStage=$failureStage
+        DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
+    }
+    $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message 'Official download page parsing completed.' -Context $traceContext -Severity $traceSeverity
+    $logEvents.Add($parseEvent)
 
     if($releases.Count -eq 0){
         # NoReleasesFound is a successful, explicit provider outcome. The structured
