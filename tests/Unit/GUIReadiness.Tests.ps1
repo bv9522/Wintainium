@@ -209,6 +209,7 @@ Describe 'Wintainium GUI-facing public boundary' {
         $onboardingService | Should -Match 'ReasonCode'
         $onboardingService | Should -Match 'Reason'
         $mainWindow | Should -Match 'Onboarding Stages:'
+        $mainWindow | Should -Match 'onboardingDiagnosticsText\.Text = BuildOnboardingDiagnostics\(result, sourceUri\)'
         $mainWindow | Should -Match 'Reason code:'
         $mainWindow | Should -Match 'Reason:'
 
