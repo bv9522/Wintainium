@@ -31,8 +31,8 @@ function New-OfficialDownloadPageDiagnosticEvent {
         [ValidateSet('Information','Warning','Error')][string]$Severity = 'Information'
     )
     [pscustomobject][ordered]@{
-        Severity=$Severity; OperationId=$OperationId; Component='OfficialDownloadPageProvider'
-        EventName=$EventName; Message=$Message; Context=$Context
+        Timestamp=[DateTimeOffset]::UtcNow; Severity=$Severity; OperationId=$OperationId
+        Component='OfficialDownloadPageProvider'; EventName=$EventName; Message=$Message; Context=$Context
     }
 }
 
