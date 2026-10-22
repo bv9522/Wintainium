@@ -849,8 +849,7 @@ public sealed partial class MainWindow : Window
         {
             XamlRoot = Content.XamlRoot,
             Title = "Add Software",
-            // Source-resolution diagnostics can be long; keep the dialog usable by allowing
-            // the content to scroll rather than clipping the report below the visible area.
+            // Keep the onboarding form usable on smaller displays without making it taller than the available dialog area.
             Content = new ScrollViewer
             {
                 Content = content,
@@ -959,7 +958,9 @@ public sealed partial class MainWindow : Window
                     recoveryButton.Visibility = Visibility.Collapsed;
                     progressRing.IsActive = false;
                     progressRing.Visibility = Visibility.Collapsed;
-                    statusText.Text = "Software was added. Source-resolution diagnostics are available in Application Details.";
+                    statusText.Text = result.Application is null
+                        ? "Software was added, but its source-resolution diagnostics could not be associated with an Application Details record."
+                        : "Software was added. Source-resolution diagnostics are available in Application Details.";
                     statusText.Visibility = Visibility.Visible;
                     dialog.Title = "Software Added";
                     dialog.PrimaryButtonText = "Done";
