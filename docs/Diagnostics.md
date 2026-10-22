@@ -89,7 +89,7 @@ All three workflows are Core-owned operations, but they do not share an identica
 
 ### Onboarding
 
-The onboarding result uses `OperationId`, `IsSuccessful`, `Status`, `SourceResolution`, `ApplicationDefinition`, `ManifestPath`, `Errors`, `Warnings`, and `LogEvents`. The effective sequence is URI validation → capable-provider resolution and ambiguity handling → optional icon discovery → policy resolution → application-definition normalization → persistence. Some failures return before later work begins, so the result must not imply that later stages were attempted.
+The onboarding result uses `OperationId`, `IsSuccessful`, `Status`, `SourceResolution`, `ApplicationDefinition`, `ManifestPath`, `Errors`, `Warnings`, `LogEvents`, and `Stages`. The stage trace records only work reached by the operation: `InputValidation` → `SourceResolution` → `PolicyResolution` → `DefinitionNormalization` → `Persistence`. Optional icon discovery is ancillary and may add warnings, but it does not become a mandatory stage. Caller-supplied policy is represented as a successful `Skipped` policy-resolution stage. Failed stages carry a stable `ReasonCode` and human-readable `Reason` where the owning operation has evidence for them. Some failures return before later work begins, so the trace must not imply that later stages were attempted.
 
 The authoritative success condition is `Status = Resolved` with a persisted application definition and manifest path. Source recognition alone is not successful onboarding. Onboarding does not mutate installed state.
 
@@ -165,7 +165,7 @@ When Add Software cannot resolve a URL, do not stop at the user-facing status su
 - `LogEvents` — correlated provider/resolver events. Source-resolution completion events include provider identity and the provider's status in their context.
 - `OperationId` — the correlation identifier to preserve when collecting or sharing diagnostics.
 
-The Add Software dialog's **Diagnostics and Troubleshooting** expander presents these fields in a copyable report. Provider trace events may include the requested and final URL paths, but query strings and fragments are removed and long paths are truncated. Raw HTML and raw request-exception text are not included in the trace.
+The Add Software flow's source-resolution diagnostics report includes the onboarding stage trace, with each reached stage's status and any available reason code/reason, alongside the provider events and structured errors. Provider trace events may include the requested and final URL paths, but query strings and fragments are removed and long paths are truncated. Raw HTML and raw request-exception text are not included in the trace.
 
 A report with no provider/resolver events may indicate that resolution failed before a provider was invoked, no provider advertised the required capability, or the provider returned no additional events. It should not be interpreted as proof that the page itself was inspected successfully.
 
