@@ -137,8 +137,13 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
 
                     # Surface the provider's bounded, structured trace in the install report.
                     # Providers without trace events remain valid and need no HTML-specific fields.
-                    foreach ($traceEvent in @($result.LogEvents | Where-Object {
-                        $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')
+                    $providerLogEvents = @()
+                    if ($result.PSObject.Properties['LogEvents'] -and $null -ne $result.LogEvents) {
+                        $providerLogEvents = @($result.LogEvents)
+                    }
+                    foreach ($traceEvent in @($providerLogEvents | Where-Object {
+                        $null -ne $_ -and $_.PSObject.Properties['EventName'] -and
+                            $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')
                     })) {
                         $traceParts = [System.Collections.Generic.List[string]]::new()
                         $traceParts.Add([string]$traceEvent.EventName)
@@ -259,9 +264,12 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
 
             if ($stageName -ne 'UpdateDecision' -or -not $result.PSObject.Properties['ReleaseEligibility']) { continue }
             $releaseEligibility = $result.ReleaseEligibility
-            $releaseObservations = if ($null -ne $releaseEligibility -and $releaseEligibility.PSObject.Properties['Observations']) { @($releaseEligibility.Observations) } else { @() }
+            [object[]]$releaseObservations = @()
+            if ($null -ne $releaseEligibility -and $releaseEligibility.PSObject.Properties['Observations'] -and $null -ne $releaseEligibility.Observations) {
+                $releaseObservations = @($releaseEligibility.Observations)
+            }
 
-            if ($releaseObservations.Count -eq 0) {
+            if (@($releaseObservations).Count -eq 0) {
                 $discoveryReturnedNoReleases = $false
                 foreach ($discoveryItem in @($LifecycleResult.StageResults)) {
                     if ($null -eq $discoveryItem) { continue }
