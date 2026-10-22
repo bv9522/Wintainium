@@ -120,7 +120,23 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
     if ($null -ne $LifecycleResult.PSObject.Properties['Error'] -and $null -ne $LifecycleResult.Error) { $errors.Add($LifecycleResult.Error) }
 
     $troubleshootingDiagnostics = [System.Collections.Generic.List[object]]::new()
-    if (-not $isSuccessful -and -not $wasCancelled) {
+    $hasReleaseDiscoveryTrace = $false
+    foreach ($traceStageItem in @($LifecycleResult.StageResults)) {
+        if ($null -eq $traceStageItem) { continue }
+        $traceStageExecution = if ($traceStageItem.PSObject.Properties['Execution']) { $traceStageItem.Execution } else { $null }
+        $traceStageResult = if ($null -ne $traceStageExecution -and $traceStageExecution.PSObject.Properties['Result']) { $traceStageExecution.Result } else { $null }
+        if ($null -eq $traceStageResult -or -not $traceStageResult.PSObject.Properties['LogEvents'] -or $null -eq $traceStageResult.LogEvents) { continue }
+        foreach ($traceCandidate in @($traceStageResult.LogEvents)) {
+            if ($null -ne $traceCandidate -and $traceCandidate.PSObject.Properties['EventName'] -and
+                $traceCandidate.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')) {
+                $hasReleaseDiscoveryTrace = $true
+                break
+            }
+        }
+        if ($hasReleaseDiscoveryTrace) { break }
+    }
+
+    if ((-not $isSuccessful -and -not $wasCancelled) -or $hasReleaseDiscoveryTrace) {
         foreach ($item in @($LifecycleResult.StageResults)) {
             if ($null -eq $item) { continue }
             $execution = if ($null -ne $item.PSObject.Properties['Execution']) { $item.Execution } else { $null }
@@ -128,6 +144,9 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             $result = if ($null -ne $execution -and $execution.PSObject.Properties['Result']) { $execution.Result } else { $null }
             if ($null -eq $result) { continue }
             $stageName = if ($stage.PSObject.Properties['Name']) { [string]$stage.Name } elseif ($item.PSObject.Properties['StageName']) { [string]$item.StageName } else { 'Unknown' }
+            # A successful empty discovery still deserves its trace, but should not
+            # cause unrelated install-stage troubleshooting cards to appear.
+            if ($isSuccessful -and $stageName -ne 'ReleaseDiscovery') { continue }
             switch ($stageName) {
                 'ReleaseDiscovery' {
                     $providerId = if ($result.PSObject.Properties['ProviderId']) { [string]$result.ProviderId } else { $null }
