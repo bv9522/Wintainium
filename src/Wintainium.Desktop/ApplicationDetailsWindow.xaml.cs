@@ -86,6 +86,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         ErrorItemsControl.ItemsSource = Array.Empty<string>();
         WarningItemsControl.ItemsSource = Array.Empty<string>();
         StageItemsControl.ItemsSource = Array.Empty<string>();
+        StageReasonItemsControl.ItemsSource = Array.Empty<string>();
         RefreshDiagnosticsItemsControl.ItemsSource = Array.Empty<string>();
         UpdateRefreshDiagnosticsPresentation();
         UpdateSourceResolutionDiagnosticsPresentation();
@@ -356,6 +357,8 @@ public sealed partial class ApplicationDetailsWindow : Window
                 _ => $"Installation: {result.Status ?? "Unknown"}."
             };
             StageItemsControl.ItemsSource = result.Stages.Select(FormatStage).ToArray();
+            StageReasonItemsControl.ItemsSource = result.Stages.Select(FormatStageReason).Where(static line => line is not null).ToArray();
+            UpdateDiagnosticSectionVisibility(StageReasonItemsControl);
             InstalledStateRefreshStatusText.Text = "Refreshing authoritative installed state…";
 
             if (result.Errors.Count > 0)
@@ -626,6 +629,8 @@ public sealed partial class ApplicationDetailsWindow : Window
                 _ => $"Update: {result.Status ?? "Unknown"}."
             };
             StageItemsControl.ItemsSource = result.Stages.Select(FormatStage).ToArray();
+            StageReasonItemsControl.ItemsSource = result.Stages.Select(FormatStageReason).Where(static line => line is not null).ToArray();
+            UpdateDiagnosticSectionVisibility(StageReasonItemsControl);
             InstalledStateRefreshStatusText.Text = "Refreshing authoritative installed state…";
 
             if (result.Errors.Count > 0)
@@ -743,6 +748,29 @@ public sealed partial class ApplicationDetailsWindow : Window
     {
         NotesTextBox.Text = _savedNotes;
         NotesStatusText.Text = "Unsaved note changes discarded.";
+    }
+
+    // Stage reasons are shown in the GUI-only section below the lifecycle list.
+    // Keep FormatStage unchanged: StageItemsControl is also part of the established
+    // Copy Diagnostics clipboard report contract.
+    private static string? FormatStageReason(WintainiumApplicationUpdateStageModel stage) =>
+        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason);
+
+    private static string? FormatStageReason(WintainiumApplicationInstallStageModel stage) =>
+        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason);
+
+    private static string? FormatStageReason(int sequence, string? name, string? reasonCode, string? reason)
+    {
+        if (string.IsNullOrWhiteSpace(reasonCode) && string.IsNullOrWhiteSpace(reason))
+            return null;
+
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(reasonCode))
+            details.Add($"Reason code: {reasonCode}");
+        if (!string.IsNullOrWhiteSpace(reason))
+            details.Add($"Reason: {reason}");
+
+        return $"{sequence}. {name ?? "Unnamed stage"} — {string.Join("; ", details)}";
     }
 
     private static string FormatStage(WintainiumApplicationUpdateStageModel stage)
