@@ -122,8 +122,14 @@ function Get-WintainiumApplicationInstallDecision {
 
     if ($selectable.Count -eq 0) {
         $base.Status = 'NoInstallableRelease'
-        $base.ReasonCode = 'NoSelectableArtifact'
-        $base.Reason = 'No discovered release has a selectable artifact for this machine.'
+        if ($observations.Count -eq 0) {
+            $base.ReasonCode = 'NoReleasesFound'
+            $base.Reason = 'Release discovery returned no releases, so no installable artifact can be selected.'
+        }
+        else {
+            $base.ReasonCode = 'NoSelectableArtifact'
+            $base.Reason = 'No discovered release has a selectable artifact for this machine.'
+        }
         return [pscustomobject]$base
     }
 
