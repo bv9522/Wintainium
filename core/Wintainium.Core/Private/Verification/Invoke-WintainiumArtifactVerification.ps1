@@ -37,16 +37,17 @@ function Invoke-WintainiumArtifactVerification {
 
     $sha256Claims = @($claims | Where-Object { $_.Algorithm -ieq 'SHA256' })
     if ($claims.Count -gt 0 -and $sha256Claims.Count -eq 0) {
-        $publisherMd5Claims = @($claims | Where-Object {
-            $_.Algorithm -ieq 'MD5' -and
-            $null -ne $SelectedArtifact.PSObject.Properties['Hashes'] -and
-            @($SelectedArtifact.Hashes | Where-Object {
-                $_.Algorithm -ieq 'MD5' -and
-                $_.Value -ceq $_.Value -and
-                $_.PSObject.Properties['Source'] -and
-                [string]$_.Source -eq 'OfficialDownloadPageChecksum'
-            }).Count -gt 0
-        })
+        $publisherMd5Claims = @()
+        if ($null -ne $SelectedArtifact.PSObject.Properties['Hashes'] -and $null -ne $SelectedArtifact.Hashes -and $SelectedArtifact.Hashes -isnot [System.Collections.IDictionary]) {
+            $publisherMd5Claims = @($SelectedArtifact.Hashes | Where-Object {
+                $null -ne $_ -and
+                $_.PSObject.Properties['Algorithm'] -and [string]$_.Algorithm -ieq 'MD5' -and
+                $_.PSObject.Properties['Value'] -and
+                $_.PSObject.Properties['Source'] -and [string]$_.Source -ceq 'OfficialDownloadPageChecksum'
+            } | ForEach-Object {
+                [pscustomobject]@{ Algorithm=[string]$_.Algorithm; Value=[string]$_.Value }
+            })
+        }
         if ($AllowLegacyMd5Verification -and $publisherMd5Claims.Count -gt 0) {
             foreach ($claim in $publisherMd5Claims) {
                 if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{32}
