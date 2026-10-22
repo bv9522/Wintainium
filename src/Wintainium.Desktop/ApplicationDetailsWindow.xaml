@@ -261,6 +261,14 @@
                     </StackPanel>
                 </Border>
 
+                <Border x:Name="SourceResolutionDiagnosticsCard" Padding="18" Visibility="Collapsed">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Source Resolution" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" />
+                        <TextBlock Text="Diagnostics captured when this application was added to Wintainium." Opacity="0.65" TextWrapping="Wrap" />
+                        <TextBlock x:Name="SourceResolutionDiagnosticsText" TextWrapping="Wrap" IsTextSelectionEnabled="True" FontFamily="Consolas" />
+                    </StackPanel>
+                </Border>
+
                 <Border x:Name="RefreshDiagnosticsCard" Padding="18" Visibility="Collapsed">
                     <StackPanel Spacing="10">
                         <TextBlock Text="Installed-State Refresh" Style="{StaticResource WintainiumY2KSubtitleTextBlockStyle}" />
