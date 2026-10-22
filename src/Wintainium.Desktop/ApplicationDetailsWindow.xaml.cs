@@ -330,13 +330,24 @@ public sealed partial class ApplicationDetailsWindow : Window
             ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
             WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
             TroubleshootingDiagnosticsItemsControl.ItemsSource = result.TroubleshootingDiagnostics.Select(FormatDiagnostic).ToArray();
-            TroubleshootingDiagnosticsCard.Visibility = result.OperationState == WintainiumOperationState.Failed && result.TroubleshootingDiagnostics.Count > 0
+            TroubleshootingDiagnosticsCard.Visibility = result.TroubleshootingDiagnostics.Count > 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
             var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
+            var decisionStatus = result.Stages
+                .FirstOrDefault(stage => string.Equals(stage.Name, "UpdateDecision", StringComparison.OrdinalIgnoreCase))
+                ?.Status;
             UpdateResultStatusText.Text = result.OperationState switch
             {
+                WintainiumOperationState.Completed when string.Equals(decisionStatus, "NoInstallableRelease", StringComparison.OrdinalIgnoreCase) =>
+                    "Installation was not attempted because no eligible release artifact was found.",
+                WintainiumOperationState.Completed when string.Equals(decisionStatus, "DecisionIndeterminate", StringComparison.OrdinalIgnoreCase) =>
+                    "Installation was not attempted because Wintainium could not make a deterministic install decision.",
+                WintainiumOperationState.Completed when string.Equals(decisionStatus, "ProviderDiscoveryUnsuccessful", StringComparison.OrdinalIgnoreCase) =>
+                    "Installation was not attempted because release discovery was unsuccessful.",
+                WintainiumOperationState.Completed when string.Equals(decisionStatus, "ApplicationAlreadyInstalled", StringComparison.OrdinalIgnoreCase) =>
+                    "The application is already installed; no installation was needed.",
                 WintainiumOperationState.Completed =>
                     $"Installation completed. {completedStages} of {result.Stages.Count} lifecycle stage(s) reported successful.",
                 WintainiumOperationState.Cancelled => "Installation was cancelled.",
