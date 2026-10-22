@@ -204,6 +204,31 @@ Describe 'Wintainium initial install release and artifact selection' {
         }
     }
 
+    It 'distinguishes a successful empty release discovery from artifact rejection' {
+        InModuleScope Wintainium.Core {
+            $manifest = [pscustomobject]@{
+                Id='example.app'
+                Release=[pscustomobject]@{ channel='stable' }
+                Artifact=[pscustomobject]@{ formats=@('exe'); architectures=@('x64'); allowUnknownArchitecture=$false }
+            }
+            $state = [pscustomobject]@{ ApplicationId='example.app'; InstallationState='NotInstalled' }
+            $provider = [pscustomobject]@{
+                IsSuccessful=$true
+                Status='NoReleasesFound'
+                Releases=@()
+            }
+
+            Mock Get-WintainiumEnvironment { [pscustomobject]@{ MachineArchitecture='x64' } }
+
+            $result = Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $state -ProviderResult $provider -MachineArchitecture x64
+
+            $result.Status | Should -Be 'NoInstallableRelease'
+            $result.ReasonCode | Should -Be 'NoReleasesFound'
+            $result.Reason | Should -Match 'Release discovery returned no releases'
+            @($result.ReleaseEligibility.Observations).Count | Should -Be 0
+        }
+    }
+
     It 'returns no installable release when every release lacks a selectable artifact' {
         InModuleScope Wintainium.Core {
             $manifest = [pscustomobject]@{
