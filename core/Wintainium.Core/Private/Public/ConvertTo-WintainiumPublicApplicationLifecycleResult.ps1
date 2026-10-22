@@ -185,6 +185,111 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         }
     }
 
+    # A completed orchestration can still have no installable target. Preserve
+    # the decision path in that case instead of hiding it behind successful
+    # skipped stages.
+    $decisionStageResult = $null
+    foreach ($item in @($LifecycleResult.StageResults)) {
+        if ($null -eq $item) { continue }
+        $stageName = if ($item.PSObject.Properties['StageName']) { [string]$item.StageName } elseif ($item.PSObject.Properties['Stage'] -and $item.Stage.PSObject.Properties['Name']) { [string]$item.Stage.Name } else { $null }
+        if ($stageName -ne 'UpdateDecision') { continue }
+        $execution = if ($item.PSObject.Properties['Execution']) { $item.Execution } else { $null }
+        $decisionStageResult = if ($null -ne $execution -and $execution.PSObject.Properties['Result']) { $execution.Result } else { $null }
+        break
+    }
+
+    $decisionStatus = if ($null -ne $decisionStageResult -and $decisionStageResult.PSObject.Properties['Status']) { [string]$decisionStageResult.Status } else { $null }
+    $selectedArtifact = if ($null -ne $decisionStageResult -and $decisionStageResult.PSObject.Properties['SelectedArtifact']) { $decisionStageResult.SelectedArtifact } else { $null }
+    $needsArtifactDiagnostics = $null -ne $decisionStageResult -and
+        ($null -eq $selectedArtifact -or $decisionStatus -notin @('InstallAvailable','UpdateAvailable'))
+
+    if ($needsArtifactDiagnostics) {
+        $decisionReasonCode = if ($decisionStageResult.PSObject.Properties['ReasonCode']) { [string]$decisionStageResult.ReasonCode } else { $null }
+        $decisionReason = if ($decisionStageResult.PSObject.Properties['Reason']) { [string]$decisionStageResult.Reason } else { $null }
+        $decisionParts = [System.Collections.Generic.List[string]]::new()
+        if (-not [string]::IsNullOrWhiteSpace($decisionStatus)) { $decisionParts.Add("status '$decisionStatus'") }
+        if (-not [string]::IsNullOrWhiteSpace($decisionReasonCode)) { $decisionParts.Add("reason code '$decisionReasonCode'") }
+        if (-not [string]::IsNullOrWhiteSpace($decisionReason)) { $decisionParts.Add($decisionReason) }
+        $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+            Code = 'InstallDiagnostic.DecisionOutcome'
+            Message = "Install decision: $($decisionParts -join '; ')."
+        })
+
+        foreach ($item in @($LifecycleResult.StageResults)) {
+            if ($null -eq $item) { continue }
+            $stageName = if ($item.PSObject.Properties['StageName']) { [string]$item.StageName } elseif ($item.PSObject.Properties['Stage'] -and $item.Stage.PSObject.Properties['Name']) { [string]$item.Stage.Name } else { $null }
+            $execution = if ($item.PSObject.Properties['Execution']) { $item.Execution } else { $null }
+            $result = if ($null -ne $execution -and $execution.PSObject.Properties['Result']) { $execution.Result } else { $null }
+            if ($null -eq $result) { continue }
+
+            if ($stageName -eq 'ReleaseDiscovery') {
+                $releaseCount = if ($result.PSObject.Properties['Releases']) { @($result.Releases).Count } else { 0 }
+                $releaseStatus = if ($result.PSObject.Properties['Status']) { [string]$result.Status } else { 'Not provided' }
+                $providerId = if ($result.PSObject.Properties['ProviderId']) { [string]$result.ProviderId } else { 'not provided by provider result' }
+                $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                    Code = 'InstallDiagnostic.ReleaseDiscoveryOutcome'
+                    Message = "Release discovery: status '$releaseStatus'; provider '$providerId'; releases returned: $releaseCount."
+                })
+            }
+
+            if ($stageName -ne 'UpdateDecision' -or -not $result.PSObject.Properties['ReleaseEligibility']) { continue }
+            $releaseEligibility = $result.ReleaseEligibility
+            $releaseObservations = if ($null -ne $releaseEligibility -and $releaseEligibility.PSObject.Properties['Observations']) { @($releaseEligibility.Observations) } else { @() }
+
+            if ($releaseObservations.Count -eq 0) {
+                $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                    Code = 'InstallDiagnostic.ReleaseEligibility'
+                    Message = 'Release eligibility: no per-release observations were available; release discovery may have returned no releases or the decision did not reach eligibility evaluation.'
+                })
+                continue
+            }
+
+            foreach ($releaseObservation in $releaseObservations) {
+                $release = if ($releaseObservation.PSObject.Properties['Release']) { $releaseObservation.Release } else { $null }
+                $releaseId = if ($null -ne $release -and $release.PSObject.Properties['ReleaseId']) { [string]$release.ReleaseId } else { 'unknown' }
+                $version = if ($null -ne $release -and $release.PSObject.Properties['Version']) { [string]$release.Version } else { 'unknown' }
+                $channel = if ($null -ne $release -and $release.PSObject.Properties['Channel']) { [string]$release.Channel } else { 'unknown' }
+                $eligible = if ($releaseObservation.PSObject.Properties['Selectable']) { [bool]$releaseObservation.Selectable } else { $false }
+                $reasonCode = if ($releaseObservation.PSObject.Properties['ReasonCode']) { [string]$releaseObservation.ReasonCode } else { 'not provided' }
+                $reason = if ($releaseObservation.PSObject.Properties['Reason']) { [string]$releaseObservation.Reason } else { $null }
+                $releaseMessage = "Release '$releaseId' (version $version, channel $channel): selectable=$eligible; reason code '$reasonCode'"
+                if (-not [string]::IsNullOrWhiteSpace($reason)) { $releaseMessage += "; $reason" }
+                $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                    Code = 'InstallDiagnostic.ReleaseEligibility'
+                    Message = $releaseMessage
+                })
+
+                $artifactObservations = if ($releaseObservation.PSObject.Properties['ArtifactObservations']) { @($releaseObservation.ArtifactObservations) } else { @() }
+                if ($artifactObservations.Count -eq 0) {
+                    $artifactCount = if ($null -ne $release -and $release.PSObject.Properties['Artifacts']) { @($release.Artifacts).Count } else { 0 }
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                        Code = 'InstallDiagnostic.ArtifactEligibility'
+                        Message = "Release '$releaseId': no per-artifact eligibility observations were captured; provider artifacts present: $artifactCount."
+                    })
+                    continue
+                }
+
+                foreach ($artifactObservation in $artifactObservations) {
+                    $artifact = if ($artifactObservation.PSObject.Properties['Artifact']) { $artifactObservation.Artifact } else { $null }
+                    $fileName = if ($null -ne $artifact -and $artifact.PSObject.Properties['FileName']) { [string]$artifact.FileName } else { 'filename unknown' }
+                    $uri = if ($null -ne $artifact -and $artifact.PSObject.Properties['Uri']) { [string]$artifact.Uri } else { $null }
+                    $format = if ($artifactObservation.PSObject.Properties['Format']) { [string]$artifactObservation.Format } elseif ($null -ne $artifact -and $artifact.PSObject.Properties['Format']) { [string]$artifact.Format } else { 'unknown' }
+                    $architecture = if ($artifactObservation.PSObject.Properties['Architecture']) { [string]$artifactObservation.Architecture } elseif ($null -ne $artifact -and $artifact.PSObject.Properties['Architecture']) { [string]$artifact.Architecture } else { 'unknown' }
+                    $eligible = if ($artifactObservation.PSObject.Properties['Eligible']) { [bool]$artifactObservation.Eligible } else { $false }
+                    $reasonCode = if ($artifactObservation.PSObject.Properties['ReasonCode']) { [string]$artifactObservation.ReasonCode } else { 'not provided' }
+                    $reason = if ($artifactObservation.PSObject.Properties['Reason']) { [string]$artifactObservation.Reason } else { $null }
+                    $artifactMessage = "Release '$releaseId' artifact '$fileName': eligible=$eligible; format=$format; architecture=$architecture; reason code '$reasonCode'"
+                    if (-not [string]::IsNullOrWhiteSpace($uri)) { $artifactMessage += "; URI '$uri'" }
+                    if (-not [string]::IsNullOrWhiteSpace($reason)) { $artifactMessage += "; $reason" }
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                        Code = 'InstallDiagnostic.ArtifactEligibility'
+                        Message = $artifactMessage
+                    })
+                }
+            }
+        }
+    }
+
     [pscustomobject][ordered]@{
         OperationId = $operationId
         IsSuccessful = $isSuccessful
