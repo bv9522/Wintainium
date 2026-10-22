@@ -130,8 +130,9 @@ internal static class WintainiumApplicationRefreshReportFormatter
         stage.LogEvents
             .Where(item => string.Equals(item.EventName, "ReleaseDiscoveryParsingCompleted", StringComparison.OrdinalIgnoreCase))
             .SelectMany(item => item.Context)
-            .FirstOrDefault(context => string.Equals(context.Key, key, StringComparison.OrdinalIgnoreCase))
-            .Value;
+            .Where(context => string.Equals(context.Key, key, StringComparison.OrdinalIgnoreCase))
+            .Select(context => context.Value)
+            .FirstOrDefault();
 
     private static void AppendStageDiagnostics(
         StringBuilder builder,
