@@ -233,7 +233,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         $decisionParts = [System.Collections.Generic.List[string]]::new()
         if (-not [string]::IsNullOrWhiteSpace($decisionStatus)) { $decisionParts.Add("status '$decisionStatus'") }
         if (-not [string]::IsNullOrWhiteSpace($decisionReasonCode)) { $decisionParts.Add("reason code '$decisionReasonCode'") }
-        if (-not [string]::IsNullOrWhiteSpace($decisionReason)) { $decisionParts.Add($decisionReason) }
+        if (-not [string]::IsNullOrWhiteSpace($decisionReason)) { $decisionParts.Add(([string]$decisionReason).Trim().TrimEnd('.', ';', ' ')) }
         $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
             Code = 'InstallDiagnostic.DecisionOutcome'
             Message = "Install decision: $($decisionParts -join '; ')."
@@ -262,10 +262,24 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             $releaseObservations = if ($null -ne $releaseEligibility -and $releaseEligibility.PSObject.Properties['Observations']) { @($releaseEligibility.Observations) } else { @() }
 
             if ($releaseObservations.Count -eq 0) {
-                $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
-                    Code = 'InstallDiagnostic.ReleaseEligibility'
-                    Message = 'Release eligibility: no per-release observations were available; release discovery may have returned no releases or the decision did not reach eligibility evaluation.'
-                })
+                $discoveryReturnedNoReleases = $false
+                foreach ($discoveryItem in @($LifecycleResult.StageResults)) {
+                    if ($null -eq $discoveryItem) { continue }
+                    $discoveryStageName = if ($discoveryItem.PSObject.Properties['StageName']) { [string]$discoveryItem.StageName } elseif ($discoveryItem.PSObject.Properties['Stage'] -and $discoveryItem.Stage.PSObject.Properties['Name']) { [string]$discoveryItem.Stage.Name } else { $null }
+                    if ($discoveryStageName -ne 'ReleaseDiscovery') { continue }
+                    $discoveryExecution = if ($discoveryItem.PSObject.Properties['Execution']) { $discoveryItem.Execution } else { $null }
+                    $discoveryResult = if ($null -ne $discoveryExecution -and $discoveryExecution.PSObject.Properties['Result']) { $discoveryExecution.Result } else { $null }
+                    if ($null -ne $discoveryResult -and $discoveryResult.PSObject.Properties['Status'] -and [string]$discoveryResult.Status -eq 'NoReleasesFound') {
+                        $discoveryReturnedNoReleases = $true
+                        break
+                    }
+                }
+                if (-not $discoveryReturnedNoReleases) {
+                    $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                        Code = 'InstallDiagnostic.ReleaseEligibility'
+                        Message = 'Release eligibility: no per-release observations were captured; the decision did not reach per-release eligibility evaluation.'
+                    })
+                }
                 continue
             }
 
