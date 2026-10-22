@@ -704,10 +704,13 @@ public sealed partial class MainWindow : Window
         if (application is null)
             return;
 
-        await RefreshSingleApplicationAsync(
+        var refreshedApplication = await RefreshSingleApplicationAsync(
             application,
             _collectionRefreshCancellation?.Token ?? CancellationToken.None,
             allowDuringOperation: true);
+
+        if (refreshedApplication is not null)
+            SetApplicationCollectionItem(refreshedApplication);
     }
 
     private void IncrementApplicationRefreshGeneration(string applicationId)
@@ -731,15 +734,26 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            await Task.WhenAll(applications.Select(
+            // Keep the dashboard stable while providers complete independently. Each result is
+            // collected first; the visible collection is updated once after the refresh batch ends.
+            var refreshedApplications = await Task.WhenAll(applications.Select(
                 application => RefreshSingleApplicationAsync(application, cancellationToken))).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            foreach (var application in refreshedApplications)
+            {
+                if (application is not null)
+                    SetApplicationCollectionItem(application);
+            }
         }
         catch (OperationCanceledException)
         {
         }
     }
 
-    private async Task RefreshSingleApplicationAsync(
+    private async Task<WintainiumApplicationModel?> RefreshSingleApplicationAsync(
         WintainiumApplicationModel application,
         CancellationToken cancellationToken,
         bool allowDuringOperation = false)
@@ -755,33 +769,35 @@ public sealed partial class MainWindow : Window
             }
 
             if (!IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
-                return;
+                return null;
 
             var result = await _services.ApplicationCollection.RefreshApplicationAsync(
                 application, cancellationToken);
 
-            if (!cancellationToken.IsCancellationRequested &&
-                IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
+            if (cancellationToken.IsCancellationRequested ||
+                !IsApplicationRefreshCurrent(application.ApplicationId, generation, allowDuringOperation))
+                return null;
+
+            WintainiumDesktopDiagnosticsStore.SetRefreshResult(application.ApplicationId, result);
+
+            // A Details window may have opened while the dashboard refresh was still running.
+            // Push the completed result into that window so its diagnostics and state facts
+            // do not remain stuck at their pre-refresh placeholders.
+            if (_applicationDetailsWindows.TryGetValue(application.ApplicationId, out var detailsWindow))
             {
-                WintainiumDesktopDiagnosticsStore.SetRefreshResult(application.ApplicationId, result);
-
-                // A Details window may have opened while the dashboard refresh was still running.
-                // Push the completed result into that window so its diagnostics and state facts
-                // do not remain stuck at their pre-refresh placeholders.
-                if (_applicationDetailsWindows.TryGetValue(application.ApplicationId, out var detailsWindow))
-                {
-                    detailsWindow.ApplyDashboardRefreshResult(result);
-                }
-
-                SetApplicationCollectionItem(result.Application);
+                detailsWindow.ApplyDashboardRefreshResult(result);
             }
+
+            return result.Application;
         }
         catch (OperationCanceledException)
         {
+            return null;
         }
         catch
         {
             // Keep the manifest-backed card visible if a background refresh fails.
+            return null;
         }
     }
 
