@@ -401,33 +401,65 @@ function Invoke-WintainiumProvider {
 function Invoke-WintainiumProviderSourceResolution {
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$Request)
+
     $operationId=[string]$Request.OperationId
+    $logEvents=[System.Collections.Generic.List[object]]::new()
+    $stopwatch=[System.Diagnostics.Stopwatch]::StartNew()
     try {$sourceUri=[Uri]([string]$Request.SourceUri)} catch {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageUriInvalid' 'The supplied source URL is not a valid URI.')
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The supplied source URL could not be parsed.' -Context @{FailureStage='Configuration';Outcome='InvalidSourceUri'} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageUriInvalid' 'The supplied source URL is not a valid URI.') @() $logEvents.ToArray()
     }
     if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.')
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'Official download page resolution requires HTTP or HTTPS.' -Context @{Host=$sourceUri.Host;FailureStage='Configuration';Outcome='UnsupportedUriScheme'} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.') @() $logEvents.ToArray()
     }
+    $safeSourceUri=Get-OfficialDownloadPageSafeUri -Uri $sourceUri
     if ($sourceUri.Host -ieq 'github.com' -or $sourceUri.Host -ieq 'www.github.com') {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageHostUnsupported' 'GitHub sources are resolved by the GitHub provider.')
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionDelegated' -Message 'GitHub source URLs are handled by the dedicated GitHub provider.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;Outcome='DedicatedProviderFallback'} -Severity Information))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageHostUnsupported' 'GitHub sources are resolved by the GitHub provider.') @() $logEvents.ToArray()
     }
+
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRequestStarted' -Message 'Official download page source resolution started.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;FailureStage='Retrieval'}))
     try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' $_.Exception.Message)
+        $stopwatch.Stop()
+        $exceptionType=$_.Exception.GetType().Name
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRetrievalFailed' -Message 'The source page request failed before identity metadata could be parsed.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;FailureStage='Retrieval';ExceptionType=$exceptionType;DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' "The source page request failed ($exceptionType). See source-resolution diagnostics for request context.") @() $logEvents.ToArray()
     }
+
     $contentType=''
     if ($response.Headers -and $response.Headers['Content-Type']) {$contentType=[string]$response.Headers['Content-Type']}
+    $httpStatus=$null
+    try { if ($null -ne $response.StatusCode) { $httpStatus=[int]$response.StatusCode } } catch {}
+    $finalUri=$sourceUri
+    try {
+        if ($null -ne $response.BaseResponse -and $null -ne $response.BaseResponse.ResponseUri) { $finalUri=[Uri]$response.BaseResponse.ResponseUri }
+        elseif ($null -ne $response.BaseResponse -and $response.BaseResponse.RequestMessage -and $response.BaseResponse.RequestMessage.RequestUri) { $finalUri=[Uri]$response.BaseResponse.RequestMessage.RequestUri }
+    } catch {}
+    $safeFinalUri=Get-OfficialDownloadPageSafeUri -Uri $finalUri
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionResponseReceived' -Message 'The source page response was received.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;Host=$sourceUri.Host;HttpStatusCode=$httpStatus;ContentType=$contentType;FailureStage='IdentityParsing'}))
+
     if ($contentType -and $contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentTypeUnsupported' "Unsupported content type '$contentType'.")
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response content type is not supported for official download page resolution.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;ContentType=$contentType;FailureStage='Validation';Outcome='UnsupportedContentType';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentTypeUnsupported' "Unsupported content type '$contentType'.") @() $logEvents.ToArray()
     }
+
     $html=[string]$response.Content
     if ([string]::IsNullOrWhiteSpace($html)) {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentEmpty' 'The source returned an empty HTML document.')
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The source response contained no HTML content.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;FailureStage='IdentityParsing';Outcome='EmptyDocument';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentEmpty' 'The source returned an empty HTML document.') @() $logEvents.ToArray()
     }
-    $canonical=Get-OfficialDownloadPageCanonicalUri -Html $html -BaseUri $sourceUri
+
+    $canonical=Get-OfficialDownloadPageCanonicalUri -Html $html -BaseUri $finalUri
     $name=Get-OfficialDownloadPageApplicationName -Html $html
     if ([string]::IsNullOrWhiteSpace($name)) {
-        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.')
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response was retrieved but supported identity metadata did not yield an application name.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;FailureStage='IdentityParsing';Outcome='ApplicationIdentityMissing';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.') @() $logEvents.ToArray()
     }
+
     $hostId=$sourceUri.Host.ToLowerInvariant() -replace '[^a-z0-9]+','.'
     $pathId=$sourceUri.AbsolutePath.Trim('/').ToLowerInvariant() -replace '[^a-z0-9]+','.'
     $pathId=$pathId.Trim('.')
@@ -439,7 +471,9 @@ function Invoke-WintainiumProviderSourceResolution {
         ProviderSettings=[ordered]@{pageUri=$canonical}
         SourceContext=[pscustomobject][ordered]@{sourceFamily='official-download-page';contentType=if($contentType){$contentType}else{'text/html'}}
     }
-    New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source
+    $stopwatch.Stop()
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionCompleted' -Message 'Official download page source resolution completed.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;Host=$sourceUri.Host;ApplicationId=$applicationId;ContentType=$contentType;Outcome='Resolved';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds}))
+    New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source @() @() $logEvents.ToArray()
 }
 function New-OfficialDownloadPageIconDiscoveryResult {
     param(
