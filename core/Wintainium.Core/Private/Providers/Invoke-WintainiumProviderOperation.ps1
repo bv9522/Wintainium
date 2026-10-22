@@ -93,9 +93,10 @@ function Invoke-WintainiumProviderOperation {
         $providerResult=& $command -Request $Request
     }
     catch {
-        $error=[pscustomobject]@{Code='ProviderInternalError';Message=$_.Exception.Message}
-        $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message 'Provider execution failed.' -Context @{ErrorCode=$error.Code}))
-        return & $baseResult $false 'ProviderInternalError' @() @($error) @()
+        $exceptionType=$_.Exception.GetType().Name
+        $error=[pscustomobject]@{Code='ProviderInternalError';Message="Provider execution failed ($exceptionType). See structured provider diagnostics for the failure stage."}
+        $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'Provider' -EventName 'ProviderOperationFailed' -Message 'Provider execution failed.' -Context @{ErrorCode=$error.Code;ExceptionType=$exceptionType}))
+        return & $baseResult $false 'ProviderInternalError' @() @($error) @($error)
     }
 
     if ($null -eq $providerResult -or @($providerResult).Count -ne 1) {
