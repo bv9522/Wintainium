@@ -39,6 +39,27 @@ Describe 'Official download page discovery diagnostics' {
         $serialized | Should -Not -Match 'do-not-log-this|also-secret'
     }
 
+    It 'recognizes plain-text release labels with alphabetic version suffixes' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = '<html><body><div class="release-title">Release 11.50a</div><p>24 September 2026 / Windows 10 and 11</p><a href="/ac-11_50a.exe">Full setup</a><a href="/ac-11_50a-portable.exe">Portable</a><div class="release-title">Release 11.40b</div><a href="/ac-11_40b.exe">Older setup</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request $script:request
+        $trace = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')
+
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 2
+        $result.Releases[0].Version | Should -Be '11.50a'
+        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        $result.Releases[1].Version | Should -Be '11.40b'
+        $trace[0].Context.Outcome | Should -Be 'ReleasesParsed'
+    }
+
     It 'records recognized release and artifact counts when parsing succeeds' {
         Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             [pscustomobject]@{
