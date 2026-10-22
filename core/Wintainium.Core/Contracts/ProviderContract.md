@@ -149,6 +149,7 @@ Channel is the authoritative normalized channel concept. Prerelease semantics mu
 A normalized artifact candidate may contain:
 
 - `Uri` — untrusted artifact location data.
+- `SourcePageUri` — optional HTTPS page URI from which the artifact link was discovered. Core may derive an origin-only HTTP referrer from it; it is not a trust signal.
 - `FileName` — upstream filename when known.
 - `Format` — normalized artifact format when known, such as `exe`, `msi`, or `zip`.
 - `Architecture` — normalized supported architecture when known, such as `x86`, `x64`, `neutral`, or `unknown`.
