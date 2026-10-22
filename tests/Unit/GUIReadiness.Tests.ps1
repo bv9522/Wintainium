@@ -176,4 +176,25 @@ Describe 'Wintainium GUI-facing public boundary' {
         $mainWindow | Should -Match 'IsApplicationRefreshCurrent'
     }
 
+
+
+    It 'shows lifecycle reason codes in a GUI-only section without changing the Copy Diagnostics report' {
+        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\ApplicationDetailsWindow.xaml.cs') -Raw
+        $detailsXaml = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\ApplicationDetailsWindow.xaml') -Raw
+
+        $detailsXaml | Should -Match 'x:Name="StageReasonItemsControl"'
+        $detailsXaml | Should -Match 'x:Name="StageReasonHeaderText"'
+        $details | Should -Match 'FormatStageReason\(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason\)'
+        $details | Should -Match 'Reason code: \{reasonCode\}'
+        $details | Should -Match 'Reason: \{reason\}'
+
+        $clipboardStart = $details.IndexOf('private string BuildDiagnosticsClipboardText()', [StringComparison]::Ordinal)
+        $clipboardEnd = $details.IndexOf('private static void AppendItems(', $clipboardStart, [StringComparison]::Ordinal)
+        $clipboardStart | Should -BeGreaterOrEqual 0
+        $clipboardEnd | Should -BeGreaterThan $clipboardStart
+        $clipboardBuilder = $details.Substring($clipboardStart, $clipboardEnd - $clipboardStart)
+        $clipboardBuilder | Should -Not -Match 'StageReason'
+        $details | Should -Match 'CopyDiagnosticsButton_Click'
+        $details | Should -Match 'Copy Diagnostics'
+    }
 }
