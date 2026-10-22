@@ -485,11 +485,16 @@ function Invoke-WintainiumProviderSourceResolution {
     $pathId=$pathId.Trim('.')
     $applicationId=if ($pathId) {"web.$hostId.$pathId"} else {"web.$hostId"}
     $publisher=Get-OfficialDownloadPagePublisher -Html $html
+    $sourceContentType = if (-not [string]::IsNullOrWhiteSpace($contentType)) { $contentType } else { 'text/html' }
+    $sourceContext = [pscustomobject][ordered]@{
+        sourceFamily='official-download-page'
+        contentType=$sourceContentType
+    }
     $source=[pscustomobject][ordered]@{
         ApplicationId=$applicationId;Name=$name;Publisher=$publisher;Homepage=$canonical;CanonicalUri=$canonical
         ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
         ProviderSettings=[ordered]@{pageUri=$canonical}
-        SourceContext=[pscustomobject][ordered]@{sourceFamily='official-download-page';contentType=if($contentType){$contentType}else{'text/html'}}
+        SourceContext=$sourceContext
     }
     $stopwatch.Stop()
     $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionCompleted' -Message 'Official download page source resolution completed.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;Host=$sourceUri.Host;ApplicationId=$applicationId;ContentType=$contentType;Outcome='Resolved';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds}))
