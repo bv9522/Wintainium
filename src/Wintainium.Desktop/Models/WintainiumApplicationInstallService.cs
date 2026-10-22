@@ -19,6 +19,7 @@ internal sealed class WintainiumApplicationInstallService
         string? pluginRoot = null,
         string? schemaPath = null,
         int installerTimeoutMilliseconds = 600_000,
+        bool allowLegacyMd5Verification = false,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
@@ -34,6 +35,7 @@ internal sealed class WintainiumApplicationInstallService
             pluginRoot,
             schemaPath,
             installerTimeoutMilliseconds,
+            allowLegacyMd5Verification,
             cancellationToken).ConfigureAwait(false);
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
