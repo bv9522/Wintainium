@@ -62,6 +62,12 @@ Describe 'Wintainium artifact verification' {
         $result.FailureKind | Should -Be 'VerificationMetadataMissing'
     }
 
+    It 'continues to reject absent hash evidence even when legacy MD5 is authorized' {
+        $artifact.Hashes = @()
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -AllowLegacyMd5Verification }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'VerificationMetadataMissing'
+    }
     It 'rejects unsupported-only algorithms' {
         $artifact.Hashes = @([pscustomobject]@{ Algorithm='MD5'; Value=('0' * 32) })
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
