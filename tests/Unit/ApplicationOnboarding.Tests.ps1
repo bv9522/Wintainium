@@ -158,6 +158,19 @@ Describe 'Wintainium application onboarding' {
         @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
+    It 'reports persistence failure as the terminal onboarding stage' {
+        New-Item -ItemType File -Path $script:manifestRoot -Force | Out-Null
+
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'ApplicationDefinitionPersistenceFailed'
+        $result.Stages[-1].Name | Should -Be 'Persistence'
+        $result.Stages[-1].Status | Should -Be 'Failed'
+        $result.Stages[-1].ReasonCode | Should -Be 'ApplicationDefinitionPersistenceFailed'
+        $result.Stages[-1].Reason | Should -Not -BeNullOrEmpty
+    }
+
     It 'preserves provider status and identity in source-identification failure log events' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/unsupported' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
 
