@@ -157,6 +157,25 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
 
     if ($artifacts.Count -eq 0) { return $null }
 
+    # Some publishers expose legacy MD5 checksums as visible text near the
+    # corresponding download buttons rather than in the artifact URL. Capture
+    # these claims only when the page provides one checksum per parsed artifact;
+    # never guess the association when counts differ.
+    $releaseText = ConvertFrom-OfficialDownloadPageHtmlText $Body
+    $md5Matches = [regex]::Matches(
+        $releaseText,
+        '(?i)\bMD5\s*(?:Checksum|Hash)\s*[:=]\s*([0-9a-f]{32})\b'
+    )
+    if ($md5Matches.Count -eq $artifacts.Count) {
+        for ($artifactIndex = 0; $artifactIndex -lt $artifacts.Count; $artifactIndex++) {
+            $artifacts[$artifactIndex].Hashes = @($artifacts[$artifactIndex].Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'MD5'
+                Value = $md5Matches[$artifactIndex].Groups[1].Value.ToUpperInvariant()
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+
     $releaseKey="$($BaseUri.Host.ToLowerInvariant())|$version|$($publishedAt)"
     $hash=[Security.Cryptography.SHA256]::Create()
     try {
