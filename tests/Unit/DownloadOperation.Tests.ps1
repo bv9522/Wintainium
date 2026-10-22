@@ -71,8 +71,9 @@ namespace Wintainium.Tests
 
 class TestDownloadHandler : System.Net.Http.HttpMessageHandler {
     [System.Net.Http.HttpResponseMessage] $Response
+    [System.Net.Http.HttpRequestMessage] $Request
     TestDownloadHandler([System.Net.Http.HttpResponseMessage] $response) { $this.Response = $response }
-    [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync([System.Net.Http.HttpRequestMessage] $request, [System.Threading.CancellationToken] $cancellationToken) { return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response) }
+    [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync([System.Net.Http.HttpRequestMessage] $request, [System.Threading.CancellationToken] $cancellationToken) { $this.Request = $request; return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response) }
 }
 
 Describe 'Invoke-WintainiumDownload' {
@@ -148,5 +149,72 @@ Describe 'Invoke-WintainiumDownload' {
     It 'classifies a cancelled download as non-retryable and removes temporary output' {
         $response=[System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK); $response.Content=[System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('cancelled artifact')); $handler=[TestDownloadHandler]::new($response); $client=[System.Net.Http.HttpClient]::new($handler); $cts=[System.Threading.CancellationTokenSource]::new(); $cts.Cancel()
         try { $result=InModuleScope Wintainium.Core -Parameters @{Request=$request;Root=$root;Client=$client;Token=$cts.Token} { param($Request,$Root,$Client,$Token); Mock Resolve-WintainiumDownloadTarget { [pscustomobject]@{Uri=$Request.SelectedArtifact.Uri;DownloadRoot=$Root;FileName=$Request.SelectedArtifact.FileName;DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName} }; Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client -CancellationToken $Token }; $result.Status|Should -Be 'Failed'; $result.FailureKind|Should -Be 'Cancelled'; $result.Retryable|Should -BeFalse; Test-Path -LiteralPath $result.DestinationPath|Should -BeFalse; Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue|Should -BeNullOrEmpty } finally { $client.Dispose(); $response.Dispose(); $cts.Dispose() }
+    }
+
+    It 'sends the source origin as a referrer when downloading a discovered artifact' {
+        $request.SelectedArtifact.Uri = 'https://pubfiles.petges.lu/ac-11_50a.exe'
+        $request.SelectedArtifact.FileName = 'ac-11_50a.exe'
+        $request.SelectedArtifact | Add-Member -NotePropertyName SourcePageUri -NotePropertyValue 'https://www.petges.lu/download/'
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('MZ test executable payload'))
+        $response.Content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new('application/octet-stream')
+        $handler = [TestDownloadHandler]::new($response)
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
+                param($Request,$Root,$Client)
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $handler.Request.Headers.Referrer.AbsoluteUri | Should -Be 'https://www.petges.lu/'
+            $result.Status | Should -Be 'Downloaded'
+        } finally { $client.Dispose(); $response.Dispose() }
+    }
+
+    It 'rejects an HTML response declared as HTML instead of saving it under a package filename' {
+        $request.SelectedArtifact.Uri = 'https://pubfiles.petges.lu/ac-11_50a.exe'
+        $request.SelectedArtifact.FileName = 'ac-11_50a.exe'
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content = [System.Net.Http.StringContent]::new('<!DOCTYPE html><html><body>Redirected page</body></html>')
+        $response.Content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new('text/html')
+        $handler = [TestDownloadHandler]::new($response)
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
+                param($Request,$Root,$Client)
+                Mock Resolve-WintainiumDownloadTarget {
+                    [pscustomobject]@{ Uri=$Request.SelectedArtifact.Uri; DownloadRoot=$Root; FileName=$Request.SelectedArtifact.FileName; DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName }
+                }
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $result.Status | Should -Be 'Failed'
+            $result.FailureKind | Should -Be 'UnexpectedContentType'
+            $result.ErrorMessage | Should -Match 'Final URL'
+            Test-Path -LiteralPath $result.DestinationPath | Should -BeFalse
+            Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        } finally { $client.Dispose(); $response.Dispose() }
+    }
+
+    It 'rejects an HTML document even when the server mislabels its content type as binary' {
+        $request.SelectedArtifact.Uri = 'https://pubfiles.petges.lu/ac-11_50a.exe'
+        $request.SelectedArtifact.FileName = 'ac-11_50a.exe'
+        $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::OK)
+        $response.Content = [System.Net.Http.ByteArrayContent]::new([System.Text.Encoding]::UTF8.GetBytes('<!DOCTYPE html><html><body>Redirected page</body></html>'))
+        $response.Content.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new('application/octet-stream')
+        $handler = [TestDownloadHandler]::new($response)
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        try {
+            $result = InModuleScope Wintainium.Core -Parameters @{ Request=$request; Root=$root; Client=$client } {
+                param($Request,$Root,$Client)
+                Mock Resolve-WintainiumDownloadTarget {
+                    [pscustomobject]@{ Uri=$Request.SelectedArtifact.Uri; DownloadRoot=$Root; FileName=$Request.SelectedArtifact.FileName; DestinationPath=Join-Path $Root $Request.SelectedArtifact.FileName }
+                }
+                Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
+            }
+            $result.Status | Should -Be 'Failed'
+            $result.FailureKind | Should -Be 'InvalidArtifactPayload'
+            $result.ErrorMessage | Should -Match 'HTML document'
+            Test-Path -LiteralPath $result.DestinationPath | Should -BeFalse
+            Get-ChildItem -LiteralPath $root -File -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+        } finally { $client.Dispose(); $response.Dispose() }
     }
 }
