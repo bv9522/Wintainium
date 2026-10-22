@@ -425,6 +425,79 @@ Describe 'Wintainium install failure troubleshooting diagnostics' {
         }
     }
 
+    It 'preserves release and artifact rejection reasons when no installable target exists' {
+        InModuleScope Wintainium.Core {
+            $release = [pscustomobject]@{
+                ReleaseId='attribute-changer-1.0'
+                Version='1.0'
+                Channel='stable'
+                Artifacts=@([pscustomobject]@{
+                    Uri='https://www.petges.lu/downloads/attribute-changer.zip'
+                    FileName='attribute-changer.zip'
+                    Format='zip'
+                    Architecture='x64'
+                })
+            }
+            $artifactObservation = [pscustomobject]@{
+                Artifact=$release.Artifacts[0]
+                Eligible=$false
+                ReasonCode='FormatNotPermitted'
+                Reason='Artifact format zip is not permitted by the manifest.'
+                Format='zip'
+                Architecture='x64'
+            }
+            $releaseObservation = [pscustomobject]@{
+                Release=$release
+                SelectedArtifact=$null
+                ArtifactObservations=@($artifactObservation)
+                Selectable=$false
+                ReasonCode='NoSelectableArtifact'
+                Reason='The release has no artifact permitted for the target machine.'
+            }
+            $lifecycle = [pscustomobject]@{
+                OperationId='no-installable-target'
+                IsSuccessful=$true
+                WasCancelled=$false
+                StageResults=@(
+                    [pscustomobject]@{
+                        StageName='ReleaseDiscovery'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                Status='Success'
+                                Releases=@($release)
+                            }
+                        }
+                    }
+                    [pscustomobject]@{
+                        StageName='UpdateDecision'
+                        Execution=[pscustomobject]@{
+                            Result=[pscustomobject]@{
+                                IsSuccessful=$true
+                                Status='NoInstallableRelease'
+                                ReasonCode='NoSelectableArtifact'
+                                Reason='No discovered release has a selectable artifact for this machine.'
+                                SelectedArtifact=$null
+                                ReleaseEligibility=[pscustomobject]@{
+                                    Observations=@($releaseObservation)
+                                }
+                            }
+                        }
+                    }
+                )
+                Error=$null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+            $messages = @($result.TroubleshootingDiagnostics | ForEach-Object Message) -join [Environment]::NewLine
+
+            $messages | Should -Match 'NoSelectableArtifact'
+            $messages | Should -Match 'attribute-changer.zip'
+            $messages | Should -Match 'FormatNotPermitted'
+            $messages | Should -Match 'Artifact format zip is not permitted'
+        }
+    }
+
     It 'does not expose troubleshooting diagnostics for a successful operation' {
         InModuleScope Wintainium.Core {
             $lifecycle = [pscustomobject]@{
