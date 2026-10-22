@@ -3,7 +3,8 @@ function Invoke-WintainiumArtifactVerification {
     param(
         [Parameter(Mandatory)] [psobject]$DownloadResult,
         [Parameter(Mandatory)] [psobject]$SelectedArtifact,
-        [string]$OperationId
+        [string]$OperationId,
+        [switch]$AllowLegacyMd5Verification
     )
 
     $resolvedOperationId = if ($PSBoundParameters.ContainsKey('OperationId')) { $OperationId } elseif ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['OperationId']) { [string]$DownloadResult.OperationId } else { $null }
@@ -35,7 +36,52 @@ function Invoke-WintainiumArtifactVerification {
     }
 
     $sha256Claims = @($claims | Where-Object { $_.Algorithm -ieq 'SHA256' })
-    if ($claims.Count -gt 0 -and $sha256Claims.Count -eq 0) { return & $failed 'UnsupportedVerificationAlgorithm' 'The artifact declares no supported SHA256 verification evidence.' }
+    if ($claims.Count -gt 0 -and $sha256Claims.Count -eq 0) {
+        $publisherMd5Claims = @($claims | Where-Object {
+            $_.Algorithm -ieq 'MD5' -and
+            $null -ne $SelectedArtifact.PSObject.Properties['Hashes'] -and
+            @($SelectedArtifact.Hashes | Where-Object {
+                $_.Algorithm -ieq 'MD5' -and
+                $_.Value -ceq $_.Value -and
+                $_.PSObject.Properties['Source'] -and
+                [string]$_.Source -eq 'OfficialDownloadPageChecksum'
+            }).Count -gt 0
+        })
+        if ($AllowLegacyMd5Verification -and $publisherMd5Claims.Count -gt 0) {
+            foreach ($claim in $publisherMd5Claims) {
+                if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{32}
+    if ($sha256Claims.Count -eq 0) { return & $failed 'VerificationMetadataMissing' 'The selected artifact contains no SHA256 verification evidence.' }
+
+    foreach ($claim in $sha256Claims) {
+        if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{64}$') { return & $failed 'VerificationMetadataInvalid' 'A SHA256 verification value is not a valid 64-character hexadecimal digest.' }
+    }
+
+    try { $actualHash = (Get-FileHash -LiteralPath $destinationPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant() }
+    catch { return & $failed 'VerificationFailed' 'The downloaded artifact could not be hashed for verification.' }
+
+    foreach ($claim in $sha256Claims) {
+        if ($actualHash -cne $claim.Value.ToUpperInvariant()) {
+            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
+        }
+    }
+
+    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; IsSuccessful=$true; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$null }
+}
+) {
+                    return & $failed 'VerificationMetadataInvalid' 'A publisher-declared MD5 verification value is not a valid 32-character hexadecimal digest.'
+                }
+            }
+            try { $actualMd5 = (Get-FileHash -LiteralPath $destinationPath -Algorithm MD5 -ErrorAction Stop).Hash.ToUpperInvariant() }
+            catch { return & $failed 'VerificationFailed' 'The downloaded artifact could not be hashed for legacy MD5 verification.' }
+            foreach ($claim in $publisherMd5Claims) {
+                if ($actualMd5 -cne $claim.Value.ToUpperInvariant()) {
+                    return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='MD5'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact MD5 does not match the publisher-declared checksum.' }
+                }
+            }
+            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='VerifiedWithReducedAssurance'; IsSuccessful=$true; FailureKind=$null; Algorithm='MD5'; ExpectedHash=$publisherMd5Claims[0].Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; DestinationPath=$destinationPath; ErrorMessage='Publisher-declared MD5 checksum matched after explicit user authorization. MD5 provides reduced assurance and is not equivalent to SHA256.' }
+        }
+        return & $failed 'UnsupportedVerificationAlgorithm' 'The artifact declares no supported SHA256 verification evidence. Publisher-declared MD5 may be used only after explicit per-install user authorization.'
+    }
     if ($sha256Claims.Count -eq 0) { return & $failed 'VerificationMetadataMissing' 'The selected artifact contains no SHA256 verification evidence.' }
 
     foreach ($claim in $sha256Claims) {
