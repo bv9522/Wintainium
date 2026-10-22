@@ -240,6 +240,10 @@
                         <ItemsControl x:Name="StageItemsControl">
                             <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <TextBlock x:Name="StageReasonHeaderText" Text="Stage reasons" FontWeight="SemiBold" Visibility="Collapsed" />
+                        <ItemsControl x:Name="StageReasonItemsControl" Loaded="DiagnosticItemsControl_Loaded">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock x:Name="ErrorsHeaderText" Text="Errors" FontWeight="SemiBold" Visibility="Collapsed" />
                         <ItemsControl x:Name="ErrorItemsControl" Loaded="DiagnosticItemsControl_Loaded">
                             <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" /></DataTemplate></ItemsControl.ItemTemplate>
