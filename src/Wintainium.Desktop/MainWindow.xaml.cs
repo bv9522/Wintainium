@@ -743,11 +743,18 @@ public sealed partial class MainWindow : Window
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            foreach (var application in refreshedApplications)
-            {
-                if (application is not null)
-                    SetApplicationCollectionItem(application);
-            }
+            var refreshedById = refreshedApplications
+                .Where(application => application is not null)
+                .Cast<WintainiumApplicationModel>()
+                .ToDictionary(application => application.ApplicationId, StringComparer.OrdinalIgnoreCase);
+            var mergedApplications = applications
+                .Select(application => refreshedById.TryGetValue(application.ApplicationId, out var refreshed)
+                    ? refreshed
+                    : application)
+                .ToArray();
+            var selectedApplicationId = GetSelectedApplicationId();
+            SetApplicationCollection(mergedApplications);
+            RestoreSelectedApplication(selectedApplicationId);
         }
         catch (OperationCanceledException)
         {
