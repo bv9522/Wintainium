@@ -225,10 +225,11 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             if ($stageName -eq 'ReleaseDiscovery') {
                 $releaseCount = if ($result.PSObject.Properties['Releases']) { @($result.Releases).Count } else { 0 }
                 $releaseStatus = if ($result.PSObject.Properties['Status']) { [string]$result.Status } else { 'Not provided' }
-                $providerId = if ($result.PSObject.Properties['ProviderId']) { [string]$result.ProviderId } else { 'not provided by provider result' }
+                $providerId = if ($result.PSObject.Properties['ProviderId']) { [string]$result.ProviderId } else { $null }
+                $providerText = if (-not [string]::IsNullOrWhiteSpace($providerId)) { "; provider '$providerId'" } else { '' }
                 $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
                     Code = 'InstallDiagnostic.ReleaseDiscoveryOutcome'
-                    Message = "Release discovery: status '$releaseStatus'; provider '$providerId'; releases returned: $releaseCount."
+                    Message = "Release discovery: status '$releaseStatus'$providerText; releases returned: $releaseCount."
                 })
             }
 
