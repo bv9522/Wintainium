@@ -4,7 +4,7 @@
 
 Identify the earliest stage at which a managed application's installed or update state becomes `Unknown`, preserve the explanation across Core and desktop boundaries, and expose a copyable report without changing reconciliation behavior merely to make the dashboard look healthier.
 
-This work is separate from Add Software source-resolution diagnostics. Source-resolution diagnostics remain in Add Software. Installed-state refresh diagnostics belong to the selected application's existing diagnostics experience; no automatic App Details window opening is planned.
+This work covers both source-resolution and installed-state refresh diagnostics. Source-resolution details are captured during Add Software but shown only in the corresponding Application Details window after successful onboarding. Add Software displays a concise notice pointing the user to Application Details; it does not display a second copy of the report. No automatic Details-window opening is planned.
 
 ## Guardrails
 
@@ -12,7 +12,7 @@ This work is separate from Add Software source-resolution diagnostics. Source-re
 - Do not convert an unresolved `Unknown` into `Installed` or `NotInstalled`.
 - Preserve Core as the authority for installed state and policy.
 - Capture relevant registry evidence only; do not dump unrelated installed-software entries.
-- Keep source-resolution and refresh/reconciliation reports explicitly labeled as different operation types.
+- Keep source-resolution and refresh/reconciliation reports explicitly labeled as different operation types, even though both are presented in Application Details.
 - Prefer structured diagnostic codes, stages, and before/after state values over unstructured log dumps.
 
 ## Diagnostic stages
@@ -54,13 +54,13 @@ D2 implementation notes:
 - Core diagnostic extra fields are preserved through a safe allowlist (including registry scope/view and stage/state context); raw subkeys and unrelated software names are excluded.
 - The Windows reconciliation plugin now emits an explicit `WindowsReconciliationEvidenceIncomplete` summary when zero registrations match and any configured registry observation failed. It reports safe counts (candidates, configured locations, failed reads) and match mode. Ambiguous evidence now includes candidate count, match mode, location count, and registry-read-failure count. These changes are committed but have not yet been run locally.
 - Existing aggregate errors/warnings remain available for compatibility; public Core result property sets were not changed.
-- Source-resolution diagnostics and theme/visual appearance files were not changed by D2.
+- Theme/visual appearance files were not changed by D2.
 
 ### D3 — Produce a copyable refresh report
 - Add a deterministic plain-text diagnostic formatter for one application refresh.
 - Include operation/application identity, stage outcomes, state transitions, reason codes, errors, warnings, and concise event context.
 - Avoid exposing unrelated registry entries or secrets.
-- Expose the report through the existing selected-application diagnostics/copy flow; do not auto-open windows or move source-resolution diagnostics out of Add Software.
+- Expose the report through the existing selected-application diagnostics/copy flow; do not auto-open windows. Source-resolution reports are retained against the onboarded application and presented in Application Details rather than in Add Software.
 - **Acceptance:** a user can copy a single report that identifies the first failed or uncertain stage.
 
 D3 implementation notes:
@@ -68,7 +68,7 @@ D3 implementation notes:
 - The report identifies the first failed or uncertain stage, including an Unknown post-stage state and explicit Unknown/evidence-unavailable reason codes.
 - Report event context is filtered through a safe allowlist; unrelated application entries and raw registry subkeys are not included.
 - Added an Installed-State Refresh section to the existing Application Details diagnostics experience. The existing Copy Diagnostics action includes the selected application's full refresh report, scoped by its application ID.
-- Source-resolution diagnostics remain in Add Software; no windows are opened automatically and no theme files were changed.
+- Source-resolution reports are now retained per application and presented in Application Details; Add Software displays a concise notice directing users there. No windows are opened automatically and no theme files were changed.
 
 ### D4 — Validate the end-to-end failure modes
 - Strengthened the Windows reconciliation tests so ambiguous registrations and registry-read failures assert the structured reason survives alongside `Unknown` evidence, rather than asserting only the state value.
@@ -100,6 +100,14 @@ Brian reports that 10 applications were onboarded, with Audacity and 7-Zip recog
 - [x] D3 — Produce a copyable refresh report (Brian confirmed Release build succeeded and all 708/708 tests passed).
 - [ ] D4 — Validate end-to-end failure modes (targeted Core assertions and explicit desktop mapping-failure reporting committed; latest Release build confirmed by Brian; runtime report/state-preservation verification outstanding).
 - [ ] D5 — **Current priority:** identify why eight of the ten onboarded apps show `Unknown` (Audacity and 7-Zip are recognized; the five named examples are not the full set). The first code inspection confirms the Windows reconciler returns `Unknown` when multiple registry entries match, or when no entries match and one or more registry locations failed to read. It returns `NotInstalled` when the registry scan succeeds with zero matches. This narrows the likely cause but does not prove which branch affects Brian's eight apps. New safe diagnostic summary fields have been added for candidate count, match mode, configured registry locations, and failed reads. After Brian builds/runs this change, use one affected app's copied Installed-State Refresh Report to determine the actual branch before changing behavior.
+
+### D6 — Consolidate diagnostics presentation
+- [x] Remove the expanded source-resolution report and its copy control from Add Software.
+- [x] Retain the complete source-resolution report against the successfully onboarded application's ID.
+- [x] Show the report in a dedicated Source Resolution section in Application Details and include it in Copy Diagnostics.
+- [x] After successful onboarding, show a concise notice directing the user to Application Details rather than duplicating the report in Add Software.
+- [ ] Build and run the desktop; verify source diagnostics appear only in Application Details for a newly onboarded app, Copy Diagnostics includes the source-resolution report, and Add Software remains uncluttered.
+- Note: onboarding failures that do not create an application still show a concise failure message in Add Software because no corresponding Application Details record exists to hold a report.
 
 ## D4 local desktop scenario checks
 
