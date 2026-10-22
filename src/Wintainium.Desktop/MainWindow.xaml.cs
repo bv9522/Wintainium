@@ -1023,6 +1023,21 @@ public sealed partial class MainWindow : Window
         builder.AppendLine($"Overall Status: {result.Status ?? "Unknown"}");
         builder.AppendLine($"Source Resolution Status: {result.SourceResolutionStatus ?? "Not provided"}");
 
+        if (result.Stages.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Onboarding Stages:");
+            foreach (var stage in result.Stages)
+            {
+                var outcome = string.IsNullOrWhiteSpace(stage.Status) ? "Unknown" : stage.Status;
+                builder.AppendLine($"  {stage.Sequence}. {stage.Name}: {outcome}");
+                if (!string.IsNullOrWhiteSpace(stage.ReasonCode))
+                    builder.AppendLine($"     Reason code: {stage.ReasonCode}");
+                if (!string.IsNullOrWhiteSpace(stage.Reason))
+                    builder.AppendLine($"     Reason: {stage.Reason}");
+            }
+        }
+
         if (Uri.TryCreate(sourceUri, UriKind.Absolute, out var uri))
             builder.AppendLine($"Source Host: {uri.Host}");
 
