@@ -737,7 +737,7 @@ public sealed partial class MainWindow : Window
             // Keep the dashboard stable while providers complete independently. Each result is
             // collected first; the visible collection is updated once after the refresh batch ends.
             var refreshedApplications = await Task.WhenAll(applications.Select(
-                application => RefreshSingleApplicationAsync(application, cancellationToken))).ConfigureAwait(false);
+                application => RefreshSingleApplicationAsync(application, cancellationToken)));
 
             if (cancellationToken.IsCancellationRequested)
                 return;
