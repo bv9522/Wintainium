@@ -164,7 +164,11 @@ internal sealed class WintainiumApplicationOnboardingService
             foreach (DictionaryEntry entry in dictionary)
             {
                 var key = Convert.ToString(entry.Key);
-                if (key is null || entry.Value is null || key is not ("ProviderId" or "Status" or "Capability" or "Host" or "Stage" or "ErrorCode"))
+                if (key is null || entry.Value is null || key is not (
+                    "ProviderId" or "Status" or "Capability" or "Host" or "Stage" or "ErrorCode" or
+                    "RequestedUrl" or "FinalUrl" or "HttpStatusCode" or "ContentType" or "Outcome" or
+                    "FailureStage" or "DurationMilliseconds" or "ExceptionType" or "ApplicationId" or
+                    "SectionCandidateCount" or "DownloadArtifactCandidateCount" or "ParsedArtifactCount" or "ParsedReleaseCount"))
                     continue;
                 details.Add($"{key}={entry.Value}");
             }
@@ -172,7 +176,13 @@ internal sealed class WintainiumApplicationOnboardingService
         else
         {
             var context = PSObject.AsPSObject(value);
-            foreach (var key in new[] { "ProviderId", "Status", "Capability", "Host", "Stage", "ErrorCode" })
+            foreach (var key in new[]
+            {
+                "ProviderId", "Status", "Capability", "Host", "Stage", "ErrorCode",
+                "RequestedUrl", "FinalUrl", "HttpStatusCode", "ContentType", "Outcome",
+                "FailureStage", "DurationMilliseconds", "ExceptionType", "ApplicationId",
+                "SectionCandidateCount", "DownloadArtifactCandidateCount", "ParsedArtifactCount", "ParsedReleaseCount"
+            })
             {
                 var detail = Nullable(context, key);
                 if (!string.IsNullOrWhiteSpace(detail))
