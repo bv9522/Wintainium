@@ -814,39 +814,6 @@ public sealed partial class MainWindow : Window
             Visibility = Visibility.Collapsed
         };
 
-        var diagnosticsText = new TextBlock
-        {
-            TextWrapping = TextWrapping.Wrap,
-            IsTextSelectionEnabled = true,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas")
-        };
-
-        var copyDiagnosticsButton = new Button
-        {
-            Content = "Copy Diagnostics",
-            HorizontalAlignment = HorizontalAlignment.Left
-        };
-
-        copyDiagnosticsButton.Click += (_, _) =>
-        {
-            var package = new DataPackage();
-            package.SetText(diagnosticsText.Text);
-            Clipboard.SetContent(package);
-            copyDiagnosticsButton.Content = "Diagnostics Copied";
-        };
-
-        var diagnosticsExpander = new Expander
-        {
-            Header = "Diagnostics and Troubleshooting",
-            IsExpanded = false,
-            Visibility = Visibility.Collapsed,
-            Content = new StackPanel
-            {
-                Spacing = 8,
-                Children = { diagnosticsText, copyDiagnosticsButton }
-            }
-        };
-
         Grid.SetColumn(statusText, 1);
 
         var recoveryButton = new Button
@@ -874,8 +841,7 @@ public sealed partial class MainWindow : Window
                         statusText
                     }
                 },
-                recoveryButton,
-                diagnosticsExpander
+                recoveryButton
             }
         };
 
@@ -962,10 +928,6 @@ public sealed partial class MainWindow : Window
 
                         statusText.Text = message;
                         statusText.Visibility = Visibility.Visible;
-                        diagnosticsText.Text = BuildOnboardingDiagnostics(result, sourceUri);
-                        diagnosticsExpander.Visibility = Visibility.Visible;
-                        diagnosticsExpander.IsExpanded = result.Errors.Count > 0 || result.LogEvents.Count > 0;
-                        copyDiagnosticsButton.Content = "Copy Diagnostics";
                         recoveryButton.Visibility = canOpenSource ? Visibility.Visible : Visibility.Collapsed;
                         sourceTextBox.IsEnabled = true;
                         dialog.IsPrimaryButtonEnabled = true;
@@ -976,25 +938,28 @@ public sealed partial class MainWindow : Window
                         return;
                     }
 
-                    await RefreshApplicationCollectionAsync();
+                    // Keep the full source-resolution report with the onboarded application,
+                    // then present it only in Application Details rather than duplicating it here.
+                    if (result.Application is not null)
+                    {
+                        WintainiumDesktopDiagnosticsStore.SetSourceResolutionReport(
+                            result.Application.ApplicationId,
+                            BuildOnboardingDiagnostics(result, sourceUri));
 
-                    // Keep source-resolution diagnostics available even when onboarding succeeds.
-                    // A provider may fail to identify a source while the overall onboarding flow
-                    // still completes, so success must not hide the resolver's diagnostic events.
-                    diagnosticsText.Text = BuildOnboardingDiagnostics(result, sourceUri);
-                    diagnosticsExpander.Visibility = Visibility.Visible;
-                    diagnosticsExpander.IsExpanded =
-                        result.Errors.Count > 0 ||
-                        result.Warnings.Count > 0 ||
-                        result.LogEvents.Count > 0;
-                    copyDiagnosticsButton.Content = "Copy Diagnostics";
+                        if (_applicationDetailsWindows.TryGetValue(result.Application.ApplicationId, out var detailsWindow))
+                        {
+                            detailsWindow.ApplySourceResolutionDiagnostics();
+                        }
+                    }
+
+                    await RefreshApplicationCollectionAsync();
 
                     onboardingComplete = true;
                     sourceTextBox.Visibility = Visibility.Collapsed;
                     recoveryButton.Visibility = Visibility.Collapsed;
                     progressRing.IsActive = false;
                     progressRing.Visibility = Visibility.Collapsed;
-                    statusText.Text = "Software was added to your Wintainium collection.";
+                    statusText.Text = "Software was added. Source-resolution diagnostics are available in Application Details.";
                     statusText.Visibility = Visibility.Visible;
                     dialog.Title = "Software Added";
                     dialog.PrimaryButtonText = "Done";
