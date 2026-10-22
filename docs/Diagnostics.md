@@ -126,7 +126,7 @@ When Add Software cannot resolve a URL, do not stop at the user-facing status su
 - `LogEvents` — correlated provider/resolver events. Source-resolution completion events include provider identity and the provider's status in their context.
 - `OperationId` — the correlation identifier to preserve when collecting or sharing diagnostics.
 
-The Add Software dialog's **Diagnostics and Troubleshooting** expander presents these fields in a copyable report. It intentionally displays the source host rather than echoing the complete URL, because query strings or path segments can contain sensitive tokens.
+The Add Software dialog's **Diagnostics and Troubleshooting** expander presents these fields in a copyable report. Provider trace events may include the requested and final URL paths, but query strings and fragments are removed and long paths are truncated. Raw HTML and raw request-exception text are not included in the trace.
 
 A report with no provider/resolver events may indicate that resolution failed before a provider was invoked, no provider advertised the required capability, or the provider returned no additional events. It should not be interpreted as proof that the page itself was inspected successfully.
 
@@ -143,6 +143,22 @@ If release discovery fails:
 5. Preserve `OperationId` and `LogEvents` when escalating or diagnosing the operation.
 
 A successful release-discovery operation can legitimately contain no applicable release observations. Release discovery is not the update-decision stage.
+
+For the official-download-page provider, the structured trace distinguishes retrieval from parsing:
+
+- `ReleaseDiscoveryRequestStarted` records a redacted requested URL.
+- `ReleaseDiscoveryResponseReceived` records the final URL path when available, HTTP status, content type, and HTML length.
+- `ReleaseDiscoveryParsingCompleted` records the number of release-section candidates, supported download-artifact candidates, parsed artifacts, parsed releases, elapsed time, and a stable outcome.
+- `ReleaseDiscoveryRetrievalFailed` and `ReleaseDiscoveryParsingFailed` identify the failure stage without copying raw HTML or exception messages that may contain signed URLs.
+
+Interpret `NoReleasesFound` as a successful provider interaction that yielded no normalized releases—not as proof that the page was unreachable. The parsing outcome narrows the next question:
+
+- `NoReleaseSectionCandidates`: the current parser did not recognize a release section.
+- `NoSupportedDownloadLinks`: no links with currently supported artifact extensions were found.
+- `ReleaseSectionsProducedNoArtifacts`: release-like sections and supported links existed, but they did not normalize into releases.
+- `ReleasesParsed`: one or more releases were normalized; later eligibility diagnostics can explain why none is installable.
+
+These counts describe what the current parser recognized; they do not claim that every possible release or download link on the page was understood. A provider may expose richer or different trace fields when its discovery method supports them.
 
 ## Installer and reconciliation diagnostics
 
