@@ -146,6 +146,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         $artifacts.Add([pscustomobject][ordered]@{
             Uri=$uri.AbsoluteUri
             FileName=$fileName
+            SourcePageUri=$BaseUri.AbsoluteUri
             Format=$format
             Architecture=$architecture
             Size=$null
