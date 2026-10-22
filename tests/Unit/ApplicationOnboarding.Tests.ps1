@@ -59,6 +59,8 @@ Describe 'Wintainium application onboarding' {
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
         @($result.Stages.Name) | Should -Be @('InputValidation','SourceResolution','PolicyResolution','DefinitionNormalization','Persistence')
         @($result.Stages | Where-Object { $_.Status -eq 'Failed' }).Count | Should -Be 0
+        $result.Stages[2].Status | Should -Be 'Skipped'
+        $result.Stages[2].ReasonCode | Should -Be 'CallerProvidedPolicy'
         $result.Stages[-1].Status | Should -Be 'Completed'
         $result.Stages[-1].Reason | Should -Match 'persisted'
 
