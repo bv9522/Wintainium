@@ -64,7 +64,8 @@ function Invoke-WintainiumArtifactVerification {
             }
             return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='VerifiedWithReducedAssurance'; IsSuccessful=$true; FailureKind=$null; ReasonCode='LegacyMd5UserAuthorized'; Reason='Publisher-declared MD5 matched after explicit user authorization; verification assurance is reduced.'; Algorithm='MD5'; ExpectedHash=$publisherMd5Claims[0].Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; DestinationPath=$destinationPath; ErrorMessage=$null }
         }
-        return & $failed 'UnsupportedVerificationAlgorithm' 'The artifact declares no supported SHA256 verification evidence. Publisher-declared MD5 may be used only after explicit per-install user authorization.'
+        if ($publisherMd5Claims.Count -gt 0) { return & $failed 'UnsupportedVerificationAlgorithm' 'A publisher-declared MD5 checksum from the official download page is available; explicit per-install user authorization is required to use reduced-assurance verification.' }
+        return & $failed 'UnsupportedVerificationAlgorithm' 'The artifact declares no supported SHA256 verification evidence.'
     }
     if ($sha256Claims.Count -eq 0) { return & $failed 'VerificationMetadataMissing' 'The selected artifact contains no SHA256 verification evidence.' }
 
