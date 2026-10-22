@@ -59,7 +59,7 @@ internal static class WintainiumApplicationRefreshReportFormatter
         builder.AppendLine("First Failed or Uncertain Stage:");
         builder.AppendLine(firstAttention is null
             ? "- No failed stage or Unknown post-stage state was recorded."
-            : $"- {firstAttention.Name} (status: {firstAttention.Status}, reason: {Value(firstAttention.ReasonCode)}, state after: {Value(firstAttention.StateAfter?.ToString())})");
+            : $"- {firstAttention.Name} (status: {firstAttention.Status}, reason: {Value(FirstAttentionReason(firstAttention))}, state after: {Value(firstAttention.StateAfter?.ToString())})");
 
         AppendStageDiagnostics(builder, "Aggregate Errors", result.Errors, string.Empty);
         AppendStageDiagnostics(builder, "Aggregate Warnings", result.Warnings, string.Empty);
@@ -93,7 +93,21 @@ internal static class WintainiumApplicationRefreshReportFormatter
         stage.Errors.Count > 0 ||
         stage.StateAfter == WintainiumInstallationState.Unknown ||
         (stage.ReasonCode?.Contains("Unknown", StringComparison.OrdinalIgnoreCase) ?? false) ||
-        (stage.ReasonCode?.Contains("EvidenceUnavailable", StringComparison.OrdinalIgnoreCase) ?? false);
+        (stage.ReasonCode?.Contains("EvidenceUnavailable", StringComparison.OrdinalIgnoreCase) ?? false) ||
+        HasNoReleasesFound(stage);
+
+    private static bool HasNoReleasesFound(WintainiumApplicationRefreshStage stage) =>
+        stage.LogEvents.Any(item =>
+            item.EventName.Equals("ProviderOperationCompleted", StringComparison.OrdinalIgnoreCase) &&
+            (item.Context.Any(context =>
+                 context.Key.Equals("Status", StringComparison.OrdinalIgnoreCase) &&
+                 string.Equals(context.Value, "NoReleasesFound", StringComparison.OrdinalIgnoreCase)) ||
+             item.Message.Contains("NoReleasesFound", StringComparison.OrdinalIgnoreCase)));
+
+    private static string? FirstAttentionReason(WintainiumApplicationRefreshStage stage) =>
+        HasNoReleasesFound(stage)
+            ? "Release discovery returned no releases (NoReleasesFound)"
+            : stage.ReasonCode;
 
     private static void AppendStageDiagnostics(
         StringBuilder builder,
