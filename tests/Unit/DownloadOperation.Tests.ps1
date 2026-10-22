@@ -72,8 +72,9 @@ namespace Wintainium.Tests
 class TestDownloadHandler : System.Net.Http.HttpMessageHandler {
     [System.Net.Http.HttpResponseMessage] $Response
     [System.Net.Http.HttpRequestMessage] $Request
+    [string] $ObservedReferrer
     TestDownloadHandler([System.Net.Http.HttpResponseMessage] $response) { $this.Response = $response }
-    [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync([System.Net.Http.HttpRequestMessage] $request, [System.Threading.CancellationToken] $cancellationToken) { $this.Request = $request; return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response) }
+    [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]] SendAsync([System.Net.Http.HttpRequestMessage] $request, [System.Threading.CancellationToken] $cancellationToken) { $this.Request = $request; if ($null -ne $request.Headers.Referrer) { $this.ObservedReferrer = $request.Headers.Referrer.AbsoluteUri }; return [System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]::FromResult($this.Response) }
 }
 
 Describe 'Invoke-WintainiumDownload' {
@@ -165,7 +166,7 @@ Describe 'Invoke-WintainiumDownload' {
                 param($Request,$Root,$Client)
                 Invoke-WintainiumDownload -DownloadRequest $Request -DownloadRoot $Root -HttpClient $Client
             }
-            $handler.Request.Headers.Referrer.AbsoluteUri | Should -Be 'https://www.petges.lu/'
+            $handler.ObservedReferrer | Should -Be 'https://www.petges.lu/'
             $result.Status | Should -Be 'Downloaded'
         } finally { $client.Dispose(); $response.Dispose() }
     }
