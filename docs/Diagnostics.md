@@ -83,6 +83,45 @@ $result.LogEvents | Format-Table
 
 `LogEvents` are diagnostic data. They are not a command interface and must not be interpreted as an alternate source of business rules.
 
+## Onboarding, Installing, and Updating
+
+All three workflows are Core-owned operations, but they do not share an identical stage plan. Onboarding already runs through the public Core command `Invoke-WintainiumApplicationOnboarding`; it intentionally does not use the eight-stage install/update orchestration lifecycle because its authoritative work is source resolution, policy resolution, normalization, and manifest persistence. The desktop onboarding service is an adapter/presenter, not the owner of those decisions. Diagnostics should share vocabulary and correlation rules without forcing onboarding into install-specific stages.
+
+### Onboarding
+
+The onboarding result uses `OperationId`, `IsSuccessful`, `Status`, `SourceResolution`, `ApplicationDefinition`, `ManifestPath`, `Errors`, `Warnings`, and `LogEvents`. The effective sequence is URI validation → capable-provider resolution and ambiguity handling → optional icon discovery → policy resolution → application-definition normalization → persistence. Some failures return before later work begins, so the result must not imply that later stages were attempted.
+
+The authoritative success condition is `Status = Resolved` with a persisted application definition and manifest path. Source recognition alone is not successful onboarding. Onboarding does not mutate installed state.
+
+### Installing and Updating
+
+Install and update use the shared Core lifecycle stages, in order:
+
+1. `ManifestValidation`
+2. `ReleaseDiscovery`
+3. `UpdateDecision`
+4. `Download`
+5. `Verification`
+6. `InstallerSelection`
+7. `Installation`
+8. `Reconciliation`
+
+The decision policy differs by operation: install requires an installable release for an application whose authoritative state is `NotInstalled`; update requires an available update for the currently installed application. A successful `Skipped` stage is a successful no-op, not a failed operation. Decision outcomes such as `NoInstallableRelease`, `NoUpdateAvailable`, and `DecisionIndeterminate` must remain distinguishable instead of being collapsed into a generic success or failure label.
+
+The authoritative outcome is the completed lifecycle and reconciled installed state—not merely a successful download or installer process. Verification failure must block installation; a local hash calculated after download is not, by itself, publisher-authenticity evidence.
+
+### Cross-workflow diagnostic rules
+
+- Preserve the Core-generated `OperationId` from entry point through provider, stage, result, and desktop presentation.
+- Preserve stable `ReasonCode` and human-readable `Reason` values when stage results provide them.
+- Prefer the first concrete stage failure as the primary error. Generic `OrchestrationStageExecutionFailed` and `OrchestrationStageStructuredFailure` wrappers must not hide a more specific underlying failure.
+- Keep the complete `Errors`, `Warnings`, `LogEvents`, stage results, and troubleshooting evidence; selecting a primary error must not discard secondary evidence.
+- Treat cancellation as its own terminal outcome, distinct from failure.
+- Keep workflow-specific stages distinct while aligning status semantics and error-code conventions.
+- A presentation mapper must preserve meaningful successful no-op/unresolved statuses such as `Skipped`, `NoUpdateAvailable`, `NoInstallableRelease`, `DecisionIndeterminate`, `ProviderDiscoveryUnsuccessful`, and `NoReleasesFound` rather than erasing them because `IsSuccessful` is true.
+
+The desktop's existing **Copy Diagnostics** control remains a presentation/clipboard affordance. Core diagnostic contracts and result mapping may improve, but changes to the control itself must not be used as a shortcut for correcting diagnostic data.
+
 ## Warnings and partial information
 
 Warnings do not automatically mean that an operation failed. Check the operation's success/validity field and inspect the warning collection separately.
