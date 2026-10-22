@@ -58,6 +58,21 @@ public sealed partial class ApplicationDetailsWindow
         UpdateRefreshDiagnosticsPresentation();
     }
 
+    internal void ApplySourceResolutionDiagnostics()
+    {
+        UpdateSourceResolutionDiagnosticsPresentation();
+    }
+
+    private void UpdateSourceResolutionDiagnosticsPresentation()
+    {
+        var report = WintainiumDesktopDiagnosticsStore.GetSourceResolutionReport(_application.ApplicationId);
+        SourceResolutionDiagnosticsText.Text = report ?? string.Empty;
+        SourceResolutionDiagnosticsCard.Visibility = string.IsNullOrWhiteSpace(report)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        CopyDiagnosticsButton.IsEnabled = HasDiagnosticContent();
+    }
+
     private void UpdateRefreshDiagnosticsPresentation()
     {
         var result = WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId);
@@ -110,6 +125,7 @@ public sealed partial class ApplicationDetailsWindow
                TroubleshootingDiagnosticsItemsControl.Items.Count > 0 ||
                RefreshDiagnosticsItemsControl.Items.Count > 0 ||
                WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId) is not null ||
+               WintainiumDesktopDiagnosticsStore.GetSourceResolutionReport(_application.ApplicationId) is not null ||
                StageItemsControl.Items.Count > 0;
     }
 
@@ -130,6 +146,13 @@ public sealed partial class ApplicationDetailsWindow
         AppendItems(builder, "Errors", ErrorItemsControl.Items);
         AppendItems(builder, "Warnings", WarningItemsControl.Items);
         AppendItems(builder, "Troubleshooting", TroubleshootingDiagnosticsItemsControl.Items);
+
+        var sourceResolutionReport = WintainiumDesktopDiagnosticsStore.GetSourceResolutionReport(_application.ApplicationId);
+        if (!string.IsNullOrWhiteSpace(sourceResolutionReport))
+        {
+            builder.AppendLine();
+            builder.AppendLine(sourceResolutionReport);
+        }
 
         var refreshResult = WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId);
         if (refreshResult is not null)
