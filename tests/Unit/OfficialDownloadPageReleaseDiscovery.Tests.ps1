@@ -147,4 +147,33 @@ Describe 'Wintainium official download page provider release discovery' {
         $result.Status | Should -Be 'NoReleasesFound'
         @($result.Releases).Count | Should -Be 0
     }
+
+    It 'preserves the publisher download URL and source-page provenance for a cross-host artifact' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Release 11.50a</h2>
+<p>Full setup / 6.37 MB / MD5 checksum published separately.</p>
+<a href="https://pubfiles.petges.lu/ac-11_50a.exe">Full setup</a>
+<a href="https://pubfiles.petges.lu/ac-11_50a.zip">Portable</a>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'attribute-changer-source-provenance'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.petges.lu/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        $artifact.Uri | Should -Be 'https://pubfiles.petges.lu/ac-11_50a.exe'
+        $artifact.FileName | Should -Be 'ac-11_50a.exe'
+        $artifact.SourcePageUri | Should -Be 'https://www.petges.lu/download/'
+        $artifact.Hashes.Count | Should -Be 0
+    }
 }
