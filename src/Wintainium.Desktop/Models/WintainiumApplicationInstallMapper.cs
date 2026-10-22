@@ -50,7 +50,7 @@ internal static class WintainiumApplicationInstallMapper
 
         var status = Nullable(stage, "Status");
         if (isSuccessful)
-            return null;
+            return string.Equals(status, "Skipped", StringComparison.OrdinalIgnoreCase) ? "Skipped" : null;
 
         var reason = Nullable(stage, "Reason");
         return string.IsNullOrWhiteSpace(reason) || string.Equals(reason, status, StringComparison.OrdinalIgnoreCase)
