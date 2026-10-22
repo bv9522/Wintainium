@@ -42,7 +42,7 @@ Describe 'Official download page discovery diagnostics' {
     It 'recognizes plain-text release labels with alphabetic version suffixes' {
         Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             [pscustomobject]@{
-                Content = '<html><body><div class="release-title">Release 11.50a</div><p>24 September 2026 / Windows 10 and 11</p><a href="/ac-11_50a.exe">Full setup</a><a href="/ac-11_50a-portable.exe">Portable</a><div class="release-title">Release 11.40b</div><a href="/ac-11_40b.exe">Older setup</a></body></html>'
+                Content = '<html><body><div class="release-title">Release 11.50a</div><p>24 September 2026 / Windows 10 and 11 / 64-bit only</p><a href="/ac-11_50a.exe">Full setup</a><a href="/ac-11_50a-portable.exe">Portable</a><div class="release-title">Release 11.40b</div><a href="/ac-11_40b.exe">Older setup</a></body></html>'
                 Headers = @{ 'Content-Type' = 'text/html' }
                 StatusCode = 200
                 BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
@@ -56,7 +56,10 @@ Describe 'Official download page discovery diagnostics' {
         @($result.Releases).Count | Should -Be 2
         $result.Releases[0].Version | Should -Be '11.50a'
         @($result.Releases[0].Artifacts).Count | Should -Be 2
+        $result.Releases[0].Artifacts[0].Architecture | Should -Be 'x64'
+        $result.Releases[0].Artifacts[1].Architecture | Should -Be 'x64'
         $result.Releases[1].Version | Should -Be '11.40b'
+        $result.Releases[1].Artifacts[0].Architecture | Should -Be 'unknown'
         $trace[0].Context.Outcome | Should -Be 'ReleasesParsed'
     }
 
