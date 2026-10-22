@@ -56,4 +56,60 @@ Describe 'Official download page verification evidence discovery' {
         $result.IsSuccessful | Should -BeTrue
         $result.Releases[0].Artifacts[0].Hashes.Count | Should -Be 0
     }
+
+    It 'captures official-page MD5 claims only when there is one checksum per artifact' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Release 11.50a</h2>
+<p>Full setup / 6.37 MB / MD5 Checksum: CC180CA4A6204B1BAD8562C79C805F4B</p>
+<p>Portable / 5.46 MB / MD5 Checksum: F9963A9DB7F1A826353F486C0E5216FC</p>
+<a href="https://downloads.example.com/ac-11_50a.exe">Full setup</a>
+<a href="https://downloads.example.com/ac-11_50a.zip">Portable</a>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{
+                pageUri = 'https://example.com/download/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifacts = @($result.Releases[0].Artifacts)
+        $artifacts.Count | Should -Be 2
+        $artifacts[0].FileName | Should -Be 'ac-11_50a.exe'
+        $artifacts[0].Hashes.Count | Should -Be 1
+        $artifacts[0].Hashes[0].Algorithm | Should -Be 'MD5'
+        $artifacts[0].Hashes[0].Value | Should -Be 'CC180CA4A6204B1BAD8562C79C805F4B'
+        $artifacts[0].Hashes[0].Source | Should -Be 'OfficialDownloadPageChecksum'
+        $artifacts[1].FileName | Should -Be 'ac-11_50a.zip'
+        $artifacts[1].Hashes[0].Value | Should -Be 'F9963A9DB7F1A826353F486C0E5216FC'
+    }
+
+    It 'does not guess MD5-to-artifact association when checksum and artifact counts differ' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Release 1.0.0</h2>
+<p>MD5 Checksum: CC180CA4A6204B1BAD8562C79C805F4B</p>
+<a href="https://downloads.example.com/app.exe">Download</a>
+<a href="https://downloads.example.com/app.zip">Portable</a>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{
+                pageUri = 'https://example.com/download/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts)[0].Hashes.Count | Should -Be 0
+        @($result.Releases[0].Artifacts)[1].Hashes.Count | Should -Be 0
+    }
 }
