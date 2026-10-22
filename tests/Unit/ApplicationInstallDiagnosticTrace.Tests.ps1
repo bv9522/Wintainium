@@ -71,6 +71,9 @@ Describe 'Wintainium install diagnostic trace' {
             $trace.Count | Should -Be 1
             $trace[0].Message | Should -Match 'NoReleaseSectionCandidates'
             $trace[0].Message | Should -Match 'SectionCandidateCount=0'
+            $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
+            $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
+            $result.Stages[1].Reason | Should -Be 'No discovered release has a selectable artifact for this machine.'
             @($result.Warnings | Where-Object Code -eq 'NoSelectableArtifact').Count | Should -Be 0
         }
     }
@@ -124,6 +127,95 @@ Describe 'Wintainium install diagnostic trace' {
             $result.Stages[0].ReasonCode | Should -Be 'VerificationMetadataMissing'
             $result.Stages[0].Reason | Should -Be 'SHA256 verification evidence is unavailable.'
             @($result.Errors | Where-Object Code -eq 'VerificationMetadataMissing').Count | Should -BeGreaterThan 0
+        }
+    }
+
+
+    It 'preserves a successful no-update decision as a meaningful stage status' {
+        InModuleScope Wintainium.Core {
+            $operationId = '00000000-0000-0000-0000-000000000203'
+            $decisionResult = [pscustomobject][ordered]@{
+                IsSuccessful = $true
+                Status = 'NoUpdateAvailable'
+                ReasonCode = 'NoUpdateAvailable'
+                Reason = 'The installed version is already current.'
+                Errors = @()
+                Warnings = @()
+                LogEvents = @()
+            }
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId = $operationId
+                IsSuccessful = $true
+                WasCancelled = $false
+                StageResults = @(
+                    [pscustomobject][ordered]@{
+                        StageName = 'UpdateDecision'
+                        Stage = [pscustomobject][ordered]@{ Sequence = 3; Name = 'UpdateDecision' }
+                        Execution = [pscustomobject][ordered]@{ IsSuccessful = $true; Result = $decisionResult }
+                    }
+                )
+                Error = $null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            $result.Status | Should -Be 'Completed'
+            $result.Stages[0].Status | Should -Be 'NoUpdateAvailable'
+            $result.Stages[0].ReasonCode | Should -Be 'NoUpdateAvailable'
+            $result.Stages[0].Reason | Should -Be 'The installed version is already current.'
+        }
+    }
+
+    It 'preserves cancellation as a terminal outcome distinct from failure' {
+        InModuleScope Wintainium.Core {
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId = '00000000-0000-0000-0000-000000000204'
+                IsSuccessful = $false
+                WasCancelled = $true
+                StageResults = @()
+                Error = [pscustomobject]@{ Code = 'OrchestrationStageExecutionFailed'; Message = 'Cancellation interrupted the lifecycle.' }
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            $result.Status | Should -Be 'Cancelled'
+            $result.WasCancelled | Should -Be $true
+            $result.IsSuccessful | Should -Be $false
+        }
+    }
+
+    It 'promotes authoritative reconciliation failures over generic lifecycle wrappers' {
+        InModuleScope Wintainium.Core {
+            $operationId = '00000000-0000-0000-0000-000000000205'
+            $reconciliationResult = [pscustomobject][ordered]@{
+                IsSuccessful = $false
+                Status = 'Failed'
+                FailureKind = 'AuthoritativeStateReconciliationFailed'
+                ErrorMessage = 'The installed-state reconciliation did not complete.'
+                Errors = @()
+                Warnings = @()
+                LogEvents = @()
+            }
+            $genericError = [pscustomobject]@{ Code = 'OrchestrationStageExecutionFailed'; Message = 'A lifecycle stage failed.' }
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId = $operationId
+                IsSuccessful = $false
+                WasCancelled = $false
+                StageResults = @(
+                    [pscustomobject][ordered]@{
+                        StageName = 'Reconciliation'
+                        Stage = [pscustomobject][ordered]@{ Sequence = 8; Name = 'Reconciliation' }
+                        Execution = [pscustomobject][ordered]@{ IsSuccessful = $false; Result = $reconciliationResult; Error = $genericError }
+                    }
+                )
+                Error = $genericError
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            $result.Status | Should -Be 'Failed'
+            $result.Error.Code | Should -Be 'AuthoritativeStateReconciliationFailed'
+            $result.Stages[0].Error.Code | Should -Be 'AuthoritativeStateReconciliationFailed'
         }
     }
 }
