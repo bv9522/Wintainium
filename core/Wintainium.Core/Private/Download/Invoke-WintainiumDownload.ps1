@@ -88,12 +88,6 @@ function Invoke-WintainiumDownload {
         $isPackageArtifact = [System.IO.Path]::GetExtension([string]$target.FileName).ToLowerInvariant() -in @('.exe', '.msi', '.zip')
         if ($isPackageArtifact -and (Test-WintainiumHtmlArtifactPayload -Path $temporaryPath)) {
             $bytesWritten = [System.IO.FileInfo]::new($temporaryPath).Length
-            $finalUri = [string]$target.Uri
-            try {
-                if ($null -ne $response -and $null -ne $response.RequestMessage -and $null -ne $response.RequestMessage.RequestUri) {
-                    $finalUri = ([System.Uri]$response.RequestMessage.RequestUri).GetLeftPart([System.UriPartial]::Path)
-                }
-            } catch {}
             return [pscustomobject][ordered]@{ OperationId=$operationId; Status='Failed'; FailureKind='InvalidArtifactPayload'; Uri=$target.Uri; FileName=$target.FileName; ArtifactDirectory=$artifactDirectory; DestinationPath=$target.DestinationPath; BytesWritten=$bytesWritten; Retryable=$false; ErrorMessage="The downloaded bytes are an HTML document, not a package. Final URL: '$finalUri'. The response was not published as an artifact." }
         }
         try { [void][System.IO.File]::Move($temporaryPath, $target.DestinationPath) }
