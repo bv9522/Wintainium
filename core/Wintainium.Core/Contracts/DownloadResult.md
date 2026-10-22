@@ -33,7 +33,11 @@ A successful result has:
 - `DestinationPath` points to the completed local artifact.
 - `BytesWritten` equals the completed artifact length.
 
-The destination is published only after the transfer completes. The temporary download file is not part of the handoff contract.
+The destination is published only after the transfer completes and basic response validation passes. The temporary download file is not part of the handoff contract.
+
+For `.exe`, `.msi`, and `.zip` candidates, Core rejects explicit HTML content types and checks the downloaded prefix for common HTML document signatures before publishing the file. This is a response-type sanity check, not authenticity verification; later verification remains mandatory.
+
+When a provider supplies `SourcePageUri`, Core may send only that HTTPS page's origin as the HTTP `Referer`. It does not send the full source-page path or query. This supports ordinary publisher download flows while limiting referrer disclosure.
 
 ## Failed Handoff
 
@@ -51,6 +55,8 @@ The current controlled download operation reports these categories:
 - `Transfer` — the response body could not be completely transferred; retryable.
 - `Cancelled` — cancellation interrupted the operation; not retryable automatically.
 - `DestinationWrite` — the completed temporary artifact could not be published to the destination; retryable.
+- `UnexpectedContentType` — the server declared an HTML response for an executable/archive package URL; the response is rejected before publication.
+- `InvalidArtifactPayload` — the response body begins like an HTML document even when its content type does not identify HTML; the response is rejected before publication.
 
 ## Artifact Trust Boundary
 
