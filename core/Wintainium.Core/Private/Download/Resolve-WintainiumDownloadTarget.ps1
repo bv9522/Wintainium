@@ -58,7 +58,7 @@ function Resolve-WintainiumDownloadTarget {
         if ([System.Uri]::TryCreate([string]$artifact.SourcePageUri, [System.UriKind]::Absolute, [ref]$sourceUri) -and
             $sourceUri.Scheme -eq 'https' -and -not [string]::IsNullOrEmpty($sourceUri.Host) -and
             [string]::IsNullOrEmpty($sourceUri.UserInfo)) {
-            $referrerUri = [System.Uri]::new(\"$($sourceUri.Scheme)://$($sourceUri.Authority)/\").AbsoluteUri
+            $referrerUri = $sourceUri.GetLeftPart([System.UriPartial]::Authority) + '/'
         }
     }
 
