@@ -50,7 +50,13 @@ internal static class WintainiumApplicationUpdateMapper
 
         var status = Nullable(stage, "Status");
         if (isSuccessful)
-            return null;
+        {
+            return status is not null &&
+                   new[] { "Skipped", "NoInstallableRelease", "NoUpdateAvailable", "DecisionIndeterminate", "ProviderDiscoveryUnsuccessful", "NoReleasesFound" }
+                       .Contains(status, StringComparer.OrdinalIgnoreCase)
+                ? status
+                : null;
+        }
 
         var reason = Nullable(stage, "Reason");
         return string.IsNullOrWhiteSpace(reason) || string.Equals(reason, status, StringComparison.OrdinalIgnoreCase)
