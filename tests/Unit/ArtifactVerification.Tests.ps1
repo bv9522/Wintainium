@@ -68,6 +68,42 @@ Describe 'Wintainium artifact verification' {
         $result.FailureKind | Should -Be 'UnsupportedVerificationAlgorithm'
     }
 
+    It 'does not accept publisher MD5 without explicit user authorization' {
+        $md5 = (Get-FileHash -LiteralPath $path -Algorithm MD5).Hash
+        $artifact.Hashes = @([pscustomobject]@{ Algorithm='MD5'; Value=$md5; Source='OfficialDownloadPageChecksum' })
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'UnsupportedVerificationAlgorithm'
+    }
+
+    It 'accepts a matching publisher-declared MD5 only with explicit authorization and marks reduced assurance' {
+        $md5 = (Get-FileHash -LiteralPath $path -Algorithm MD5).Hash
+        $artifact.Hashes = @([pscustomobject]@{ Algorithm='MD5'; Value=$md5; Source='OfficialDownloadPageChecksum' })
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -AllowLegacyMd5Verification }
+        $result.Status | Should -Be 'VerifiedWithReducedAssurance'
+        $result.IsSuccessful | Should -BeTrue
+        $result.Algorithm | Should -Be 'MD5'
+        $result.ExpectedHash | Should -Be $md5
+        $result.ActualHash | Should -Be $md5
+        $result.VerificationLevel | Should -Be 'ReducedAssurance'
+        $result.UserAuthorized | Should -BeTrue
+    }
+
+    It 'rejects a mismatched publisher MD5 even when the user authorizes legacy verification' {
+        $artifact.Hashes = @([pscustomobject]@{ Algorithm='MD5'; Value=('0' * 32); Source='OfficialDownloadPageChecksum' })
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -AllowLegacyMd5Verification }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'HashMismatch'
+        $result.Algorithm | Should -Be 'MD5'
+    }
+
+    It 'does not accept MD5 from an unknown metadata source even with user authorization' {
+        $md5 = (Get-FileHash -LiteralPath $path -Algorithm MD5).Hash
+        $artifact.Hashes = @([pscustomobject]@{ Algorithm='MD5'; Value=$md5; Source='UntrustedMetadata' })
+        $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -AllowLegacyMd5Verification }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'UnsupportedVerificationAlgorithm'
+    }
     It 'rejects malformed SHA256 evidence' {
         $artifact.Hashes = @([pscustomobject]@{ Algorithm='SHA256'; Value='not-a-digest' })
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
