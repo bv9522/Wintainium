@@ -80,6 +80,7 @@ Describe 'Wintainium artifact verification' {
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
         $result.Status | Should -Be 'Failed'
         $result.FailureKind | Should -Be 'UnsupportedVerificationAlgorithm'
+        $result.ErrorMessage | Should -Match 'publisher-declared MD5 checksum from the official download page is available'
     }
 
     It 'accepts a matching publisher-declared MD5 only with explicit authorization and marks reduced assurance' {
@@ -109,7 +110,9 @@ Describe 'Wintainium artifact verification' {
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact -AllowLegacyMd5Verification }
         $result.Status | Should -Be 'Failed'
         $result.FailureKind | Should -Be 'UnsupportedVerificationAlgorithm'
+        $result.ErrorMessage | Should -Not -Match 'publisher-declared MD5 checksum from the official download page is available'
     }
+
     It 'rejects malformed SHA256 evidence' {
         $artifact.Hashes = @([pscustomobject]@{ Algorithm='SHA256'; Value='not-a-digest' })
         $result = InModuleScope Wintainium.Core -Parameters @{ DownloadResult=$download; SelectedArtifact=$artifact } { param($DownloadResult,$SelectedArtifact) Invoke-WintainiumArtifactVerification -DownloadResult $DownloadResult -SelectedArtifact $SelectedArtifact }
