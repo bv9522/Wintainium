@@ -356,6 +356,19 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         }
     }
 
+    # Prefer the earliest concrete stage failure over a generic orchestration wrapper.
+    # Keep the complete Errors collection unchanged so callers retain all evidence.
+    $primaryError = $errors | Where-Object {
+        $code = if ($_.PSObject.Properties['Code']) { [string]$_.Code } else { $null }
+        $message = if ($_.PSObject.Properties['Message']) { [string]$_.Message } else { $null }
+        -not [string]::Equals($code, 'OrchestrationStageExecutionFailed', [System.StringComparison]::OrdinalIgnoreCase) -and
+        -not ([string]::Equals($code, 'OrchestrationStageStructuredFailure', [System.StringComparison]::OrdinalIgnoreCase) -and
+            [string]::Equals($message, 'The stage returned a structured unsuccessful result.', [System.StringComparison]::OrdinalIgnoreCase))
+    } | Select-Object -First 1
+    if ($null -eq $primaryError -and $null -ne $LifecycleResult.PSObject.Properties['Error']) {
+        $primaryError = $LifecycleResult.Error
+    }
+
     [pscustomobject][ordered]@{
         OperationId = $operationId
         IsSuccessful = $isSuccessful
@@ -367,6 +380,6 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         Warnings = @($warnings.ToArray())
         LogEvents = @($logEvents.ToArray())
         TroubleshootingDiagnostics = @($troubleshootingDiagnostics.ToArray())
-        Error = if ($null -ne $LifecycleResult.PSObject.Properties['Error']) { $LifecycleResult.Error } else { $null }
+        Error = $primaryError
     }
 }
