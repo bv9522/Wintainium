@@ -98,11 +98,11 @@ internal static class WintainiumApplicationRefreshReportFormatter
 
     private static bool HasNoReleasesFound(WintainiumApplicationRefreshStage stage) =>
         stage.LogEvents.Any(item =>
-            item.EventName.Equals("ProviderOperationCompleted", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(item.EventName, "ProviderOperationCompleted", StringComparison.OrdinalIgnoreCase) &&
             (item.Context.Any(context =>
                  context.Key.Equals("Status", StringComparison.OrdinalIgnoreCase) &&
                  string.Equals(context.Value, "NoReleasesFound", StringComparison.OrdinalIgnoreCase)) ||
-             item.Message.Contains("NoReleasesFound", StringComparison.OrdinalIgnoreCase)));
+             (item.Message?.Contains("NoReleasesFound", StringComparison.OrdinalIgnoreCase) ?? false)));
 
     private static string? FirstAttentionReason(WintainiumApplicationRefreshStage stage) =>
         HasNoReleasesFound(stage)
