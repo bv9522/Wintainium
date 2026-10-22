@@ -767,13 +767,21 @@ public sealed partial class ApplicationDetailsWindow : Window
         long? elapsedMilliseconds,
         WintainiumOperationDiagnostic? error)
     {
+        var isSkipped = string.Equals(status, "Skipped", StringComparison.OrdinalIgnoreCase);
+        var isUnresolvedDecision = status is not null &&
+            new[] { "NoInstallableRelease", "DecisionIndeterminate", "ProviderDiscoveryUnsuccessful", "NoReleasesFound" }
+                .Contains(status, StringComparer.OrdinalIgnoreCase);
         var outcome = wasCancelled
             ? "Cancelled"
-            : isSuccessful
-                ? "Succeeded"
-                : "Failed";
+            : isSkipped
+                ? "Skipped"
+                : isUnresolvedDecision
+                    ? "Unresolved"
+                    : isSuccessful
+                        ? "Succeeded"
+                        : "Failed";
 
-        var statusText = string.IsNullOrWhiteSpace(status) ? string.Empty : $" — {status}";
+        var statusText = string.IsNullOrWhiteSpace(status) || isSkipped ? string.Empty : $" — {status}";
         var elapsedText = elapsedMilliseconds is long elapsed
             ? elapsed >= 1000 ? $" — {(elapsed / 1000d):0.0} s" : $" — {elapsed} ms"
             : string.Empty;
