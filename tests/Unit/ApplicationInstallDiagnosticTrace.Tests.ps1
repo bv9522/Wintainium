@@ -74,4 +74,56 @@ Describe 'Wintainium install diagnostic trace' {
             @($result.Warnings | Where-Object Code -eq 'NoSelectableArtifact').Count | Should -Be 0
         }
     }
+
+
+    It 'preserves the first concrete stage failure as the public primary error' {
+        InModuleScope Wintainium.Core {
+            $operationId = '00000000-0000-0000-0000-000000000202'
+            $specificError = [pscustomobject][ordered]@{
+                Code = 'VerificationMetadataMissing'
+                Message = 'The selected artifact contains no SHA256 verification evidence.'
+            }
+            $genericError = [pscustomobject][ordered]@{
+                Code = 'OrchestrationStageExecutionFailed'
+                Message = 'A lifecycle stage failed.'
+            }
+            $verificationResult = [pscustomobject][ordered]@{
+                IsSuccessful = $false
+                Status = 'Failed'
+                ReasonCode = 'VerificationMetadataMissing'
+                Reason = 'SHA256 verification evidence is unavailable.'
+                Error = $specificError
+                Errors = @()
+                Warnings = @()
+                LogEvents = @()
+            }
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId = $operationId
+                IsSuccessful = $false
+                WasCancelled = $false
+                StageResults = @(
+                    [pscustomobject][ordered]@{
+                        StageName = 'Verification'
+                        Stage = [pscustomobject][ordered]@{ Sequence = 5; Name = 'Verification' }
+                        Execution = [pscustomobject][ordered]@{
+                            IsSuccessful = $false
+                            Status = 'Failed'
+                            Result = $verificationResult
+                            Error = $genericError
+                            ElapsedMilliseconds = 42
+                        }
+                    }
+                )
+                Error = $genericError
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+            $result.Status | Should -Be 'Failed'
+            $result.Error.Code | Should -Be 'VerificationMetadataMissing'
+            $result.Stages[0].ReasonCode | Should -Be 'VerificationMetadataMissing'
+            $result.Stages[0].Reason | Should -Be 'SHA256 verification evidence is unavailable.'
+            @($result.Errors | Where-Object Code -eq 'VerificationMetadataMissing').Count | Should -BeGreaterThan 0
+        }
+    }
 }
