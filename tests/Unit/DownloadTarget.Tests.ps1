@@ -106,4 +106,23 @@ Describe 'Resolve-WintainiumDownloadTarget' {
                 Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
             } } | Should -Throw '*end with a space or period*'
     }
+
+    It 'derives only the HTTPS source origin as a referrer for a discovered artifact' {
+        $request.SelectedArtifact.SourcePageUri = 'https://www.petges.lu/download/'
+        $request.SelectedArtifact.Uri = 'https://pubfiles.petges.lu/ac-11_50a.exe'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+            param($Request, $Root)
+            Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+        }
+        $result.ReferrerUri | Should -Be 'https://www.petges.lu/'
+    }
+
+    It 'ignores an invalid or non-HTTPS source page when deriving a referrer' {
+        $request.SelectedArtifact.SourcePageUri = 'http://www.petges.lu/download/'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Request = $request; Root = $root } {
+            param($Request, $Root)
+            Resolve-WintainiumDownloadTarget -DownloadRequest $Request -DownloadRoot $Root
+        }
+        $result.ReferrerUri | Should -BeNullOrEmpty
+    }
 }
