@@ -52,7 +52,7 @@ internal static class WintainiumApplicationInstallMapper
         if (isSuccessful)
         {
             return status is not null &&
-                   new[] { "Skipped", "NoInstallableRelease", "DecisionIndeterminate", "ProviderDiscoveryUnsuccessful", "NoReleasesFound" }
+                   new[] { "Skipped", "NoInstallableRelease", "NoUpdateAvailable", "DecisionIndeterminate", "ProviderDiscoveryUnsuccessful", "NoReleasesFound" }
                        .Contains(status, StringComparer.OrdinalIgnoreCase)
                 ? status
                 : null;
