@@ -846,6 +846,14 @@ public sealed partial class MainWindow : Window
             Visibility = Visibility.Collapsed
         };
 
+        var onboardingDiagnosticsText = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            FontFamily = new FontFamily("Consolas"),
+            IsTextSelectionEnabled = true,
+            Visibility = Visibility.Collapsed
+        };
+
         var content = new StackPanel
         {
             Spacing = 12,
@@ -865,7 +873,8 @@ public sealed partial class MainWindow : Window
                         statusText
                     }
                 },
-                recoveryButton
+                recoveryButton,
+                onboardingDiagnosticsText
             }
         };
 
@@ -932,6 +941,8 @@ public sealed partial class MainWindow : Window
                 dialog.IsPrimaryButtonEnabled = false;
                 dialog.IsSecondaryButtonEnabled = false;
                 recoveryButton.Visibility = Visibility.Collapsed;
+                onboardingDiagnosticsText.Text = string.Empty;
+                onboardingDiagnosticsText.Visibility = Visibility.Collapsed;
                 progressRing.Visibility = Visibility.Visible;
                 progressRing.IsActive = true;
                 statusText.Text = "Resolving source…";
@@ -951,6 +962,8 @@ public sealed partial class MainWindow : Window
 
                         statusText.Text = message;
                         statusText.Visibility = Visibility.Visible;
+                        onboardingDiagnosticsText.Text = BuildOnboardingDiagnostics(result, sourceUri);
+                        onboardingDiagnosticsText.Visibility = Visibility.Visible;
                         recoveryButton.Visibility = canOpenSource ? Visibility.Visible : Visibility.Collapsed;
                         sourceTextBox.IsEnabled = true;
                         dialog.IsPrimaryButtonEnabled = true;
