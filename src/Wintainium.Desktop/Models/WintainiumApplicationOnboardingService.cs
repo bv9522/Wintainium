@@ -51,6 +51,7 @@ internal sealed class WintainiumApplicationOnboardingService
             Warnings: Diagnostics(result, "Warnings"),
             SourceResolutionStatus: NestedNullable(result, "SourceResolution", "Status"),
             LogEvents: LogEvents(result),
+            Stages: Stages(result),
             OperationState: WintainiumOperationStateMapper.Map(result).State);
     }
 
@@ -119,6 +120,25 @@ internal sealed class WintainiumApplicationOnboardingService
             Nullable(item, "Code"),
             Nullable(item, "Path"),
             Nullable(item, "Message"))];
+    }
+
+    private static IReadOnlyList<WintainiumApplicationOnboardingStage> Stages(PSObject source)
+    {
+        var value = source.Properties["Stages"]?.Value;
+        if (value is null)
+            return [];
+
+        var stages = value is IEnumerable enumerable and not string
+            ? enumerable.Cast<object>().Select(PSObject.AsPSObject)
+            : new[] { PSObject.AsPSObject(value) };
+
+        return stages.Select(stage => new WintainiumApplicationOnboardingStage(
+            stage.Properties["Sequence"]?.Value is null ? 0 : Convert.ToInt32(stage.Properties["Sequence"]!.Value),
+            Nullable(stage, "Name") ?? "Unknown",
+            Nullable(stage, "Status"),
+            Boolean(stage, "IsSuccessful"),
+            Nullable(stage, "ReasonCode"),
+            Nullable(stage, "Reason"))).ToArray();
     }
 
     private static string? NestedNullable(PSObject source, string parentName, string propertyName)
