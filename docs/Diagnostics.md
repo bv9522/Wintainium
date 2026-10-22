@@ -110,6 +110,8 @@ The decision policy differs by operation: install requires an installable releas
 
 The authoritative outcome is the completed lifecycle and reconciled installed state—not merely a successful download or installer process. Verification failure must block installation; a local hash calculated after download is not, by itself, publisher-authenticity evidence.
 
+The current artifact-verification policy requires publisher-declared SHA-256 evidence and a matching locally computed SHA-256 digest. A provider may preserve a publisher-declared MD5 checksum as legacy integrity metadata, but MD5-only evidence is not accepted as verification and must not authorize installation. Diagnostics should distinguish missing hash metadata (`VerificationMetadataMissing`) from metadata that exists only for unsupported algorithms (`UnsupportedVerificationAlgorithm`). Capturing an MD5 claim improves evidence fidelity; it does not weaken the trust policy.
+
 ### Cross-workflow diagnostic rules
 
 - Preserve the Core-generated `OperationId` from entry point through provider, stage, result, and desktop presentation.
