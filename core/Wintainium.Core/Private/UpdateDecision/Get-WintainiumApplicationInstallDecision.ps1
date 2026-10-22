@@ -67,6 +67,7 @@ function Get-WintainiumApplicationInstallDecision {
         $reasonCode = $null
         $reason = $null
         $artifact = $null
+        $artifactObservations = @()
 
         if ($releaseChannel -notin @('stable','prerelease')) {
             $reasonCode = 'UnknownReleaseChannel'
@@ -87,6 +88,7 @@ function Get-WintainiumApplicationInstallDecision {
         else {
             $artifactSelection = Select-WintainiumArtifact -Release $release -Manifest $Manifest -MachineArchitecture ([string]$Environment.MachineArchitecture)
             $artifact = $artifactSelection.SelectedArtifact
+            $artifactObservations = @($artifactSelection.Observations)
             if ($null -eq $artifact) {
                 $reasonCode = 'NoSelectableArtifact'
                 $reason = 'The release has no artifact permitted for the target machine.'
@@ -100,6 +102,7 @@ function Get-WintainiumApplicationInstallDecision {
         $observation = [pscustomobject][ordered]@{
             Release = $release
             SelectedArtifact = $artifact
+            ArtifactObservations = @($artifactObservations)
             Selectable = ($null -ne $artifact -and $reasonCode -eq 'Selectable')
             ReasonCode = $reasonCode
             Reason = $reason
