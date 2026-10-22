@@ -111,6 +111,18 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
     $artifacts=[System.Collections.Generic.List[object]]::new()
 
+    # Use release-level architecture only when the source explicitly says a single architecture.
+    $releaseMetadataHtml=$Body
+    foreach ($candidateLink in $links) {
+        $candidateHref=$candidateLink.Groups[1].Value
+        try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
+        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -eq 'unknown') { continue }
+        $releaseMetadataHtml=$Body.Substring(0,$candidateLink.Index)
+        break
+    }
+    $releaseMetadataText=ConvertFrom-OfficialDownloadPageHtmlText $releaseMetadataHtml
+    $hasExplicitSingleArchitecture = $releaseMetadataText -match '(?i)(64-bit only|x64 only|32-bit only|x86 only|arm64 only|aarch64 only)'
+
     foreach ($link in $links) {
         $href=$link.Groups[1].Value
         $label=ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
@@ -128,6 +140,9 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         # and contaminate classification (for example, a 7-Zip x64 link being marked arm64
         # merely because the same release also contains an ARM64 link).
         $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
+        if ($architecture -eq 'unknown' -and $hasExplicitSingleArchitecture) {
+            $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture $releaseMetadataText
+        }
         $artifacts.Add([pscustomobject][ordered]@{
             Uri=$uri.AbsoluteUri
             FileName=$fileName
