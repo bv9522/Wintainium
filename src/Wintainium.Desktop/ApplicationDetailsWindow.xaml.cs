@@ -330,8 +330,11 @@ public sealed partial class ApplicationDetailsWindow : Window
             OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
             ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
             WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
-            TroubleshootingDiagnosticsItemsControl.ItemsSource = result.TroubleshootingDiagnostics.Select(FormatDiagnostic).ToArray();
-            TroubleshootingDiagnosticsCard.Visibility = result.TroubleshootingDiagnostics.Count > 0
+            var showInstallTroubleshooting = result.OperationState == WintainiumOperationState.Failed;
+            TroubleshootingDiagnosticsItemsControl.ItemsSource = showInstallTroubleshooting
+                ? result.TroubleshootingDiagnostics.Select(FormatDiagnostic).ToArray()
+                : Array.Empty<string>();
+            TroubleshootingDiagnosticsCard.Visibility = showInstallTroubleshooting && result.TroubleshootingDiagnostics.Count > 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
 
