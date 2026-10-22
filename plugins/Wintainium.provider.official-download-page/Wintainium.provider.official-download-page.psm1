@@ -276,9 +276,9 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message 'Official download page parsing completed.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;SectionCandidateCount=$sectionMatches.Count;DownloadArtifactCandidateCount=$downloadArtifactCandidateCount;ParsedArtifactCount=$parsedArtifactCount;ParsedReleaseCount=$releases.Count;Outcome=$outcome;FailureStage=if($releases.Count -eq 0){'Parsing'}else{'None'};DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity $(if($releases.Count -eq 0){'Warning'}else{'Information'}))
 
     if($releases.Count -eq 0){
-        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoReleasesFound' -Warnings @(
-            (New-OfficialDownloadPageError 'OfficialDownloadPageNoReleaseCandidates' "The page was retrieved, but release discovery produced no releases ($outcome).")
-        ) -LogEvents $logEvents.ToArray()
+        # NoReleasesFound is a successful, explicit provider outcome. The structured
+        # parsing trace carries the explanation, so do not repeat it as an aggregate warning.
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoReleasesFound' -LogEvents $logEvents.ToArray()
     }
 
     New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'Success' -Releases $releases.ToArray() -LogEvents $logEvents.ToArray()
