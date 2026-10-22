@@ -61,6 +61,21 @@ Describe 'Official download page discovery diagnostics' {
         $trace[0].Context.Outcome | Should -Be 'ReleasesParsed'
     }
 
+    It 'records GitHub as an intentional provider fallback without exposing URL query data' {
+        $request = [pscustomobject]@{
+            OperationId = '00000000-0000-0000-0000-000000000102'
+            SourceUri = 'https://github.com/example/project?token=do-not-log-this'
+        }
+
+        $result = Invoke-WintainiumProviderSourceResolution -Request $request
+        $serialized = ConvertTo-Json -InputObject $result -Depth 12
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'SourceUnsupported'
+        @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDelegated').Count | Should -Be 1
+        $serialized | Should -Not -Match 'do-not-log-this'
+    }
+
     It 'returns a sanitized retrieval failure without logging the signed query string' {
         Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             throw [System.Net.WebException]::new('Request failed for https://example.test/downloads?token=do-not-log-this')
