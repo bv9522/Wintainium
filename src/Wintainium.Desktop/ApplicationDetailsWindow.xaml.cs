@@ -326,6 +326,19 @@ public sealed partial class ApplicationDetailsWindow : Window
                 WintainiumDesktopPaths.DownloadRoot,
                 cancellationToken: _operationCancellation.Token);
 
+            if (CanOfferLegacyMd5Authorization(result) &&
+                await ConfirmLegacyMd5VerificationAsync())
+            {
+                UpdateResultStatusText.Text = "Retrying installation with explicitly authorized legacy MD5 verification…";
+                result = await _installService.ExecuteAsync(
+                    _application.ManifestPath,
+                    WintainiumDesktopPaths.InstalledStateRoot,
+                    machineArchitecture,
+                    WintainiumDesktopPaths.DownloadRoot,
+                    allowLegacyMd5Verification: true,
+                    cancellationToken: _operationCancellation.Token);
+            }
+
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
             ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
@@ -403,6 +416,25 @@ public sealed partial class ApplicationDetailsWindow : Window
         }
     }
 
+    private static bool CanOfferLegacyMd5Authorization(WintainiumApplicationInstallResult result) =>
+        result.OperationState == WintainiumOperationState.Failed &&
+        result.Errors.Any(error => string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase)) &&
+        result.TroubleshootingDiagnostics.Any(diagnostic => diagnostic.Message?.Contains("MD5", StringComparison.OrdinalIgnoreCase) == true);
+
+    private async Task<bool> ConfirmLegacyMd5VerificationAsync()
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "Use legacy MD5 verification?",
+            Content = "The publisher provides an MD5 checksum, and Wintainium can compare the downloaded file against it. The checksum match detects many accidental changes, but MD5 is weaker than SHA-256 and is vulnerable to collision attacks. This installer is not Authenticode-signed, and an MD5 match does not independently prove the file's origin or safety. If you continue, you authorize this one installation to proceed with reduced verification assurance. Releases with no usable checksum remain blocked.",
+            PrimaryButtonText = "Accept Risk & Install",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close
+        };
+        App.ApplyThemeToElement(dialog);
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+    }
     private async Task<bool> ConfirmInstallOrUpdateAsync(string operation)
     {
         if (!App.Settings.Current.ConfirmBeforeInstallOrUpdate)
