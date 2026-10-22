@@ -82,7 +82,9 @@ function Invoke-WintainiumCoreProviderSourceResolution {
         $resolverResult=& $command -Request $Request
     }
     catch {
-        $error=[pscustomobject]@{Code='SourceResolverInternalError';Message=$_.Exception.Message}
+        $exceptionType=$_.Exception.GetType().Name
+        $error=[pscustomobject]@{Code='SourceResolverInternalError';Message="Source resolver execution failed ($exceptionType). See source-resolution diagnostics for the failure stage."}
+        $logEvents.Add((New-WintainiumLogEvent -Severity Error -OperationId $operationId -Component 'SourceIdentification' -EventName 'ProviderSourceResolutionExecutionFailed' -Message 'Provider source resolver execution failed.' -Context @{ErrorCode=$error.Code;ExceptionType=$exceptionType;Host=$sourceHost}))
         return & $baseResult $false 'SourceResolverInternalError' $null @($error) @()
     }
 
