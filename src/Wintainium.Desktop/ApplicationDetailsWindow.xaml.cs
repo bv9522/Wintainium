@@ -418,8 +418,9 @@ public sealed partial class ApplicationDetailsWindow : Window
 
     private static bool CanOfferLegacyMd5Authorization(WintainiumApplicationInstallResult result) =>
         result.OperationState == WintainiumOperationState.Failed &&
-        result.Errors.Any(error => string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase)) &&
-        result.TroubleshootingDiagnostics.Any(diagnostic => diagnostic.Message?.Contains("MD5", StringComparison.OrdinalIgnoreCase) == true);
+        result.Errors.Any(error =>
+            string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase) &&
+            error.Message?.Contains("publisher-declared MD5 checksum from the official download page is available", StringComparison.OrdinalIgnoreCase) == true);
 
     private async Task<bool> ConfirmLegacyMd5VerificationAsync()
     {
