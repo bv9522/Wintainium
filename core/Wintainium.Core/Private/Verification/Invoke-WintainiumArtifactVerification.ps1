@@ -11,7 +11,7 @@ function Invoke-WintainiumArtifactVerification {
     $destinationPath = if ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['DestinationPath']) { [string]$DownloadResult.DestinationPath } else { $null }
     $failed = {
         param([string]$Kind,[string]$Message)
-        [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; FailureKind=$Kind; Algorithm=$null; ExpectedHash=$null; ActualHash=$null; DestinationPath=$destinationPath; ErrorMessage=$Message }
+        [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind=$Kind; Algorithm=$null; ExpectedHash=$null; ActualHash=$null; VerificationLevel=$null; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$Message }
     }
 
     if ($null -eq $DownloadResult -or $null -eq $SelectedArtifact) { return & $failed 'InputInvalid' 'DownloadResult and SelectedArtifact are required.' }
@@ -37,38 +37,21 @@ function Invoke-WintainiumArtifactVerification {
 
     $sha256Claims = @($claims | Where-Object { $_.Algorithm -ieq 'SHA256' })
     if ($claims.Count -gt 0 -and $sha256Claims.Count -eq 0) {
-        $publisherMd5Claims = @()
-        if ($null -ne $SelectedArtifact.PSObject.Properties['Hashes'] -and $null -ne $SelectedArtifact.Hashes -and $SelectedArtifact.Hashes -isnot [System.Collections.IDictionary]) {
-            $publisherMd5Claims = @($SelectedArtifact.Hashes | Where-Object {
-                $null -ne $_ -and
-                $_.PSObject.Properties['Algorithm'] -and [string]$_.Algorithm -ieq 'MD5' -and
-                $_.PSObject.Properties['Value'] -and
-                $_.PSObject.Properties['Source'] -and [string]$_.Source -ceq 'OfficialDownloadPageChecksum'
-            } | ForEach-Object {
-                [pscustomobject]@{ Algorithm=[string]$_.Algorithm; Value=[string]$_.Value }
-            })
+        $publisherMd5Claims = [System.Collections.Generic.List[object]]::new()
+        if ($hashes -isnot [System.Collections.IDictionary]) {
+            foreach ($claim in @($hashes)) {
+                if ($null -ne $claim -and
+                    $claim.PSObject.Properties['Algorithm'] -and [string]$claim.Algorithm -ieq 'MD5' -and
+                    $claim.PSObject.Properties['Value'] -and
+                    $claim.PSObject.Properties['Source'] -and [string]$claim.Source -ceq 'OfficialDownloadPageChecksum') {
+                    $publisherMd5Claims.Add([pscustomobject]@{ Algorithm='MD5'; Value=[string]$claim.Value })
+                }
+            }
         }
+
         if ($AllowLegacyMd5Verification -and $publisherMd5Claims.Count -gt 0) {
             foreach ($claim in $publisherMd5Claims) {
-                if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{32}
-    if ($sha256Claims.Count -eq 0) { return & $failed 'VerificationMetadataMissing' 'The selected artifact contains no SHA256 verification evidence.' }
-
-    foreach ($claim in $sha256Claims) {
-        if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{64}$') { return & $failed 'VerificationMetadataInvalid' 'A SHA256 verification value is not a valid 64-character hexadecimal digest.' }
-    }
-
-    try { $actualHash = (Get-FileHash -LiteralPath $destinationPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant() }
-    catch { return & $failed 'VerificationFailed' 'The downloaded artifact could not be hashed for verification.' }
-
-    foreach ($claim in $sha256Claims) {
-        if ($actualHash -cne $claim.Value.ToUpperInvariant()) {
-            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
-        }
-    }
-
-    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; IsSuccessful=$true; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$null }
-}
-) {
+                if ([string]::IsNullOrWhiteSpace($claim.Value) -or $claim.Value -notmatch '^[0-9A-Fa-f]{32}$') {
                     return & $failed 'VerificationMetadataInvalid' 'A publisher-declared MD5 verification value is not a valid 32-character hexadecimal digest.'
                 }
             }
@@ -94,9 +77,9 @@ function Invoke-WintainiumArtifactVerification {
 
     foreach ($claim in $sha256Claims) {
         if ($actualHash -cne $claim.Value.ToUpperInvariant()) {
-            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
+            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
         }
     }
 
-    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; DestinationPath=$destinationPath; ErrorMessage=$null }
+    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; IsSuccessful=$true; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$null }
 }
