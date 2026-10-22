@@ -10,4 +10,13 @@ internal sealed record WintainiumApplicationOnboardingResult(
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
     string? SourceResolutionStatus,
     IReadOnlyList<WintainiumOperationDiagnostic> LogEvents,
-    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
+    WintaniumOperationState OperationState = WintainiumOperationState.NotStarted,
+    IReadOnlyList<WintainiumApplicationOnboardingStage> Stages = default!);
+
+internal sealed record WintainiumApplicationOnboardingStage(
+    int Sequence,
+    string Name,
+    string? Status,
+    bool IsSuccessful,
+    string? ReasonCode,
+    string? Reason);
