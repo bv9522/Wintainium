@@ -670,10 +670,11 @@ public sealed partial class MainWindow : Window
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            foreach (var application in hydrated)
-            {
-                SetApplicationCollectionItem(application);
-            }
+            // Hydrate every persisted state before publishing the updated collection.
+            // Updating each item individually would clear/repopulate the dashboard once per app.
+            var selectedApplicationId = GetSelectedApplicationId();
+            SetApplicationCollection(hydrated);
+            RestoreSelectedApplication(selectedApplicationId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
