@@ -57,6 +57,11 @@ Describe 'Wintainium application onboarding' {
         @($result.Errors).Count | Should -Be 0
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
+        @($result.Stages.Name) | Should -Be @('InputValidation','SourceResolution','PolicyResolution','DefinitionNormalization','Persistence')
+        @($result.Stages | Where-Object { $_.Status -eq 'Failed' }).Count | Should -Be 0
+        $result.Stages[-1].Status | Should -Be 'Completed'
+        $result.Stages[-1].Reason | Should -Match 'persisted'
+
     }
 
     It 'uses the Core-owned default policy when the caller supplies no policy' {
@@ -134,6 +139,9 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'SourceInvalid'
         @($result.Errors.Code) | Should -Contain 'SourceResolutionUriInvalid'
         $result.ManifestPath | Should -BeNullOrEmpty
+        $result.Stages[-1].Name | Should -Be 'InputValidation'
+        $result.Stages[-1].Status | Should -Be 'Failed'
+        $result.Stages[-1].ReasonCode | Should -Be 'SourceResolutionUriInvalid'
     }
 
     It 'does not persist when Core policy normalization fails' {
@@ -142,6 +150,9 @@ Describe 'Wintainium application onboarding' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'ApplicationDefinitionInvalid'
         $result.ManifestPath | Should -BeNullOrEmpty
+        $result.Stages[-1].Name | Should -Be 'DefinitionNormalization'
+        $result.Stages[-1].Status | Should -Be 'Failed'
+        $result.Stages[-1].ReasonCode | Should -Not -BeNullOrEmpty
         @(Get-ChildItem -LiteralPath $script:manifestRoot -Recurse -File -Filter '*.wintainium.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
     }
 
