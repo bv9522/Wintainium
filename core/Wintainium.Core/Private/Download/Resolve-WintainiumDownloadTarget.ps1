@@ -50,6 +50,18 @@ function Resolve-WintainiumDownloadTarget {
         throw [System.ArgumentException]::new('Download URI fragments are not permitted.')
     }
 
+    # Preserve only the source origin as a referrer. This supports ordinary publisher
+    # download flows that require a browser-like referrer without leaking the full page path.
+    $referrerUri = $null
+    if ($artifact.PSObject.Properties['SourcePageUri'] -and -not [string]::IsNullOrWhiteSpace([string]$artifact.SourcePageUri)) {
+        $sourceUri = $null
+        if ([System.Uri]::TryCreate([string]$artifact.SourcePageUri, [System.UriKind]::Absolute, [ref]$sourceUri) -and
+            $sourceUri.Scheme -eq 'https' -and -not [string]::IsNullOrEmpty($sourceUri.Host) -and
+            [string]::IsNullOrEmpty($sourceUri.UserInfo)) {
+            $referrerUri = [System.Uri]::new(\"$($sourceUri.Scheme)://$($sourceUri.Authority)/\").AbsoluteUri
+        }
+    }
+
     $rawName = $null
     if ($artifact.PSObject.Properties['FileName']) {
         $rawName = [string]$artifact.FileName
@@ -104,6 +116,7 @@ function Resolve-WintainiumDownloadTarget {
 
     [pscustomobject][ordered]@{
         Uri = $uri.AbsoluteUri
+        ReferrerUri = $referrerUri
         DownloadRoot = $root
         ArtifactDirectory = $artifactDirectory
         OperationId = $operationId
