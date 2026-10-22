@@ -19,7 +19,10 @@ function Get-OfficialDownloadPageSafeUri {
     param([AllowNull()][Uri]$Uri)
     if ($null -eq $Uri -or -not $Uri.IsAbsoluteUri) { return $null }
     # Query strings and fragments can contain credentials, signed URLs, or tracking tokens.
-    return $Uri.GetLeftPart([UriPartial]::Path)
+    $safeUri = $Uri.GetLeftPart([System.UriPartial]::Path)
+    # Bound report size even when a source supplies an unusually long path.
+    if ($safeUri.Length -gt 512) { return $safeUri.Substring(0, 509) + '...' }
+    return $safeUri
 }
 
 function New-OfficialDownloadPageDiagnosticEvent {
