@@ -94,7 +94,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     $headingText=ConvertFrom-OfficialDownloadPageHtmlText $Heading
     if ([string]::IsNullOrWhiteSpace($headingText)) { return $null }
 
-    $versionMatch=[regex]::Match($headingText,'(?i)(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3})(?![a-z0-9])')
+    $versionMatch=[regex]::Match($headingText,'(?i)(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)(?![a-z0-9])')
     if (-not $versionMatch.Success) { return $null }
     $version=$versionMatch.Groups[1].Value
 
@@ -226,7 +226,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # This trace records what the current parser recognized without dumping HTML.
     $sectionMatches=[regex]::Matches(
         $html,
-        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)',
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $downloadLinkMatches=[regex]::Matches($html,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
@@ -247,7 +247,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         $bodyStart=$section.Index+$section.Length
         if($bodyStart -ge $nextStart){continue}
 
-        $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } else { $section.Groups[3].Value }
+        $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } elseif($section.Groups[3].Success) { $section.Groups[3].Value } else { $section.Groups[4].Value }
         $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
         try {
             $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading -Body $body -BaseUri $baseUri
