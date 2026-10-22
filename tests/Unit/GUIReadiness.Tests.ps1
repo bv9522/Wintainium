@@ -197,4 +197,28 @@ Describe 'Wintainium GUI-facing public boundary' {
         $details | Should -Match 'CopyDiagnosticsButton_Click'
         $details | Should -Match 'Copy Diagnostics'
     }
+
+    It 'maps Core onboarding stages into source-resolution diagnostics without changing Copy Diagnostics' {
+        $onboardingResult = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumApplicationOnboardingResult.cs') -Raw
+        $onboardingService = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\Models\WintainiumApplicationOnboardingService.cs') -Raw
+        $mainWindow = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\MainWindow.xaml.cs') -Raw
+        $details = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\Wintainium.Desktop\ApplicationDetailsWindow.xaml.cs') -Raw
+
+        $onboardingResult | Should -Match 'WintainiumApplicationOnboardingStage'
+        $onboardingService | Should -Match 'Stages\(result\)'
+        $onboardingService | Should -Match 'ReasonCode'
+        $onboardingService | Should -Match 'Reason'
+        $mainWindow | Should -Match 'Onboarding Stages:'
+        $mainWindow | Should -Match 'Reason code:'
+        $mainWindow | Should -Match 'Reason:'
+
+        $clipboardStart = $details.IndexOf('private string BuildDiagnosticsClipboardText()', [StringComparison]::Ordinal)
+        $clipboardEnd = $details.IndexOf('private static void AppendItems(', $clipboardStart, [StringComparison]::Ordinal)
+        $clipboardStart | Should -BeGreaterOrEqual 0
+        $clipboardEnd | Should -BeGreaterThan $clipboardStart
+        $details.Substring($clipboardStart, $clipboardEnd - $clipboardStart) | Should -Not -Match 'Onboarding Stages|StageReason'
+        $details | Should -Match 'CopyDiagnosticsButton_Click'
+        $details | Should -Match 'Copy Diagnostics'
+    }
+
 }
