@@ -64,6 +64,7 @@ function Invoke-WintainiumApplicationInstall {
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [ValidateRange(1, 2147483647)] [int]$InstallerTimeoutMilliseconds = 600000,
+        [switch]$AllowLegacyMd5Verification,
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
@@ -76,6 +77,7 @@ function Invoke-WintainiumApplicationInstall {
         SchemaPath = $SchemaPath
         InstallerTimeoutMilliseconds = $InstallerTimeoutMilliseconds
         OperationKind = 'Install'
+        AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
         CancellationToken = $CancellationToken
     }
 
