@@ -11,10 +11,12 @@ internal static class WintainiumApplicationRefreshReportFormatter
 {
     private static readonly HashSet<string> SafeContextNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "ApplicationId", "Capability", "CandidateCount", "Component", "ErrorCode",
-        "EvidenceSource", "EventName", "Host", "InstallationState", "MatchMode",
-        "ObservedInstallationState", "OperationId", "Persisted", "PriorInstallationState",
-        "ProviderId", "ReasonCode", "RegistryLocationCount", "RegistryReadFailureCount", "Scope", "Severity", "Stage", "Status", "View"
+        "ApplicationId", "Capability", "CandidateCount", "Component", "ContentType", "DownloadArtifactCandidateCount",
+        "DurationMilliseconds", "ErrorCode", "EventName", "ExceptionType", "EvidenceSource", "FailureStage",
+        "FinalUrl", "Host", "HtmlLength", "HttpStatusCode", "InstallationState", "MatchMode",
+        "ObservedInstallationState", "OperationId", "Outcome", "ParsedArtifactCount", "ParsedReleaseCount",
+        "Persisted", "PriorInstallationState", "ProviderId", "ReasonCode", "RegistryLocationCount",
+        "RegistryReadFailureCount", "RequestedUrl", "Scope", "SectionCandidateCount", "Severity", "Stage", "Status", "View"
     };
 
     public static string Format(WintainiumApplicationRefreshResult result)
@@ -59,7 +61,7 @@ internal static class WintainiumApplicationRefreshReportFormatter
         builder.AppendLine("First Failed or Uncertain Stage:");
         builder.AppendLine(firstAttention is null
             ? "- No failed stage or Unknown post-stage state was recorded."
-            : $"- {firstAttention.Name} (status: {firstAttention.Status}, reason: {Value(FirstAttentionReason(firstAttention))}, state after: {Value(firstAttention.StateAfter?.ToString())})");
+            : $"- {FirstAttentionLabel(firstAttention)} (status: {firstAttention.Status}, reason: {Value(FirstAttentionReason(firstAttention))}, state after: {Value(firstAttention.StateAfter?.ToString())})");
 
         AppendStageDiagnostics(builder, "Aggregate Errors", result.Errors, string.Empty);
         AppendStageDiagnostics(builder, "Aggregate Warnings", result.Warnings, string.Empty);
@@ -104,10 +106,32 @@ internal static class WintainiumApplicationRefreshReportFormatter
                  string.Equals(context.Value, "NoReleasesFound", StringComparison.OrdinalIgnoreCase)) ||
              (item.Message?.Contains("NoReleasesFound", StringComparison.OrdinalIgnoreCase) ?? false)));
 
-    private static string? FirstAttentionReason(WintainiumApplicationRefreshStage stage) =>
+    private static string FirstAttentionLabel(WintainiumApplicationRefreshStage stage) =>
         HasNoReleasesFound(stage)
-            ? "Release discovery returned no releases (NoReleasesFound)"
-            : stage.ReasonCode;
+            ? $"ReleaseDiscovery (provider result surfaced during {stage.Name})"
+            : stage.Name;
+
+    private static string? FirstAttentionReason(WintainiumApplicationRefreshStage stage)
+    {
+        if (!HasNoReleasesFound(stage))
+            return stage.ReasonCode;
+
+        var outcome = LogContextValue(stage, "Outcome");
+        var sections = LogContextValue(stage, "SectionCandidateCount");
+        var links = LogContextValue(stage, "DownloadArtifactCandidateCount");
+        var details = new List<string> { "provider returned NoReleasesFound" };
+        if (!string.IsNullOrWhiteSpace(outcome)) details.Add($"parser outcome {outcome}");
+        if (!string.IsNullOrWhiteSpace(sections)) details.Add($"release-section candidates {sections}");
+        if (!string.IsNullOrWhiteSpace(links)) details.Add($"download-artifact candidates {links}");
+        return string.Join("; ", details);
+    }
+
+    private static string? LogContextValue(WintainiumApplicationRefreshStage stage, string key) =>
+        stage.LogEvents
+            .Where(item => string.Equals(item.EventName, "ReleaseDiscoveryParsingCompleted", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(item => item.Context)
+            .FirstOrDefault(context => string.Equals(context.Key, key, StringComparison.OrdinalIgnoreCase))
+            .Value;
 
     private static void AppendStageDiagnostics(
         StringBuilder builder,
