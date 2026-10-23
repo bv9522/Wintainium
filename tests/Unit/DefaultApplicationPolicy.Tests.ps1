@@ -250,8 +250,10 @@ Describe 'Wintainium default application installer policy' {
         @($result.Policy.Reconciliation.Settings.registry.match).Count | Should -Be 2
         $result.Policy.Reconciliation.Settings.registry.match[0].value | Should -Be 'DisplayName'
         $result.Policy.Reconciliation.Settings.registry.match[0].equals | Should -Be 'Audacity'
+        $result.Policy.Reconciliation.Settings.registry.match[0].matchType | Should -Be 'nameOrVersionSuffix'
         $result.Policy.Reconciliation.Settings.registry.match[1].value | Should -Be 'subkey'
         $result.Policy.Reconciliation.Settings.registry.match[1].equals | Should -Be 'Audacity'
+        $result.Policy.Reconciliation.Settings.registry.match[1].matchType | Should -Be 'nameOrVersionSuffix'
     }
 
     It 'retains architecture as a separate policy dimension from installer format' {
