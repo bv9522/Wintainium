@@ -38,6 +38,9 @@ Path to the application manifest JSON schema.
 .PARAMETER InstallerTimeoutMilliseconds
 Maximum installer execution time in milliseconds. The default is 600000.
 
+.PARAMETER AllowLegacyMd5Verification
+Explicitly authorizes reduced-assurance verification for an artifact with an official-download-page publisher-declared MD5 checksum. The downloaded file must match that checksum. This does not bypass missing metadata, unknown checksum sources, or mismatches. Prefer SHA-256 verification whenever available.
+
 .PARAMETER CancellationToken
 Optional cancellation token propagated through the update lifecycle.
 
@@ -67,6 +70,7 @@ function Invoke-WintainiumApplicationUpdate {
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [ValidateRange(1, 2147483647)] [int]$InstallerTimeoutMilliseconds = 600000,
+        [switch]$AllowLegacyMd5Verification,
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
@@ -78,6 +82,7 @@ function Invoke-WintainiumApplicationUpdate {
         PluginRoot = $PluginRoot
         SchemaPath = $SchemaPath
         InstallerTimeoutMilliseconds = $InstallerTimeoutMilliseconds
+        AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
         CancellationToken = $CancellationToken
     }
 
