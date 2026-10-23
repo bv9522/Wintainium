@@ -43,6 +43,18 @@ Describe 'Wintainium final update decision' {
         $result.ReleaseEligibility.Observations[0].VersionComparison.Comparison | Should -Be 'Greater'
     }
 
+    It 'does not treat a successful discovery with no releases as proof that the app is up to date' {
+        $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('exe');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
+        $state=[pscustomobject]@{ ApplicationId='example.app'; Version='26.5.2'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Status='NoReleasesFound'; Releases=@() }
+        $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
+        $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput} { param($DecisionInput) Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' }
+        $result.Status | Should -Be 'DecisionIndeterminate'
+        $result.IsUpdateAvailable | Should -BeNullOrEmpty
+        $result.ReasonCode | Should -Be 'NoReleaseEvidence'
+        $result.IsDeterministic | Should -BeFalse
+    }
+
     It 'returns no update when discovery succeeds but no release is eligible' {
         $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('msi');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
         $state=[pscustomobject]@{ ApplicationId='example.app'; Version='2.0.0'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
