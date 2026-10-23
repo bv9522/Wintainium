@@ -54,6 +54,21 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.Publisher | Should -Be 'VideoLAN'
     }
 
+    It 'separates HandBrake product identity from its tagline and preserves a description' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><meta name="application-name" content="Handbrake The open video source transcoder"><meta name="description" content="A video transcoder for multiple platforms."></head><body></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-handbrake';SourceUri='https://handbrake.fr/downloads.php'})}
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.Name | Should -Be 'HandBrake'
+        $result.Source.Description | Should -Be 'A video transcoder for multiple platforms.'
+    }
+
+    It 'removes the Files section label from SourceForge project-page names' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>Equalizer APO Files - SourceForge</title><meta name="application-name" content="Equalizer APO Files"></head><body></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-equalizerapo';SourceUri='https://sourceforge.net/projects/equalizerapo/files/1.4.2/'})}
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.Name | Should -Be 'Equalizer APO'
+    }
+
     It 'does not return download artifacts during source resolution' {
         Mock Invoke-WebRequest {$script:response} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-3';SourceUri='https://www.7-zip.org/download.html'})}
