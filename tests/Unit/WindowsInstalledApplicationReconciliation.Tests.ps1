@@ -206,6 +206,24 @@ Describe 'Windows installed-application reconciliation plugin' {
         $unrelated.Candidates.Count | Should -Be 0
     }
 
+    It 'applies conservative version suffix normalization to legacy name predicates' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Core Temp' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{ Scope='machine'; View='64'; SubKey='{086D343F-8E78-4AFC-81AC-D6D414AFD8AC}_is1'; DisplayName='Core Temp 1.20.1'; DisplayVersion='1.20.1' }
+        }
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+        $observation.Candidates.Count | Should -Be 1
+    }
+
     It 'supports explicitly declared exact aliases' {
         $settings = [pscustomobject][ordered]@{
             registry = [pscustomobject][ordered]@{
