@@ -91,6 +91,7 @@ function New-WintainiumApplicationDefinitionFromSource {
         manifestVersion='1.1'
         id=[string]$Source.ApplicationId
         name=[string]$Source.Name
+        description=if ($Source.PSObject.Properties['Description'] -and -not [string]::IsNullOrWhiteSpace([string]$Source.Description)) {[string]$Source.Description} else {$null}
         icon=if (-not [string]::IsNullOrWhiteSpace($AutomaticIconUri)) { [ordered]@{ automaticUri=[string]$AutomaticIconUri } } else { $null }
         homepage=if ($Source.PSObject.Properties['Homepage']) {[string]$Source.Homepage} else {$null}
         publisher=if ($Source.PSObject.Properties['Publisher']) {[string]$Source.Publisher} else {$null}
@@ -129,6 +130,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     }
 
     if ($application.icon -eq $null) { $application.Remove('icon') }
+    if ([string]::IsNullOrWhiteSpace([string]$application.description)) { $application.Remove('description') }
     if ([string]::IsNullOrWhiteSpace([string]$application.homepage)) { $application.Remove('homepage') }
     if ([string]::IsNullOrWhiteSpace([string]$application.publisher)) { $application.Remove('publisher') }
 
