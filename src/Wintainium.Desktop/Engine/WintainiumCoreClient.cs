@@ -202,6 +202,7 @@ internal sealed class WintainiumCoreClient
         string? pluginRoot = null,
         string? schemaPath = null,
         int installerTimeoutMilliseconds = 600_000,
+        bool allowLegacyMd5Verification = false,
         CancellationToken cancellationToken = default)
     {
         var parameters = new Dictionary<string, object?>
@@ -213,6 +214,11 @@ internal sealed class WintainiumCoreClient
             ["InstallerTimeoutMilliseconds"] = installerTimeoutMilliseconds,
             ["CancellationToken"] = cancellationToken
         };
+
+        if (allowLegacyMd5Verification)
+        {
+            parameters["AllowLegacyMd5Verification"] = true;
+        }
 
         AddOptional(parameters, "PluginRoot", pluginRoot);
         AddOptional(parameters, "SchemaPath", schemaPath);
