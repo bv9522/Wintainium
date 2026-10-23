@@ -62,6 +62,14 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.Description | Should -Be 'A video transcoder for multiple platforms.'
     }
 
+    It 'identifies the AMD driver landing page as AMD Software rather than the AMD vendor' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><meta name="application-name" content="AMD"><meta name="description" content="Drivers and software."></head></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-amd';SourceUri='https://www.amd.com/en/support/download/drivers.html'})}
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.Name | Should -Be 'AMD Software'
+        $result.Source.Description | Should -Be 'Drivers and software.'
+    }
+
     It 'removes the Files section label from SourceForge project-page names' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>Equalizer APO Files - SourceForge</title><meta name="application-name" content="Equalizer APO Files"></head><body></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-equalizerapo';SourceUri='https://sourceforge.net/projects/equalizerapo/files/1.4.2/'})}
