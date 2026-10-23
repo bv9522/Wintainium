@@ -34,7 +34,11 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $value = Get-WintainiumWindowsSettingValue -Object $predicate -Name 'value'
         $equals = Get-WintainiumWindowsSettingValue -Object $predicate -Name 'equals'
         $matchType = [string](Get-WintainiumWindowsSettingValue -Object $predicate -Name 'matchType')
-        if ([string]::IsNullOrWhiteSpace($matchType)) { $matchType = 'exact' }
+        if ([string]::IsNullOrWhiteSpace($matchType)) {
+            # Older manifests predate the explicit matchType field. Apply only
+            # the conservative, anchored version-suffix rule to name-bearing fields.
+            $matchType = if ([string]$value -in @('DisplayName','subkey')) { 'nameOrVersionSuffix' } else { 'exact' }
+        }
         $aliases = @(Get-WintainiumWindowsSettingValue -Object $predicate -Name 'aliases' | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | ForEach-Object { [string]$_ })
         if ([string]::IsNullOrWhiteSpace([string]$value)) { throw [System.ArgumentException]::new("Each registry match predicate requires a non-empty 'value'.") }
         if ($matchableValues -notcontains [string]$value) { throw [System.ArgumentException]::new("Unsupported Windows uninstall registry match value '$value'.") }
