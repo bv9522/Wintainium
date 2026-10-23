@@ -517,6 +517,11 @@ function Invoke-WintainiumProviderSourceResolution {
         $name -match '(?i)^(.+?)\s+Files$') {
         $name=$matches[1].Trim()
     }
+    # AMD's driver landing page represents the user-facing AMD Software
+    # product, not every AMD-published driver and utility registered on Windows.
+    if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and $sourceUri.AbsolutePath -match '(?i)^/en/support/download/drivers(?:\.html)?/?$' -and $name -ieq 'AMD') {
+        $name='AMD Software'
+    }
     # HandBrake's official page metadata sometimes concatenates its brand and
     # tagline into one identity string. Keep the product name and description separate.
     if ($name -match '(?i)^Handbrake\s+(The open video source transcoder)$') {
