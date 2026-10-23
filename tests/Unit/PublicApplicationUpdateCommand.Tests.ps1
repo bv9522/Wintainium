@@ -104,6 +104,7 @@ Describe 'Wintainium public application update command boundary' {
         InModuleScope Wintainium.Core {
             $script:capturedLifecycle = $null
             Mock Invoke-WintainiumApplicationLifecycle {
+                param($ManifestPath, $StateRoot, $MachineArchitecture, $DownloadRoot, $PluginRoot, $SchemaPath, $InstallerTimeoutMilliseconds, $AllowLegacyMd5Verification, $HttpClient, $CancellationToken, $OperationKind)
                 $script:capturedLifecycle = [pscustomobject]@{
                     AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
                     OperationKind = $OperationKind
