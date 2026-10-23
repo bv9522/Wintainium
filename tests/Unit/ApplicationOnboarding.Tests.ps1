@@ -66,6 +66,25 @@ Describe 'Wintainium application onboarding' {
 
     }
 
+    It 'preserves a resolved source description in the persisted application definition model' {
+        $source = [pscustomobject][ordered]@{
+            ApplicationId='web.example.com.product'
+            Name='Example Product'
+            Description='A short product description.'
+            CanonicalUri='https://example.com/product'
+            Homepage='https://example.com/product'
+            Publisher='Example Publisher'
+            ProviderId='Wintainium.provider.official-download-page'
+            ProviderContractVersion='1'
+            ProviderSettings=@{pageUri='https://example.com/product'}
+        }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Source=$source; Policy=$script:policy } {
+            New-WintainiumApplicationDefinitionFromSource -Source $Source -Policy $Policy -OperationId 'description-test'
+        }
+        $result.IsSuccessful | Should -BeTrue
+        $result.ApplicationDefinition.description | Should -Be 'A short product description.'
+    }
+
     It 'uses the Core-owned default policy when the caller supplies no policy' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot
         $failureDetails = @($result.Errors | ForEach-Object { "$($_.Code): $($_.Message)" }) -join '; '
