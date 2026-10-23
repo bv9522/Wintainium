@@ -33,10 +33,14 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         if ($null -eq $predicate) { throw [System.ArgumentException]::new('Registry match predicates must not be null.') }
         $value = Get-WintainiumWindowsSettingValue -Object $predicate -Name 'value'
         $equals = Get-WintainiumWindowsSettingValue -Object $predicate -Name 'equals'
+        $matchType = [string](Get-WintainiumWindowsSettingValue -Object $predicate -Name 'matchType')
+        if ([string]::IsNullOrWhiteSpace($matchType)) { $matchType = 'exact' }
+        $aliases = @(Get-WintainiumWindowsSettingValue -Object $predicate -Name 'aliases' | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | ForEach-Object { [string]$_ })
         if ([string]::IsNullOrWhiteSpace([string]$value)) { throw [System.ArgumentException]::new("Each registry match predicate requires a non-empty 'value'.") }
         if ($matchableValues -notcontains [string]$value) { throw [System.ArgumentException]::new("Unsupported Windows uninstall registry match value '$value'.") }
-        if ($null -eq $equals) { throw [System.ArgumentException]::new("Registry match predicate '$value' requires an 'equals' value.") }
-        [pscustomobject]@{ Value = [string]$value; Equals = [string]$equals }
+        if ($null -eq $equals -or [string]::IsNullOrWhiteSpace([string]$equals)) { throw [System.ArgumentException]::new("Registry match predicate '$value' requires an 'equals' value.") }
+        if ($matchType -notin @('exact', 'nameOrVersionSuffix')) { throw [System.ArgumentException]::new("Unsupported Windows registry match type '$matchType'.") }
+        [pscustomobject]@{ Value = [string]$value; Equals = [string]$equals; MatchType = $matchType; Aliases = $aliases }
     }
 
     $reader = $RegistryReader
@@ -114,7 +118,115 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $errors.Add([pscustomobject]@{ Code='WindowsRegistryValueMalformed'; Message="Registry value '$($predicate.Value)' for uninstall entry '$($entry.SubKey)' is not a scalar value."; Scope=$scope; View=$locationView; SubKey=[string]$entry.SubKey })
                     break
                 }
-                $predicateMatches = [string]$actual -ieq $predicate.Equals
+                $identityNames = @($predicate.Equals) + @($predicate.Aliases)
+                $predicateMatches = $false
+                foreach ($identityName in $identityNames) {
+                    if ([string]$actual -ieq [string]$identityName) {
+                        $predicateMatches = $true
+                        break
+                    }
+                    # Controlled normalization only accepts a complete, whitespace-delimited
+                    # numeric version suffix (optionally followed by one release letter).
+                    # It does not accept arbitrary substrings, architecture tags, or extra words.
+                    if ($predicate.MatchType -eq 'nameOrVersionSuffix' -and
+                        [string]$actual -match ('(?i)^' + [regex]::Escape([string]$identityName) + '\\s+\\d+(?:\\.\\d+)*(?:[a-z])?
+                    if ($predicateMatches) { $matches = $true; break }
+                }
+                elseif (-not $predicateMatches) { $matches = $false; break }
+            }
+            if ($matches) {
+                $candidates.Add([pscustomobject]@{
+                    Scope = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Scope')
+                    View = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'View')
+                    SubKey = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey')
+                    DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayName')
+                    DisplayVersion = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayVersion')
+                    Publisher = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Publisher')
+                    InstallLocation = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'InstallLocation')
+                    EvidenceSource = 'WindowsUninstallRegistry'
+                })
+            }
+        }
+    }
+    [pscustomobject]@{ IsSuccessful=($errors.Count -eq 0); Candidates=@($candidates); Errors=@($errors) }
+}
+
+function Invoke-WintainiumReconciliation {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+    $operationId = [string]$Request.OperationId
+    $applicationId = [string]$Request.ApplicationId
+    $base = {
+        param([bool]$successful,[string]$status,[object]$evidence,[object[]]$errors,[object[]]$warnings)
+        [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$successful; Status=$status; Evidence=$evidence; Errors=@($errors); Warnings=@($warnings); LogEvents=@() }
+    }
+    try {
+        if ($null -eq $Request.Manifest) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $reconciliation = $Request.Manifest.Reconciliation
+        $settings = if ($reconciliation -is [System.Collections.IDictionary]) { $reconciliation['settings'] } elseif ($null -ne $reconciliation.PSObject.Properties['settings']) { $reconciliation.settings } else { $null }
+        if ($null -eq $settings) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $observation = Get-WintainiumWindowsInstalledApplicationCandidates -Settings $settings
+        $warnings = @($observation.Errors | ForEach-Object {
+            [pscustomobject]@{
+                Code = [string]$_.Code
+                Message = [string]$_.Message
+                OperationId = $operationId
+                Scope = if ($_.PSObject.Properties['Scope']) { [string]$_.Scope } else { $null }
+                View = if ($_.PSObject.Properties['View']) { [string]$_.View } else { $null }
+            }
+        })
+        $candidateCount = @($observation.Candidates).Count
+        $registry = Get-WintainiumWindowsSettingValue -Object $settings -Name 'registry'
+        $matchMode = [string](Get-WintainiumWindowsSettingValue -Object $registry -Name 'matchMode')
+        if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
+        $locationCount = @(Get-WintainiumWindowsSettingValue -Object $registry -Name 'locations').Count
+        $readFailureCount = @($observation.Errors | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count
+        if ($candidateCount -eq 0) {
+            $installationState = if ($observation.IsSuccessful) { 'NotInstalled' } else { 'Unknown' }
+            $status = if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }
+            if (-not $observation.IsSuccessful) {
+                $warnings += [pscustomobject]@{
+                    Code = 'WindowsReconciliationEvidenceIncomplete'
+                    Message = 'No matching uninstall registration was found, and one or more registry observations failed. Wintainium cannot safely conclude that the application is not installed.'
+                    OperationId = $operationId
+                    CandidateCount = $candidateCount
+                    MatchMode = $matchMode
+                    RegistryLocationCount = $locationCount
+                    RegistryReadFailureCount = $readFailureCount
+                }
+            }
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=$installationState;EvidenceSource='WindowsUninstallRegistry'}
+            return & $base $true $status $evidence @() $warnings
+        }
+        if ($candidateCount -gt 1) {
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
+            $ambiguity=[pscustomobject]@{
+                Code = 'WindowsReconciliationAmbiguous'
+                Message = 'Multiple uninstall registrations matched the configured application identity; Wintainium did not choose one.'
+                OperationId = $operationId
+                CandidateCount = $candidateCount
+                MatchMode = $matchMode
+                RegistryLocationCount = $locationCount
+                RegistryReadFailureCount = $readFailureCount
+            }
+            return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
+        }
+        $candidate=@($observation.Candidates)[0]
+        $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
+        if($candidate.DisplayVersion){$evidence.Version=$candidate.DisplayVersion;$evidence.VersionSource='Registry'}
+        if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
+        return & $base $true 'Reconciled' ([pscustomobject]$evidence) @() $warnings
+    } catch {
+        return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsInvalid';Message=$_.Exception.Message}) @()
+    }
+}
+
+Export-ModuleMember -Function Invoke-WintainiumReconciliation
+)) {
+                        $predicateMatches = $true
+                        break
+                    }
+                }
                 if ($matchMode -eq 'any') {
                     if ($predicateMatches) { $matches = $true; break }
                 }
