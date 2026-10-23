@@ -94,9 +94,16 @@ The initial matchable registry values are:
 - `DisplayName` — the registered application display name.
 - `Publisher` — the registered publisher.
 
-A candidate matches only when it satisfies every declared predicate.
+Each predicate requires `value` and `equals`. It may also declare:
 
-String matching is exact and case-insensitive by default. The initial contract does not support substring matching, regular expressions, fuzzy matching, ranking, or heuristic similarity.
+- `aliases` — an optional list of additional exact, case-insensitive identity names.
+- `matchType` — optional `exact` (default) or `nameOrVersionSuffix`.
+
+With `nameOrVersionSuffix`, a candidate may match the declared identity followed by a complete, whitespace-delimited numeric version suffix, such as `GIMP 2.10.38`, `Core Temp 1.20.1`, or `Attribute Changer 11.40b`. The suffix must be anchored to the end of the value. This mode does not accept arbitrary substrings, architecture tags, or extra descriptive words.
+
+A candidate matches only when it satisfies every declared predicate; `matchMode: any` retains its existing any-predicate behavior. Use aliases only for known product-name variants, not vendor-wide labels that could identify unrelated components.
+
+The contract does not support arbitrary substring matching, caller-supplied regular expressions, fuzzy matching, ranking, or heuristic similarity.
 
 The reconciler must not use the manifest's human-readable `name` or `id` as an implicit registry search criterion. If a registry value is intended to identify the application, the manifest must declare that criterion explicitly.
 
