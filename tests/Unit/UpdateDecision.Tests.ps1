@@ -31,6 +31,18 @@ Describe 'Wintainium final update decision' {
         $result.SelectedArtifact.Architecture | Should -Be 'arm64'
     }
 
+    It 'recognizes a newer dotted numeric release with a trailing letter suffix' {
+        $manifest=[pscustomobject]@{ Id='attribute-changer'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('exe');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
+        $state=[pscustomobject]@{ ApplicationId='attribute-changer'; Version='11.40b'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Releases=@([pscustomobject]@{ReleaseId='attribute-changer-11.50a';Version='11.50a';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://example.test/attribute-changer.exe';Format='exe';Architecture='x64'})}) }
+        $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
+        $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput} { param($DecisionInput) Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' }
+        $result.Status | Should -Be 'UpdateAvailable'
+        $result.IsUpdateAvailable | Should -BeTrue
+        $result.SelectedRelease.Version | Should -Be '11.50a'
+        $result.ReleaseEligibility.Observations[0].VersionComparison.Comparison | Should -Be 'Greater'
+    }
+
     It 'returns no update when discovery succeeds but no release is eligible' {
         $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('msi');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
         $state=[pscustomobject]@{ ApplicationId='example.app'; Version='2.0.0'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
