@@ -519,7 +519,18 @@ function Invoke-WintainiumProviderSourceResolution {
     }
     # The Equalizer APO SourceForge project has a stable product identity even
     # when page metadata prefers a generic file-listing title.
-    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net    # This official AMD driver landing page is specifically for AMD Software,
+    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/projects/equalizerapo/files(?:/|$)') {
+        $name='Equalizer APO'
+    }
+    # The official Equalizer APO download page uses "Equalizer APO Download"
+    # as its page title; keep the product name separate from that page label.
+    if ($sourceUri.Host -match '(?i)(^|\.)equalizerapo\.com$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/download/?$' -and
+        $name -match '(?i)^Equalizer\s+APO\s+Download$') {
+        $name='Equalizer APO'
+    }
+    # This official AMD driver landing page is specifically for AMD Software,
     # not the vendor's many separately registered drivers and utilities.
     if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and
         $sourceUri.AbsolutePath -match '(?i)^/en/support/download/drivers(?:\.html)?/?$') {
@@ -527,7 +538,18 @@ function Invoke-WintainiumProviderSourceResolution {
     }
     # The official HandBrake downloads landing page has a stable product identity,
     # regardless of whether its title metadata includes a tagline or page wording.
-    if ($sourceUri.Host -match '(?i)(^|\.)handbrake\.fr    if ([string]::IsNullOrWhiteSpace($name)) {
+    if ($sourceUri.Host -match '(?i)(^|\.)handbrake\.fr$' -and
+        ($sourceUri.AbsolutePath -match '(?i)^/downloads\.php/?$' -or
+         $name -match '(?i)^Handbrake\b')) {
+        if ($name -match '(?i)^Handbrake\s*[:|–—-]?\s*(.+)?$') {
+            $tagline=[string]$matches[1]
+            if (-not [string]::IsNullOrWhiteSpace($tagline) -and [string]::IsNullOrWhiteSpace($description)) {
+                $description=$tagline.Trim()
+            }
+        }
+        $name='HandBrake'
+    }
+    if ([string]::IsNullOrWhiteSpace($name)) {
         $stopwatch.Stop()
         $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response was retrieved but supported identity metadata did not yield an application name.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;FailureStage='IdentityParsing';Outcome='ApplicationIdentityMissing';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
         return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.') @() $logEvents.ToArray()
