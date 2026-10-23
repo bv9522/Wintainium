@@ -129,6 +129,37 @@ Describe 'Wintainium official download page provider release discovery' {
         @($result.Releases[0].Artifacts)[1].Uri | Should -Be 'https://cdn.example.net/example-x86.msi'
     }
 
+    It 'does not invent a versioned release from an unversioned driver landing page' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h1>Drivers and Support for Processors and Graphics</h1>
+<h2>Windows 10/11 Drivers</h2>
+<p>Auto-detect and install driver updates for graphics and chipsets.</p>
+<a href="https://drivers.example.test/auto-detect.exe">Download Windows Drivers</a>
+<h2>Linux Drivers</h2>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'page-release-unversioned-landing'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.example.com/drivers.html' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'NoReleasesFound'
+        @($result.Releases).Count | Should -Be 0
+        $parseEvent = @($result.LogEvents | Where-Object { $_.EventName -eq 'ReleaseDiscoveryParsingCompleted' })[-1]
+        $parseEvent.Context.Outcome | Should -Be 'ReleaseSectionsProducedNoArtifacts'
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 1
+        $parseEvent.Context.ParsedReleaseCount | Should -Be 0
+    }
+
     It 'returns no releases when the page contains no versioned release sections' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
