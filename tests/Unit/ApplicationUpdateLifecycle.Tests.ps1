@@ -32,14 +32,19 @@ Describe 'Wintainium application update lifecycle composition' {
             Mock Get-WintainiumUpdateDecision { $decision }
             Mock New-WintainiumDownloadRequest { [pscustomobject]@{ OperationId=$operationId; UpdateDecision=$decision; SelectedRelease=$decision.SelectedRelease; SelectedArtifact=$decision.SelectedArtifact } }
             Mock Invoke-WintainiumDownload { $download }
-            Mock Invoke-WintainiumArtifactVerification { $verification }
+            $script:capturedLegacyMd5Authorization = $false
+            Mock Invoke-WintainiumArtifactVerification {
+                param($DownloadResult, $SelectedArtifact, $OperationId, $AllowLegacyMd5Verification)
+                $script:capturedLegacyMd5Authorization = [bool]$AllowLegacyMd5Verification
+                $verification
+            }
             Mock Select-WintainiumInstaller { $selection }
             Mock New-WintainiumInstallerRequest { [pscustomobject]@{ IsValid=$true; Request=[pscustomobject]@{ OperationId=$operationId; DownloadOperationId=$operationId; Manifest=$manifest; Installer=$manifest.Installer; Artifact=[pscustomobject]@{ Path='/tmp/app.exe'; Uri='https://example.test/app.exe'; FileName='app.exe' } }; Errors=@() } }
             Mock New-WintainiumInstallerInvocation { [pscustomobject]@{ IsValid=$true; Invocation=[pscustomobject]@{ OperationId=$operationId; DownloadOperationId=$operationId; PluginId=$installer.PluginId; PluginModulePath='/tmp/installer.psm1'; ArtifactPath='/tmp/app.exe'; ArtifactFormat='exe'; Settings=@{} }; Error=$null } }
             Mock Invoke-WintainiumInstallerOperation { $installation }
             Mock Invoke-WintainiumReconciliationOperation { $reconciliationResult }
 
-            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads'
+            $result = Invoke-WintainiumApplicationLifecycle -ManifestPath '/tmp/example.json' -StateRoot '/tmp/state' -MachineArchitecture x64 -DownloadRoot '/tmp/downloads' -AllowLegacyMd5Verification $true
 
             if (-not $result.IsSuccessful) {
                 $failedStage = if ($null -ne $result.State -and $null -ne $result.State.FailedStage) { [string]$result.State.FailedStage.Name } else { '<none>' }
@@ -57,6 +62,7 @@ Describe 'Wintainium application update lifecycle composition' {
                 throw "Lifecycle failed. ErrorCode=$errorCode; ErrorMessage=$errorMessage; StateStatus=$($result.State.Status); FailedStage=$failedStage; FailedStageDetail=$stageDetail"
             }
             $result.IsSuccessful | Should -BeTrue
+            $script:capturedLegacyMd5Authorization | Should -BeTrue
             $result.OperationId | Should -Be $operationId
             $result.State.Status | Should -Be 'Completed'
             @($result.StageResults).Count | Should -Be 8
