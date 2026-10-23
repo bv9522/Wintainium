@@ -8,6 +8,7 @@ function Invoke-WintainiumApplicationUpdateLifecycle {
         [string]$PluginRoot = $script:WintainiumDefaultPluginRoot,
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [ValidateRange(1, 2147483647)] [int]$InstallerTimeoutMilliseconds = 600000,
+        [bool]$AllowLegacyMd5Verification = $false,
         [System.Net.Http.HttpClient]$HttpClient,
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
