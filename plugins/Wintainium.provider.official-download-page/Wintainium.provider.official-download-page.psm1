@@ -511,21 +511,33 @@ function Invoke-WintainiumProviderSourceResolution {
     $name=Get-OfficialDownloadPageApplicationName -Html $html
     $description=Get-OfficialDownloadPageMetaValue -Html $html -Names @('description','og:description')
     # SourceForge project file pages often append "Files" to the project name.
-    # That page-section label is not part of the software's product identity.
+    # Strip an optional site-title suffix as well; it is page chrome, not product identity.
     if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
         $sourceUri.AbsolutePath -match '(?i)^/projects/[^/]+/files(?:/|$)' -and
-        $name -match '(?i)^(.+?)\s+Files$') {
+        $name -match '(?i)^(.+?)\s+Files(?:\s*[-|–—]\s*SourceForge)?$') {
         $name=$matches[1].Trim()
     }
-    # AMD's driver landing page represents the user-facing AMD Software
-    # product, not every AMD-published driver and utility registered on Windows.
-    if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and $sourceUri.AbsolutePath -match '(?i)^/en/support/download/drivers(?:\.html)?/?$' -and $name -ieq 'AMD') {
+    # The Equalizer APO SourceForge project has a stable product identity even
+    # when page metadata prefers a generic file-listing title.
+    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/projects/equalizerapo/files(?:/|$)') {
+        $name='Equalizer APO'
+    }
+    # This official AMD driver landing page is specifically for AMD Software,
+    # not the vendor's many separately registered drivers and utilities.
+    if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/en/support/download/drivers(?:\.html)?/?$') {
         $name='AMD Software'
     }
-    # HandBrake's official page metadata sometimes concatenates its brand and
-    # tagline into one identity string. Keep the product name and description separate.
-    if ($name -match '(?i)^Handbrake\s+(The open video source transcoder)$') {
-        $description=if ([string]::IsNullOrWhiteSpace($description)) {$matches[1]} else {$description}
+    # HandBrake's official page metadata may append a tagline, with either
+    # "open source video transcoder" or "open video source transcoder" wording.
+    # On this official domain, keep the canonical brand as the application name.
+    if ($sourceUri.Host -match '(?i)(^|\.)handbrake\.fr$' -and
+        $name -match '(?i)^Handbrake\s*[:|–—-]?\s*(.+)?$') {
+        $tagline=[string]$matches[1]
+        if (-not [string]::IsNullOrWhiteSpace($tagline) -and [string]::IsNullOrWhiteSpace($description)) {
+            $description=$tagline.Trim()
+        }
         $name='HandBrake'
     }
     if ([string]::IsNullOrWhiteSpace($name)) {
