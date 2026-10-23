@@ -21,6 +21,7 @@ Describe 'Wintainium public application update command boundary' {
                     PluginRoot=$PluginRoot
                     SchemaPath=$SchemaPath
                     InstallerTimeoutMilliseconds=$InstallerTimeoutMilliseconds
+                    AllowLegacyMd5Verification=[bool]$AllowLegacyMd5Verification
                     CancellationToken=$CancellationToken
                 }
 
@@ -34,7 +35,7 @@ Describe 'Wintainium public application update command boundary' {
             }
 
             $tokenSource = [System.Threading.CancellationTokenSource]::new()
-            $result = Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' -PluginRoot 'C:\Wintainium\Plugins' -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json' -InstallerTimeoutMilliseconds 120000 -CancellationToken $tokenSource.Token
+            $result = Invoke-WintainiumApplicationUpdate -ManifestPath 'C:\Wintainium\manifests\Example.wintainium.json' -StateRoot 'C:\Wintainium\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\Wintainium\Downloads' -PluginRoot 'C:\Wintainium\Plugins' -SchemaPath 'C:\Wintainium\schemas\application-manifest.schema.json' -InstallerTimeoutMilliseconds 120000 -AllowLegacyMd5Verification -CancellationToken $tokenSource.Token
 
             $result.Status | Should -Be 'Completed'
             $script:captured.ManifestPath | Should -Be 'C:\Wintainium\manifests\Example.wintainium.json'
@@ -44,6 +45,7 @@ Describe 'Wintainium public application update command boundary' {
             $script:captured.PluginRoot | Should -Be 'C:\Wintainium\Plugins'
             $script:captured.SchemaPath | Should -Be 'C:\Wintainium\schemas\application-manifest.schema.json'
             $script:captured.InstallerTimeoutMilliseconds | Should -Be 120000
+            $script:captured.AllowLegacyMd5Verification | Should -BeTrue
             $script:captured.CancellationToken.Equals($tokenSource.Token) | Should -BeTrue
             Should -Invoke Invoke-WintainiumApplicationUpdateLifecycle -Times 1 -Exactly
         }
