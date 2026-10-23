@@ -512,7 +512,18 @@ function Invoke-WintainiumProviderSourceResolution {
     $description=Get-OfficialDownloadPageMetaValue -Html $html -Names @('description','og:description')
     # SourceForge project file pages often append "Files" to the project name.
     # That page-section label is not part of the software's product identity.
-    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net
+    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/projects/[^/]+/files(?:/|$)' -and
+        $name -match '(?i)^(.+?)\s+Files$') {
+        $name=$matches[1].Trim()
+    }
+    # HandBrake's official page metadata sometimes concatenates its brand and
+    # tagline into one identity string. Keep the product name and description separate.
+    if ($name -match '(?i)^Handbrake\s+(The open video source transcoder)$') {
+        $description=if ([string]::IsNullOrWhiteSpace($description)) {$matches[1]} else {$description}
+        $name='HandBrake'
+    }
+    if ([string]::IsNullOrWhiteSpace($name)) {
         $stopwatch.Stop()
         $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response was retrieved but supported identity metadata did not yield an application name.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;FailureStage='IdentityParsing';Outcome='ApplicationIdentityMissing';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
         return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.') @() $logEvents.ToArray()
