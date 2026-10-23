@@ -55,6 +55,40 @@ Describe 'Wintainium version comparison' {
         $result.Comparison | Should -Be 'Less'
     }
 
+    It 'compares dotted numeric versions with a single trailing letter suffix' {
+        $result = InModuleScope Wintainium.Core {
+            $installed = New-WintainiumVersionObservation -Version '11.40b'
+            $release = New-WintainiumVersionObservation -Version '11.50a'
+            [pscustomobject]@{
+                InstalledStrategy = $installed.Strategy
+                ReleaseStrategy = $release.Strategy
+                Comparison = (Compare-WintainiumVersion -Left $release -Right $installed).Comparison
+            }
+        }
+        $result.InstalledStrategy | Should -Be 'NumericVersionSuffix'
+        $result.ReleaseStrategy | Should -Be 'NumericVersionSuffix'
+        $result.Comparison | Should -Be 'Greater'
+    }
+
+    It 'compares trailing letter suffixes only after equal numeric versions' {
+        $result = InModuleScope Wintainium.Core {
+            $a = New-WintainiumVersionObservation -Version '11.50a'
+            $b = New-WintainiumVersionObservation -Version '11.50b'
+            Compare-WintainiumVersion -Left $a -Right $b
+        }
+        $result.Comparison | Should -Be 'Less'
+    }
+
+    It 'does not compare suffixed versions with unsuffixed versions by guessing' {
+        $result = InModuleScope Wintainium.Core {
+            $suffixed = New-WintainiumVersionObservation -Version '11.50a'
+            $plain = New-WintainiumVersionObservation -Version '11.50'
+            Compare-WintainiumVersion -Left $suffixed -Right $plain
+        }
+        $result.Comparison | Should -Be 'Unknown'
+        $result.Strategy | Should -Be 'Incompatible'
+    }
+
     It 'returns unknown for opaque values' {
         $result = InModuleScope Wintainium.Core {
             $left = New-WintainiumVersionObservation -Version 'vendor-a'
