@@ -129,7 +129,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     # numeric version suffix (optionally followed by one release letter).
                     # It does not accept arbitrary substrings, architecture tags, or extra words.
                     if ($predicate.MatchType -eq 'nameOrVersionSuffix' -and
-                        [string]$actual -match ('(?i)^' + [regex]::Escape([string]$identityName) + '\\s+\\d+(?:\\.\\d+)*(?:[a-z])?
+                        [string]$actual -match ('(?i)^' + [regex]::Escape([string]$identityName) + '\s+\d+(?:\.\d+)*(?:[a-z])?
                     if ($predicateMatches) { $matches = $true; break }
                 }
                 elseif (-not $predicateMatches) { $matches = $false; break }
