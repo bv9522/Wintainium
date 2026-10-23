@@ -327,7 +327,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 cancellationToken: _operationCancellation.Token);
 
             if (CanOfferLegacyMd5Authorization(result) &&
-                await ConfirmLegacyMd5VerificationAsync())
+                await ConfirmLegacyMd5VerificationAsync("Install"))
             {
                 UpdateResultStatusText.Text = "Retrying installation with explicitly authorized legacy MD5 verification…";
                 result = await _installService.ExecuteAsync(
@@ -422,14 +422,20 @@ public sealed partial class ApplicationDetailsWindow : Window
             string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase) &&
             error.Message?.Contains("publisher-declared MD5 checksum from the official download page is available", StringComparison.OrdinalIgnoreCase) == true);
 
-    private async Task<bool> ConfirmLegacyMd5VerificationAsync()
+    private static bool CanOfferLegacyMd5Authorization(WintainiumApplicationUpdateResult result) =>
+        result.OperationState == WintainiumOperationState.Failed &&
+        result.Errors.Any(error =>
+            string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase) &&
+            error.Message?.Contains("publisher-declared MD5 checksum from the official download page is available", StringComparison.OrdinalIgnoreCase) == true);
+
+    private async Task<bool> ConfirmLegacyMd5VerificationAsync(string operation)
     {
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "Use legacy MD5 verification?",
-            Content = "The publisher provides an MD5 checksum, and Wintainium can compare the downloaded file against it. The checksum match detects many accidental changes, but MD5 is weaker than SHA-256 and is vulnerable to collision attacks. This installer is not Authenticode-signed, and an MD5 match does not independently prove the file's origin or safety. If you continue, you authorize this one installation to proceed with reduced verification assurance. Releases with no usable checksum remain blocked.",
-            PrimaryButtonText = "Accept Risk & Install",
+            Content = $"The publisher provides an MD5 checksum, and Wintainium can compare the downloaded file against it. The checksum match detects many accidental changes, but MD5 is weaker than SHA-256 and is vulnerable to collision attacks. This installer is not Authenticode-signed, and an MD5 match does not independently prove the file's origin or safety. If you continue, you authorize this one {operation.ToLowerInvariant()} to proceed with reduced verification assurance. Releases with no usable checksum remain blocked.",
+            PrimaryButtonText = $"Accept Risk & {operation}",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close
         };
@@ -647,6 +653,19 @@ public sealed partial class ApplicationDetailsWindow : Window
                 machineArchitecture,
                 WintainiumDesktopPaths.DownloadRoot,
                 cancellationToken: _operationCancellation.Token);
+
+            if (CanOfferLegacyMd5Authorization(result) &&
+                await ConfirmLegacyMd5VerificationAsync("Update"))
+            {
+                UpdateResultStatusText.Text = "Retrying update with explicitly authorized legacy MD5 verification…";
+                result = await _updateService.ExecuteAsync(
+                    _application.ManifestPath,
+                    WintainiumDesktopPaths.InstalledStateRoot,
+                    machineArchitecture,
+                    WintainiumDesktopPaths.DownloadRoot,
+                    allowLegacyMd5Verification: true,
+                    cancellationToken: _operationCancellation.Token);
+            }
 
             _lastUpdateResult = result;
             OperationStateText.Text = result.OperationState.ToString();
