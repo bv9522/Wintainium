@@ -84,6 +84,13 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.Name | Should -Be 'Equalizer APO'
     }
 
+    It 'normalizes alternate official Equalizer APO page-title ordering' {
+        Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>APO Equalizer Download</title><meta name="application-name" content="APO Equalizer Download"></head><body></body></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
+        $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-equalizerapo-title-order';SourceUri='https://equalizerapo.com/download'})}
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.Name | Should -Be 'Equalizer APO'
+    }
+
     It 'does not return download artifacts during source resolution' {
         Mock Invoke-WebRequest {$script:response} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-3';SourceUri='https://www.7-zip.org/download.html'})}
