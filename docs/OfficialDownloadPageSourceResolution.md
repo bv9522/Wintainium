@@ -14,7 +14,7 @@ The resolver currently uses a small identity surface:
 - the first `h1`;
 - an optional canonical `link rel="canonical"`.
 
-The result is normalized source identity. It does not select a release, choose an installer, or return downloadable artifacts.
+The result is normalized source identity, with a product name kept separate from an optional HTML description. The resolver removes known page-section labels (such as SourceForge's `Files`) from supported product-name cases and normalizes known official-page taglines when the page concatenates them into the product identity. It does not select a release, choose an installer, or return downloadable artifacts.
 
 ## Relationship to HTML fallback approaches
 
