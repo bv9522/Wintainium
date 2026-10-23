@@ -144,8 +144,8 @@ function Get-WintainiumDefaultApplicationPolicy {
                     [ordered]@{ scope='user'; view='native' }
                 )
                 match = @(
-                    [ordered]@{ value='DisplayName'; equals=[string]$ApplicationName }
-                    [ordered]@{ value='subkey'; equals=[string]$ApplicationName }
+                    [ordered]@{ value='DisplayName'; equals=[string]$ApplicationName; matchType='nameOrVersionSuffix' }
+                    [ordered]@{ value='subkey'; equals=[string]$ApplicationName; matchType='nameOrVersionSuffix' }
                 )
             }
         }
