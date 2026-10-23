@@ -44,7 +44,7 @@ function Get-WintainiumUpdateDecision {
 
     # A successful provider response with no discovered releases is not proof that the installed version is current.
     # In particular, generic landing pages may expose downloads without versioned release evidence.
-    if ([string]$providerResult.Status -eq 'NoReleasesFound' -and @($providerResult.Releases).Count -eq 0) {
+    if ($providerResult.PSObject.Properties.Name -contains 'Status' -and [string]$providerResult.Status -eq 'NoReleasesFound' -and @($providerResult.Releases).Count -eq 0) {
         $base['Status']='DecisionIndeterminate'; $base['IsUpdateAvailable']=$null; $base['ReasonCode']='NoReleaseEvidence'; $base['Reason']='The provider did not discover versioned releases, so update availability cannot be determined.'; $base['IsDeterministic']=$false
         return [pscustomobject]$base
     }
