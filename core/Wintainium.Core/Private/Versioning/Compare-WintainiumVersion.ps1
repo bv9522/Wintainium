@@ -28,6 +28,23 @@ function Compare-WintainiumVersion {
         $value = $Left.SystemVersion.CompareTo($Right.SystemVersion)
         $comparison = if ($value -lt 0) { 'Less' } elseif ($value -gt 0) { 'Greater' } else { 'Equal' }
     }
+    elseif ($Left.Strategy -eq 'NumericVersionSuffix') {
+        $value = $Left.SystemVersion.CompareTo($Right.SystemVersion)
+        if ($value -lt 0) {
+            $comparison = 'Less'
+        }
+        elseif ($value -gt 0) {
+            $comparison = 'Greater'
+        }
+        else {
+            $suffixValue = [string]::Compare(
+                [string]$Left.VersionSuffix,
+                [string]$Right.VersionSuffix,
+                [System.StringComparison]::OrdinalIgnoreCase
+            )
+            $comparison = if ($suffixValue -lt 0) { 'Less' } elseif ($suffixValue -gt 0) { 'Greater' } else { 'Equal' }
+        }
+    }
     else {
         $comparison = 'Unknown'
     }
