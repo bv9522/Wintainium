@@ -35,6 +35,10 @@ $result.Manifests
 $result.Errors | Select-Object Code, Message
 ```
 
+## Update decisions without release evidence
+
+A provider can retrieve an official page successfully but discover no versioned releases. This is common with general download or product-selection landing pages that link to installers without identifying a release version. In that case, `NoReleasesFound` means release discovery produced no usable release evidence; it does **not** mean the installed application is up to date. Core reports `DecisionIndeterminate` with reason code `NoReleaseEvidence` so callers can distinguish unknown update status from a confirmed absence of an update. Use a product-specific publisher page or another supported source that exposes versioned release evidence when available.
+
 ## Error handling
 
 Expected operational failures are represented in the `Errors` collection. Error records provide a stable machine-readable `Code` and a human-readable `Message`; contextual information may also be present when the owning operation supplies it.
