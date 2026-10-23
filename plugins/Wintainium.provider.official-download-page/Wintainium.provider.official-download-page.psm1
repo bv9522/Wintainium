@@ -527,7 +527,10 @@ function Invoke-WintainiumProviderSourceResolution {
     # orders (for example, "Equalizer APO Download" and "APO Equalizer Download").
     # The host and path identify this product page, so normalize independently of
     # the publisher's current title wording.
-    if ($sourceUri.Host -match '(?i)(^|\.)equalizerapo\.com
+    if ($sourceUri.Host -match '(?i)(^|\.)equalizerapo\.com$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/download/?$') {
+        $name='Equalizer APO'
+    }
     # This official AMD driver landing page is specifically for AMD Software,
     # not the vendor's many separately registered drivers and utilities.
     if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and
