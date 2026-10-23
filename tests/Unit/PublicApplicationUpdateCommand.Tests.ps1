@@ -78,6 +78,7 @@ Describe 'Wintainium public application update command boundary' {
                 $script:capturedDefaults = [pscustomobject][ordered]@{
                     PluginRoot = $PluginRoot
                     SchemaPath = $SchemaPath
+                    AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
                     CancellationToken = $CancellationToken
                 }
 
@@ -94,7 +95,26 @@ Describe 'Wintainium public application update command boundary' {
 
             $script:capturedDefaults.PluginRoot | Should -Be $script:WintainiumDefaultPluginRoot
             $script:capturedDefaults.SchemaPath | Should -Be (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json')
+            $script:capturedDefaults.AllowLegacyMd5Verification | Should -BeFalse
             $script:capturedDefaults.CancellationToken.Equals([System.Threading.CancellationToken]::None) | Should -BeTrue
+        }
+    }
+
+    It 'forwards explicitly authorized legacy MD5 verification through the update lifecycle' {
+        InModuleScope Wintainium.Core {
+            $script:capturedLifecycle = $null
+            Mock Invoke-WintainiumApplicationLifecycle {
+                $script:capturedLifecycle = [pscustomobject]@{
+                    AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
+                    OperationKind = $OperationKind
+                }
+                [pscustomobject]@{ IsSuccessful=$true; WasCancelled=$false; OperationId='operation-md5'; StageResults=@(); Error=$null }
+            }
+
+            Invoke-WintainiumApplicationUpdateLifecycle -ManifestPath 'C:\\Wintainium\\manifests\\Example.wintainium.json' -StateRoot 'C:\\Wintainium\\State' -MachineArchitecture 'x64' -DownloadRoot 'C:\\Wintainium\\Downloads' -AllowLegacyMd5Verification:$true | Out-Null
+
+            $script:capturedLifecycle.AllowLegacyMd5Verification | Should -BeTrue
+            $script:capturedLifecycle.OperationKind | Should -Be 'Update'
         }
     }
 
