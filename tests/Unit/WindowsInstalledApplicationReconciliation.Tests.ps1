@@ -179,6 +179,51 @@ Describe 'Windows installed-application reconciliation plugin' {
         $observation.Candidates[0].SubKey | Should -Be '7-Zip'
     }
 
+    It 'matches a complete numeric version suffix without enabling substring matching' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='GIMP'; matchType='nameOrVersionSuffix' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{ Scope='machine'; View='64'; SubKey='GIMP-2_is1'; DisplayName='GIMP 2.10.38'; DisplayVersion='2.10.38' }
+        }
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+        $observation.Candidates.Count | Should -Be 1
+
+        $unrelatedReader = {
+            param($location)
+            [pscustomobject]@{ Scope='machine'; View='64'; SubKey='AMD Settings'; DisplayName='AMD Settings'; DisplayVersion='2026.0423' }
+        }
+        $unrelated = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=([pscustomobject]@{ registry=[pscustomobject]@{ matchMode='any'; locations=@([pscustomobject]@{scope='machine';view='64'}); match=@([pscustomobject]@{value='DisplayName';equals='AMD';matchType='nameOrVersionSuffix'}) } }); Reader=$unrelatedReader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+        $unrelated.Candidates.Count | Should -Be 0
+    }
+
+    It 'supports explicitly declared exact aliases' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Attribute Changer'; aliases=@('Attribute Changer Classic') })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{ Scope='machine'; View='64'; SubKey='{27263813-8BDE-4CD2-84D3-02536743428A}_is1'; DisplayName='Attribute Changer Classic'; DisplayVersion='11.40b' }
+        }
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+        $observation.Candidates.Count | Should -Be 1
+    }
+
     It 'retains all-match semantics when match mode is omitted' {
         $settings = [pscustomobject][ordered]@{
             registry = [pscustomobject][ordered]@{
