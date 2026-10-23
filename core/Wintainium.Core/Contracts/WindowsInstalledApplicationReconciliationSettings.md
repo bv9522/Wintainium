@@ -97,7 +97,7 @@ The initial matchable registry values are:
 Each predicate requires `value` and `equals`. It may also declare:
 
 - `aliases` — an optional list of additional exact, case-insensitive identity names.
-- `matchType` — optional `exact` (default) or `nameOrVersionSuffix`.
+- `matchType` — optional `exact` or `nameOrVersionSuffix`. If omitted for legacy `DisplayName` or `subkey` predicates, the plugin applies `nameOrVersionSuffix`; other values default to `exact`.
 
 With `nameOrVersionSuffix`, a candidate may match the declared identity followed by a complete, whitespace-delimited numeric version suffix, such as `GIMP 2.10.38`, `Core Temp 1.20.1`, or `Attribute Changer 11.40b`. The suffix must be anchored to the end of the value. This mode does not accept arbitrary substrings, architecture tags, or extra descriptive words.
 
