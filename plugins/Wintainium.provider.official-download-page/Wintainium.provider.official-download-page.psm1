@@ -94,12 +94,35 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     $headingText=ConvertFrom-OfficialDownloadPageHtmlText $Heading
     if ([string]::IsNullOrWhiteSpace($headingText)) { return $null }
 
+    $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
     $versionMatch=[regex]::Match($headingText,'(?i)(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)(?![a-z0-9])')
-    if (-not $versionMatch.Success) { return $null }
+    $versionEvidenceText=$headingText
+    $versionEvidenceHtml=$Body
+    foreach ($candidateLink in $links) {
+        $candidateHref=$candidateLink.Groups[1].Value
+        try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
+        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -eq 'unknown') { continue }
+        $versionEvidenceHtml=$Body.Substring(0,$candidateLink.Index)
+        break
+    }
+    if (-not $versionMatch.Success) {
+        # Some publishers put the version in a labeled metadata field rather than
+        # the section heading (for example, "Revision Number: 26.5.2"). Only use
+        # that evidence from the same heading section and before its first supported
+        # installer link, so unrelated page versions cannot become release evidence.
+        $versionEvidenceText=ConvertFrom-OfficialDownloadPageHtmlText $versionEvidenceHtml
+        $revisionVersionMatch=[regex]::Match($versionEvidenceText,'(?i)\bRevision\s+Number\b[\s\S]{0,160}?(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)(?![a-z0-9])')
+        if (-not $revisionVersionMatch.Success) { return $null }
+        $versionMatch=$revisionVersionMatch
+    }
     $version=$versionMatch.Groups[1].Value
 
     $publishedAt=$null
     $dateMatch=[regex]::Match($headingText,'(?<!\d)(20\d{2})[-./](\d{1,2})[-./](\d{1,2})(?!\d)')
+    if (-not $dateMatch.Success) {
+        $versionEvidenceText=ConvertFrom-OfficialDownloadPageHtmlText $versionEvidenceHtml
+        $dateMatch=[regex]::Match($versionEvidenceText,'(?<!\d)(20\d{2})[-./](\d{1,2})[-./](\d{1,2})(?!\d)')
+    }
     if ($dateMatch.Success) {
         try { $publishedAt=[DateTimeOffset]::ParseExact(
             "$($dateMatch.Groups[1].Value)-$($dateMatch.Groups[2].Value.PadLeft(2,'0'))-$($dateMatch.Groups[3].Value.PadLeft(2,'0'))",
@@ -108,7 +131,6 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         ) } catch {}
     }
 
-    $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
     $artifacts=[System.Collections.Generic.List[object]]::new()
 
     # Use release-level architecture only when the source explicitly says a single architecture.
