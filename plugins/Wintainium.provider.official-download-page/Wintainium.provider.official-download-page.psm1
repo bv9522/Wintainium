@@ -40,7 +40,8 @@ function New-OfficialDownloadPageDiagnosticEvent {
 }
 
 function ConvertTo-OfficialDownloadPageArtifactFormat {
-    param([Parameter(Mandatory)][string]$FileName)
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$FileName)
+    if ([string]::IsNullOrWhiteSpace($FileName)) { return 'unknown' }
     switch ([IO.Path]::GetExtension($FileName).ToLowerInvariant()) {
         '.zip' { 'zip'; break }
         '.msi' { 'msi'; break }
@@ -86,8 +87,8 @@ function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
 
 function ConvertFrom-OfficialDownloadPageReleaseSection {
     param(
-        [Parameter(Mandatory)][string]$Heading,
-        [Parameter(Mandatory)][string]$Body,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Heading,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Body,
         [Parameter(Mandatory)][Uri]$BaseUri
     )
 
@@ -321,7 +322,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
         catch {
             $stopwatch.Stop()
-            $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingFailed' -Message 'A candidate release section could not be normalized.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;SectionCandidateCount=$sectionMatches.Count;DownloadArtifactCandidateCount=$downloadArtifactCandidateCount;ParsedReleaseCount=$releases.Count;FailureStage='Parsing';Outcome='ReleaseNormalizationException';ExceptionType=$_.Exception.GetType().Name;DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+            $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingFailed' -Message 'A candidate release section could not be normalized.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;SectionCandidateCount=$sectionMatches.Count;DownloadArtifactCandidateCount=$downloadArtifactCandidateCount;ParsedReleaseCount=$releases.Count;FailureStage='Parsing';Outcome='ReleaseNormalizationException';ExceptionType=$_.Exception.GetType().Name;ExceptionMessage=$_.Exception.Message;SectionHeading=(ConvertFrom-OfficialDownloadPageHtmlText $heading);DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
             return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
                 (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseInvalid' 'A candidate release section could not be normalized. See discovery diagnostics for counts and failure stage.')
             ) -LogEvents $logEvents.ToArray()
