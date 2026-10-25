@@ -129,6 +129,40 @@ Describe 'Wintainium official download page provider release discovery' {
         @($result.Releases[0].Artifacts)[1].Uri | Should -Be 'https://cdn.example.net/example-x86.msi'
     }
 
+    It 'extracts a version from labeled revision metadata within a download section' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h4>Example Graphics Software</h4>
+<div>Revision Number</div>
+<div>Adrenalin 26.5.2 (WHQL Recommended)</div>
+<div>File Size</div>
+<div>623 MB</div>
+<div>Release Date</div>
+<div>2026-05-21</div>
+<a href="https://downloads.example.test/example-26.5.2-x64.exe">Download</a>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'page-release-revision-metadata'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.example.test/product/downloads.html' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '26.5.2'
+        $result.Releases[0].PublishedAt.ToString('yyyy-MM-dd') | Should -Be '2026-05-21'
+        @($result.Releases[0].Artifacts).Count | Should -Be 1
+        $result.Releases[0].Artifacts[0].Uri | Should -Be 'https://downloads.example.test/example-26.5.2-x64.exe'
+    }
+
     It 'does not invent a versioned release from an unversioned driver landing page' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
