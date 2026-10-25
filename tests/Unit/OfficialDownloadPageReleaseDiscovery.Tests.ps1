@@ -241,4 +241,32 @@ Describe 'Wintainium official download page provider release discovery' {
         $artifact.SourcePageUri | Should -Be 'https://www.petges.lu/download/'
         $artifact.Hashes.Count | Should -Be 0
     }
+    It 'skips empty release headings without aborting discovery of later valid releases' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2></h2>
+<a href="/downloads/unrelated.exe">Download</a>
+<h2>Example 2.4.0</h2>
+<a href="/downloads/example-2.4.0-x64.exe">Download</a>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'page-release-empty-heading'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.example.test/downloads.html' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '2.4.0'
+        @($result.Releases[0].Artifacts).Count | Should -Be 1
+    }
+
 }
