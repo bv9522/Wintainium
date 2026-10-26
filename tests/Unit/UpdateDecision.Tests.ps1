@@ -43,6 +43,30 @@ Describe 'Wintainium final update decision' {
         $result.ReleaseEligibility.Observations[0].VersionComparison.Comparison | Should -Be 'Greater'
     }
 
+    It 'recognizes Core Temp 1.21 as newer than installed version 1.20.1' {
+        $manifest=[pscustomobject]@{ Id='web.www.alcpu.com.coretemp'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('exe','zip');architectures=@('x64','x86','neutral');allowUnknownArchitecture=$false} }
+        $state=[pscustomobject]@{ ApplicationId='web.www.alcpu.com.coretemp'; Version='1.20.1'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Status='Success'; Releases=@([pscustomobject]@{ReleaseId='coretemp-1.21';Version='1.21';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.21.exe';Format='exe';Architecture='unknown'})}) }
+        $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
+        $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput} { param($DecisionInput) Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' }
+        $result.Status | Should -Be 'UpdateAvailable'
+        $result.SelectedRelease.Version | Should -Be '1.21'
+        $result.ReleaseEligibility.Observations[0].VersionComparison.Comparison | Should -Be 'Greater'
+    }
+
+    It 'returns an indeterminate decision when release eligibility lacks trustworthy channel evidence' {
+        $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('msi');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
+        $state=[pscustomobject]@{ ApplicationId='example.app'; Version='1.0.0'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Releases=@([pscustomobject]@{ReleaseId='release-2';Version='2.0.0';Channel='unknown';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://example.test/app.msi';Format='msi';Architecture='x64'})}) }
+        $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
+        $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput} { param($DecisionInput) Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' }
+        $result.Status | Should -Be 'DecisionIndeterminate'
+        $result.IsUpdateAvailable | Should -BeNullOrEmpty
+        $result.ReasonCode | Should -Be 'ReleaseEligibilityIndeterminate'
+        $result.ReleaseEligibility.Observations[0].ReasonCode | Should -Be 'UnknownReleaseChannel'
+        $result.IsDeterministic | Should -BeFalse
+    }
+
     It 'does not treat a successful discovery with no releases as proof that the app is up to date' {
         $manifest=[pscustomobject]@{ Id='example.app'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('exe');architectures=@('x64','neutral');allowUnknownArchitecture=$false} }
         $state=[pscustomobject]@{ ApplicationId='example.app'; Version='26.5.2'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
