@@ -144,6 +144,11 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         break
     }
     $releaseMetadataText=ConvertFrom-OfficialDownloadPageHtmlText $releaseMetadataHtml
+    # Treat an installer as architecture-neutral only when publisher text before the
+    # first artifact explicitly declares support for both x86/32-bit and x64/64-bit.
+    # Separate architecture-specific links elsewhere on the page are not evidence
+    # that the primary installer supports both architectures.
+    $hasExplicitDualArchitecture = $releaseMetadataText -match '(?i)(?:\\b32\\s*[- ]?bit\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\b64\\s*[- ]?bit\\b|\\b64\\s*[- ]?bit\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\b32\\s*[- ]?bit\\b|\\bx86\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\bx64\\b|\\bx64\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\bx86\\b|\\b32\\s*/\\s*64\\s*[- ]?bit\\b|\\bx86\\s*/\\s*x64\\b)'
     $hasExplicitSingleArchitecture = $releaseMetadataText -match '(?i)(64-bit only|x64 only|32-bit only|x86 only|arm64 only|aarch64 only)'
 
     foreach ($link in $links) {
@@ -163,7 +168,10 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         # and contaminate classification (for example, a 7-Zip x64 link being marked arm64
         # merely because the same release also contains an ARM64 link).
         $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
-        if ($architecture -eq 'unknown' -and $hasExplicitSingleArchitecture) {
+        if ($architecture -eq 'unknown' -and $hasExplicitDualArchitecture) {
+            $architecture='neutral'
+        }
+        elseif ($architecture -eq 'unknown' -and $hasExplicitSingleArchitecture) {
             $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture $releaseMetadataText
         }
         $artifacts.Add([pscustomobject][ordered]@{
