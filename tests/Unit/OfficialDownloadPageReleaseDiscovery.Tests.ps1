@@ -58,6 +58,11 @@ Describe 'Wintainium official download page provider release discovery' {
         $older.Version | Should -Be '23.01'
         $older.PublishedAt.ToString('yyyy-MM-dd') | Should -Be '2023-06-20'
         @($older.Artifacts).Count | Should -Be 2
+
+        $parseEvent = @($result.LogEvents | Where-Object { $_.EventName -eq 'ReleaseDiscoveryParsingCompleted' })[-1]
+        @($parseEvent.Context.ParsedReleaseVersions).Count | Should -Be 2
+        $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '26.03'
+        $parseEvent.Context.ParsedReleaseVersions[1] | Should -Be '23.01'
     }
 
     It 'discovers release sections that are presented as download labels instead of headings' {
