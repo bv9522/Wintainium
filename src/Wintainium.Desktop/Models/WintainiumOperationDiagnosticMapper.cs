@@ -56,6 +56,28 @@ internal static class WintainiumOperationDiagnosticMapper
             }
         }
 
+        // Structured log events keep diagnostic context nested. Promote only explicitly
+        // allowlisted context fields so useful evidence survives desktop mapping safely.
+        var contextValue = source.Properties["Context"]?.Value;
+        if (contextValue is IDictionary contextDictionary)
+        {
+            foreach (DictionaryEntry entry in contextDictionary)
+            {
+                var name = Convert.ToString(entry.Key);
+                if (!string.IsNullOrWhiteSpace(name) && SafeDetailNames.Contains(name))
+                    details[name] = FormatSafeDetail(entry.Value);
+            }
+        }
+        else if (contextValue is not null)
+        {
+            var context = PSObject.AsPSObject(contextValue);
+            foreach (var property in context.Properties)
+            {
+                if (SafeDetailNames.Contains(property.Name))
+                    details[property.Name] = FormatSafeDetail(property.Value);
+            }
+        }
+
         return new WintainiumOperationDiagnostic(
             Nullable(source, "Code"),
             Nullable(source, "Path"),
