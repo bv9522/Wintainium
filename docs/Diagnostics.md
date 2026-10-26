@@ -205,6 +205,17 @@ Interpret `NoReleasesFound` as a successful provider interaction that yielded no
 
 These counts describe what the current parser recognized; they do not claim that every possible release or download link on the page was understood. A provider may expose richer or different trace fields when its discovery method supports them.
 
+### Update eligibility and artifact selection
+
+The Core `ReleaseEligibilityEvaluated` event records the installed version and source, manifest channel policy, decision status/reason, and each release's normalized version and comparison outcome. It also records each considered artifact's filename, format, architecture, eligibility, and stable rejection reason. Artifact diagnostics intentionally retain only the final filename, not the full download URI, to avoid copying query strings or signed URL parameters into diagnostic reports.
+
+Use these observations to distinguish:
+- a release that is not newer or is excluded by channel/version policy;
+- a newer eligible release whose artifacts are rejected by format or architecture policy; and
+- an eligible release with a selectable artifact.
+
+For example, `NoSelectableArtifact` should be investigated through the per-artifact `ReasonCode` values (such as `FormatNotPermitted`, `ArchitectureNotPermitted`, or `ArchitectureIncompatible`) rather than by loosening manifest policy without evidence.
+
 ## Installer and reconciliation diagnostics
 
 Installer failures should be diagnosed from the structured installer error code
