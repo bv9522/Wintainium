@@ -284,7 +284,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # This trace records what the current parser recognized without dumping HTML.
     $sectionMatches=[regex]::Matches(
         $html,
-        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)',
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)|(?:^|>)\s*(Core\s+Temp\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*:?)\s*(?=<|$)|(?:^|>)\s*(Past\s+releases)\s*(?=<|$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $downloadLinkMatches=[regex]::Matches($html,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
@@ -305,8 +305,20 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         $bodyStart=$section.Index+$section.Length
         if($bodyStart -ge $nextStart){continue}
 
-        $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } elseif($section.Groups[3].Success) { $section.Groups[3].Value } else { $section.Groups[4].Value }
+        $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } elseif($section.Groups[3].Success) { $section.Groups[3].Value } elseif($section.Groups[4].Success) { $section.Groups[4].Value } elseif($section.Groups[5].Success) { $section.Groups[5].Value } else { $section.Groups[6].Value }
         $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
+
+        # Core Temp's official page uses a legacy text/table layout rather than
+        # versioned heading elements. Its current download choices are followed
+        # by language packs and a historical release table. Keep this release
+        # scoped to the primary installer and standalone archives above those
+        # sections; historical archives must never inherit the current version.
+        if ($baseUri.Host -match '(?i)(^|\.)alcpu\.com$' -and $heading -match '(?i)^Core\s+Temp\s+v?([0-9]+(?:\.[0-9]+){1,3})') {
+            $languageBoundary=[regex]::Match($body,'(?i)Language\s+packs')
+            if ($languageBoundary.Success) { $body=$body.Substring(0,$languageBoundary.Index) }
+            $pastBoundary=[regex]::Match($body,'(?i)Past\s+releases')
+            if ($pastBoundary.Success) { $body=$body.Substring(0,$pastBoundary.Index) }
+        }
         try {
             $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading -Body $body -BaseUri $baseUri
             if($null -ne $release){
