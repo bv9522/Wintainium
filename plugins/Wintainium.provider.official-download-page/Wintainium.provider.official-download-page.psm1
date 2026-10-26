@@ -134,7 +134,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
 
     $artifacts=[System.Collections.Generic.List[object]]::new()
 
-    # Use release-level architecture only when the source explicitly says a single architecture.
+    # Use release-level architecture only when source text explicitly establishes its scope.
     $releaseMetadataHtml=$Body
     foreach ($candidateLink in $links) {
         $candidateHref=$candidateLink.Groups[1].Value
@@ -148,7 +148,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     # first artifact explicitly declares support for both x86/32-bit and x64/64-bit.
     # Separate architecture-specific links elsewhere on the page are not evidence
     # that the primary installer supports both architectures.
-    $hasExplicitDualArchitecture = $releaseMetadataText -match '(?i)(?:\\b32\\s*[- ]?bit\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\b64\\s*[- ]?bit\\b|\\b64\\s*[- ]?bit\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\b32\\s*[- ]?bit\\b|\\bx86\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\bx64\\b|\\bx64\\b.{0,80}\\b(?:and|or)\\b.{0,80}\\bx86\\b|\\b32\\s*/\\s*64\\s*[- ]?bit\\b|\\bx86\\s*/\\s*x64\\b)'
+    $hasExplicitDualArchitecture = $releaseMetadataText -match '(?i)(?:\b32\s*[- ]?bit\b.{0,80}\b(?:and|or)\b.{0,80}\b64\s*[- ]?bit\b|\b64\s*[- ]?bit\b.{0,80}\b(?:and|or)\b.{0,80}\b32\s*[- ]?bit\b|\bx86\b.{0,80}\b(?:and|or)\b.{0,80}\bx64\b|\bx64\b.{0,80}\b(?:and|or)\b.{0,80}\bx86\b|\b32\s*/\s*64\s*[- ]?bit\b|\bx86\s*/\s*x64\b)'
     $hasExplicitSingleArchitecture = $releaseMetadataText -match '(?i)(64-bit only|x64 only|32-bit only|x86 only|arm64 only|aarch64 only)'
 
     foreach ($link in $links) {
