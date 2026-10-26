@@ -67,11 +67,7 @@ internal static class WintainiumOperationDiagnosticMapper
     {
         if (value is null) return null;
         if (value is IDictionary || value is IEnumerable and not string)
-            return System.Management.Automation.LanguagePrimitives.ConvertTo(
-                value is string ? value : System.Management.Automation.PSObject.AsPSObject(value).BaseObject,
-                typeof(string))?.ToString() is string text && text is not ("System.Object[]" or "System.Collections.Hashtable")
-                ? text
-                : System.Text.Json.JsonSerializer.Serialize(value);
+            return System.Text.Json.JsonSerializer.Serialize(value);
         return Convert.ToString(value);
     }
 
