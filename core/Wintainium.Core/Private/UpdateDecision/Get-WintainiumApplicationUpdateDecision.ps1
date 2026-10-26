@@ -74,8 +74,46 @@ function Get-WintainiumApplicationUpdateDecision {
                 }
             }
         )
+        # Flatten target/artifact eligibility into an explicitly safe diagnostic shape.
+        # Artifact URLs are never copied into diagnostics; only the final path segment is retained.
+        $targetObservations = @(
+            foreach ($targetObservation in @($decision.TargetResolution.Observations)) {
+                $artifactObservations = @(
+                    foreach ($artifactObservation in @($targetObservation.ArtifactSelection.Observations)) {
+                        $artifactName = $null
+                        $artifactUri = [string]$artifactObservation.Artifact.Uri
+                        if (-not [string]::IsNullOrWhiteSpace($artifactUri)) {
+                            try {
+                                $parsedArtifactUri = [uri]$artifactUri
+                                $artifactName = [System.IO.Path]::GetFileName($parsedArtifactUri.AbsolutePath)
+                            }
+                            catch {
+                                $artifactName = [System.IO.Path]::GetFileName(($artifactUri -split '[?#]', 2)[0])
+                            }
+                        }
+
+                        [pscustomobject][ordered]@{
+                            ArtifactName = [string]$artifactName
+                            Format = [string]$artifactObservation.Format
+                            Architecture = [string]$artifactObservation.Architecture
+                            Eligible = [bool]$artifactObservation.Eligible
+                            ReasonCode = [string]$artifactObservation.ReasonCode
+                            Reason = [string]$artifactObservation.Reason
+                        }
+                    }
+                )
+
+                [pscustomobject][ordered]@{
+                    ReleaseVersion = [string]$targetObservation.Release.Version
+                    Selectable = [bool]$targetObservation.Selectable
+                    ReasonCode = [string]$targetObservation.ReasonCode
+                    Reason = [string]$targetObservation.Reason
+                    Artifacts = $artifactObservations
+                }
+            }
+        )
         $severity = if ($decision.Status -eq 'DecisionIndeterminate') { 'Warning' } else { 'Information' }
-        $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $releaseResult.OperationId -Component 'CoreUpdateDecision' -EventName 'ReleaseEligibilityEvaluated' -Message 'Release candidates were evaluated against the installed version and manifest channel policy.' -Context @{
+        $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $releaseResult.OperationId -Component 'CoreUpdateDecision' -EventName 'ReleaseEligibilityEvaluated' -Message 'Release candidates and their artifacts were evaluated against the installed version, manifest policy, and target architecture.' -Context @{
             ApplicationId = [string]$manifest.Id
             InstalledVersion = [string]$installedState.Version
             InstalledVersionSource = [string]$installedState.VersionSource
@@ -83,6 +121,7 @@ function Get-WintainiumApplicationUpdateDecision {
             DecisionStatus = [string]$decision.Status
             DecisionReasonCode = [string]$decision.ReasonCode
             ReleaseObservations = $releaseEligibilityObservations
+            TargetObservations = $targetObservations
         }))
     }
 
