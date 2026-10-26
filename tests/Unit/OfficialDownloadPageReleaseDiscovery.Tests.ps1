@@ -317,6 +317,8 @@ Describe 'Wintainium official download page provider release discovery' {
         @($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' }).Count | Should -Be 1
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' }).Count | Should -Be 1
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp64.zip' }).Count | Should -Be 1
+        (@($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' })[0]).Architecture | Should -Be 'x86'
+        (@($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp64.zip' })[0]).Architecture | Should -Be 'x64'
         @($release.Artifacts | Where-Object { $_.FileName -match 'translation-tool|CT1201|CT1195' }).Count | Should -Be 0
 
         $parseEvent = @($result.LogEvents | Where-Object { $_.EventName -eq 'ReleaseDiscoveryParsingCompleted' })[-1]
