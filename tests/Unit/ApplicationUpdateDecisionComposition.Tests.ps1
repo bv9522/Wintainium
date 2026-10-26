@@ -63,6 +63,13 @@ Describe 'Wintainium application update decision composition' {
             $eligibilityEvent.Context.ReleaseObservations[0].ReleaseChannel | Should -Be 'stable'
             $eligibilityEvent.Context.ReleaseObservations[0].Eligible | Should -BeTrue
             $eligibilityEvent.Context.ReleaseObservations[0].VersionComparison | Should -Be 'Greater'
+            $eligibilityEvent.Context.TargetObservations[0].ReleaseVersion | Should -Be '2.0.0'
+            $eligibilityEvent.Context.TargetObservations[0].Selectable | Should -BeTrue
+            $eligibilityEvent.Context.TargetObservations[0].Artifacts[0].ArtifactName | Should -Be 'app.msi'
+            $eligibilityEvent.Context.TargetObservations[0].Artifacts[0].Format | Should -Be 'msi'
+            $eligibilityEvent.Context.TargetObservations[0].Artifacts[0].Architecture | Should -Be 'x64'
+            $eligibilityEvent.Context.TargetObservations[0].Artifacts[0].Eligible | Should -BeTrue
+            $eligibilityEvent.Context.TargetObservations[0].Artifacts[0].ReasonCode | Should -Be 'Eligible'
             Should -Invoke Get-WintainiumApplicationRelease -Times 1 -Exactly
             Should -Invoke Invoke-WintainiumApplicationReconciliation -Times 1 -Exactly
             Should -Invoke Get-WintainiumInstalledApplicationState -Times 0 -Exactly
