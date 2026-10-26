@@ -54,8 +54,8 @@ function ConvertTo-OfficialDownloadPageArtifactArchitecture {
     param([Parameter(Mandatory)][string]$Value)
     $name=$Value.ToLowerInvariant()
     if ($name -match '(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)') { return 'arm64' }
-    if ($name -match '(^|[^a-z0-9])(x64|amd64|64-bit|64bit)([^a-z0-9]|$)') { return 'x64' }
-    if ($name -match '(^|[^a-z0-9])(x86|win32|i[3-6]86|32-bit|32bit)([^a-z0-9]|$)') { return 'x86' }
+    if ($name -match '(^|[^a-z0-9])(x64|amd64|64\s*[- ]?bit|64bit)([^a-z0-9]|$)') { return 'x64' }
+    if ($name -match '(^|[^a-z0-9])(x86|win32|i[3-6]86|32\s*[- ]?bit|32bit)([^a-z0-9]|$)') { return 'x86' }
     return 'unknown'
 }
 
