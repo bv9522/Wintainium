@@ -42,6 +42,23 @@ Describe 'Wintainium version comparison' {
         $result.Comparison | Should -Be 'Equal'
     }
 
+    It 'compares two-part publisher versions with three-part semantic versions' {
+        $result = InModuleScope Wintainium.Core {
+            $installed = New-WintainiumVersionObservation -Version '1.20.1'
+            $release = New-WintainiumVersionObservation -Version '1.21'
+            [pscustomobject]@{
+                InstalledStrategy = $installed.Strategy
+                ReleaseStrategy = $release.Strategy
+                ReleaseNormalized = $release.Normalized
+                Comparison = (Compare-WintainiumVersion -Left $release -Right $installed).Comparison
+            }
+        }
+        $result.InstalledStrategy | Should -Be 'SemanticVersion'
+        $result.ReleaseStrategy | Should -Be 'SemanticVersion'
+        $result.ReleaseNormalized | Should -Be '1.21.0'
+        $result.Comparison | Should -Be 'Greater'
+    }
+
     It 'compares System.Version values' {
         $result = InModuleScope Wintainium.Core {
             $older = New-WintainiumVersionObservation -Version '10.0.19045.1'
