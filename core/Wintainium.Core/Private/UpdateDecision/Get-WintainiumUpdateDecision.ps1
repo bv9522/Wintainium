@@ -64,6 +64,24 @@ function Get-WintainiumUpdateDecision {
         return [pscustomobject]$base
     }
 
+    $unknownEligibilityReasons = @(
+        'UnknownReleaseChannel',
+        'InvalidReleasePolicy',
+        'InsufficientVersionData',
+        'VersionComparisonUnknown'
+    )
+    $indeterminateObservations = @($eligibility.Observations | Where-Object {
+        -not $_.Eligible -and $_.ReasonCode -in $unknownEligibilityReasons
+    })
+    if (@($eligibility.EligibleReleases).Count -eq 0 -and $indeterminateObservations.Count -gt 0) {
+        $base['Status']='DecisionIndeterminate'
+        $base['IsUpdateAvailable']=$null
+        $base['ReasonCode']='ReleaseEligibilityIndeterminate'
+        $base['Reason']='Release discovery returned candidates, but one or more candidates could not be safely evaluated for update eligibility.'
+        $base['IsDeterministic']=$false
+        return [pscustomobject]$base
+    }
+
     $reasonCode = if (@($eligibility.EligibleReleases).Count -eq 0) { 'NoEligibleRelease' } else { 'NoSelectableArtifact' }
     $reason = if ($reasonCode -eq 'NoEligibleRelease') { 'No discovered release is eligible as an update.' } else { 'Eligible releases exist, but none has a selectable artifact.' }
     $base['Status']='NoUpdateAvailable'; $base['IsUpdateAvailable']=$false; $base['ReasonCode']=$reasonCode; $base['Reason']=$reason; $base['IsDeterministic']=$true
