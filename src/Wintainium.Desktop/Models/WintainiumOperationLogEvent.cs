@@ -52,15 +52,56 @@ internal static class WintainiumOperationLogEventMapper
             {
                 var key = Convert.ToString(entry.Key);
                 if (!string.IsNullOrWhiteSpace(key))
-                    context[key] = entry.Value is null ? null : Convert.ToString(entry.Value);
+                    context[key] = FormatContextValue(entry.Value);
             }
             return context;
         }
 
         var wrapped = System.Management.Automation.PSObject.AsPSObject(value);
         foreach (var property in wrapped.Properties)
-            context[property.Name] = property.Value is null ? null : Convert.ToString(property.Value);
+            context[property.Name] = FormatContextValue(property.Value);
         return context;
+    }
+
+    private static string? FormatContextValue(object? value)
+    {
+        if (value is null) return null;
+        if (value is System.Collections.IDictionary || value is System.Collections.IEnumerable and not string)
+            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value));
+        return Convert.ToString(value);
+    }
+
+    private static object? ToJsonSafeValue(object? value)
+    {
+        if (value is null) return null;
+        if (value is System.Collections.IDictionary dictionary)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (System.Collections.DictionaryEntry entry in dictionary)
+            {
+                var key = Convert.ToString(entry.Key);
+                if (!string.IsNullOrWhiteSpace(key))
+                    result[key] = ToJsonSafeValue(entry.Value);
+            }
+            return result;
+        }
+
+        if (value is System.Collections.IEnumerable enumerable and not string)
+            return enumerable.Cast<object?>().Select(ToJsonSafeValue).ToArray();
+
+        var wrapped = System.Management.Automation.PSObject.AsPSObject(value);
+        if (wrapped.BaseObject is System.Management.Automation.PSCustomObject)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in wrapped.Properties)
+            {
+                if (property.MemberType is System.Management.Automation.PSMemberTypes.NoteProperty or System.Management.Automation.PSMemberTypes.Property or System.Management.Automation.PSMemberTypes.AliasProperty)
+                    result[property.Name] = ToJsonSafeValue(property.Value);
+            }
+            return result;
+        }
+
+        return Convert.ToString(value);
     }
 
     private static string? Nullable(System.Management.Automation.PSObject source, string name) =>
