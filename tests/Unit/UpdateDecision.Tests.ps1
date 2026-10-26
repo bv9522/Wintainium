@@ -46,7 +46,7 @@ Describe 'Wintainium final update decision' {
     It 'recognizes Core Temp 1.21 as newer than installed version 1.20.1' {
         $manifest=[pscustomobject]@{ Id='web.www.alcpu.com.coretemp'; Release=[pscustomobject]@{channel='stable'}; artifact=[pscustomobject]@{formats=@('exe','zip');architectures=@('x64','x86','neutral');allowUnknownArchitecture=$false} }
         $state=[pscustomobject]@{ ApplicationId='web.www.alcpu.com.coretemp'; Version='1.20.1'; Architecture='x64'; Channel='stable'; InstallationState='Installed' }
-        $provider=[pscustomobject]@{ IsSuccessful=$true; Status='Success'; Releases=@([pscustomobject]@{ReleaseId='coretemp-1.21';Version='1.21';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.21.exe';Format='exe';Architecture='unknown'})}) }
+        $provider=[pscustomobject]@{ IsSuccessful=$true; Status='Success'; Releases=@([pscustomobject]@{ReleaseId='coretemp-1.21';Version='1.21';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://www.alcpu.com/CoreTemp/Core-Temp-setup-v1.21.exe';Format='exe';Architecture='x64'})}) }
         $decisionInput=[pscustomobject]@{Manifest=$manifest;InstalledState=$state;ProviderResult=$provider}
         $result=InModuleScope Wintainium.Core -Parameters @{DecisionInput=$decisionInput} { param($DecisionInput) Get-WintainiumUpdateDecision -UpdateDecisionInput $DecisionInput -MachineArchitecture 'x64' }
         $result.Status | Should -Be 'UpdateAvailable'
