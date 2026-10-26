@@ -16,7 +16,9 @@ internal static class WintainiumApplicationRefreshReportFormatter
         "FinalUrl", "Host", "HtmlLength", "HttpStatusCode", "InstallationState", "MatchMode",
         "ObservedInstallationState", "OperationId", "Outcome", "ParsedArtifactCount", "ParsedReleaseCount",
         "Persisted", "PriorInstallationState", "ProviderId", "ReasonCode", "RegistryLocationCount",
-        "RegistryReadFailureCount", "RequestedUrl", "Scope", "SectionCandidateCount", "Severity", "Stage", "Status", "View"
+        "RegistryReadFailureCount", "RequestedUrl", "Scope", "SectionCandidateCount", "Severity", "Stage", "Status", "View",
+        "DecisionReasonCode", "DecisionStatus", "InstalledVersion", "InstalledVersionSource",
+        "ManifestChannelPolicy", "ReleaseObservations", "TargetObservations"
     };
 
     public static string Format(WintainiumApplicationRefreshResult result)
