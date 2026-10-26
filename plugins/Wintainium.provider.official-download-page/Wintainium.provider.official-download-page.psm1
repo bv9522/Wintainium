@@ -343,6 +343,8 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         DownloadArtifactCandidateCount=$downloadArtifactCandidateCount
         ParsedArtifactCount=$parsedArtifactCount
         ParsedReleaseCount=$releases.Count
+        # Make version extraction and provider ordering observable without exposing artifact URLs.
+        ParsedReleaseVersions=@($releases | ForEach-Object { [string]$_.Version })
         Outcome=$outcome
         FailureStage=$failureStage
         DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
