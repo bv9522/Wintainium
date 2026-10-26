@@ -14,8 +14,10 @@ internal static class WintainiumOperationDiagnosticMapper
         "ApplicationId", "Capability", "CandidateCount", "ErrorCode", "EvidenceSource",
         "Host", "InstallationState", "MatchMode", "ObservedInstallationState",
         "RegistryLocationCount", "RegistryReadFailureCount",
-        "OperationId", "Persisted", "PriorInstallationState", "ProviderId", "ReasonCode",
-        "Scope", "Stage", "Status", "View"
+        "DecisionReasonCode", "DecisionStatus", "InstalledVersion", "InstalledVersionSource",
+        "ManifestChannelPolicy", "OperationId", "Persisted", "PriorInstallationState",
+        "ProviderId", "ReasonCode", "ReleaseObservations", "Scope", "Stage", "Status",
+        "TargetObservations", "View"
     };
 
     public static IReadOnlyList<WintainiumOperationDiagnostic> MapCollection(PSObject source, string propertyName)
@@ -40,7 +42,7 @@ internal static class WintainiumOperationDiagnosticMapper
             if (SafeDetailNames.Contains(property.Name) &&
                 property.Name is not ("Code" or "Path" or "Message"))
             {
-                details[property.Name] = property.Value is null ? null : Convert.ToString(property.Value);
+                details[property.Name] = FormatSafeDetail(property.Value);
             }
         }
 
@@ -50,7 +52,7 @@ internal static class WintainiumOperationDiagnosticMapper
             {
                 var name = Convert.ToString(entry.Key);
                 if (!string.IsNullOrWhiteSpace(name) && SafeDetailNames.Contains(name))
-                    details[name] = entry.Value is null ? null : Convert.ToString(entry.Value);
+                    details[name] = FormatSafeDetail(entry.Value);
             }
         }
 
@@ -59,6 +61,18 @@ internal static class WintainiumOperationDiagnosticMapper
             Nullable(source, "Path"),
             Nullable(source, "Message"),
             details);
+    }
+
+    private static string? FormatSafeDetail(object? value)
+    {
+        if (value is null) return null;
+        if (value is IDictionary || value is IEnumerable and not string)
+            return System.Management.Automation.LanguagePrimitives.ConvertTo(
+                value is string ? value : System.Management.Automation.PSObject.AsPSObject(value).BaseObject,
+                typeof(string))?.ToString() is string text && text is not ("System.Object[]" or "System.Collections.Hashtable")
+                ? text
+                : System.Text.Json.JsonSerializer.Serialize(value);
+        return Convert.ToString(value);
     }
 
     private static string? Nullable(PSObject source, string name) =>
