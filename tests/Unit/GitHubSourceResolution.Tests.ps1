@@ -49,6 +49,18 @@ Describe 'Wintainium GitHub source resolution' {
         $result.Source.SourceContext.PSObject.Properties.Name | Should -Not -Contain 'releaseTag'
     }
 
+    It 'preserves a releases collection URL for navigation while retaining repository identity' {
+        $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+            OperationId = 'github-source-release-homepage'
+            SourceUri = 'https://github.com/PCSX2/pcsx2/releases'
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.Homepage | Should -Be 'https://github.com/PCSX2/pcsx2/releases'
+        $result.Source.CanonicalUri | Should -Be 'https://github.com/PCSX2/pcsx2'
+        $result.Source.ProviderSettings.repository | Should -Be 'PCSX2/pcsx2'
+    }
+
     It 'resolves a release tag URL and preserves the exact tag' {
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-4'
