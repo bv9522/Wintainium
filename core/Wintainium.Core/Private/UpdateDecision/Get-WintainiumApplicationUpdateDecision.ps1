@@ -56,5 +56,35 @@ function Get-WintainiumApplicationUpdateDecision {
     $decisionInput = New-WintainiumUpdateDecisionInput -Manifest $manifest -InstalledState $installedState -ProviderResult $providerResult
     $decision = Get-WintainiumUpdateDecision -UpdateDecisionInput $decisionInput -MachineArchitecture $MachineArchitecture
 
-    [pscustomobject][ordered]@{ OperationId=$releaseResult.OperationId; IsSuccessful=$true; Status=[string]$decision.Status; Manifest=$manifest; InstalledState=$installedState; Decision=$decision; Errors=@($releaseResult.Errors); Warnings=@($releaseResult.Warnings); LogEvents=@($releaseResult.LogEvents) }
+    $logEvents = [System.Collections.Generic.List[object]]::new()
+    foreach ($event in @($releaseResult.LogEvents)) { $logEvents.Add($event) }
+    foreach ($event in @($reconciliation.LogEvents)) { $logEvents.Add($event) }
+
+    if ($null -ne $decision.ReleaseEligibility -and @($decision.ReleaseEligibility.Observations).Count -gt 0) {
+        $releaseEligibilityObservations = @(
+            foreach ($observation in @($decision.ReleaseEligibility.Observations)) {
+                [pscustomobject][ordered]@{
+                    ReleaseVersion = [string]$observation.Release.Version
+                    ReleaseChannel = [string]$observation.Release.Channel
+                    Eligible = [bool]$observation.Eligible
+                    ReasonCode = [string]$observation.ReasonCode
+                    Reason = [string]$observation.Reason
+                    VersionComparison = if ($null -ne $observation.VersionComparison) { [string]$observation.VersionComparison.Comparison } else { $null }
+                    ComparisonStrategy = if ($null -ne $observation.VersionComparison) { [string]$observation.VersionComparison.Strategy } else { $null }
+                }
+            }
+        )
+        $severity = if ($decision.Status -eq 'DecisionIndeterminate') { 'Warning' } else { 'Information' }
+        $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $releaseResult.OperationId -Component 'CoreUpdateDecision' -EventName 'ReleaseEligibilityEvaluated' -Message 'Release candidates were evaluated against the installed version and manifest channel policy.' -Context @{
+            ApplicationId = [string]$manifest.Id
+            InstalledVersion = [string]$installedState.Version
+            InstalledVersionSource = [string]$installedState.VersionSource
+            ManifestChannelPolicy = [string]$manifest.Release.channel
+            DecisionStatus = [string]$decision.Status
+            DecisionReasonCode = [string]$decision.ReasonCode
+            ReleaseObservations = $releaseEligibilityObservations
+        }))
+    }
+
+    [pscustomobject][ordered]@{ OperationId=$releaseResult.OperationId; IsSuccessful=$true; Status=[string]$decision.Status; Manifest=$manifest; InstalledState=$installedState; Decision=$decision; Errors=@($releaseResult.Errors); Warnings=@($releaseResult.Warnings); LogEvents=$logEvents.ToArray() }
 }
