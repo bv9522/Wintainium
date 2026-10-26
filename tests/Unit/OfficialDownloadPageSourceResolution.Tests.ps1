@@ -24,6 +24,26 @@ Describe 'Wintainium official download page source resolution' {
         $result.Source.ProviderSettings.pageUri | Should -Be 'https://www.7-zip.org/download.html'
     }
 
+    It 'preserves a product-specific source URL when the page canonical points to a generic landing page' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = '<html><head><title>Example Product Downloads</title><meta name="application-name" content="Example Product"><link rel="canonical" href="https://www.example.test/downloads/"></head><body></body></html>'
+                Headers = @{'Content-Type'='text/html'}
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $productPage = 'https://www.example.test/products/example/downloads.html'
+        $result = & (Get-Module Wintainium.provider.official-download-page) {
+            param($uri)
+            Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-canonical-product-url';SourceUri=$uri})
+        } $productPage
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Source.CanonicalUri | Should -Be 'https://www.example.test/downloads/'
+        $result.Source.Homepage | Should -Be $productPage
+        $result.Source.ProviderSettings.pageUri | Should -Be $productPage
+    }
+
     It 'accepts canonical link attributes in different attribute order' {
         Mock Invoke-WebRequest {[pscustomobject]@{Content='<html><head><title>7-Zip</title><link href="/download.html" rel="canonical"></head></html>';Headers=@{'Content-Type'='text/html'}}} -ModuleName Wintainium.provider.official-download-page
         $result=& (Get-Module Wintainium.provider.official-download-page) {Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{OperationId='page-test-canonical-order';SourceUri='https://www.7-zip.org/download.html'})}
