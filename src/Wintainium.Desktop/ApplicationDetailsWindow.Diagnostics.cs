@@ -222,8 +222,19 @@ public sealed partial class ApplicationDetailsWindow
         if (IsUsefulDiagnosticPath(path))
             parts.Add($"Path: {path}");
 
+        if (diagnostic.Details.Count > 0)
+        {
+            var context = diagnostic.Details
+                .Where(static pair => !string.IsNullOrWhiteSpace(pair.Value))
+                .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(static pair => $"{pair.Key}={pair.Value}")
+                .ToArray();
+            if (context.Length > 0)
+                parts.Add("Context: " + string.Join("; ", context));
+        }
+
         return parts.Count == 0 ? "Unspecified diagnostic." : string.Join(": ", parts.Take(2)) +
-            (parts.Count > 2 ? $" ({parts[2]})" : string.Empty);
+            (parts.Count > 2 ? $" ({string.Join(" | ", parts.Skip(2))})" : string.Empty);
     }
 
     private static bool IsUsefulDiagnosticPath(string? path)
