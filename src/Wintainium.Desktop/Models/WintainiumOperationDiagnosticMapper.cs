@@ -67,7 +67,40 @@ internal static class WintainiumOperationDiagnosticMapper
     {
         if (value is null) return null;
         if (value is IDictionary || value is IEnumerable and not string)
-            return System.Text.Json.JsonSerializer.Serialize(value);
+            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value));
+        return Convert.ToString(value);
+    }
+
+    private static object? ToJsonSafeValue(object? value)
+    {
+        if (value is null) return null;
+        if (value is IDictionary dictionary)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                var key = Convert.ToString(entry.Key);
+                if (!string.IsNullOrWhiteSpace(key))
+                    result[key] = ToJsonSafeValue(entry.Value);
+            }
+            return result;
+        }
+
+        if (value is IEnumerable enumerable and not string)
+            return enumerable.Cast<object?>().Select(ToJsonSafeValue).ToArray();
+
+        var wrapped = PSObject.AsPSObject(value);
+        if (wrapped.BaseObject is PSCustomObject)
+        {
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in wrapped.Properties)
+            {
+                if (property.MemberType is PSMemberTypes.NoteProperty or PSMemberTypes.Property or PSMemberTypes.AliasProperty)
+                    result[property.Name] = ToJsonSafeValue(property.Value);
+            }
+            return result;
+        }
+
         return Convert.ToString(value);
     }
 
