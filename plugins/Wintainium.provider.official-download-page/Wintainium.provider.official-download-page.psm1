@@ -589,10 +589,15 @@ function Invoke-WintainiumProviderSourceResolution {
         sourceFamily='official-download-page'
         contentType=$sourceContentType
     }
+    # A publisher's SEO canonical link may intentionally point at a generic landing page,
+    # even when the user supplied a product-specific download or release page. Preserve the
+    # resolved page URL for navigation and provider operations; retain the canonical URI only
+    # as separate metadata rather than allowing it to rewrite the configured source.
+    $resolvedPageUri=$finalUri.AbsoluteUri
     $source=[pscustomobject][ordered]@{
-        ApplicationId=$applicationId;Name=$name;Description=$description;Publisher=$publisher;Homepage=$canonical;CanonicalUri=$canonical
+        ApplicationId=$applicationId;Name=$name;Description=$description;Publisher=$publisher;Homepage=$resolvedPageUri;CanonicalUri=$canonical
         ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
-        ProviderSettings=[ordered]@{pageUri=$canonical}
+        ProviderSettings=[ordered]@{pageUri=$resolvedPageUri}
         SourceContext=$sourceContext
     }
     $stopwatch.Stop()
