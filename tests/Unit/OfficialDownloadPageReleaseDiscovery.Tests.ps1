@@ -275,6 +275,35 @@ Describe 'Wintainium official download page provider release discovery' {
     }
 
 
+    It 'classifies an installer as neutral when official release metadata explicitly supports both 32-bit and 64-bit' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Example 3.2.1</h2>
+<p>The Windows installer supports both 32-bit and 64-bit Windows.</p>
+<a href="/downloads/example-setup.exe">Download installer</a>
+<a href="/downloads/example-x64.zip">64-bit portable archive</a>
+</body>
+</html>
+'@
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'page-release-dual-architecture'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.example.test/downloads.html' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases).Count | Should -Be 1
+        $artifacts = @($result.Releases[0].Artifacts)
+        @($artifacts | Where-Object FileName -eq 'example-setup.exe').Count | Should -Be 1
+        (@($artifacts | Where-Object FileName -eq 'example-setup.exe')[0]).Architecture | Should -Be 'neutral'
+        (@($artifacts | Where-Object FileName -eq 'example-x64.zip')[0]).Architecture | Should -Be 'x64'
+    }
+
     It 'discovers Core Temp current release and excludes language-pack and historical downloads' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
@@ -315,6 +344,7 @@ Describe 'Wintainium official download page provider release discovery' {
         $release.Version | Should -Be '1.21'
         @($release.Artifacts).Count | Should -Be 3
         @($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' }).Count | Should -Be 1
+        (@($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' })[0]).Architecture | Should -Be 'unknown'
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' }).Count | Should -Be 1
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp64.zip' }).Count | Should -Be 1
         (@($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' })[0]).Architecture | Should -Be 'x86'
