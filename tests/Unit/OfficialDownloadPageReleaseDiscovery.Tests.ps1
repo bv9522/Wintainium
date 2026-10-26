@@ -274,4 +274,54 @@ Describe 'Wintainium official download page provider release discovery' {
         @($result.Releases[0].Artifacts).Count | Should -Be 1
     }
 
+
+    It 'discovers Core Temp current release and excludes language-pack and historical downloads' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<div>Core Temp 1.21:</div>
+<p>Download SHA-256: FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6 MD5: 93CFE187305BF73A4054079538B711EC</p>
+<a href="/CoreTemp/Core-Temp-setup-v1.21.exe">Download Core Temp</a>
+<p>More downloads... Download the standalone version of Core Temp:</p>
+<a href="/CoreTemp/CoreTemp32.zip">32 Bit</a>
+<a href="/CoreTemp/CoreTemp64.zip">64 Bit</a>
+<p>Language packs</p>
+<a href="/CoreTemp/translation-tool.zip">Download the translation tool</a>
+<p>Past releases</p>
+<table>
+<tr><td>1.20.1</td><td><a href="/CoreTemp/CT1201.zip">CT1201.zip</a></td></tr>
+<tr><td>1.19.5</td><td><a href="/CoreTemp/CT1195.zip">CT1195.zip</a></td></tr>
+</table>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.alcpu.com/CoreTemp/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'core-temp-current-release'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.alcpu.com/CoreTemp/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $release = $result.Releases[0]
+        $release.Version | Should -Be '1.21'
+        @($release.Artifacts).Count | Should -Be 3
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp64.zip' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -match 'translation-tool|CT1201|CT1195' }).Count | Should -Be 0
+
+        $parseEvent = @($result.LogEvents | Where-Object { $_.EventName -eq 'ReleaseDiscoveryParsingCompleted' })[-1]
+        $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
+        $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '1.21'
+    }
+
 }
