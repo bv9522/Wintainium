@@ -55,6 +55,14 @@ Describe 'Wintainium application update decision composition' {
             $result.InstalledState.ApplicationId | Should -Be 'example.app'
             $result.InstalledState.Version | Should -Be '1.0.0'
             $result.Decision.SelectedRelease.ReleaseId | Should -Be 'release-2'
+            $eligibilityEvent = @($result.LogEvents | Where-Object { $_.EventName -eq 'ReleaseEligibilityEvaluated' }) | Select-Object -First 1
+            $eligibilityEvent | Should -Not -BeNullOrEmpty
+            $eligibilityEvent.Context.InstalledVersion | Should -Be '1.0.0'
+            $eligibilityEvent.Context.ManifestChannelPolicy | Should -Be 'stable'
+            $eligibilityEvent.Context.ReleaseObservations[0].ReleaseVersion | Should -Be '2.0.0'
+            $eligibilityEvent.Context.ReleaseObservations[0].ReleaseChannel | Should -Be 'stable'
+            $eligibilityEvent.Context.ReleaseObservations[0].Eligible | Should -BeTrue
+            $eligibilityEvent.Context.ReleaseObservations[0].VersionComparison | Should -Be 'Greater'
             Should -Invoke Get-WintainiumApplicationRelease -Times 1 -Exactly
             Should -Invoke Invoke-WintainiumApplicationReconciliation -Times 1 -Exactly
             Should -Invoke Get-WintainiumInstalledApplicationState -Times 0 -Exactly
