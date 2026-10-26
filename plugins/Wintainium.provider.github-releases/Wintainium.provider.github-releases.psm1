@@ -385,6 +385,14 @@ function Invoke-WintainiumProviderSourceResolution {
     }
 
     $canonicalUri = "https://github.com/$owner/$repository"
+    # Keep release URLs useful for navigation when that is the page the user supplied.
+    # Repository identity and release discovery still use the normalized repository setting.
+    $homepageUri = if ($segments.Count -ge 3 -and $segments[2] -eq 'releases') {
+        $sourceUri.GetLeftPart([System.UriPartial]::Path)
+    }
+    else {
+        $canonicalUri
+    }
     $sourceContext = [ordered]@{ repository = "$owner/$repository" }
     if ($segments.Count -ge 5 -and $segments[2] -eq 'releases' -and $segments[3] -eq 'tag') {
         $sourceContext.releaseTag = [Uri]::UnescapeDataString(($segments[4..($segments.Count-1)] -join '/'))
@@ -394,7 +402,7 @@ function Invoke-WintainiumProviderSourceResolution {
         ApplicationId = "github.$($owner.ToLowerInvariant()).$($repository.ToLowerInvariant())"
         Name = $repository
         Publisher = $owner
-        Homepage = $canonicalUri
+        Homepage = $homepageUri
         CanonicalUri = $canonicalUri
         ProviderId = 'Wintainium.provider.github-releases'
         ProviderContractVersion = '1'
