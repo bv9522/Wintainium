@@ -84,10 +84,7 @@ internal static class WintainiumApplicationUpdateMapper
         Collection(source, name).Select(MapDiagnostic).ToArray();
 
     private static WintainiumOperationDiagnostic MapDiagnostic(PSObject source) =>
-        new(
-            Code: Nullable(source, "Code"),
-            Path: Nullable(source, "Path"),
-            Message: Nullable(source, "Message"));
+        WintainiumOperationDiagnosticMapper.Map(source);
 
     private static List<PSObject> Collection(PSObject source, string name)
     {
