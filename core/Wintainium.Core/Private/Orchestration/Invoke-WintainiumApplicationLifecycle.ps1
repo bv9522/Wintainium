@@ -90,6 +90,10 @@ function Invoke-WintainiumApplicationLifecycle {
                     $verificationParameters=@{DownloadResult=$StageInput.Download;SelectedArtifact=$decision.SelectedArtifact;OperationId=$StageInput.OperationId}
                     if($AllowLegacyMd5Verification){$verificationParameters.AllowLegacyMd5Verification=$true}
                     $verification=Invoke-WintainiumArtifactVerification @verificationParameters
+                    if($ArchitectureRiskDecision -in @('AcceptRisk','UseFallback')){
+                        $verification | Add-Member -NotePropertyName ArchitectureRiskDecision -NotePropertyValue $ArchitectureRiskDecision -Force
+                        $verification | Add-Member -NotePropertyName ArchitectureRiskArtifact -NotePropertyValue ([string]$decision.SelectedArtifact.FileName) -Force
+                    }
                     $verificationSuccessful=if($null -ne $verification -and $verification.PSObject.Properties['IsSuccessful']){[bool]$verification.IsSuccessful}else{[string]$verification.Status -eq 'Verified'}
 
                     if($verificationSuccessful -and $decision.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] -and [bool]$decision.SelectedArtifact.ArchitectureInspectionRequired){
@@ -97,6 +101,7 @@ function Invoke-WintainiumApplicationLifecycle {
                             $decision.SelectedArtifact.PSObject.Properties.Remove('ArchitectureInspectionRequired')
                             $verification | Add-Member -NotePropertyName ArchitectureRiskAccepted -NotePropertyValue $true -Force
                             $verification | Add-Member -NotePropertyName ArchitectureRiskDecision -NotePropertyValue 'AcceptRisk' -Force
+                            $verification | Add-Member -NotePropertyName ArchitectureRiskArtifact -NotePropertyValue ([string]$decision.SelectedArtifact.FileName) -Force
                             $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue ([pscustomobject][ordered]@{
                                 IsSuccessful=$false; Status='Unresolved'; ReasonCode='ArchitectureRiskAccepted'
                                 Reason='The user explicitly accepted unresolved payload architecture after successful SHA256 verification.'
