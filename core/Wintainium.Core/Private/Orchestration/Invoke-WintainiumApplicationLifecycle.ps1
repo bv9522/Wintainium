@@ -126,7 +126,7 @@ function Invoke-WintainiumApplicationLifecycle {
                             $fallbackSelection = Select-WintainiumArtifact -Release $fallbackRelease[0] -Manifest $StageInput.Manifest -MachineArchitecture $StageInput.MachineArchitecture
                         }
                         $fallbackArtifact = if ($null -ne $fallbackSelection) { $fallbackSelection.SelectedArtifact } else { $null }
-                        $fallbackAvailable = $null -ne $fallbackArtifact -and [string]$fallbackArtifact.Architecture -in @([string]$StageInput.MachineArchitecture, 'neutral')
+                        $fallbackAvailable = $null -ne $fallbackArtifact -and [string]$fallbackArtifact.Architecture -in @([string]$StageInput.MachineArchitecture, 'neutral') -and (Test-WintainiumArtifactHasSupportedChecksum -Artifact $fallbackArtifact)
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
                         $verification.FailureKind=if($fallbackAvailable){'ArchitectureRiskDecisionRequiredWithFallback'}else{'ArchitectureRiskDecisionRequired'}
