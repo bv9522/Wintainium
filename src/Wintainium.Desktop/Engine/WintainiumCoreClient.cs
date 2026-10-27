@@ -245,6 +245,7 @@ internal sealed class WintainiumCoreClient
         string? schemaPath = null,
         int installerTimeoutMilliseconds = 600_000,
         bool allowLegacyMd5Verification = false,
+        string architectureRiskDecision = "None",
         CancellationToken cancellationToken = default)
     {
         var parameters = new Dictionary<string, object?>
@@ -260,6 +261,11 @@ internal sealed class WintainiumCoreClient
         if (allowLegacyMd5Verification)
         {
             parameters["AllowLegacyMd5Verification"] = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(architectureRiskDecision) && !string.Equals(architectureRiskDecision, "None", StringComparison.OrdinalIgnoreCase))
+        {
+            parameters["ArchitectureRiskDecision"] = architectureRiskDecision;
         }
 
         AddOptional(parameters, "PluginRoot", pluginRoot);
