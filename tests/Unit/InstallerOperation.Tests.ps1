@@ -242,8 +242,8 @@ Export-ModuleMember -Function Invoke-WintainiumInstaller
 
         $result.Status | Should -Be 'Failed'
         $result.FailureKind | Should -Be 'InstallerInternalError'
-        $result.ErrorMessage | Should -Match 'Installer plugin execution failed \\(RuntimeException\\): fixture installer failure'
-        $result.ErrorMessage | Should -Not -Match '[\\r\\n]'
+        $result.ErrorMessage | Should -Match 'Installer plugin execution failed \(RuntimeException\): fixture installer failure'
+        $result.ErrorMessage | Should -Not -Match '[\r\n]'
         $result.ExitCode | Should -Be $null
     }
 
