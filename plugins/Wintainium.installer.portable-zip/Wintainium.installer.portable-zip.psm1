@@ -131,6 +131,65 @@ catch {
 "@
     $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
 
+    # Portable applications may be installed under protected locations such as
+    # Program Files. Run those extractions through a tracked elevated child
+    # process; the non-elevated parent waits for its exit code and captures both
+    # output streams through temporary files so Core receives the real result.
+    $protectedRoots = @(
+        $env:ProgramFiles,
+        [Environment]::GetEnvironmentVariable('ProgramFiles(x86)'),
+        $env:WINDIR,
+        $env:ProgramData
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+    $requiresElevation = $false
+    foreach ($protectedRoot in $protectedRoots) {
+        try {
+            $normalizedRoot = [System.IO.Path]::GetFullPath([string]$protectedRoot).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+            $normalizedPrefix = $normalizedRoot + [System.IO.Path]::DirectorySeparatorChar
+            if ([string]::Equals($destination, $normalizedRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $destination.StartsWith($normalizedPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $requiresElevation = $true
+                break
+            }
+        }
+        catch {
+            # An invalid environment path is ignored; the remaining roots still
+            # protect the common Windows installation locations.
+        }
+    }
+
+    if ($requiresElevation) {
+        $escapedPowerShellPath = $powershellPath.Replace("'", "''")
+        $wrapper = @"
+`$ErrorActionPreference = 'Stop'
+`$powerShellPath = '$escapedPowerShellPath'
+`$childCommand = '$encodedCommand'
+`$stdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stdout')
+`$stderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stderr')
+try {
+    `$childArguments = @('-NoProfile', '-NonInteractive', '-EncodedCommand', `$childCommand)
+    `$child = Start-Process -FilePath `$powerShellPath -ArgumentList `$childArguments -Verb RunAs -Wait -PassThru -RedirectStandardOutput `$stdoutPath -RedirectStandardError `$stderrPath
+    if (Test-Path -LiteralPath `$stdoutPath -PathType Leaf) { [Console]::Out.Write([System.IO.File]::ReadAllText(`$stdoutPath)) }
+    if (Test-Path -LiteralPath `$stderrPath -PathType Leaf) { [Console]::Error.Write([System.IO.File]::ReadAllText(`$stderrPath)) }
+    exit [int]`$child.ExitCode
+}
+catch {
+    `$exception = `$_.Exception
+    while (`$null -ne `$exception -and `$exception -isnot [System.ComponentModel.Win32Exception] -and `$null -ne `$exception.InnerException) { `$exception = `$exception.InnerException }
+    if (`$exception -is [System.ComponentModel.Win32Exception] -and `$exception.NativeErrorCode -eq 1223) {
+        [Console]::Error.WriteLine('ElevationDenied: The Windows elevation prompt was cancelled or denied.')
+        exit 1223
+    }
+    [Console]::Error.WriteLine([string]`$_.Exception.Message)
+    exit 1
+}
+finally {
+    Remove-Item -LiteralPath `$stdoutPath, `$stderrPath -Force -ErrorAction SilentlyContinue
+}
+"@
+        $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($wrapper))
+    }
+
     [pscustomobject][ordered]@{
         ExecutablePath = [System.IO.Path]::GetFullPath($powershellPath)
         Arguments = [string[]]@(
