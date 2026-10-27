@@ -102,3 +102,21 @@ function Select-WintainiumArtifact {
         IsDeterministic = $true
     }
 }
+
+
+function Get-WintainiumArchitectureRiskFallbackReleases {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object[]]$Releases)
+
+    foreach ($release in $Releases) {
+        if ($null -eq $release) { continue }
+        $properties = [ordered]@{}
+        foreach ($property in $release.PSObject.Properties) {
+            $properties[$property.Name] = $property.Value
+        }
+        $properties['Artifacts'] = @($release.Artifacts | Where-Object {
+            -not ([string]$_.Format -eq 'exe' -and [string]$_.Architecture -eq 'unknown')
+        })
+        [pscustomobject]$properties
+    }
+}
