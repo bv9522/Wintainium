@@ -359,6 +359,20 @@ public sealed partial class ApplicationDetailsWindow : Window
                         allowLegacyMd5Verification: legacyMd5Authorized,
                         architectureRiskDecision: architectureDecision,
                         cancellationToken: _operationCancellation.Token);
+
+                    if (!legacyMd5Authorized && CanOfferLegacyMd5Authorization(result) &&
+                        await ConfirmLegacyMd5VerificationAsync("Install"))
+                    {
+                        legacyMd5Authorized = true;
+                        result = await _installService.ExecuteAsync(
+                            _application.ManifestPath,
+                            WintainiumDesktopPaths.InstalledStateRoot,
+                            machineArchitecture,
+                            WintainiumDesktopPaths.DownloadRoot,
+                            allowLegacyMd5Verification: true,
+                            architectureRiskDecision: architectureDecision,
+                            cancellationToken: _operationCancellation.Token);
+                    }
                 }
             }
 
@@ -742,6 +756,20 @@ public sealed partial class ApplicationDetailsWindow : Window
                         allowLegacyMd5Verification: legacyMd5Authorized,
                         architectureRiskDecision: architectureDecision,
                         cancellationToken: _operationCancellation.Token);
+
+                    if (!legacyMd5Authorized && CanOfferLegacyMd5Authorization(result) &&
+                        await ConfirmLegacyMd5VerificationAsync("Update"))
+                    {
+                        legacyMd5Authorized = true;
+                        result = await _updateService.ExecuteAsync(
+                            _application.ManifestPath,
+                            WintainiumDesktopPaths.InstalledStateRoot,
+                            machineArchitecture,
+                            WintainiumDesktopPaths.DownloadRoot,
+                            allowLegacyMd5Verification: true,
+                            architectureRiskDecision: architectureDecision,
+                            cancellationToken: _operationCancellation.Token);
+                    }
                 }
             }
 
