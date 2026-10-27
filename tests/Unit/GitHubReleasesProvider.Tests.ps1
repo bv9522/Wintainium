@@ -86,7 +86,7 @@ Describe 'Wintainium GitHub Releases provider' {
         $result.Status | Should -Be 'Success'
         $result.Releases | Should -HaveCount 2
         $result.Releases[0].ReleaseId | Should -Be '123'
-        $result.Releases[0].Version | Should -Be 'v2.4.0'
+        $result.Releases[0].Version | Should -Be '2.4.0'
         $result.Releases[0].Channel | Should -Be 'stable'
         $result.Releases[0].Artifacts | Should -HaveCount 2
         $result.Releases[0].Artifacts[0].Format | Should -Be 'zip'
