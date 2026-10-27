@@ -59,7 +59,9 @@ function Resolve-WintainiumInstallerPayloadArchitecture {
     # Reading the outer PE header is safe and useful evidence, but a bootstrapper's
     # machine type does not prove the architecture of the application it installs.
     # Without a supported native payload parser, keep payload architecture unresolved.
-    $isPortableExecutable = [string]$SelectedArtifact.Format -eq 'exe' -or [System.IO.Path]::GetExtension([string]$SelectedArtifact.FileName) -ieq '.exe'
+    $artifactFormat = if ($null -ne $SelectedArtifact.PSObject.Properties['Format']) { [string]$SelectedArtifact.Format } else { '' }
+    $artifactFileName = if ($null -ne $SelectedArtifact.PSObject.Properties['FileName']) { [string]$SelectedArtifact.FileName } else { '' }
+    $isPortableExecutable = $artifactFormat -eq 'exe' -or [System.IO.Path]::GetExtension($artifactFileName) -ieq '.exe'
     $outerArchitecture = if ($isPortableExecutable) { Get-WintainiumPortableExecutableArchitecture -Path $path } else { 'unknown' }
     $inspector = if ($isPortableExecutable) { 'native-pe-header' } else { 'native-static' }
     $reason = if ($isPortableExecutable) {
