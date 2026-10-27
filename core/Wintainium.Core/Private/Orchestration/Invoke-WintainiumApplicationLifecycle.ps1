@@ -120,12 +120,21 @@ function Invoke-WintainiumApplicationLifecycle {
                             return & $normalize $verification $false
                         }
 
+                        $fallbackRelease = @(Get-WintainiumArchitectureRiskFallbackReleases -Releases @($decision.SelectedRelease) | Select-Object -First 1)
+                        $fallbackSelection = $null
+                        if ($fallbackRelease.Count -gt 0) {
+                            $fallbackSelection = Select-WintainiumArtifact -Release $fallbackRelease[0] -Manifest $StageInput.Manifest -MachineArchitecture $StageInput.MachineArchitecture
+                        }
+                        $fallbackArtifact = if ($null -ne $fallbackSelection) { $fallbackSelection.SelectedArtifact } else { $null }
+                        $fallbackAvailable = $null -ne $fallbackArtifact -and [string]$fallbackArtifact.Architecture -in @([string]$StageInput.MachineArchitecture, 'neutral')
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
-                        $verification.FailureKind='ArchitectureRiskDecisionRequired'
-                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved after {1} verification. {2}" -f [string]$decision.SelectedArtifact.FileName,[string]$verification.Algorithm,[string]$inspection.Reason)
+                        $verification.FailureKind=if($fallbackAvailable){'ArchitectureRiskDecisionRequiredWithFallback'}else{'ArchitectureRiskDecisionRequired'}
+                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved after {1} verification. {2} Compatible fallback available: {3}." -f [string]$decision.SelectedArtifact.FileName,[string]$verification.Algorithm,[string]$inspection.Reason,[string]$fallbackAvailable)
                         $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
                         $verification | Add-Member -NotePropertyName ArchitectureRiskDecisionRequired -NotePropertyValue $true -Force
+                        $verification | Add-Member -NotePropertyName ArchitectureFallbackAvailable -NotePropertyValue ([bool]$fallbackAvailable) -Force
+                        if($fallbackAvailable){$verification | Add-Member -NotePropertyName ArchitectureFallbackFileName -NotePropertyValue ([string]$fallbackArtifact.FileName) -Force}
                         $verificationSuccessful=$false
                     }
 
