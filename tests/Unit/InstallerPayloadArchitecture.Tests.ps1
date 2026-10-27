@@ -54,12 +54,31 @@ Describe 'Wintainium native static architecture evidence' {
         $result.ResolvedArchitecture | Should -BeNullOrEmpty
     }
 
-    It 'requires successful SHA256 verification before architecture-risk evaluation' {
+    It 'allows an explicitly authorized legacy MD5 verification to reach the separate architecture-risk decision' {
+        $path = Join-Path $TestDrive 'setup.exe'
+        New-TestPortableExecutable -Path $path -Architecture x86
+        $download = [pscustomobject]@{ Status='Downloaded'; DestinationPath=$path }
+        $artifact = [pscustomobject]@{ FileName='setup.exe'; Architecture='unknown' }
+        $verification = [pscustomobject]@{ Status='VerifiedWithReducedAssurance'; Algorithm='MD5' }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            Download=$download; Artifact=$artifact; Verification=$verification
+        } {
+            param($Download,$Artifact,$Verification)
+            Resolve-WintainiumInstallerPayloadArchitecture -DownloadResult $Download -SelectedArtifact $Artifact -VerificationResult $Verification -MachineArchitecture 'x64'
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.ReasonCode | Should -Be 'ArchitectureRiskDecisionRequired'
+        $result.OuterArchitecture | Should -Be 'x86'
+    }
+
+    It 'requires successful checksum verification before architecture-risk evaluation' {
         $path = Join-Path $TestDrive 'setup.exe'
         New-TestPortableExecutable -Path $path -Architecture x64
         $download = [pscustomobject]@{ Status='Downloaded'; DestinationPath=$path }
         $artifact = [pscustomobject]@{ FileName='setup.exe'; Architecture='unknown' }
-        $verification = [pscustomobject]@{ Status='VerifiedWithReducedAssurance'; Algorithm='MD5' }
+        $verification = [pscustomobject]@{ Status='Failed'; Algorithm='MD5' }
 
         $result = InModuleScope Wintainium.Core -Parameters @{
             Download=$download; Artifact=$artifact; Verification=$verification
@@ -113,6 +132,28 @@ Describe 'Wintainium unknown-architecture EXE decision candidates' {
         $fallback.Count | Should -Be 1
         @($fallback[0].Artifacts).Count | Should -Be 1
         $fallback[0].Artifacts[0].FileName | Should -Be 'app-x64.zip'
+    }
+
+    It 'allows a publisher-declared MD5-backed EXE to reach the separate MD5 and architecture decisions' {
+        $manifest = [pscustomobject]@{
+            artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
+        }
+        $exe = [pscustomobject]@{
+            Uri='https://example.test/setup.exe'; FileName='setup.exe'; Format='exe'; Architecture='unknown'
+            Hashes=@([pscustomobject]@{ Algorithm='MD5'; Value=('A' * 32) })
+        }
+        $zip = [pscustomobject]@{
+            Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64'
+        }
+        $release = [pscustomobject]@{ Version='2.0.0'; Artifacts=@($exe,$zip) }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest} {
+            param($Release,$Manifest)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
+        }
+
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/setup.exe'
+        $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
     }
 
     It 'uses the compatible ZIP when the unknown EXE has no SHA256 evidence' {
