@@ -43,7 +43,7 @@ The implementation must preserve the governing boundary: **Manifest describes. P
 
 ## Initial format support
 
-The first implementation uses `innoextract` as an optional static extraction backend for Inno Setup installers. The capability is detected at runtime; Wintainium does not assume the tool is installed or bundle it. When the inspector is unavailable, an unknown-architecture executable is not promoted for selection. When the inspector cannot parse an installer, its architecture remains unresolved and installation is blocked.
+The first implementation uses `innoextract` as an optional static extraction backend for Inno Setup installers. The capability is detected at runtime; Wintainium does not assume the tool is installed or bundle it. When the inspector is unavailable, an unknown-architecture executable is not promoted for selection. When the inspector cannot parse an installer, its architecture remains unresolved and Wintainium attempts a known-compatible alternative from the same release; if no eligible alternative exists, installation is blocked.
 
 The inspected `innoextract` project publishes a permissive zlib-style license that allows commercial use and redistribution subject to preserving its notice. This is a preliminary license review, not approval to bundle the binary. The current implementation uses an externally installed executable only; a bundled parser, a supported multi-architecture distribution strategy, and dependency hardening require a separate repository-level packaging/security review.
 
