@@ -84,6 +84,16 @@ Describe 'Wintainium public CLI contract' {
         $helpText | Should -Match 'Unknown evidence'
     }
 
+    It 'exposes the explicit architecture-risk choice on the public application install command' {
+        $command = Get-Command -Name Invoke-WintainiumApplicationInstall -Module Wintainium.Core
+
+        $command.Parameters.Keys | Should -Contain 'ArchitectureRiskDecision'
+        $command.Parameters['ArchitectureRiskDecision'].Attributes |
+            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+            ForEach-Object ValidValues |
+            Should -Be @('None', 'AcceptRisk', 'UseFallback')
+    }
+
     It 'uses the approved parameter contract on the public application update status command' {
         $command = Get-Command -Name Get-WintainiumApplicationUpdateStatus -Module Wintainium.Core
 
