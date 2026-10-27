@@ -142,11 +142,28 @@ Describe 'Windows installed-application reconciliation plugin' {
             Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
                 [pscustomobject]@{ IsSuccessful=$true; Candidates=@([pscustomobject]@{ Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'; DisplayVersion='v2-beta'; InstallLocation='C:\Example' }); Errors=@() }
             }
+            Mock -CommandName Get-WintainiumWindowsExecutableVersion -MockWith { $null }
             Invoke-WintainiumReconciliation -Request $Request
         } | ForEach-Object {
             $_.Evidence.Version | Should -Be 'v2-beta'
             $_.Evidence.VersionSource | Should -Be 'Registry'
             $_.Evidence.InstallationLocation | Should -Be 'C:\Example'
+        }
+    }
+
+    It 'prefers matching executable version metadata over a stale uninstall registry version' {
+        $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-000000000208'; ApplicationId='web.www.alcpu.com.coretemp'; Manifest=$script:baseManifest }
+        InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{ IsSuccessful=$true; Candidates=@([pscustomobject]@{ Scope='machine'; View='64'; SubKey='CoreTemp'; DisplayName='Core Temp 1.20.1'; DisplayVersion='1.20.1'; InstallLocation='C:\Program Files\Core Temp' }); Errors=@() }
+            }
+            Mock -CommandName Get-WintainiumWindowsExecutableVersion -MockWith {
+                [pscustomobject]@{ Version='1.21.0.207'; Path='C:\Program Files\Core Temp\Core Temp.exe' }
+            }
+            $result = Invoke-WintainiumReconciliation -Request $Request
+            $result.Evidence.Version | Should -Be '1.21.0.207'
+            $result.Evidence.VersionSource | Should -Be 'ExecutableFileVersion'
+            $result.Evidence.InstallationLocation | Should -Be 'C:\Program Files\Core Temp'
         }
     }
 
