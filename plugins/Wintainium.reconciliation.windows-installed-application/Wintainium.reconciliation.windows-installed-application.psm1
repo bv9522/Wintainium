@@ -100,7 +100,14 @@ function Invoke-WintainiumReconciliation {
         }
         $candidate=@($observation.Candidates)[0]
         $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
-        if($candidate.DisplayVersion){$evidence.Version=$candidate.DisplayVersion;$evidence.VersionSource='Registry'}
+        $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
+        $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
+        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
+        if ($null -ne $executableVersion -and -not [string]::IsNullOrWhiteSpace([string]$executableVersion.Version)) {
+            $version = [string]$executableVersion.Version
+            $versionSource = 'ExecutableFileVersion'
+        }
+        if ($null -ne $version) { $evidence.Version=$version; $evidence.VersionSource=$versionSource }
         if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
         return & $base $true 'Reconciled' ([pscustomobject]$evidence) @() $warnings
     } catch {
