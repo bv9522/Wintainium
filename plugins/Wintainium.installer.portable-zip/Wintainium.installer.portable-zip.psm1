@@ -75,7 +75,34 @@ function Invoke-WintainiumInstaller {
     $resolvedArtifactPath = [System.IO.Path]::GetFullPath($artifactPath)
     $escapedArtifactPath = $resolvedArtifactPath.Replace("'", "''")
     $escapedDestination = $destination.Replace("'", "''")
-    $script = "Expand-Archive -LiteralPath '$escapedArtifactPath' -DestinationPath '$escapedDestination' -Force"
+    $entryPointCheck = ''
+    if ($null -ne $entryPoint) {
+        $escapedEntryPoint = $entryPoint.Replace("'", "''")
+        $entryPointCheck = @"
+    `$entryPointPath = Join-Path -Path '$escapedDestination' -ChildPath '$escapedEntryPoint'
+    if (-not (Test-Path -LiteralPath `$entryPointPath -PathType Leaf)) {
+        throw "Expected portable ZIP entry point was not extracted: `$entryPointPath"
+    }
+"@
+    }
+
+    # Expand-Archive can emit non-terminating errors. Without Stop + an explicit
+    # nonzero exit, a partial extraction (for example, a locked running EXE) can
+    # be reported as successful because powershell.exe itself exits with code 0.
+    # Promote extraction errors to terminating errors and propagate them through
+    # the process boundary so Core never records a false successful installation.
+    $script = @"
+`$ErrorActionPreference = 'Stop'
+try {
+    Expand-Archive -LiteralPath '$escapedArtifactPath' -DestinationPath '$escapedDestination' -Force -ErrorAction Stop
+$entryPointCheck
+    exit 0
+}
+catch {
+    [Console]::Error.WriteLine([string]$_.Exception.Message)
+    exit 1
+}
+"@
     $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
 
     [pscustomobject][ordered]@{
