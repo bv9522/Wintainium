@@ -16,7 +16,7 @@
         'Get-WintainiumApplicationRelease'
         'Get-WintainiumApplicationUpdateStatus'
         'Invoke-WintainiumApplicationUpdate'
-    'Invoke-WintainiumApplicationInstall'
+        'Invoke-WintainiumApplicationInstall'
         'Invoke-WintainiumApplicationOnboarding'
         'Set-WintainiumApplicationIconOverride'
         'Remove-WintainiumApplication'
