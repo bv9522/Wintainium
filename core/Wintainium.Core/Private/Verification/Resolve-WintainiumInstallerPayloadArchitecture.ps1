@@ -40,11 +40,11 @@ function Resolve-WintainiumInstallerPayloadArchitecture {
 
     $path = if ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['DestinationPath']) { [string]$DownloadResult.DestinationPath } else { '' }
     $validVerification = $null -ne $DownloadResult -and [string]$DownloadResult.Status -eq 'Downloaded' -and
-        [string]$VerificationResult.Status -eq 'Verified' -and [string]$VerificationResult.Algorithm -eq 'SHA256'
+        ([string]$VerificationResult.Status -in @('Verified','VerifiedWithReducedAssurance')) -and ([string]$VerificationResult.Algorithm -in @('SHA256','MD5'))
     if (-not $validVerification) {
         return [pscustomobject][ordered]@{
             IsSuccessful=$false; Status='Unresolved'; ReasonCode='VerifiedArtifactRequired'
-            Reason='Architecture risk evaluation requires a completed download verified by a matching SHA256 checksum.'
+            Reason='Architecture risk evaluation requires a completed download that passed an explicitly supported checksum verification.'
             PayloadArchitectures=@(); ResolvedArchitecture=$null; Inspector='native-static'
         }
     }
@@ -64,7 +64,7 @@ function Resolve-WintainiumInstallerPayloadArchitecture {
         IsSuccessful=$false
         Status='Unresolved'
         ReasonCode='ArchitectureRiskDecisionRequired'
-        Reason='The file passed SHA256 verification, but native static inspection cannot establish the installed payload architecture. The executable header reports the outer file architecture only.'
+        Reason='The file passed checksum verification, but native static inspection cannot establish the installed payload architecture. The executable header reports the outer file architecture only.'
         PayloadArchitectures=@()
         ResolvedArchitecture=$null
         OuterArchitecture=$outerArchitecture
