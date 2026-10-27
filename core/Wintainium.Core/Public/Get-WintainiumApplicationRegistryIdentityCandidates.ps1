@@ -103,12 +103,12 @@ function Get-WintainiumApplicationRegistryIdentityCandidates {
 
         if ($score -gt 0) {
             [pscustomobject][ordered]@{
-                Scope=[string]$entry.Scope
-                View=[string]$entry.View
+                Scope=if ($entry.PSObject.Properties['Scope']) { [string]$entry.Scope } else { $null }
+                View=if ($entry.PSObject.Properties['View']) { [string]$entry.View } else { $null }
                 DisplayName=$displayName
-                DisplayVersion=[string]$entry.DisplayVersion
+                DisplayVersion=if ($entry.PSObject.Properties['DisplayVersion']) { [string]$entry.DisplayVersion } else { $null }
                 Publisher=$entryPublisher
-                InstallLocation=[string]$entry.InstallLocation
+                InstallLocation=if ($entry.PSObject.Properties['InstallLocation']) { [string]$entry.InstallLocation } else { $null }
                 RegistrySubKey=$subKey
                 Score=$score
                 Confidence=$confidence
