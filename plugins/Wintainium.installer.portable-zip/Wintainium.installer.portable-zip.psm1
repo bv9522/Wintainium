@@ -68,15 +68,23 @@ function Invoke-WintainiumInstaller {
         throw 'Portable ZIP installer could not locate the Windows PowerShell executable.'
     }
 
+    # Windows PowerShell's -Command mode does not reliably expose trailing
+    # process arguments through $args in this invocation shape. Embed validated
+    # absolute paths as escaped PowerShell single-quoted literals in an encoded
+    # command, avoiding both the empty-$args failure and command injection.
+    $resolvedArtifactPath = [System.IO.Path]::GetFullPath($artifactPath)
+    $escapedArtifactPath = $resolvedArtifactPath.Replace("'", "''")
+    $escapedDestination = $destination.Replace("'", "''")
+    $script = "Expand-Archive -LiteralPath '$escapedArtifactPath' -DestinationPath '$escapedDestination' -Force"
+    $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
+
     [pscustomobject][ordered]@{
         ExecutablePath = [System.IO.Path]::GetFullPath($powershellPath)
         Arguments = [string[]]@(
             '-NoProfile',
             '-NonInteractive',
-            '-Command',
-            'Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force',
-            [System.IO.Path]::GetFullPath($artifactPath),
-            $destination
+            '-EncodedCommand',
+            $encodedCommand
         )
     }
 }
