@@ -36,7 +36,10 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand | Should -Match ([regex]::Escape($script:artifactPath))
         $decodedCommand | Should -Match ([regex]::Escape($script:destination))
         $decodedCommand | Should -Match '\$ErrorActionPreference = ''Stop'''
-        $decodedCommand | Should -Match 'Expand-Archive -LiteralPath .* -DestinationPath .* -Force -ErrorAction Stop'
+        $decodedCommand | Should -Match '\[System\.IO\.Compression\.ZipFile\]::OpenRead'
+        $decodedCommand | Should -Match '\[System\.IO\.FileMode\]::Create'
+        $decodedCommand | Should -Match 'ZIP entry attempts to write outside destination'
+        $decodedCommand | Should -Not -Match 'Expand-Archive'
         $decodedCommand | Should -Match 'catch'
         $decodedCommand | Should -Match 'exit 1'
     }
@@ -79,6 +82,26 @@ Describe 'Wintainium generic portable ZIP installer' {
         $processResult.ExitCode | Should -Not -Be 0
         $processResult.StandardError | Should -Not -BeNullOrEmpty
     }
+    It 'rejects ZIP entries that attempt to escape the destination directory' {
+        Add-Type -AssemblyName System.IO.Compression
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $traversalArtifactPath = Join-Path $script:tempRoot 'traversal.zip'
+        $traversalPayload = Join-Path $script:tempRoot 'outside-payload.txt'
+        Set-Content -LiteralPath $traversalPayload -Value 'must not escape' -Encoding utf8
+        $archive = [System.IO.Compression.ZipFile]::Open($traversalArtifactPath, [System.IO.Compression.ZipArchiveMode]::Create)
+        try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $traversalPayload, '../outside-payload.txt') | Out-Null } finally { $archive.Dispose() }
+        $traversalDestination = Join-Path $script:tempRoot 'traversal-destination'
+        $inv=[pscustomobject]@{ArtifactPath=$traversalArtifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$traversalDestination}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+
+        $processResult.Status | Should -Be 'Failed'
+        $processResult.StandardError | Should -Match 'ZIP entry attempts to write outside destination'
+        Test-Path -LiteralPath (Join-Path $script:tempRoot 'outside-payload.txt') | Should -BeTrue
+    }
+
     It 'fails when a configured entry point was not extracted' {
         $missingEntryPointDestination = Join-Path $script:tempRoot 'missing-entrypoint-destination'
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$missingEntryPointDestination;entryPoint='missing.exe'}}
