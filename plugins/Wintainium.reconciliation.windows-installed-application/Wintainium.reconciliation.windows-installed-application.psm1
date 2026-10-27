@@ -160,6 +160,26 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     [pscustomobject]@{ IsSuccessful=($errors.Count -eq 0); Candidates=@($candidates); Errors=@($errors) }
 }
 
+function ConvertTo-WintainiumComparableExecutableVersion {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$Version,
+        [AllowNull()] [string]$RegistryVersion
+    )
+
+    # Windows file resources sometimes append a fourth build/revision component
+    # while the publisher's release feed uses three components (for example,
+    # file 1.21.0.207 vs release 1.21.0). When the executable has exactly one
+    # more numeric component than the stale registry version, discard only that
+    # extra component so the values remain comparable.
+    if ($Version -match '^\d+(?:\.\d+){3}$' -and
+        $RegistryVersion -match '^\d+(?:\.\d+){2}$') {
+        return ($Version -split '\.')[0..2] -join '.'
+    }
+
+    return $Version
+}
+
 function Get-WintainiumWindowsExecutableVersion {
     [CmdletBinding()]
     param(
@@ -195,15 +215,7 @@ function Get-WintainiumWindowsExecutableVersion {
         if ([string]::IsNullOrWhiteSpace($version)) { $version = [string]$versionInfo.FileVersion }
         if ([string]::IsNullOrWhiteSpace($version)) { return $null }
 
-        # Windows file resources sometimes append a fourth build/revision
-        # component while the publisher's release feed uses three components
-        # (for example, file 1.21.0.207 vs release 1.21.0). When the executable
-        # has exactly one more numeric component than the stale registry version,
-        # discard only that extra component so the values remain comparable.
-        if ($version -match '^\d+(?:\.\d+){3}$' -and
-            $RegistryVersion -match '^\d+(?:\.\d+){2}$') {
-            $version = ($version -split '\.')[0..2] -join '.'
-        }
+        $version = ConvertTo-WintainiumComparableExecutableVersion -Version $version -RegistryVersion $RegistryVersion
         [pscustomobject][ordered]@{ Version=$version; Path=$executablePath }
     }
     catch {
