@@ -243,7 +243,12 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                 }
             }
             if ($rowHashes.Count -eq 1) {
-                $value = $rowHashes[0].Groups[1].Success ? $rowHashes[0].Groups[1].Value : $rowHashes[0].Value
+                if ($rowHashes[0].Groups.Count -gt 1 -and $rowHashes[0].Groups[1].Success) {
+                    $value = $rowHashes[0].Groups[1].Value
+                }
+                else {
+                    $value = $rowHashes[0].Value
+                }
                 $value = $value.ToUpperInvariant()
                 $matchIndex = -1
                 for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
