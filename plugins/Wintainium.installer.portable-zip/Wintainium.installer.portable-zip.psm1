@@ -79,22 +79,48 @@ function Invoke-WintainiumInstaller {
     if ($null -ne $entryPoint) {
         $escapedEntryPoint = $entryPoint.Replace("'", "''")
         $entryPointCheck = @"
-    `$entryPointPath = Join-Path -Path '$escapedDestination' -ChildPath '$escapedEntryPoint'
+    `$entryPointPath = [System.IO.Path]::GetFullPath((Join-Path -Path '$escapedDestination' -ChildPath '$escapedEntryPoint'))
     if (-not (Test-Path -LiteralPath `$entryPointPath -PathType Leaf)) {
         throw "Expected portable ZIP entry point was not extracted: `$entryPointPath"
     }
 "@
     }
 
-    # Expand-Archive can emit non-terminating errors. Without Stop + an explicit
-    # nonzero exit, a partial extraction (for example, a locked running EXE) can
-    # be reported as successful because powershell.exe itself exits with code 0.
-    # Promote extraction errors to terminating errors and propagate them through
-    # the process boundary so Core never records a false successful installation.
+    # Avoid Expand-Archive: Windows PowerShell can discover the
+    # Microsoft.PowerShell.Archive module but fail to load it on some hosts.
+    # Extract through .NET compression APIs, reject ZIP path traversal, and
+    # use FileMode.Create to replace existing files during updates.
     $script = @"
 `$ErrorActionPreference = 'Stop'
 try {
-    Expand-Archive -LiteralPath '$escapedArtifactPath' -DestinationPath '$escapedDestination' -Force -ErrorAction Stop
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    `$archivePath = '$escapedArtifactPath'
+    `$destinationRoot = [System.IO.Path]::GetFullPath('$escapedDestination').TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    [System.IO.Directory]::CreateDirectory(`$destinationRoot) | Out-Null
+    `$destinationPrefix = `$destinationRoot + [System.IO.Path]::DirectorySeparatorChar
+    `$archive = [System.IO.Compression.ZipFile]::OpenRead(`$archivePath)
+    try {
+        foreach (`$entry in `$archive.Entries) {
+            `$relativePath = `$entry.FullName.Replace('/', [System.IO.Path]::DirectorySeparatorChar).Replace('\', [System.IO.Path]::DirectorySeparatorChar)
+            if ([string]::IsNullOrWhiteSpace(`$relativePath)) { continue }
+            `$targetPath = [System.IO.Path]::GetFullPath((Join-Path -Path `$destinationRoot -ChildPath `$relativePath))
+            if (-not `$targetPath.StartsWith(`$destinationPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "ZIP entry attempts to write outside destination: `$(`$entry.FullName)"
+            }
+            if (`$entry.FullName.EndsWith('/') -or `$entry.FullName.EndsWith('\')) {
+                [System.IO.Directory]::CreateDirectory(`$targetPath) | Out-Null
+                continue
+            }
+            `$parentPath = [System.IO.Path]::GetDirectoryName(`$targetPath)
+            [System.IO.Directory]::CreateDirectory(`$parentPath) | Out-Null
+            `$inputStream = `$entry.Open()
+            try {
+                `$outputStream = [System.IO.File]::Open(`$targetPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+                try { `$inputStream.CopyTo(`$outputStream) } finally { `$outputStream.Dispose() }
+            } finally { `$inputStream.Dispose() }
+        }
+    } finally { `$archive.Dispose() }
 $entryPointCheck
     exit 0
 }
