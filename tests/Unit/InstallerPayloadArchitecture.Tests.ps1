@@ -148,6 +148,15 @@ Describe 'Wintainium unknown-architecture EXE decision candidates' {
         $fallback.Count | Should -Be 1
         @($fallback[0].Artifacts).Count | Should -Be 1
         $fallback[0].Artifacts[0].FileName | Should -Be 'app-x64.zip'
+
+        $manifest = [pscustomobject]@{
+            artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
+        }
+        $selection = InModuleScope Wintainium.Core -Parameters @{Release=$fallback[0];Manifest=$manifest} {
+            param($Release,$Manifest)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
+        }
+        $selection.SelectedArtifact.FileName | Should -Be 'app-x64.zip'
     }
 
     It 'allows a publisher-declared MD5-backed EXE to reach the separate MD5 and architecture decisions' {
