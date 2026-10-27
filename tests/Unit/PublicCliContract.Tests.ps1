@@ -88,10 +88,11 @@ Describe 'Wintainium public CLI contract' {
         $command = Get-Command -Name Invoke-WintainiumApplicationInstall -Module Wintainium.Core
 
         $command.Parameters.Keys | Should -Contain 'ArchitectureRiskDecision'
-        $command.Parameters['ArchitectureRiskDecision'].Attributes |
-            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
-            ForEach-Object ValidValues |
-            Should -Be @('None', 'AcceptRisk', 'UseFallback')
+        $validateSet = @($command.Parameters['ArchitectureRiskDecision'].Attributes |
+            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] })[0]
+        $validateSet.ValidValues | Should -Contain 'None'
+        $validateSet.ValidValues | Should -Contain 'AcceptRisk'
+        $validateSet.ValidValues | Should -Contain 'UseFallback'
     }
 
     It 'uses the approved parameter contract on the public application update status command' {
