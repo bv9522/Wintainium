@@ -193,6 +193,10 @@ function Invoke-WintainiumApplicationLifecycle {
 
     $artifactLifecycle = Invoke-WintainiumDownloadArtifactCleanup -DownloadResult $downloadResult -DownloadRoot $DownloadRoot -Outcome $artifactOutcome
     $lifecycleResult | Add-Member -NotePropertyName ArtifactLifecycle -NotePropertyValue $artifactLifecycle -Force
+    if ($null -ne $downloadResult -and $downloadResult.PSObject.Properties['FallbackDownloadResult']) {
+        $fallbackArtifactLifecycle = Invoke-WintainiumDownloadArtifactCleanup -DownloadResult $downloadResult.FallbackDownloadResult -DownloadRoot $DownloadRoot -Outcome $artifactOutcome
+        $lifecycleResult | Add-Member -NotePropertyName FallbackArtifactLifecycle -NotePropertyValue $fallbackArtifactLifecycle -Force
+    }
 
     # Artifact cleanup is deliberately non-authoritative. A successful update remains
     # successful even if the final file removal cannot be completed; the cleanup result
