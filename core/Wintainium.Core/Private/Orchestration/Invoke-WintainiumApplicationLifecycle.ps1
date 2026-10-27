@@ -121,7 +121,8 @@ function Invoke-WintainiumApplicationLifecycle {
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
                         $verification.FailureKind=if($fallbackAvailable){'ArchitectureRiskDecisionRequiredWithFallback'}else{'ArchitectureRiskDecisionRequired'}
-                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved after {1} verification. {2}" -f [string]$decision.SelectedArtifact.FileName,[string]$verification.Algorithm,[string]$inspection.Reason)
+                        $fallbackMessage = if ($fallbackAvailable) { " Compatible fallback: '$([string]$fallbackArtifact.FileName)'." } else { ' No known-compatible fallback with supported checksum evidence is available.' }
+                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved after {1} verification. {2}{3}" -f [string]$decision.SelectedArtifact.FileName,[string]$verification.Algorithm,[string]$inspection.Reason,$fallbackMessage)
                         $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
                         $verification | Add-Member -NotePropertyName ArchitectureRiskDecisionRequired -NotePropertyValue $true -Force
                         $verification | Add-Member -NotePropertyName ArchitectureFallbackAvailable -NotePropertyValue ([bool]$fallbackAvailable) -Force
