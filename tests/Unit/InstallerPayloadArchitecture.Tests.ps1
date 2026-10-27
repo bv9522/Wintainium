@@ -115,12 +115,28 @@ Describe 'Wintainium unknown-architecture EXE decision candidates' {
         $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
     }
 
+    It 'recognizes only well-formed publisher SHA256 or MD5 checksum evidence' {
+        $sha256 = [pscustomobject]@{ Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('A' * 64) }) }
+        $md5 = [pscustomobject]@{ Hashes=@([pscustomobject]@{ Algorithm='MD5'; Value=('B' * 32) }) }
+        $missing = [pscustomobject]@{ FileName='app.zip' }
+
+        (InModuleScope Wintainium.Core -Parameters @{Artifact=$sha256} {
+            param($Artifact) Test-WintainiumArtifactHasSupportedChecksum -Artifact $Artifact
+        }) | Should -BeTrue
+        (InModuleScope Wintainium.Core -Parameters @{Artifact=$md5} {
+            param($Artifact) Test-WintainiumArtifactHasSupportedChecksum -Artifact $Artifact
+        }) | Should -BeTrue
+        (InModuleScope Wintainium.Core -Parameters @{Artifact=$missing} {
+            param($Artifact) Test-WintainiumArtifactHasSupportedChecksum -Artifact $Artifact
+        }) | Should -BeFalse
+    }
+
     It 'removes unknown-architecture EXEs and preserves compatible alternatives for the fallback choice' {
         $release = [pscustomobject]@{
             Version='2.0.0'
             Artifacts=@(
                 [pscustomobject]@{ Uri='https://example.test/setup.exe'; FileName='setup.exe'; Format='exe'; Architecture='unknown' },
-                [pscustomobject]@{ Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64' }
+                [pscustomobject]@{ Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64'; Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('C' * 64) }) }
             )
         }
 
