@@ -51,6 +51,21 @@ Describe 'Wintainium generic portable ZIP installer' {
         Test-Path -LiteralPath (Join-Path $script:destination 'payload.txt') -PathType Leaf | Should -BeTrue
         Get-Content -LiteralPath (Join-Path $script:destination 'payload.txt') -Raw | Should -Match 'portable test'
     }
+    It 'overwrites an existing portable application file when extraction succeeds' {
+        $overwriteDestination = Join-Path $script:tempRoot 'overwrite-destination'
+        New-Item -ItemType Directory -Path $overwriteDestination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Value 'old version' -Encoding utf8
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$overwriteDestination}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+
+        $processResult.Status | Should -Be 'Completed' -Because $processResult.StandardError
+        Get-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Raw | Should -Match 'portable test'
+        Get-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Raw | Should -Not -Match 'old version'
+    }
+
     It 'returns a failed process result when archive extraction fails' {
         $invalidArtifactPath = Join-Path $script:tempRoot 'invalid.zip'
         Set-Content -LiteralPath $invalidArtifactPath -Value 'not a zip archive' -Encoding utf8
