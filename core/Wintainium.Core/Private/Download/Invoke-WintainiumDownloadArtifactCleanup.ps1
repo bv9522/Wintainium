@@ -83,7 +83,7 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     $operationsRoot = Join-Path $root 'operations'
     # Failed artifacts may be retained for troubleshooting. Cancelled artifacts
     # are always removed, so only failed operations need a reserved retention slot.
-    $operationRetentionLimit = if ($Outcome -eq 'Failed') { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
+    $operationRetentionLimit = if ($Outcome -in @('Failed','Cancelled')) { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
     $purgedOperations = [System.Collections.Generic.List[string]]::new()
     $purgedLegacyArtifacts = [System.Collections.Generic.List[string]]::new()
 

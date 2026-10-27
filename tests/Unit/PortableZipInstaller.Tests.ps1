@@ -43,6 +43,23 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand | Should -Match 'catch'
         $decodedCommand | Should -Match 'exit 1'
     }
+    It 'requests and tracks elevation for protected installation destinations' {
+        $protectedDestination = Join-Path $env:ProgramFiles 'Wintanium-PortableZip-Elevation-Test'
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$protectedDestination}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $encodedCommand = $spec.Arguments[-1]
+        $decodedCommand = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encodedCommand))
+
+        $decodedCommand | Should -Match 'Start-Process'
+        $decodedCommand | Should -Match '-Verb RunAs'
+        $decodedCommand | Should -Match '-Wait'
+        $decodedCommand | Should -Match '-PassThru'
+        $decodedCommand | Should -Match '-RedirectStandardOutput'
+        $decodedCommand | Should -Match '-RedirectStandardError'
+        $decodedCommand | Should -Match 'ExitCode'
+        $decodedCommand | Should -Match 'ElevationDenied'
+    }
+
     It 'extracts the archive using the returned encoded PowerShell command' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination}}
         $spec=&$script:installerCommand -Invocation $inv

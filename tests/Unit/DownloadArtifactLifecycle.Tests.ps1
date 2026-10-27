@@ -52,7 +52,7 @@ Describe 'Wintainium download artifact lifecycle' {
         }
     }
 
-    It 'removes a completed artifact when the lifecycle is cancelled' {
+    It 'retains a downloaded artifact when the lifecycle is cancelled' {
         InModuleScope Wintainium.Core {
             $root = Join-Path $TestDrive 'downloads'
             $operationId = [guid]::NewGuid().ToString()
@@ -64,17 +64,18 @@ Describe 'Wintainium download artifact lifecycle' {
             $result = Invoke-WintainiumDownloadArtifactCleanup -DownloadResult ([pscustomobject]@{
                 OperationId=$operationId
                 Status='Downloaded'
-                ArtifactDirectory=$directory
                 DestinationPath=$destination
+                ArtifactDirectory=$directory
             }) -DownloadRoot $root -Outcome Cancelled
 
             $result.IsSuccessful | Should -BeTrue
-            $result.Status | Should -Be 'Removed'
-            $result.Removed | Should -BeTrue
-            $result.Retained | Should -BeFalse
-            $result.ReasonCode | Should -Be 'ArtifactRemovedAfterCancelledOperation'
-            Test-Path -LiteralPath $destination | Should -BeFalse
-            Test-Path -LiteralPath $directory | Should -BeFalse
+            $result.Status | Should -Be 'Retained'
+            $result.Removed | Should -BeFalse
+            $result.Retained | Should -BeTrue
+            $result.MetadataWritten | Should -BeTrue
+            $result.ReasonCode | Should -Be 'ArtifactRetainedForTroubleshooting'
+            Test-Path -LiteralPath $destination | Should -BeTrue
+            Test-Path -LiteralPath $result.MetadataPath | Should -BeTrue
         }
     }
 

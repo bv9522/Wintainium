@@ -30,6 +30,31 @@ Describe 'Wintainium download artifact lifecycle cleanup' {
         Test-Path -LiteralPath $operationDirectory | Should -Be $false
     }
 
+    It 'removes a completed ZIP artifact from its managed operation folder' {
+        $root = Join-Path $TestDrive 'downloads'
+        $operationDirectory = Join-Path $root 'operations/zip-operation'
+        New-Item -ItemType Directory -Path $operationDirectory -Force | Out-Null
+        $artifactPath = Join-Path $operationDirectory 'CoreTemp64.zip'
+        Set-Content -LiteralPath $artifactPath -Value 'zip artifact'
+
+        $download = [pscustomobject]@{
+            OperationId = 'zip-operation'
+            DestinationPath = $artifactPath
+            ArtifactDirectory = $operationDirectory
+            FileName = 'CoreTemp64.zip'
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Download=$download; Root=$root } {
+            param($Download,$Root)
+            Invoke-WintainiumDownloadArtifactCleanup -DownloadResult $Download -DownloadRoot $Root -Outcome Completed
+        }
+
+        $result.Status | Should -Be 'Removed'
+        $result.Removed | Should -BeTrue
+        Test-Path -LiteralPath $artifactPath | Should -BeFalse
+        Test-Path -LiteralPath $operationDirectory | Should -BeFalse
+    }
+
     It 'retains a failed artifact with troubleshooting metadata' {
         $root = Join-Path $TestDrive 'downloads'
         $operationDirectory = Join-Path $root 'operations/operation-2'
