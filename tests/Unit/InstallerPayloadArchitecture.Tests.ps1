@@ -96,6 +96,25 @@ Describe 'Wintainium unknown-architecture EXE decision candidates' {
         $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
     }
 
+    It 'removes unknown-architecture EXEs and preserves compatible alternatives for the fallback choice' {
+        $release = [pscustomobject]@{
+            Version='2.0.0'
+            Artifacts=@(
+                [pscustomobject]@{ Uri='https://example.test/setup.exe'; FileName='setup.exe'; Format='exe'; Architecture='unknown' },
+                [pscustomobject]@{ Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64' }
+            )
+        }
+
+        $fallback = InModuleScope Wintainium.Core -Parameters @{Releases=@($release)} {
+            param($Releases)
+            @(Get-WintainiumArchitectureRiskFallbackReleases -Releases $Releases)
+        }
+
+        $fallback.Count | Should -Be 1
+        @($fallback[0].Artifacts).Count | Should -Be 1
+        $fallback[0].Artifacts[0].FileName | Should -Be 'app-x64.zip'
+    }
+
     It 'uses the compatible ZIP when the unknown EXE has no SHA256 evidence' {
         $manifest = [pscustomobject]@{
             artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
