@@ -1,44 +1,3 @@
-function Get-WintainiumInstallerArchitectureInspectorPath {
-    [CmdletBinding()]
-    param()
-
-    # Prefer normal command resolution, which honors administrator-managed installs
-    # and explicitly configured PATH entries.
-    $command = Get-Command innoextract.exe, innoextract -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandType -in @('Application', 'ExternalScript') } |
-        Select-Object -First 1
-    if ($null -ne $command) {
-        $source = if ($command.PSObject.Properties['Source']) { [string]$command.Source } else { [string]$command.Definition }
-        if (-not [string]::IsNullOrWhiteSpace($source) -and (Test-Path -LiteralPath $source -PathType Leaf)) {
-            return $source
-        }
-    }
-
-    # A running desktop process can retain an older PATH after WinGet installs a
-    # package. Check WinGet's stable per-user command-link directory directly.
-    $candidatePaths = [System.Collections.Generic.List[string]]::new()
-    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
-        $candidatePaths.Add((Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\innoextract.exe'))
-    }
-    if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
-        $candidatePaths.Add((Join-Path $env:ProgramFiles 'WinGet\Links\innoextract.exe'))
-    }
-
-    foreach ($candidatePath in $candidatePaths) {
-        if (Test-Path -LiteralPath $candidatePath -PathType Leaf) {
-            return $candidatePath
-        }
-    }
-
-    return $null
-}
-
-function Test-WintainiumInstallerArchitectureInspectionAvailable {
-    [CmdletBinding()]
-    param()
-    return -not [string]::IsNullOrWhiteSpace([string](Get-WintainiumInstallerArchitectureInspectorPath))
-}
-
 function Get-WintainiumPortableExecutableArchitecture {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Path)
@@ -70,125 +29,45 @@ function Get-WintainiumPortableExecutableArchitecture {
     }
 }
 
-function Invoke-WintainiumInnoExtract {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][string]$ToolPath,
-        [Parameter(Mandatory)][string]$InstallerPath,
-        [Parameter(Mandatory)][string]$OutputDirectory,
-        [ValidateRange(1, 600)][int]$TimeoutSeconds = 60
-    )
-
-    $stdoutPath = Join-Path $OutputDirectory 'innoextract.stdout.txt'
-    $stderrPath = Join-Path $OutputDirectory 'innoextract.stderr.txt'
-    $quotedOutput = '"' + $OutputDirectory.Replace('"', '\"') + '"'
-    $quotedInstaller = '"' + $InstallerPath.Replace('"', '\"') + '"'
-    $arguments = "--extract --collisions=rename-all --output-dir $quotedOutput $quotedInstaller"
-    $process = $null
-    try {
-        $process = Start-Process -FilePath $ToolPath -ArgumentList $arguments -PassThru -NoNewWindow -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
-        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-            try { $process.Kill() } catch {}
-            return [pscustomobject]@{ IsSuccessful=$false; ReasonCode='ArchitectureInspectionTimedOut'; ErrorMessage='Static extraction exceeded its time limit.' }
-        }
-        if ($process.ExitCode -ne 0) {
-            return [pscustomobject]@{ IsSuccessful=$false; ReasonCode='UnsupportedInstallerFormat'; ErrorMessage='The static extractor could not parse this installer format.'; ExitCode=$process.ExitCode }
-        }
-        return [pscustomobject]@{ IsSuccessful=$true; ReasonCode='StaticExtractionCompleted'; ErrorMessage=$null; ExitCode=$process.ExitCode }
-    }
-    catch {
-        return [pscustomobject]@{ IsSuccessful=$false; ReasonCode='StaticExtractionFailed'; ErrorMessage='The static extractor could not be started or completed.' }
-    }
-    finally { if ($null -ne $process) { $process.Dispose() } }
-}
-
 function Resolve-WintainiumInstallerPayloadArchitecture {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][psobject]$DownloadResult,
         [Parameter(Mandatory)][psobject]$SelectedArtifact,
         [Parameter(Mandatory)][psobject]$VerificationResult,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$MachineArchitecture,
-        [string]$InnoExtractPath
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$MachineArchitecture
     )
 
-    $failure = {
-        param([string]$ReasonCode, [string]$Reason, [object[]]$PayloadArchitectures = @())
-        [pscustomobject][ordered]@{ IsSuccessful=$false; Status='Unresolved'; ReasonCode=$ReasonCode; Reason=$Reason; PayloadArchitectures=@($PayloadArchitectures); ResolvedArchitecture=$null; Inspector='innoextract' }
+    $path = if ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['DestinationPath']) { [string]$DownloadResult.DestinationPath } else { '' }
+    $validVerification = $null -ne $DownloadResult -and [string]$DownloadResult.Status -eq 'Downloaded' -and
+        [string]$VerificationResult.Status -eq 'Verified' -and [string]$VerificationResult.Algorithm -eq 'SHA256'
+    if (-not $validVerification) {
+        return [pscustomobject][ordered]@{
+            IsSuccessful=$false; Status='Unresolved'; ReasonCode='VerifiedArtifactRequired'
+            Reason='Architecture risk evaluation requires a completed download verified by a matching SHA256 checksum.'
+            PayloadArchitectures=@(); ResolvedArchitecture=$null; Inspector='native-static'
+        }
     }
-
-    if ($null -eq $DownloadResult -or [string]$DownloadResult.Status -ne 'Downloaded' -or
-        [string]$VerificationResult.Status -ne 'Verified' -or [string]$VerificationResult.Algorithm -ne 'SHA256') {
-        return & $failure 'VerifiedArtifactRequired' 'Inspection requires a completed download verified by a matching SHA256 checksum.'
-    }
-    $path = [string]$DownloadResult.DestinationPath
     if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path -PathType Leaf)) {
-        return & $failure 'ArtifactPathMissing' 'The verified installer file is unavailable.'
-    }
-    if ([System.IO.Path]::GetExtension([string]$SelectedArtifact.FileName) -ine '.exe' -or [string]$SelectedArtifact.Architecture -ine 'unknown') {
-        return & $failure 'InspectionNotApplicable' 'Inspection applies only to executable artifacts with unknown architecture.'
-    }
-    if ([string]::IsNullOrWhiteSpace($InnoExtractPath)) {
-        $InnoExtractPath = [string](Get-WintainiumInstallerArchitectureInspectorPath)
-        if ([string]::IsNullOrWhiteSpace($InnoExtractPath)) { return & $failure 'ArchitectureInspectorUnavailable' 'No supported static installer inspector is available.' }
-    }
-    if (-not (Test-Path -LiteralPath $InnoExtractPath -PathType Leaf)) {
-        return & $failure 'ArchitectureInspectorUnavailable' 'The configured static installer inspector path is not available.'
-    }
-    if ((Get-Item -LiteralPath $path).Length -gt 536870912) {
-        return & $failure 'InstallerTooLargeForInspection' 'The installer exceeds the static-inspection size limit.'
+        return [pscustomobject][ordered]@{
+            IsSuccessful=$false; Status='Unresolved'; ReasonCode='ArtifactPathMissing'
+            Reason='The verified installer file is unavailable.'
+            PayloadArchitectures=@(); ResolvedArchitecture=$null; Inspector='native-static'
+        }
     }
 
-    $inspectionRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Wintainium-ArchitectureInspection-' + [guid]::NewGuid().ToString('N'))
-    $outputDirectory = Join-Path $inspectionRoot 'payload'
-    [void][System.IO.Directory]::CreateDirectory($outputDirectory)
-    try {
-        $extraction = Invoke-WintainiumInnoExtract -ToolPath $InnoExtractPath -InstallerPath $path -OutputDirectory $outputDirectory
-        if ($null -eq $extraction -or -not [bool]$extraction.IsSuccessful) {
-            $code = if ($null -ne $extraction -and $extraction.PSObject.Properties['ReasonCode']) { [string]$extraction.ReasonCode } else { 'StaticExtractionFailed' }
-            $reason = if ($null -ne $extraction -and $extraction.PSObject.Properties['ErrorMessage']) { [string]$extraction.ErrorMessage } else { 'The installer could not be statically inspected.' }
-            return & $failure $code $reason
-        }
-
-        $files = @(Get-ChildItem -LiteralPath $outputDirectory -File -Recurse -ErrorAction Stop)
-        if ($files.Count -gt 20000 -or (($files | Measure-Object -Property Length -Sum).Sum -gt 2147483648)) {
-            return & $failure 'ExtractedPayloadLimitExceeded' 'The extracted payload exceeds static-inspection safety limits.'
-        }
-        $appRoot = Join-Path $outputDirectory 'app'
-        if (-not (Test-Path -LiteralPath $appRoot -PathType Container)) { $appRoot = $outputDirectory }
-        $executables = @(Get-ChildItem -LiteralPath $appRoot -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '(?i)\.exe(?:\$\d+)?$' })
-        if ($executables.Count -eq 0) { return & $failure 'ApplicationPayloadNotFound' 'No top-level application executable was found in the extracted payload.' }
-
-        $groups = @{}
-        foreach ($exe in $executables) {
-            $name = $exe.Name -replace '\$\d+$', ''
-            if (-not $groups.ContainsKey($name)) { $groups[$name] = [System.Collections.Generic.List[object]]::new() }
-            $groups[$name].Add((Get-WintainiumPortableExecutableArchitecture -Path $exe.FullName))
-        }
-        $multiArch = @($groups.Keys | Where-Object { @($groups[$_] | Where-Object { $_ -ne 'unknown' } | Select-Object -Unique).Count -gt 1 })
-        if ($multiArch.Count -eq 1) {
-            $payloadArchitectures = @($groups[$multiArch[0]] | Where-Object { $_ -ne 'unknown' } | Select-Object -Unique)
-        } elseif ($groups.Count -eq 1) {
-            $payloadArchitectures = @($groups.Values | Select-Object -First 1 | ForEach-Object { $_ } | Where-Object { $_ -ne 'unknown' } | Select-Object -Unique)
-        } else {
-            return & $failure 'ApplicationPayloadAmbiguous' 'Multiple application executables were found without an unambiguous architecture relationship.'
-        }
-        if ($payloadArchitectures.Count -eq 0) { return & $failure 'PayloadArchitectureUnknown' 'The application executable architecture could not be established.' }
-        $target = $MachineArchitecture.Trim().ToLowerInvariant()
-        if ($target -notin $payloadArchitectures) { return & $failure 'ArchitectureIncompatible' 'The installer does not contain an application executable for the target architecture.' $payloadArchitectures }
-
-        [pscustomobject][ordered]@{
-            IsSuccessful=$true
-            Status='Resolved'
-            ReasonCode=if ($payloadArchitectures.Count -gt 1) { 'DualArchitecturePayloadConfirmed' } else { 'SingleArchitecturePayloadConfirmed' }
-            Reason='Static inspection established the application executable payload architecture.'
-            PayloadArchitectures=@($payloadArchitectures)
-            ResolvedArchitecture=$target
-            Inspector='innoextract'
-        }
-    }
-    catch { return & $failure 'ArchitectureInspectionFailed' 'Static inspection failed; the artifact remains architecture-unknown.' }
-    finally {
-        try { if (Test-Path -LiteralPath $inspectionRoot) { Remove-Item -LiteralPath $inspectionRoot -Recurse -Force -ErrorAction SilentlyContinue } } catch {}
+    # Reading the outer PE header is safe and useful evidence, but a bootstrapper's
+    # machine type does not prove the architecture of the application it installs.
+    # Without a supported native payload parser, keep payload architecture unresolved.
+    $outerArchitecture = Get-WintainiumPortableExecutableArchitecture -Path $path
+    [pscustomobject][ordered]@{
+        IsSuccessful=$false
+        Status='Unresolved'
+        ReasonCode='ArchitectureRiskDecisionRequired'
+        Reason='The file passed SHA256 verification, but native static inspection cannot establish the installed payload architecture. The executable header reports the outer file architecture only.'
+        PayloadArchitectures=@()
+        ResolvedArchitecture=$null
+        OuterArchitecture=$outerArchitecture
+        Inspector='native-pe-header'
     }
 }
