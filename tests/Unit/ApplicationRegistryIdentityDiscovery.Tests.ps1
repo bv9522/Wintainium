@@ -12,7 +12,7 @@ BeforeAll {
         )
         & $script:coreModule {
             param($Name, $PublisherValue, $Entries)
-            Invoke-RegistryIdentityDiscovery -ApplicationName $Name -Publisher $PublisherValue -RegistryEntries $Entries
+            Get-WintainiumApplicationRegistryIdentityCandidates -ApplicationName $Name -Publisher $PublisherValue -RegistryEntries $Entries
         } $ApplicationName $Publisher $RegistryEntries
     }
 }
