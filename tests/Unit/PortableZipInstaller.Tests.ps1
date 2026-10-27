@@ -54,10 +54,15 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand | Should -Match '-Verb RunAs'
         $decodedCommand | Should -Match '-Wait'
         $decodedCommand | Should -Match '-PassThru'
-        $decodedCommand | Should -Match '-RedirectStandardOutput'
-        $decodedCommand | Should -Match '-RedirectStandardError'
+        $decodedCommand | Should -Not -Match '-RedirectStandardOutput'
+        $decodedCommand | Should -Not -Match '-RedirectStandardError'
         $decodedCommand | Should -Match 'ExitCode'
         $decodedCommand | Should -Match 'ElevationDenied'
+        $decodedCommand | Should -Match '\$stderrPath'
+        $childCommandMatch = [regex]::Match($decodedCommand, '\$childCommand = ''([A-Za-z0-9+/=]+)''')
+        $childCommandMatch.Success | Should -BeTrue
+        $elevatedExtractionScript = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($childCommandMatch.Groups[1].Value))
+        $elevatedExtractionScript | Should -Match '\[System\.IO\.File\]::WriteAllText'
     }
 
     It 'extracts the archive using the returned encoded PowerShell command' {

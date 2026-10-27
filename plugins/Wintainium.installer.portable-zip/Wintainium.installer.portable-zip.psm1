@@ -129,8 +129,6 @@ catch {
     exit 1
 }
 "@
-    $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
-
     # Portable applications may be installed under protected locations such as
     # Program Files. Run those extractions through a tracked elevated child
     # process; the non-elevated parent waits for its exit code and captures both
@@ -159,17 +157,24 @@ catch {
     }
 
     if ($requiresElevation) {
+        # Start-Process cannot combine redirected streams with -Verb RunAs.
+        # Write extraction errors to a temp diagnostic file for the parent.
+        $diagnosticPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stderr')
+        $escapedDiagnosticPath = $diagnosticPath.Replace("'", "''")
+        $script = $script.Replace(
+            "[Console]::Error.WriteLine([string]`$_.Exception.Message)",
+            "[System.IO.File]::WriteAllText('$escapedDiagnosticPath', [string]`$_.Exception.Message)"
+        )
+        $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
         $escapedPowerShellPath = $powershellPath.Replace("'", "''")
         $wrapper = @"
 `$ErrorActionPreference = 'Stop'
 `$powerShellPath = '$escapedPowerShellPath'
 `$childCommand = '$encodedCommand'
-`$stdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stdout')
-`$stderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stderr')
+`$stderrPath = '$escapedDiagnosticPath'
 try {
     `$childArguments = @('-NoProfile', '-NonInteractive', '-EncodedCommand', `$childCommand)
-    `$child = Start-Process -FilePath `$powerShellPath -ArgumentList `$childArguments -Verb RunAs -Wait -PassThru -RedirectStandardOutput `$stdoutPath -RedirectStandardError `$stderrPath
-    if (Test-Path -LiteralPath `$stdoutPath -PathType Leaf) { [Console]::Out.Write([System.IO.File]::ReadAllText(`$stdoutPath)) }
+    `$child = Start-Process -FilePath `$powerShellPath -ArgumentList `$childArguments -Verb RunAs -Wait -PassThru
     if (Test-Path -LiteralPath `$stderrPath -PathType Leaf) { [Console]::Error.Write([System.IO.File]::ReadAllText(`$stderrPath)) }
     exit [int]`$child.ExitCode
 }
@@ -184,10 +189,13 @@ catch {
     exit 1
 }
 finally {
-    Remove-Item -LiteralPath `$stdoutPath, `$stderrPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath `$stderrPath -Force -ErrorAction SilentlyContinue
 }
 "@
         $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($wrapper))
+    }
+    else {
+        $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
     }
 
     [pscustomobject][ordered]@{
