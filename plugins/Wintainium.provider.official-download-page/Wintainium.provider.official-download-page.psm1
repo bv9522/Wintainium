@@ -335,6 +335,16 @@ function Get-OfficialDownloadPageSourceForgeReleases {
     if ($BaseUri.Host -notmatch '(?i)(^|\.)sourceforge\.net$' -or
         $BaseUri.AbsolutePath -notmatch '(?i)^/projects/[^/]+/files(?:/|$)') { return @() }
 
+    # SourceForge file listings may expose a versioned directory path, a root-level
+    # filename, or a "latest/download" route. For root-level/latest links, the
+    # visible file listing's first current-version label supplies the version.
+    $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
+    $currentVersionMatch = [regex]::Match(
+        [string]$pageText,
+        '(?i)\bVersion\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+    )
+    $currentVersion = if ($currentVersionMatch.Success) { $currentVersionMatch.Groups[1].Value } else { $null }
+
     $releaseGroups = [ordered]@{}
     $links = [regex]::Matches(
         $Html,
@@ -345,17 +355,33 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         $href = [System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
         try { $uri = [Uri]::new($BaseUri, $href) } catch { continue }
         if ($uri.Scheme -notin @('http','https') -or $uri.Host -notmatch '(?i)(^|\.)sourceforge\.net$') { continue }
+
         $segments = @($uri.AbsolutePath.Trim('/').Split('/') | ForEach-Object { [Uri]::UnescapeDataString($_) })
-        if ($segments.Count -lt 6 -or $segments[0] -ine 'projects' -or $segments[2] -ine 'files') { continue }
+        if ($segments.Count -lt 4 -or $segments[0] -ine 'projects' -or $segments[2] -ine 'files') { continue }
         if ($segments[-1] -ieq 'download') { $segments = @($segments[0..($segments.Count - 2)]) }
-        if ($segments.Count -lt 5) { continue }
+        if ($segments.Count -lt 4) { continue }
 
         $fileName = [string]$segments[-1]
         $format = ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
-        if ($format -eq 'unknown') { continue }
-        $versionMatch = [regex]::Match([string]$segments[-2], '(?i)^v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)$')
-        if (-not $versionMatch.Success) { continue }
-        $version = $versionMatch.Groups[1].Value
+        if ($format -eq 'unknown') {
+            # The latest/download endpoint's URL does not carry a filename; use
+            # only a recognizable supported filename explicitly shown by its link.
+            $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+            $labelFileMatch = [regex]::Match([string]$label, '(?i)([A-Za-z0-9_.() -]+\.(?:exe|msi|zip))\b')
+            if (-not $labelFileMatch.Success) { continue }
+            $fileName = (($labelFileMatch.Groups[1].Value -split '\s+') | Select-Object -Last 1)
+            $format = ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
+            if ($format -eq 'unknown') { continue }
+        }
+
+        $version = $null
+        if ($segments.Count -ge 6) {
+            $versionMatch = [regex]::Match([string]$segments[-2], '(?i)^v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)$')
+            if ($versionMatch.Success) { $version = $versionMatch.Groups[1].Value }
+        }
+        if ([string]::IsNullOrWhiteSpace($version)) { $version = $currentVersion }
+        if ([string]::IsNullOrWhiteSpace($version)) { continue }
+
         $key = $version.ToLowerInvariant()
         if (-not $releaseGroups.Contains($key)) {
             $releaseGroups[$key] = [pscustomobject][ordered]@{
@@ -363,6 +389,7 @@ function Get-OfficialDownloadPageSourceForgeReleases {
                 Artifacts = [System.Collections.Generic.List[object]]::new()
             }
         }
+
         $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
         $artifact = [pscustomobject][ordered]@{
             Uri = $uri.AbsoluteUri
