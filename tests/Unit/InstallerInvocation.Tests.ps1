@@ -39,6 +39,52 @@ Describe 'Wintainium installer invocation preparation' {
         $result.Invocation.Settings.silent | Should -Be $true
         $result.Error | Should -Be $null
     }
+    It 'uses the authoritative existing install location when a portable ZIP has no destinationPath setting' {
+        $descriptor = @{
+            pluginId = 'Wintainium.installer.portable-zip'
+            pluginType = 'Installer'
+            contractVersions = @('1')
+            entryPoint = 'Installer.psm1'
+            capabilities = @{ supportedFormats = @('zip'); installationMode = 'archive' }
+        } | ConvertTo-Json -Depth 10
+        Set-Content -LiteralPath $script:descriptorPath -Value $descriptor -Encoding utf8
+
+        $plugin = [pscustomobject]@{
+            PluginId = 'Wintainium.installer.portable-zip'
+            PluginType = 'Installer'
+            ContractVersions = @('1')
+            EntryPoint = 'Installer.psm1'
+            Capabilities = [ordered]@{ supportedFormats = @('zip'); installationMode = 'archive' }
+            DescriptorPath = $script:descriptorPath
+        }
+        $selection = [pscustomobject][ordered]@{
+            IsSelected = $true
+            InstallerPlugin = $plugin
+            InstallerSettings = [ordered]@{}
+            ArtifactFormat = 'zip'
+            InstallationMode = 'archive'
+            Error = $null
+        }
+        $request = [pscustomobject][ordered]@{
+            OperationId = 'installer-operation'
+            DownloadOperationId = 'download-operation'
+            Manifest = [pscustomobject]@{ Id = 'example.app' }
+            InstalledState = [pscustomobject]@{
+                InstallationState = 'Installed'
+                InstallationLocation = $script:pluginRoot
+            }
+            Artifact = $script:request.Artifact
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $request } {
+            New-WintainiumInstallerInvocation -Selection $Selection -Request $Request
+        }
+
+        $result.IsValid | Should -BeTrue
+        $result.Invocation.ArtifactFormat | Should -Be 'zip'
+        $result.Invocation.Settings.destinationPath | Should -Be ([System.IO.Path]::GetFullPath($script:pluginRoot))
+    }
+
     It 'rejects an unsuccessful installer selection' {
         $selection = [pscustomobject][ordered]@{ IsSelected = $false; InstallerPlugin = $null; ArtifactFormat = 'exe'; Error = $null }
         $result = InModuleScope Wintainium.Core -Parameters @{ Selection = $selection; Request = $script:request } { New-WintainiumInstallerInvocation -Selection $Selection -Request $Request }
