@@ -125,7 +125,7 @@ function Get-WintainiumArchitectureRiskFallbackReleases {
             $properties[$property.Name] = $property.Value
         }
         $properties['Artifacts'] = @($release.Artifacts | Where-Object {
-            -not ([string]$_.Format -eq 'exe' -and [string]$_.Architecture -eq 'unknown')
+            [string]$_.Architecture -ne 'unknown'
         })
         [pscustomobject]$properties
     }
