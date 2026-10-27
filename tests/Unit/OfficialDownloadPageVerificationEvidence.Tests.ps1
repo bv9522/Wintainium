@@ -143,6 +143,34 @@ Describe 'Official download page verification evidence discovery' {
         @($result.Releases[0].Artifacts)[1].Hashes.Count | Should -Be 0
     }
 
+    It 'associates SHA256 checksums with the matching filenames in a checksum table' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>App 1.0.0</h2>
+<a href="https://downloads.example.com/app-setup.exe">Download</a>
+<table>
+<tr><th>File</th><th>SHA-256</th></tr>
+<tr><td><a href="https://downloads.example.com/App32.zip">App32.zip</a></td><td>20BA206A058CCC098BF40F68833FEDA59463509D8F1984A36017A175C30B32AD</td></tr>
+<tr><td><a href="https://downloads.example.com/App64.zip">App64.zip</a></td><td>407A5DFFBCAF43098200B7F6AE7875974CB7F1891B535837055DE09A1F3D154F</td></tr>
+</table>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifacts = @($result.Releases[0].Artifacts)
+        $artifacts.Count | Should -Be 3
+        (@($artifacts[1].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]).Value | Should -Be '20BA206A058CCC098BF40F68833FEDA59463509D8F1984A36017A175C30B32AD'
+        (@($artifacts[2].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]).Value | Should -Be '407A5DFFBCAF43098200B7F6AE7875974CB7F1891B535837055DE09A1F3D154F'
+        @($artifacts[0].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+    }
+
     It 'does not guess the target artifact for a lone SHA256 checksum appearing after download links' {
         Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
             [pscustomobject]@{
