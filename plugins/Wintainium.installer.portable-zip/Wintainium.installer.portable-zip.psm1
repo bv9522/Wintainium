@@ -102,13 +102,13 @@ try {
     `$archive = [System.IO.Compression.ZipFile]::OpenRead(`$archivePath)
     try {
         foreach (`$entry in `$archive.Entries) {
-            `$relativePath = `$entry.FullName.Replace('/', [System.IO.Path]::DirectorySeparatorChar).Replace('\', [System.IO.Path]::DirectorySeparatorChar)
+            `$relativePath = `$entry.FullName.Replace('/', [System.IO.Path]::DirectorySeparatorChar).Replace([char]92, [System.IO.Path]::DirectorySeparatorChar)
             if ([string]::IsNullOrWhiteSpace(`$relativePath)) { continue }
             `$targetPath = [System.IO.Path]::GetFullPath((Join-Path -Path `$destinationRoot -ChildPath `$relativePath))
             if (-not `$targetPath.StartsWith(`$destinationPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
                 throw "ZIP entry attempts to write outside destination: `$(`$entry.FullName)"
             }
-            if (`$entry.FullName.EndsWith('/') -or `$entry.FullName.EndsWith('\')) {
+            if (`$entry.FullName.EndsWith('/') -or `$entry.FullName.EndsWith([string][char]92)) {
                 [System.IO.Directory]::CreateDirectory(`$targetPath) | Out-Null
                 continue
             }
