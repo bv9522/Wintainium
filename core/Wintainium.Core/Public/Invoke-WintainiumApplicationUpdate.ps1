@@ -71,6 +71,7 @@ function Invoke-WintainiumApplicationUpdate {
         [string]$SchemaPath = (Join-Path -Path $script:WintainiumSchemaRoot -ChildPath 'application-manifest.schema.json'),
         [ValidateRange(1, 2147483647)] [int]$InstallerTimeoutMilliseconds = 600000,
         [switch]$AllowLegacyMd5Verification,
+        [ValidateSet('None','AcceptRisk','UseFallback')][string]$ArchitectureRiskDecision = 'None',
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
@@ -83,6 +84,7 @@ function Invoke-WintainiumApplicationUpdate {
         SchemaPath = $SchemaPath
         InstallerTimeoutMilliseconds = $InstallerTimeoutMilliseconds
         AllowLegacyMd5Verification = [bool]$AllowLegacyMd5Verification
+        ArchitectureRiskDecision = $ArchitectureRiskDecision
         CancellationToken = $CancellationToken
     }
 
