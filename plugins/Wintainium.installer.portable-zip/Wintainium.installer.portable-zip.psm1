@@ -99,7 +99,7 @@ $entryPointCheck
     exit 0
 }
 catch {
-    [Console]::Error.WriteLine([string]$_.Exception.Message)
+    [Console]::Error.WriteLine([string]`$_.Exception.Message)
     exit 1
 }
 "@
