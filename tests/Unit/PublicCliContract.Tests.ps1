@@ -117,6 +117,7 @@ Describe 'Wintainium public CLI contract' {
         $command.Parameters.Keys | Should -Contain 'SchemaPath'
         $command.Parameters.Keys | Should -Contain 'InstallerTimeoutMilliseconds'
         $command.Parameters.Keys | Should -Contain 'CancellationToken'
+        $command.Parameters.Keys | Should -Contain 'ArchitectureRiskDecision'
 
         $command.Parameters.Keys | Should -Not -Contain 'OperationId'
         $command.Parameters.Keys | Should -Not -Contain 'HttpClient'
@@ -130,7 +131,7 @@ Describe 'Wintainium public CLI contract' {
         $help.Examples.Example | Should -Not -BeNullOrEmpty
 
         $helpText = $help | Out-String
-        foreach ($parameter in @('ManifestPath', 'StateRoot', 'MachineArchitecture', 'DownloadRoot', 'PluginRoot', 'SchemaPath', 'InstallerTimeoutMilliseconds', 'CancellationToken')) {
+        foreach ($parameter in @('ManifestPath', 'StateRoot', 'MachineArchitecture', 'DownloadRoot', 'PluginRoot', 'SchemaPath', 'InstallerTimeoutMilliseconds', 'CancellationToken', 'ArchitectureRiskDecision')) {
             $helpText | Should -Match $parameter
         }
 
