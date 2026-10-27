@@ -2,6 +2,7 @@ $testRoot = Split-Path -Parent $PSScriptRoot
 $modulePath = Join-Path (Split-Path -Parent $testRoot) 'core/Wintainium.Core/Wintainium.Core.psd1'
 Import-Module $modulePath -Force
 
+BeforeAll {
 function New-TestPortableExecutable {
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -20,6 +21,7 @@ function New-TestPortableExecutable {
     }
     [BitConverter]::GetBytes($machine).CopyTo($bytes, 0x84)
     [System.IO.File]::WriteAllBytes($Path, $bytes)
+}
 }
 
 Describe 'Wintainium native static architecture evidence' {
