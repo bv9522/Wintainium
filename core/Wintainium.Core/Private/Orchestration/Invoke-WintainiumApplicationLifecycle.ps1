@@ -104,7 +104,7 @@ function Invoke-WintainiumApplicationLifecycle {
                             $verification | Add-Member -NotePropertyName ArchitectureRiskArtifact -NotePropertyValue ([string]$decision.SelectedArtifact.FileName) -Force
                             $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue ([pscustomobject][ordered]@{
                                 IsSuccessful=$false; Status='Unresolved'; ReasonCode='ArchitectureRiskAccepted'
-                                Reason='The user explicitly accepted unresolved payload architecture after successful SHA256 verification.'
+                                Reason='The user explicitly accepted unresolved payload architecture after successful checksum verification.'
                                 PayloadArchitectures=@(); ResolvedArchitecture=$null; Inspector='native-pe-header'
                             }) -Force
                             return & $normalize $verification $true
@@ -123,7 +123,7 @@ function Invoke-WintainiumApplicationLifecycle {
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
                         $verification.FailureKind='ArchitectureRiskDecisionRequired'
-                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved. {1}" -f [string]$decision.SelectedArtifact.FileName,[string]$inspection.Reason)
+                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved after {1} verification. {2}" -f [string]$decision.SelectedArtifact.FileName,[string]$verification.Algorithm,[string]$inspection.Reason)
                         $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
                         $verification | Add-Member -NotePropertyName ArchitectureRiskDecisionRequired -NotePropertyValue $true -Force
                         $verificationSuccessful=$false
