@@ -151,6 +151,21 @@ Describe 'Windows installed-application reconciliation plugin' {
         }
     }
 
+    It 'reads file version metadata from an executable matching the registry display name' {
+        $installLocation = Join-Path $TestDrive 'Core Temp'
+        New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
+        $executablePath = Join-Path $installLocation 'Core Temp.exe'
+        Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination $executablePath -Force
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Location=$installLocation } {
+            Get-WintainiumWindowsExecutableVersion -InstallationLocation $Location -DisplayName 'Core Temp 1.20.1'
+        }
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.Version | Should -Not -BeNullOrEmpty
+        $result.Path | Should -Be $executablePath
+    }
+
     It 'prefers matching executable version metadata over a stale uninstall registry version' {
         $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-000000000208'; ApplicationId='web.www.alcpu.com.coretemp'; Manifest=$script:baseManifest }
         InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
