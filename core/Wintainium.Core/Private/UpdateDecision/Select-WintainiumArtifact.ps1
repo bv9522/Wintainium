@@ -466,3 +466,29 @@ function Get-WintainiumArchitectureRiskFallbackReleases {
         [pscustomobject]$properties
     }
 }
+
+
+function Test-WintainiumArtifactHasSupportedChecksum {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][psobject]$Artifact)
+
+    if ($null -eq $Artifact -or -not $Artifact.PSObject.Properties['Hashes']) { return $false }
+    $hashes = $Artifact.Hashes
+    if ($hashes -is [System.Collections.IDictionary]) {
+        foreach ($name in $hashes.Keys) {
+            $algorithm = [string]$name
+            $value = [string]$hashes[$name]
+            if (($algorithm -ieq 'SHA256' -and $value -match '^[0-9A-Fa-f]{64}$') -or
+                ($algorithm -ieq 'MD5' -and $value -match '^[0-9A-Fa-f]{32}$')) {
+                return $true
+            }
+        }
+        return $false
+    }
+
+    return @($hashes | Where-Object {
+        $null -ne $_ -and $_.PSObject.Properties['Algorithm'] -and $_.PSObject.Properties['Value'] -and
+        (([string]$_.Algorithm -ieq 'SHA256' -and [string]$_.Value -match '^[0-9A-Fa-f]{64}$') -or
+         ([string]$_.Algorithm -ieq 'MD5' -and [string]$_.Value -match '^[0-9A-Fa-f]{32}$'))
+    }).Count -gt 0
+}
