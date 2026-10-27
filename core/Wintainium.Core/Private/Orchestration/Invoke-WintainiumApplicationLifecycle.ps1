@@ -111,15 +111,6 @@ function Invoke-WintainiumApplicationLifecycle {
                         }
 
                         $inspection=Resolve-WintainiumInstallerPayloadArchitecture -DownloadResult $StageInput.Download -SelectedArtifact $decision.SelectedArtifact -VerificationResult $verification -MachineArchitecture $StageInput.MachineArchitecture
-                        if($ArchitectureRiskDecision -eq 'UseFallback'){
-                            $verification.Status='Failed'
-                            $verification.IsSuccessful=$false
-                            $verification.FailureKind='ArchitectureFallbackUnavailable'
-                            $verification.ErrorMessage='The selected release did not provide a known-compatible fallback artifact with acceptable verification evidence.'
-                            $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
-                            return & $normalize $verification $false
-                        }
-
                         $fallbackRelease = @(Get-WintainiumArchitectureRiskFallbackReleases -Releases @($decision.SelectedRelease) | Select-Object -First 1)
                         $fallbackSelection = $null
                         if ($fallbackRelease.Count -gt 0) {
