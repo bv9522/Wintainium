@@ -219,6 +219,14 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     $parts.Add("expected SHA256 $(if ([string]::IsNullOrWhiteSpace($expected)) { 'not available' } else { $expected })")
                     $parts.Add("actual SHA256 $(if ([string]::IsNullOrWhiteSpace($actual)) { 'not available' } else { $actual })")
                     $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.Verification'; Message="Verification: $($parts -join '; ')." })
+                    if ($result.PSObject.Properties['ArchitectureRiskDecision'] -and -not [string]::IsNullOrWhiteSpace([string]$result.ArchitectureRiskDecision)) {
+                        $riskArtifact = if ($result.PSObject.Properties['ArchitectureRiskArtifact']) { [string]$result.ArchitectureRiskArtifact } else { 'selected artifact' }
+                        $riskDescription = if ([string]$result.ArchitectureRiskDecision -eq 'AcceptRisk') { 'user explicitly accepted unresolved payload architecture after checksum verification' } else { 'user chose the compatible-fallback path' }
+                        $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                            Code = 'InstallDiagnostic.ArchitectureRiskDecision'
+                            Message = "Architecture risk decision: $riskDescription for '$riskArtifact'."
+                        })
+                    }
                 }
                 'InstallerSelection' {
                     $pluginId = if ($result.PSObject.Properties['InstallerPlugin'] -and $null -ne $result.InstallerPlugin -and $result.InstallerPlugin.PSObject.Properties['PluginId']) { [string]$result.InstallerPlugin.PluginId } else { $null }
