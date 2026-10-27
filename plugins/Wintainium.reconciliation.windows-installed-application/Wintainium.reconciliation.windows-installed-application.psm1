@@ -237,10 +237,8 @@ function Get-WintainiumWindowsExecutableArchitecture {
         return $null
     }
 
-    # Architecture is only inferred from a concrete executable whose basename
-    # exactly corresponds to the uninstall display name after removing a
-    # conventional numeric version suffix. Registry view is never architecture
-    # evidence, and no directory-wide executable guessing is performed.
+    # Only inspect an executable whose basename is an exact derivation of the
+    # registered display name. Registry view is not architecture evidence.
     $baseName = [regex]::Replace($DisplayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$Request)
@@ -339,12 +337,12 @@ Export-ModuleMember -Function Invoke-WintainiumReconciliation
         $stream = [System.IO.File]::Open($executablePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
         $reader = [System.IO.BinaryReader]::new($stream)
         if ($stream.Length -lt 64) { return $null }
-        if ($reader.ReadUInt16() -ne 0x5A4D) { return $null } # MZ
+        if ($reader.ReadUInt16() -ne 0x5A4D) { return $null }
         $stream.Position = 0x3C
         $peOffset = $reader.ReadInt32()
         if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 6)) { return $null }
         $stream.Position = $peOffset
-        if ($reader.ReadUInt32() -ne 0x00004550) { return $null } # PE\0\0
+        if ($reader.ReadUInt32() -ne 0x00004550) { return $null }
         switch ($reader.ReadUInt16()) {
             0x014c { return 'x86' }
             0x8664 { return 'x64' }
