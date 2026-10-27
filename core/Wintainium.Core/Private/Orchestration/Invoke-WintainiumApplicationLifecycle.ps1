@@ -145,6 +145,13 @@ function Invoke-WintainiumApplicationLifecycle {
                                 if($fallbackVerificationSuccessful){
                                     $decision.SelectedRelease=$fallbackRelease
                                     $decision.SelectedArtifact=$fallbackSelection.SelectedArtifact
+                                    if($null -ne $decision.TargetResolution){
+                                        $decision.TargetResolution.SelectedRelease=$fallbackRelease
+                                        $decision.TargetResolution.SelectedArtifact=$fallbackSelection.SelectedArtifact
+                                        $decision.TargetResolution.ReasonCode='TargetSelected'
+                                        $decision.TargetResolution.Reason='A known-compatible fallback artifact was selected after static architecture inspection could not establish the executable payload.'
+                                    }
+                                    $decision | Add-Member -NotePropertyName ArchitectureInspectionFallbackUsed -NotePropertyValue $true -Force
                                     return & $normalize $fallbackVerification $true
                                 }
                                 return & $normalize $fallbackVerification $false
