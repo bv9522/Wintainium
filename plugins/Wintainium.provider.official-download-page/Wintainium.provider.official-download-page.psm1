@@ -207,31 +207,75 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         }
     }
 
-    # SHA-256 claims may be printed as visible text on publisher pages rather than
-    # embedded in download metadata. A single claim is associated with the first
-    # supported artifact only when it appears before every supported artifact link
-    # in this release section (the common "Download SHA-256: ..." followed by the
-    # primary installer pattern). Multiple visible SHA-256 claims are ambiguous
-    # without explicit per-artifact labeling, so leave them unassociated rather
-    # than infer a checksum-to-artifact mapping from order alone.
-    $sha256Matches = [regex]::Matches(
-        $Body,
-        '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:Checksum|Hash)\s*)?[:=]?\s*([0-9a-f]{64})\b'
-    )
-    if ($sha256Matches.Count -eq 1) {
-        $firstArtifactLink = $null
-        foreach ($candidateLink in $links) {
-            $candidateHref = $candidateLink.Groups[1].Value
-            try { $candidateUri = [Uri]::new($BaseUri, $candidateHref) } catch { continue }
-            if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -ne 'unknown') {
-                $firstArtifactLink = $candidateLink
-                break
+    # SHA-256 checksums may be published inline before the primary download link
+    # and in a file/checksum table for alternate artifacts. First associate checksums
+    # only when the artifact filename appears in the same HTML table row or a tight
+    # surrounding fragment. Then allow a single unassociated checksum before the
+    # first supported artifact link to identify the primary download. Never associate
+    # remaining checksums by ordinal position alone.
+    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:Checksum|Hash)\s*)?[:=]?\s*([0-9a-f]{64})\b'
+    $sha256Matches = [regex]::Matches($Body, $sha256Pattern)
+    $associatedSha256 = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($artifact in $artifacts) {
+        $escapedFileName = [regex]::Escape([string]$artifact.FileName)
+        $fileMatches = [regex]::Matches($Body, "(?i)$escapedFileName")
+        foreach ($fileMatch in $fileMatches) {
+            # Prefer a containing HTML table row when present.
+            $rowStart = $Body.LastIndexOf('<tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
+            $rowEnd = $Body.IndexOf('</tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
+            if ($rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
+                $fragment = $Body.Substring($rowStart, [Math]::Min($rowEnd + 5 - $rowStart, 3000))
             }
+            else {
+                $fragmentStart = [Math]::Max(0, $fileMatch.Index - 240)
+                $fragmentLength = [Math]::Min($Body.Length - $fragmentStart, 700)
+                $fragment = $Body.Substring($fragmentStart, $fragmentLength)
+            }
+            $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
+            if ($rowHashes.Count -eq 1) {
+                $value = $rowHashes[0].Groups[1].Value.ToUpperInvariant()
+                $matchIndex = -1
+                for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
+                    if ($sha256Matches[$i].Groups[1].Value -ieq $value) {
+                        $matchIndex = $i
+                        break
+                    }
+                }
+                if ($matchIndex -ge 0 -and $associatedSha256.Add($matchIndex)) {
+                    $artifact.Hashes = @($artifact.Hashes) + [pscustomobject][ordered]@{
+                        Algorithm = 'SHA256'
+                        Value = $value
+                        Source = 'OfficialDownloadPageChecksum'
+                    }
+                }
+            }
+            if (@($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -gt 0) { break }
         }
-        if ($null -ne $firstArtifactLink -and $sha256Matches[0].Index -lt $firstArtifactLink.Index) {
+    }
+
+    # The primary download may have a checksum immediately before its link without
+    # repeating the filename. Associate that checksum only if exactly one unmatched
+    # SHA-256 appears before the first supported artifact link.
+    $firstArtifactLink = $null
+    foreach ($candidateLink in $links) {
+        $candidateHref = $candidateLink.Groups[1].Value
+        try { $candidateUri = [Uri]::new($BaseUri, $candidateHref) } catch { continue }
+        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -ne 'unknown') {
+            $firstArtifactLink = $candidateLink
+            break
+        }
+    }
+    if ($null -ne $firstArtifactLink) {
+        $leadingMatches = @($sha256Matches | Where-Object { $_.Index -lt $firstArtifactLink.Index })
+        $unmatchedLeading = @($leadingMatches | Where-Object {
+            $candidateHash = $_.Groups[1].Value
+            -not @($artifacts | ForEach-Object { $_.Hashes } | Where-Object { $_.Algorithm -eq 'SHA256' -and $_.Value -ieq $candidateHash }).Count
+        })
+        if ($unmatchedLeading.Count -eq 1 -and @($artifacts[0].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
+            $value = $unmatchedLeading[0].Groups[1].Value.ToUpperInvariant()
             $artifacts[0].Hashes = @($artifacts[0].Hashes) + [pscustomobject][ordered]@{
                 Algorithm = 'SHA256'
-                Value = $sha256Matches[0].Groups[1].Value.ToUpperInvariant()
+                Value = $value
                 Source = 'OfficialDownloadPageChecksum'
             }
         }
