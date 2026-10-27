@@ -2,6 +2,8 @@ $testRoot = Split-Path -Parent $PSScriptRoot
 $modulePath = Join-Path (Split-Path -Parent $testRoot) 'core/Wintainium.Core/Wintainium.Core.psd1'
 Import-Module $modulePath -Force
 
+Describe 'Wintainium static installer payload architecture inspection' {
+    It 'reads PE machine architecture without executing the executable' {
 function New-TestPortableExecutable {
     param(
         [Parameter(Mandatory)][string]$Path,
@@ -22,8 +24,6 @@ function New-TestPortableExecutable {
     [System.IO.File]::WriteAllBytes($Path, $bytes)
 }
 
-Describe 'Wintainium static installer payload architecture inspection' {
-    It 'reads PE machine architecture without executing the executable' {
         $x86 = Join-Path $TestDrive 'payload-x86.exe'
         $x64 = Join-Path $TestDrive 'payload-x64.exe'
         $arm64 = Join-Path $TestDrive 'payload-arm64.exe'
