@@ -232,8 +232,19 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                 $fragment = $Body.Substring($fragmentStart, $fragmentLength)
             }
             $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
+            if ($rowHashes.Count -eq 0 -and $rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
+                $headerStart = [Math]::Max(0, $rowStart - 1600)
+                $headerText = ConvertFrom-OfficialDownloadPageHtmlText $Body.Substring($headerStart, $rowStart - $headerStart)
+                if ($headerText -match '(?i)\bSHA\s*[- ]?\s*256\b') {
+                    $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
+                    if ($bareHashes.Count -eq 1) {
+                        $rowHashes = $bareHashes
+                    }
+                }
+            }
             if ($rowHashes.Count -eq 1) {
-                $value = $rowHashes[0].Groups[1].Value.ToUpperInvariant()
+                $value = $rowHashes[0].Groups[1].Success ? $rowHashes[0].Groups[1].Value : $rowHashes[0].Value
+                $value = $value.ToUpperInvariant()
                 $matchIndex = -1
                 for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
                     if ($sha256Matches[$i].Groups[1].Value -ieq $value) {
