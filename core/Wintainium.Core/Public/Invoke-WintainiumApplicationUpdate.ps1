@@ -41,6 +41,9 @@ Maximum installer execution time in milliseconds. The default is 600000.
 .PARAMETER AllowLegacyMd5Verification
 Explicitly authorizes reduced-assurance verification for an artifact with an official-download-page publisher-declared MD5 checksum. The downloaded file must match that checksum. This does not bypass missing metadata, unknown checksum sources, or mismatches. Prefer SHA-256 verification whenever available.
 
+.PARAMETER ArchitectureRiskDecision
+Specifies an operation-specific architecture-risk choice after checksum verification: None (default), AcceptRisk, or UseFallback. AcceptRisk does not bypass checksum verification or other safety checks. UseFallback excludes unknown-architecture executable candidates so Core can select a compatible alternative if available.
+
 .PARAMETER CancellationToken
 Optional cancellation token propagated through the update lifecycle.
 
