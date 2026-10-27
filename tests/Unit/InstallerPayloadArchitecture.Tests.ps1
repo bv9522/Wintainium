@@ -92,7 +92,7 @@ Describe 'Wintainium native static architecture evidence' {
     }
 }
 
-Describe 'Wintainium unknown-architecture EXE decision candidates' {
+Describe 'Wintainium unknown-architecture artifact decision candidates' {
     It 'allows a SHA256-backed unknown EXE to reach the explicit risk-decision step without an external inspector' {
         $manifest = [pscustomobject]@{
             artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
