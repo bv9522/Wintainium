@@ -207,6 +207,45 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         }
     }
 
+    # SHA-256 claims may be printed as visible text on publisher pages rather than
+    # embedded in download metadata. Prefer exact one-to-one ordering when the page
+    # exposes one checksum per artifact. If there is a single checksum, associate it
+    # only when it appears before the first supported artifact link in this release
+    # section (the common "Download SHA-256: ..." followed by the primary installer
+    # pattern). Never attach a lone checksum found after artifact links or guess among
+    # multiple artifacts.
+    $sha256Matches = [regex]::Matches(
+        $Body,
+        '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:Checksum|Hash)\s*)?[:=]?\s*([0-9a-f]{64})\b'
+    )
+    if ($sha256Matches.Count -eq $artifacts.Count) {
+        for ($artifactIndex = 0; $artifactIndex -lt $artifacts.Count; $artifactIndex++) {
+            $artifacts[$artifactIndex].Hashes = @($artifacts[$artifactIndex].Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $sha256Matches[$artifactIndex].Groups[1].Value.ToUpperInvariant()
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+    elseif ($sha256Matches.Count -eq 1) {
+        $firstArtifactLink = $null
+        foreach ($candidateLink in $links) {
+            $candidateHref = $candidateLink.Groups[1].Value
+            try { $candidateUri = [Uri]::new($BaseUri, $candidateHref) } catch { continue }
+            if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -ne 'unknown') {
+                $firstArtifactLink = $candidateLink
+                break
+            }
+        }
+        if ($null -ne $firstArtifactLink -and $sha256Matches[0].Index -lt $firstArtifactLink.Index) {
+            $artifacts[0].Hashes = @($artifacts[0].Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $sha256Matches[0].Groups[1].Value.ToUpperInvariant()
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+
     $releaseKey="$($BaseUri.Host.ToLowerInvariant())|$version|$($publishedAt)"
     $hash=[Security.Cryptography.SHA256]::Create()
     try {
