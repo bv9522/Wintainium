@@ -344,7 +344,10 @@ Describe 'Wintainium official download page provider release discovery' {
         $release.Version | Should -Be '1.21'
         @($release.Artifacts).Count | Should -Be 3
         @($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' }).Count | Should -Be 1
-        (@($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' })[0]).Architecture | Should -Be 'unknown'
+        $setupArtifact = (@($release.Artifacts | Where-Object { $_.FileName -eq 'Core-Temp-setup-v1.21.exe' })[0])
+        $setupArtifact.Architecture | Should -Be 'unknown'
+        @($setupArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
+        (@($setupArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]).Value | Should -Be 'FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6'
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' }).Count | Should -Be 1
         @($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp64.zip' }).Count | Should -Be 1
         (@($release.Artifacts | Where-Object { $_.FileName -eq 'CoreTemp32.zip' })[0]).Architecture | Should -Be 'x86'
