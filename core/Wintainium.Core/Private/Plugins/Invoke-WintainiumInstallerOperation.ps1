@@ -67,7 +67,24 @@ function Invoke-WintainiumInstallerOperation {
         $processSpecification = & $command -Invocation $Invocation
     }
     catch {
-        return & $failure 'InstallerInternalError' 'Installer plugin execution failed.'
+        $exception = $_.Exception
+        $exceptionType = if ($null -ne $exception) { $exception.GetType().Name } else { 'UnknownException' }
+        $exceptionMessage = if ($null -ne $exception) { [string]$exception.Message } else { '' }
+
+        # Keep diagnostics useful without exposing stack traces or unbounded/multiline exception data.
+        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, '[\\r\\n\\t\\x00-\\x1F]+', ' ').Trim()
+        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, '(?i)[A-Z]:\\Users\\[^\\\\\\s""'']+', '<user-profile>')
+        if ($exceptionMessage.Length -gt 500) {
+            $exceptionMessage = $exceptionMessage.Substring(0, 500)
+        }
+
+        $message = if ([string]::IsNullOrWhiteSpace($exceptionMessage)) {
+            "Installer plugin execution failed ($exceptionType); the plugin did not provide a diagnostic message."
+        }
+        else {
+            "Installer plugin execution failed ($exceptionType): $exceptionMessage"
+        }
+        return & $failure 'InstallerInternalError' $message
     }
 
     if ($null -eq $processSpecification -or @($processSpecification).Count -ne 1) {
