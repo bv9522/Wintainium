@@ -50,6 +50,42 @@ Describe 'Wintainium official download page provider release discovery' {
         $parseEvent.Context.ParsedArtifactCount | Should -Be 2
     }
 
+    It 'discovers SourceForge root-level files using the current version label' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+  <a href="/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download">PeaceSetup.exe</a>
+  <a href="/projects/peace-equalizer-apo-extension/files/Peace64.exe/download">Peace64.exe</a>
+  <h2>Version 1.6.9.11</h2>
+  <p>Released 2025-11-02</p>
+  <h2>Version 1.6.7.10</h2>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-peace-root-files'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '1.6.9.11'
+        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'PeaceSetup.exe').Count | Should -Be 1
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'Peace64.exe').Count | Should -Be 1
+    }
+
     It 'normalizes multiple dated release sections and their supported artifacts' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
