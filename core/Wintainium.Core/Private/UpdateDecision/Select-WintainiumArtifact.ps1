@@ -22,8 +22,7 @@ function Select-WintainiumArtifact {
         $inspectionCandidate = $false
         if ($reasonCode -eq 'ArchitectureNotPermitted' -and
             $observation.Architecture -eq 'unknown' -and
-            $observation.Format -eq 'exe' -and
-            (Test-WintainiumInstallerArchitectureInspectionAvailable)) {
+            $observation.Format -eq 'exe') {
             $artifactHashes = if ($artifact.PSObject.Properties['Hashes']) { $artifact.Hashes } else { $null }
             $hasSha256 = $false
             if ($artifactHashes -is [System.Collections.IDictionary]) {
@@ -42,7 +41,7 @@ function Select-WintainiumArtifact {
             if ($hasSha256 -and 'exe' -in $manifestFormats -and $targetArchitecture.Trim().ToLowerInvariant() -in $manifestArchitectures) {
                 $inspectionCandidate = $true
                 $reasonCode = 'ArchitectureInspectionRequired'
-                $reason = 'The unknown-architecture executable has SHA256 evidence and will be inspected after download verification.'
+                $reason = 'The unknown-architecture executable has SHA256 evidence and may be considered only after verification and an explicit architecture-risk decision.'
             }
         }
         if ($reasonCode -eq 'ArchitectureNotPermitted' -and $observation.Architecture -ne 'unknown') {
