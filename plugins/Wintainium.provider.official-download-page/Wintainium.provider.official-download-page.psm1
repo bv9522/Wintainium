@@ -680,7 +680,7 @@ function Invoke-WintainiumProviderSourceResolution {
     # This official AMD driver landing page is specifically for AMD Software,
     # not the vendor's many separately registered drivers and utilities.
     if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and
-        $sourceUri.AbsolutePath -match '(?i)^/en/support/downloads?/drivers(?:\.html)?(?:/.*)? {
+        $sourceUri.AbsolutePath -match '(?i)^/en/support/downloads?/drivers(?:\.html)?(?:/.*)?$') {
         $name='AMD Software'
     }
     # The official HandBrake downloads landing page has a stable product identity,
