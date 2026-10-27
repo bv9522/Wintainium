@@ -101,7 +101,7 @@ Describe 'Wintainium generic portable ZIP installer' {
 
         $processResult.Status | Should -Be 'Failed'
         $processResult.StandardError | Should -Match 'ZIP entry attempts to write outside destination'
-        Test-Path -LiteralPath (Join-Path $script:tempRoot 'outside-payload.txt') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $script:tempRoot 'outside-payload.txt') | Should -BeFalse
     }
 
     It 'fails when a configured entry point was not extracted' {
