@@ -464,7 +464,8 @@ public sealed partial class ApplicationDetailsWindow : Window
             DefaultButton = ContentDialogButton.Close
         };
         App.ApplyThemeToElement(dialog);
-        return await dialog.ShowAsync() switch
+        var result = await dialog.ShowAsync();
+        return result switch
         {
             ContentDialogResult.Primary => "AcceptRisk",
             ContentDialogResult.Secondary => "UseFallback",
