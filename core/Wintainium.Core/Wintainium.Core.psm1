@@ -14,7 +14,6 @@ Get-ChildItem -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Public') -Filter 
 
 Export-ModuleMember -Function @(
     'Get-WintainiumManifest'
-    'Get-WintainiumApplicationRegistryIdentityCandidates'
     'Get-WintainiumApplicationInstalledState'
     'Invoke-WintainiumApplicationReconciliation'
     'Set-WintainiumApplicationReconciliationSettings'
