@@ -174,3 +174,31 @@ Describe 'Wintainium provisional unknown EXE selection' {
     }
 
 }
+
+
+Describe 'Wintainium static inspector discovery' {
+    It 'finds the per-user WinGet link when the running process PATH is stale' {
+        $localAppData = Join-Path $TestDrive 'user-local-appdata'
+        $links = Join-Path $localAppData 'Microsoft\WinGet\Links'
+        New-Item -ItemType Directory -Path $links -Force | Out-Null
+        $inspector = Join-Path $links 'innoextract.exe'
+        [System.IO.File]::WriteAllText($inspector, 'test executable placeholder')
+
+        $originalLocalAppData = $env:LOCALAPPDATA
+        try {
+            $env:LOCALAPPDATA = $localAppData
+            $resolved = InModuleScope Wintainium.Core {
+                Mock Get-Command { $null } -ModuleName Wintainium.Core
+                Get-WintainiumInstallerArchitectureInspectorPath
+            }
+            $resolved | Should -Be $inspector
+            (InModuleScope Wintainium.Core {
+                Mock Get-Command { $null } -ModuleName Wintainium.Core
+                Test-WintainiumInstallerArchitectureInspectionAvailable
+            }) | Should -BeTrue
+        }
+        finally {
+            $env:LOCALAPPDATA = $originalLocalAppData
+        }
+    }
+}
