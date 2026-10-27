@@ -131,8 +131,8 @@ catch {
 "@
     # Portable applications may be installed under protected locations such as
     # Program Files. Run those extractions through a tracked elevated child
-    # process; the non-elevated parent waits for its exit code and captures both
-    # output streams through temporary files so Core receives the real result.
+    # process; the parent waits for its exit code and relays extraction errors
+    # from a temporary diagnostic file to Core.
     $protectedRoots = @(
         $env:ProgramFiles,
         [Environment]::GetEnvironmentVariable('ProgramFiles(x86)'),
