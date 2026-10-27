@@ -21,9 +21,7 @@ function Select-WintainiumArtifact {
         $reason = $observation.Reason
         $inspectionCandidate = $false
 
-        if ($reasonCode -eq 'ArchitectureNotPermitted' -and
-            $observation.Architecture -eq 'unknown' -and
-            $observation.Format -eq 'exe') {
+        if ($observation.Architecture -eq 'unknown') {
             $artifactHashes = if ($artifact.PSObject.Properties['Hashes']) { $artifact.Hashes } else { $null }
             $hasIntegrityHash = $false
 
@@ -48,10 +46,10 @@ function Select-WintainiumArtifact {
 
             $manifestFormats = @($Manifest.artifact.formats | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
             $manifestArchitectures = @($Manifest.artifact.architectures | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
-            if ($hasIntegrityHash -and 'exe' -in $manifestFormats -and $targetArchitecture.Trim().ToLowerInvariant() -in $manifestArchitectures) {
+            if ($hasIntegrityHash -and $observation.Format -in $manifestFormats -and $targetArchitecture.Trim().ToLowerInvariant() -in $manifestArchitectures) {
                 $inspectionCandidate = $true
                 $reasonCode = 'ArchitectureInspectionRequired'
-                $reason = 'The unknown-architecture executable has publisher checksum evidence and may be considered only after successful checksum verification and an explicit architecture-risk decision.'
+                $reason = 'The unknown-architecture artifact has publisher checksum evidence and may be considered only after successful checksum verification and an explicit architecture-risk decision.'
             }
         }
 
@@ -73,7 +71,7 @@ function Select-WintainiumArtifact {
         $index++
     }
 
-    $eligible = @($observations | Where-Object { $_.Eligible -or $_.ArchitectureInspectionCandidate })
+    $eligible = @($observations | Where-Object { ($_.Eligible -and $_.Architecture -ne 'unknown') -or $_.ArchitectureInspectionCandidate })
     $selected = $null
 
     if ($eligible.Count -gt 0) {
