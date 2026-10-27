@@ -118,7 +118,7 @@ function Invoke-WintainiumApplicationLifecycle {
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
                         $verification.FailureKind='ArchitectureRiskDecisionRequired'
-                        $verification.ErrorMessage=[string]$inspection.Reason
+                        $verification.ErrorMessage=("Architecture for artifact '{0}' remains unresolved. {1}" -f [string]$decision.SelectedArtifact.FileName,[string]$inspection.Reason)
                         $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
                         $verification | Add-Member -NotePropertyName ArchitectureRiskDecisionRequired -NotePropertyValue $true -Force
                         $verificationSuccessful=$false
