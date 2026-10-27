@@ -2,7 +2,8 @@ function Get-WintainiumWindowsExecutableVersion {
     [CmdletBinding()]
     param(
         [AllowNull()] [string]$InstallationLocation,
-        [AllowNull()] [string]$DisplayName
+        [AllowNull()] [string]$DisplayName,
+        [AllowNull()] [string]$RegistryVersion
     )
 
     if ([string]::IsNullOrWhiteSpace($InstallationLocation) -or
@@ -31,6 +32,16 @@ function Get-WintainiumWindowsExecutableVersion {
         $version = [string]$versionInfo.ProductVersion
         if ([string]::IsNullOrWhiteSpace($version)) { $version = [string]$versionInfo.FileVersion }
         if ([string]::IsNullOrWhiteSpace($version)) { return $null }
+
+        # Windows file resources sometimes append a fourth build/revision
+        # component while the publisher's release feed uses three components
+        # (for example, file 1.21.0.207 vs release 1.21.0). When the executable
+        # has exactly one more numeric component than the stale registry version,
+        # discard only that extra component so the values remain comparable.
+        if ($version -match '^\d+(?:\.\d+){3}$' -and
+            $RegistryVersion -match '^\d+(?:\.\d+){2}$') {
+            $version = ($version -split '\.')[0..2] -join '.'
+        }
         [pscustomobject][ordered]@{ Version=$version; Path=$executablePath }
     }
     catch {
@@ -102,7 +113,7 @@ function Invoke-WintainiumReconciliation {
         $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
         $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
         $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
-        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
+        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName) -RegistryVersion ([string]$candidate.DisplayVersion)
         if ($null -ne $executableVersion -and -not [string]::IsNullOrWhiteSpace([string]$executableVersion.Version)) {
             $version = [string]$executableVersion.Version
             $versionSource = 'ExecutableFileVersion'
