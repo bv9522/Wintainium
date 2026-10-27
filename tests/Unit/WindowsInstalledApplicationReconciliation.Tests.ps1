@@ -158,7 +158,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination $executablePath -Force
 
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Location=$installLocation } {
-            Get-WintainiumWindowsExecutableVersion -InstallationLocation $Location -DisplayName 'Core Temp 1.20.1'
+            Get-WintainiumWindowsExecutableVersion -InstallationLocation $Location -DisplayName 'Core Temp 1.20.1' -RegistryVersion '1.20.1'
         }
 
         $result | Should -Not -BeNullOrEmpty
@@ -173,10 +173,10 @@ Describe 'Windows installed-application reconciliation plugin' {
                 [pscustomobject]@{ IsSuccessful=$true; Candidates=@([pscustomobject]@{ Scope='machine'; View='64'; SubKey='CoreTemp'; DisplayName='Core Temp 1.20.1'; DisplayVersion='1.20.1'; InstallLocation='C:\Program Files\Core Temp' }); Errors=@() }
             }
             Mock -CommandName Get-WintainiumWindowsExecutableVersion -MockWith {
-                [pscustomobject]@{ Version='1.21.0.207'; Path='C:\Program Files\Core Temp\Core Temp.exe' }
+                [pscustomobject]@{ Version='1.21.0'; Path='C:\Program Files\Core Temp\Core Temp.exe' }
             }
             $result = Invoke-WintainiumReconciliation -Request $Request
-            $result.Evidence.Version | Should -Be '1.21.0.207'
+            $result.Evidence.Version | Should -Be '1.21.0'
             $result.Evidence.VersionSource | Should -Be 'ExecutableFileVersion'
             $result.Evidence.InstallationLocation | Should -Be 'C:\Program Files\Core Temp'
         }
