@@ -20,6 +20,7 @@ internal sealed class WintainiumApplicationUpdateService
         string? schemaPath = null,
         int installerTimeoutMilliseconds = 600_000,
         bool allowLegacyMd5Verification = false,
+        string architectureRiskDecision = "None",
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
@@ -36,6 +37,7 @@ internal sealed class WintainiumApplicationUpdateService
             schemaPath,
             installerTimeoutMilliseconds,
             allowLegacyMd5Verification,
+            architectureRiskDecision,
             cancellationToken).ConfigureAwait(false);
 
         var result = WintainiumCoreInvocationGuard.RequireSingleResult(
