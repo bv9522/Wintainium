@@ -208,26 +208,17 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     }
 
     # SHA-256 claims may be printed as visible text on publisher pages rather than
-    # embedded in download metadata. Prefer exact one-to-one ordering when the page
-    # exposes one checksum per artifact. If there is a single checksum, associate it
-    # only when it appears before the first supported artifact link in this release
-    # section (the common "Download SHA-256: ..." followed by the primary installer
-    # pattern). Never attach a lone checksum found after artifact links or guess among
-    # multiple artifacts.
+    # embedded in download metadata. A single claim is associated with the first
+    # supported artifact only when it appears before every supported artifact link
+    # in this release section (the common "Download SHA-256: ..." followed by the
+    # primary installer pattern). Multiple visible SHA-256 claims are ambiguous
+    # without explicit per-artifact labeling, so leave them unassociated rather
+    # than infer a checksum-to-artifact mapping from order alone.
     $sha256Matches = [regex]::Matches(
         $Body,
         '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:Checksum|Hash)\s*)?[:=]?\s*([0-9a-f]{64})\b'
     )
-    if ($sha256Matches.Count -eq $artifacts.Count) {
-        for ($artifactIndex = 0; $artifactIndex -lt $artifacts.Count; $artifactIndex++) {
-            $artifacts[$artifactIndex].Hashes = @($artifacts[$artifactIndex].Hashes) + [pscustomobject][ordered]@{
-                Algorithm = 'SHA256'
-                Value = $sha256Matches[$artifactIndex].Groups[1].Value.ToUpperInvariant()
-                Source = 'OfficialDownloadPageChecksum'
-            }
-        }
-    }
-    elseif ($sha256Matches.Count -eq 1) {
+    if ($sha256Matches.Count -eq 1) {
         $firstArtifactLink = $null
         foreach ($candidateLink in $links) {
             $candidateHref = $candidateLink.Groups[1].Value
