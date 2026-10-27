@@ -81,8 +81,8 @@ function Invoke-WintainiumDownloadArtifactCleanup {
     }
 
     $operationsRoot = Join-Path $root 'operations'
-    # Failed artifacts may be retained for troubleshooting. Cancelled artifacts
-    # are always removed, so only failed operations need a reserved retention slot.
+    # Failed and cancelled artifacts may be retained for troubleshooting, so both
+    # outcomes reserve a slot in the bounded operation-retention budget.
     $operationRetentionLimit = if ($Outcome -in @('Failed','Cancelled')) { [Math]::Max(1, $MaxRetainedOperations - 1) } else { $MaxRetainedOperations }
     $purgedOperations = [System.Collections.Generic.List[string]]::new()
     $purgedLegacyArtifacts = [System.Collections.Generic.List[string]]::new()
@@ -109,9 +109,8 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         # Maintenance failure is intentionally non-authoritative.
     }
 
-    # Failed artifacts are useful for troubleshooting, but retention is temporary
-    # and bounded so repeated failures cannot consume the user's disk. Cancelled
-    # artifacts are removed below rather than retained.
+    # Failed and cancelled artifacts are useful for troubleshooting, but retention is
+    # temporary and bounded so repeated operations cannot consume the user's disk.
     if (Test-Path -LiteralPath $operationsRoot -PathType Container) {
         $nowUtc = [DateTime]::UtcNow
         $cutoffUtc = $nowUtc.AddDays(-$RetentionDays)
@@ -196,7 +195,7 @@ function Invoke-WintainiumDownloadArtifactCleanup {
         }
     }
 
-    if ($Outcome -eq 'Failed') {
+    if ($Outcome -in @('Failed','Cancelled')) {
         $artifactExists = Test-Path -LiteralPath $destination
         $metadataPath = $null
         $metadataWritten = $false
