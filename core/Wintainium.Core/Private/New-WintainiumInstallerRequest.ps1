@@ -3,7 +3,8 @@ function New-WintainiumInstallerRequest {
     param(
         [Parameter(Mandatory)] [psobject]$DownloadResult,
         [Parameter(Mandatory)] [psobject]$Manifest,
-        [string]$OperationId
+        [string]$OperationId,
+        [AllowNull()] [psobject]$InstalledState
     )
 
     $validation = Test-WintainiumInstallerInput -DownloadResult $DownloadResult -Manifest $Manifest
@@ -27,6 +28,7 @@ function New-WintainiumInstallerRequest {
             OperationId = $resolvedOperationId
             DownloadOperationId = $DownloadResult.OperationId
             Manifest = $Manifest
+            InstalledState = $InstalledState
             Installer = $Manifest.Installer
             Artifact = [pscustomobject][ordered]@{ Uri=$DownloadResult.Uri; FileName=$DownloadResult.FileName; Path=$DownloadResult.DestinationPath }
         }
