@@ -72,8 +72,8 @@ function Invoke-WintainiumInstallerOperation {
         $exceptionMessage = if ($null -ne $exception) { [string]$exception.Message } else { '' }
 
         # Keep diagnostics useful without exposing stack traces or unbounded/multiline exception data.
-        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, '[\\r\\n\\t\\x00-\\x1F]+', ' ').Trim()
-        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, '(?i)[A-Z]:\\Users\\[^\\\\\\s""'']+', '<user-profile>')
+        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, '[\r\n\t\x00-\x1F]+', ' ').Trim()
+        $exceptionMessage = [System.Text.RegularExpressions.Regex]::Replace($exceptionMessage, "(?i)[A-Z]:\\Users\\[^\\\s]+", '<user-profile>')
         if ($exceptionMessage.Length -gt 500) {
             $exceptionMessage = $exceptionMessage.Substring(0, 500)
         }
