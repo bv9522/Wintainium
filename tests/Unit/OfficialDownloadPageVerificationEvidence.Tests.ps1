@@ -119,6 +119,30 @@ Describe 'Official download page verification evidence discovery' {
         $artifacts[2].Hashes.Count | Should -Be 0
     }
 
+    It 'does not infer SHA256 associations from checksum order when multiple claims are visible' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Download App 1.0.0</h2>
+<p>SHA-256: FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6</p>
+<p>SHA-256: 0859C524B8A63551848F0C246ABDDCB1D0B7B656B0FBFE879F8D85E61A9E6EDD</p>
+<a href="https://downloads.example.com/app.exe">Installer</a>
+<a href="https://downloads.example.com/app.zip">Portable</a>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        @($result.Releases[0].Artifacts)[0].Hashes.Count | Should -Be 0
+        @($result.Releases[0].Artifacts)[1].Hashes.Count | Should -Be 0
+    }
+
     It 'does not guess the target artifact for a lone SHA256 checksum appearing after download links' {
         Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
             [pscustomobject]@{
