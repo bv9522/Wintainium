@@ -230,13 +230,12 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                 $fragment = $Body.Substring($rowStart, [Math]::Min($rowEnd + 5 - $rowStart, 3000))
                 $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
                 if ($rowHashes.Count -eq 0) {
-                    $headerStart = [Math]::Max(0, $rowStart - 1600)
-                    $headerText = ConvertFrom-OfficialDownloadPageHtmlText $Body.Substring($headerStart, $rowStart - $headerStart)
-                    if ($headerText -match '(?i)\bSHA\s*[- ]?\s*256\b') {
-                        $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
-                        if ($bareHashes.Count -eq 1) {
-                            $rowHashes = $bareHashes
-                        }
+                    # A checksum table often labels the column in its header and
+                    # places only the digest in each data row. The same-row filename
+                    # plus exactly one 64-hex digest is sufficient to associate it.
+                    $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
+                    if ($bareHashes.Count -eq 1) {
+                        $rowHashes = $bareHashes
                     }
                 }
             }
