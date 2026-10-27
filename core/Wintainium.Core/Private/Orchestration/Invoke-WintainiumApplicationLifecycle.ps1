@@ -10,6 +10,7 @@ function Invoke-WintainiumApplicationLifecycle {
         [ValidateRange(1, 2147483647)] [int]$InstallerTimeoutMilliseconds = 600000,
         [ValidateSet('Update','Install')] [string]$OperationKind = 'Update',
         [bool]$AllowLegacyMd5Verification = $false,
+        [ValidateSet('None','AcceptRisk','UseFallback')][string]$ArchitectureRiskDecision = 'None',
         [System.Net.Http.HttpClient]$HttpClient,
         [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
@@ -49,7 +50,7 @@ function Invoke-WintainiumApplicationLifecycle {
         switch([string]$stage.Name){
             'ManifestValidation' { $result=[pscustomobject][ordered]@{ManifestPath=$request.ManifestPath;PluginRoot=$PluginRoot;SchemaPath=$SchemaPath;OperationId=[string]$request.OperationId};$executor={param($StageInput,$CancellationToken);$normalize={param($value,[bool]$successful);if($null -eq $value){return [pscustomobject][ordered]@{IsSuccessful=$successful}};$copy=[ordered]@{};foreach($property in $value.PSObject.Properties){$copy[$property.Name]=$property.Value};$copy['IsSuccessful']=$successful;[pscustomobject]$copy};$validation=Test-WintainiumApplicationDefinition -ManifestPath $StageInput.ManifestPath -PluginRoot $StageInput.PluginRoot -SchemaPath $StageInput.SchemaPath -OperationId $StageInput.OperationId;& $normalize $validation ([bool]$validation.IsValid)} }
             'ReleaseDiscovery' { $validation=& $getResult 'ManifestValidation';$result=[pscustomobject][ordered]@{Validation=$validation;OperationId=[string]$request.OperationId};$executor={param($StageInput,$CancellationToken);$normalize={param($value,[bool]$successful);if($null -eq $value){return [pscustomobject][ordered]@{IsSuccessful=$successful}};$copy=[ordered]@{};foreach($property in $value.PSObject.Properties){$copy[$property.Name]=$property.Value};$copy['IsSuccessful']=$successful;[pscustomobject]$copy};$validation=$StageInput.Validation;if($null -eq $validation -or -not [bool]$validation.IsSuccessful){return [pscustomobject][ordered]@{OperationId=$StageInput.OperationId;IsSuccessful=$false;Status='Blocked';FailureKind='ManifestValidationRequired';Errors=@($validation.Errors)}};$manifest=$validation.Manifest;$provider=$validation.ProviderPlugin;$providerSettings=@{};if($manifest.Source.settings -is [System.Collections.IDictionary]){foreach($settingName in $manifest.Source.settings.Keys){$providerSettings[[string]$settingName]=$manifest.Source.settings[$settingName]}};if($OperationKind -eq 'Install' -and [string]$provider.PluginId -eq 'Wintainium.provider.github-releases' -and -not $providerSettings.ContainsKey('maxPages')){$providerSettings['maxPages']=1};$providerRequest=[pscustomobject][ordered]@{OperationId=$StageInput.OperationId;ApplicationId=[string]$manifest.Id;ProviderId=[string]$provider.PluginId;RequiredContractVersion=[string]$manifest.Source.requiredContractVersion;Settings=$providerSettings;DiscoveryContext=[pscustomobject][ordered]@{ReleaseChannel=[string]$manifest.Release.channel;ArtifactFormats=@($manifest.Artifact.formats);Architectures=@($manifest.Artifact.architectures);AllowUnknownArchitecture=[bool]$manifest.Artifact.allowUnknownArchitecture}};$providerResult=Invoke-WintainiumProviderOperation -Provider $provider -Request $providerRequest;& $normalize $providerResult ([bool]$providerResult.IsSuccessful)} }
-            'UpdateDecision' { $validation=& $getResult 'ManifestValidation';$release=& $getResult 'ReleaseDiscovery';$result=[pscustomobject][ordered]@{Validation=$validation;Release=$release;StateRoot=$StateRoot;MachineArchitecture=$MachineArchitecture;Environment=$environment;OperationId=[string]$request.OperationId};$executor={param($StageInput,$CancellationToken);$normalize={param($value,[bool]$successful);if($null -eq $value){return [pscustomobject][ordered]@{IsSuccessful=$successful}};$copy=[ordered]@{};foreach($property in $value.PSObject.Properties){$copy[$property.Name]=$property.Value};$copy['IsSuccessful']=$successful;[pscustomobject]$copy};$validation=$StageInput.Validation;$release=$StageInput.Release;if($null -eq $release -or -not [bool]$release.IsSuccessful){return [pscustomobject][ordered]@{OperationId=$StageInput.OperationId;IsSuccessful=$false;Status='ProviderDiscoveryUnsuccessful';Errors=if($null -ne $release){@($release.Errors)}else{@()};Warnings=if($null -ne $release){@($release.Warnings)}else{@()};LogEvents=if($null -ne $release){@($release.LogEvents)}else{@()}}};$manifest=$validation.Manifest;$installedState=Get-WintainiumInstalledApplicationState -StateRoot $StageInput.StateRoot -ApplicationId ([string]$manifest.Id);$providerResult=[pscustomobject][ordered]@{IsSuccessful=$true;Status=$release.Status;Releases=@($release.Releases);Errors=@($release.Errors);Warnings=@($release.Warnings);LogEvents=@($release.LogEvents)};if ($OperationKind -eq 'Install') {
+            'UpdateDecision' { $validation=& $getResult 'ManifestValidation';$release=& $getResult 'ReleaseDiscovery';$result=[pscustomobject][ordered]@{Validation=$validation;Release=$release;StateRoot=$StateRoot;MachineArchitecture=$MachineArchitecture;Environment=$environment;OperationId=[string]$request.OperationId};$executor={param($StageInput,$CancellationToken);$normalize={param($value,[bool]$successful);if($null -eq $value){return [pscustomobject][ordered]@{IsSuccessful=$successful}};$copy=[ordered]@{};foreach($property in $value.PSObject.Properties){$copy[$property.Name]=$property.Value};$copy['IsSuccessful']=$successful;[pscustomobject]$copy};$validation=$StageInput.Validation;$release=$StageInput.Release;if($null -eq $release -or -not [bool]$release.IsSuccessful){return [pscustomobject][ordered]@{OperationId=$StageInput.OperationId;IsSuccessful=$false;Status='ProviderDiscoveryUnsuccessful';Errors=if($null -ne $release){@($release.Errors)}else{@()};Warnings=if($null -ne $release){@($release.Warnings)}else{@()};LogEvents=if($null -ne $release){@($release.LogEvents)}else{@()}}};$manifest=$validation.Manifest;$installedState=Get-WintainiumInstalledApplicationState -StateRoot $StageInput.StateRoot -ApplicationId ([string]$manifest.Id);$decisionReleases=@($release.Releases);if($ArchitectureRiskDecision -eq 'UseFallback'){$decisionReleases=@($release.Releases | ForEach-Object {$r=$_;$props=[ordered]@{};foreach($p in $r.PSObject.Properties){$props[$p.Name]=$p.Value};$props['Artifacts']=@($r.Artifacts | Where-Object {-not ([string]$_.Format -eq 'exe' -and [string]$_.Architecture -eq 'unknown')});[pscustomobject]$props})};$providerResult=[pscustomobject][ordered]@{IsSuccessful=$true;Status=$release.Status;Releases=$decisionReleases;Errors=@($release.Errors);Warnings=@($release.Warnings);LogEvents=@($release.LogEvents)};if ($OperationKind -eq 'Install') {
                 $decision=Get-WintainiumApplicationInstallDecision -Manifest $manifest -InstalledState $installedState -ProviderResult $providerResult -MachineArchitecture $StageInput.MachineArchitecture -Environment $StageInput.Environment
             }
             else {
@@ -92,77 +93,34 @@ function Invoke-WintainiumApplicationLifecycle {
                     $verificationSuccessful=if($null -ne $verification -and $verification.PSObject.Properties['IsSuccessful']){[bool]$verification.IsSuccessful}else{[string]$verification.Status -eq 'Verified'}
 
                     if($verificationSuccessful -and $decision.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] -and [bool]$decision.SelectedArtifact.ArchitectureInspectionRequired){
-                        $inspection=Resolve-WintainiumInstallerPayloadArchitecture -DownloadResult $StageInput.Download -SelectedArtifact $decision.SelectedArtifact -VerificationResult $verification -MachineArchitecture $StageInput.MachineArchitecture
-                        if($inspection.IsSuccessful){
-                            $decision.SelectedArtifact.Architecture=[string]$inspection.ResolvedArchitecture
-                            $eligibility=Test-WintainiumArtifactEligibility -Artifact $decision.SelectedArtifact -Manifest $StageInput.Manifest -MachineArchitecture $StageInput.MachineArchitecture
-                            if(-not $eligibility.Eligible){
-                                $inspection=[pscustomobject][ordered]@{IsSuccessful=$false;Status='Unresolved';ReasonCode=$eligibility.ReasonCode;Reason=$eligibility.Reason;PayloadArchitectures=@($inspection.PayloadArchitectures);ResolvedArchitecture=$null;Inspector=$inspection.Inspector}
-                            }
-                        }
-
-                        if($inspection.IsSuccessful){
+                        if($ArchitectureRiskDecision -eq 'AcceptRisk'){
                             $decision.SelectedArtifact.PSObject.Properties.Remove('ArchitectureInspectionRequired')
-                            $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
+                            $verification | Add-Member -NotePropertyName ArchitectureRiskAccepted -NotePropertyValue $true -Force
+                            $verification | Add-Member -NotePropertyName ArchitectureRiskDecision -NotePropertyValue 'AcceptRisk' -Force
+                            $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue ([pscustomobject][ordered]@{
+                                IsSuccessful=$false; Status='Unresolved'; ReasonCode='ArchitectureRiskAccepted'
+                                Reason='The user explicitly accepted unresolved payload architecture after successful SHA256 verification.'
+                                PayloadArchitectures=@(); ResolvedArchitecture=$null; Inspector='native-pe-header'
+                            }) -Force
                             return & $normalize $verification $true
                         }
 
-                        # If static inspection cannot establish compatibility, try a known-architecture
-                        # artifact from the same release. The unknown EXE is never sent to the installer.
-                        $fallbackArtifacts=@($decision.SelectedRelease.Artifacts | Where-Object {
-                            [string]$_.Uri -ne [string]$decision.SelectedArtifact.Uri -and
-                            -not ([string]$_.Format -eq 'exe' -and [string]$_.Architecture -eq 'unknown')
-                        })
-                        $fallbackSelection=$null
-                        if($fallbackArtifacts.Count -gt 0){
-                            $releaseProperties=[ordered]@{}
-                            foreach($property in $decision.SelectedRelease.PSObject.Properties){$releaseProperties[$property.Name]=$property.Value}
-                            $releaseProperties['Artifacts']=$fallbackArtifacts
-                            $fallbackRelease=[pscustomobject]$releaseProperties
-                            $fallbackSelection=Select-WintainiumArtifact -Release $fallbackRelease -Manifest $StageInput.Manifest -MachineArchitecture $StageInput.MachineArchitecture
-                        }
-
-                        if($null -ne $fallbackSelection -and $null -ne $fallbackSelection.SelectedArtifact){
-                            $decisionProperties=[ordered]@{}
-                            foreach($property in $decision.PSObject.Properties){$decisionProperties[$property.Name]=$property.Value}
-                            $decisionProperties['SelectedRelease']=$fallbackRelease
-                            $decisionProperties['SelectedArtifact']=$fallbackSelection.SelectedArtifact
-                            $fallbackDecision=[pscustomobject]$decisionProperties
-                            $fallbackRequest=New-WintainiumDownloadRequest -UpdateDecision $fallbackDecision -OperationId $StageInput.OperationId
-                            $fallbackDownloadParameters=@{DownloadRequest=$fallbackRequest;DownloadRoot=$StageInput.DownloadRoot;CancellationToken=$CancellationToken}
-                            if($null -ne $StageInput.HttpClient){$fallbackDownloadParameters.HttpClient=$StageInput.HttpClient}
-                            $fallbackDownload=Invoke-WintainiumDownload @fallbackDownloadParameters
-                            $StageInput.Download | Add-Member -NotePropertyName FallbackDownloadResult -NotePropertyValue $fallbackDownload -Force
-
-                            if($null -ne $fallbackDownload -and [string]$fallbackDownload.Status -eq 'Downloaded'){
-                                $fallbackVerificationParameters=@{DownloadResult=$fallbackDownload;SelectedArtifact=$fallbackSelection.SelectedArtifact;OperationId=$StageInput.OperationId}
-                                if($AllowLegacyMd5Verification){$fallbackVerificationParameters.AllowLegacyMd5Verification=$true}
-                                $fallbackVerification=Invoke-WintainiumArtifactVerification @fallbackVerificationParameters
-                                $fallbackVerificationSuccessful=if($null -ne $fallbackVerification -and $fallbackVerification.PSObject.Properties['IsSuccessful']){[bool]$fallbackVerification.IsSuccessful}else{[string]$fallbackVerification.Status -eq 'Verified'}
-                                $fallbackVerification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
-                                $fallbackVerification | Add-Member -NotePropertyName ArchitectureInspectionFallbackUsed -NotePropertyValue $true -Force
-                                $fallbackVerification | Add-Member -NotePropertyName FallbackDownloadResult -NotePropertyValue $fallbackDownload -Force
-                                if($fallbackVerificationSuccessful){
-                                    $decision.SelectedRelease=$fallbackRelease
-                                    $decision.SelectedArtifact=$fallbackSelection.SelectedArtifact
-                                    if($null -ne $decision.TargetResolution){
-                                        $decision.TargetResolution.SelectedRelease=$fallbackRelease
-                                        $decision.TargetResolution.SelectedArtifact=$fallbackSelection.SelectedArtifact
-                                        $decision.TargetResolution.ReasonCode='TargetSelected'
-                                        $decision.TargetResolution.Reason='A known-compatible fallback artifact was selected after static architecture inspection could not establish the executable payload.'
-                                    }
-                                    $decision | Add-Member -NotePropertyName ArchitectureInspectionFallbackUsed -NotePropertyValue $true -Force
-                                    return & $normalize $fallbackVerification $true
-                                }
-                                return & $normalize $fallbackVerification $false
-                            }
+                        $inspection=Resolve-WintainiumInstallerPayloadArchitecture -DownloadResult $StageInput.Download -SelectedArtifact $decision.SelectedArtifact -VerificationResult $verification -MachineArchitecture $StageInput.MachineArchitecture
+                        if($ArchitectureRiskDecision -eq 'UseFallback'){
+                            $verification.Status='Failed'
+                            $verification.IsSuccessful=$false
+                            $verification.FailureKind='ArchitectureFallbackUnavailable'
+                            $verification.ErrorMessage='The selected release did not provide a known-compatible fallback artifact with acceptable verification evidence.'
+                            $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
+                            return & $normalize $verification $false
                         }
 
                         $verification.Status='Failed'
                         $verification.IsSuccessful=$false
-                        $verification.FailureKind='ArchitectureInspectionUnresolved'
+                        $verification.FailureKind='ArchitectureRiskDecisionRequired'
                         $verification.ErrorMessage=[string]$inspection.Reason
                         $verification | Add-Member -NotePropertyName ArchitectureInspection -NotePropertyValue $inspection -Force
+                        $verification | Add-Member -NotePropertyName ArchitectureRiskDecisionRequired -NotePropertyValue $true -Force
                         $verificationSuccessful=$false
                     }
 
