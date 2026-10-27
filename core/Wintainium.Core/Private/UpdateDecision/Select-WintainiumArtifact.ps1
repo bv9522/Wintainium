@@ -19,6 +19,73 @@ function Select-WintainiumArtifact {
         $observation = Test-WintainiumArtifactEligibility -Artifact $artifact -Manifest $Manifest -MachineArchitecture $targetArchitecture
         $reasonCode = $observation.ReasonCode
         $reason = $observation.Reason
+        $inspectionCandidate = $false
+        if ($reasonCode -eq 'ArchitectureNotPermitted' -and
+            $observation.Architecture -eq 'unknown' -and
+            $observation.Format -eq 'exe' -and
+            (Test-WintainiumInstallerArchitectureInspectionAvailable)) {
+            $artifactHashes = if ($artifact.PSObject.Properties['Hashes']) { $artifact.Hashes } else { $null }
+            $hasSha256 = $false
+            if ($artifactHashes -is [System.Collections.IDictionary]) {
+                $hasSha256 = @($artifactHashes.Keys | Where-Object { [string]$_ -ieq 'SHA256' }).Count -gt 0
+            } else {
+                $hasSha256 = @($artifactHashes | Where-Object {
+                    $null -ne $_ -and $_.PSObject.Properties['Algorithm'] -and [string]$_.Algorithm -ieq 'SHA256' -and
+                    $_.PSObject.Properties['Value'] -and [string]$_.Value -match '^[0-9A-Fa-f]{64}
+        $index++
+    }
+
+    $eligible = @($observations | Where-Object { $_.Eligible -or $_.ArchitectureInspectionCandidate })
+    $selected = $null
+
+    if ($eligible.Count -gt 0) {
+        $formats = @($Manifest.artifact.formats | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
+        $machine = $targetArchitecture.Trim().ToLowerInvariant()
+
+        $ranked = foreach ($item in $eligible) {
+            $architectureRank = if ($item.ArchitectureInspectionCandidate) { -1 } else {
+                switch ($item.Architecture) {
+                    $machine { 0 }
+                    'neutral' { 1 }
+                    'unknown' { 2 }
+                    default { 3 }
+                }
+            }
+            $formatRank = [array]::IndexOf($formats, $item.Format)
+            if ($formatRank -lt 0) { $formatRank = [int]::MaxValue }
+
+            [pscustomobject]@{
+                Item = $item
+                ArchitectureRank = $architectureRank
+                FormatRank = $formatRank
+                InputOrder = $item.InputOrder
+            }
+        }
+
+        $selectedObservation = ($ranked | Sort-Object ArchitectureRank, FormatRank, InputOrder | Select-Object -First 1).Item
+        $selected = $selectedObservation.Artifact
+        if ($selectedObservation.ArchitectureInspectionCandidate) {
+            $selected | Add-Member -NotePropertyName ArchitectureInspectionRequired -NotePropertyValue $true -Force
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        SelectedArtifact = $selected
+        Observations = @($observations)
+        IsDeterministic = $true
+    }
+}
+
+                }).Count -gt 0
+            }
+            $manifestFormats = @($Manifest.artifact.formats | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
+            $manifestArchitectures = @($Manifest.artifact.architectures | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
+            if ($hasSha256 -and 'exe' -in $manifestFormats -and $targetArchitecture.Trim().ToLowerInvariant() -in $manifestArchitectures) {
+                $inspectionCandidate = $true
+                $reasonCode = 'ArchitectureInspectionRequired'
+                $reason = 'The unknown-architecture executable has SHA256 evidence and will be inspected after download verification.'
+            }
+        }
         if ($reasonCode -eq 'ArchitectureNotPermitted' -and $observation.Architecture -ne 'unknown') {
             $reasonCode = 'ArchitectureIncompatible'
             $reason = 'Artifact architecture is incompatible with the target machine.'
@@ -27,6 +94,7 @@ function Select-WintainiumArtifact {
         $observations.Add([pscustomobject][ordered]@{
             Artifact = $observation.Artifact
             Eligible = $observation.Eligible
+            ArchitectureInspectionCandidate = $inspectionCandidate
             ReasonCode = $reasonCode
             Reason = $reason
             Format = $observation.Format
