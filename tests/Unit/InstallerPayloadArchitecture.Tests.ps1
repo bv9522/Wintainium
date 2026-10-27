@@ -3,7 +3,7 @@ $modulePath = Join-Path (Split-Path -Parent $testRoot) 'core/Wintainium.Core/Win
 Import-Module $modulePath -Force
 
 BeforeAll {
-function New-TestPortableExecutable {
+function script:New-TestPortableExecutable {
     param(
         [Parameter(Mandatory)][string]$Path,
         [Parameter(Mandatory)][ValidateSet('x86','x64','arm64')][string]$Architecture
