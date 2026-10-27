@@ -319,6 +319,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 _ => RuntimeInformation.OSArchitecture.ToString()
             };
 
+            var legacyMd5Authorized = false;
             var result = await _installService.ExecuteAsync(
                 _application.ManifestPath,
                 WintainiumDesktopPaths.InstalledStateRoot,
@@ -329,6 +330,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             if (CanOfferLegacyMd5Authorization(result) &&
                 await ConfirmLegacyMd5VerificationAsync("Install"))
             {
+                legacyMd5Authorized = true;
                 UpdateResultStatusText.Text = "Retrying installation with explicitly authorized legacy MD5 verification…";
                 result = await _installService.ExecuteAsync(
                     _application.ManifestPath,
@@ -337,6 +339,27 @@ public sealed partial class ApplicationDetailsWindow : Window
                     WintainiumDesktopPaths.DownloadRoot,
                     allowLegacyMd5Verification: true,
                     cancellationToken: _operationCancellation.Token);
+            }
+
+            if (CanOfferArchitectureRiskDecision(result))
+            {
+                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync(
+                    "Install",
+                    result.Errors.First(error => string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase)).Message ?? string.Empty);
+                if (architectureDecision is not null)
+                {
+                    UpdateResultStatusText.Text = architectureDecision == "AcceptRisk"
+                        ? "Retrying installation after explicit architecture-risk acceptance…"
+                        : "Retrying installation with a compatible fallback artifact…";
+                    result = await _installService.ExecuteAsync(
+                        _application.ManifestPath,
+                        WintainiumDesktopPaths.InstalledStateRoot,
+                        machineArchitecture,
+                        WintainiumDesktopPaths.DownloadRoot,
+                        allowLegacyMd5Verification: legacyMd5Authorized,
+                        architectureRiskDecision: architectureDecision,
+                        cancellationToken: _operationCancellation.Token);
+                }
             }
 
             OperationStateText.Text = result.OperationState.ToString();
@@ -428,6 +451,27 @@ public sealed partial class ApplicationDetailsWindow : Window
             string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase) &&
             error.Message?.Contains("publisher-declared MD5 checksum from the official download page is available", StringComparison.OrdinalIgnoreCase) == true);
 
+    private async Task<string?> ConfirmArchitectureRiskDecisionAsync(string operation, string details)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "Application architecture could not be verified",
+            Content = $"Wintainium has verified the downloaded file's SHA256 checksum, but it cannot establish the architecture of the application payload in this executable. {details} This is separate from file-integrity verification. Accepting this risk does not bypass checksum verification or any other safety check. You can accept the uncertainty for this {operation.ToLowerInvariant()} or use a known-compatible fallback if one is available.",
+            PrimaryButtonText = "Accept the risk and download",
+            SecondaryButtonText = "Use fallback",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close
+        };
+        App.ApplyThemeToElement(dialog);
+        return await dialog.ShowAsync() switch
+        {
+            ContentDialogResult.Primary => "AcceptRisk",
+            ContentDialogResult.Secondary => "UseFallback",
+            _ => null
+        };
+    }
+
     private async Task<bool> ConfirmLegacyMd5VerificationAsync(string operation)
     {
         var dialog = new ContentDialog
@@ -442,6 +486,16 @@ public sealed partial class ApplicationDetailsWindow : Window
         App.ApplyThemeToElement(dialog);
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
+    private static bool CanOfferArchitectureRiskDecision(WintainiumApplicationInstallResult result) =>
+        result.OperationState == WintainiumOperationState.Failed &&
+        result.Errors.Any(error =>
+            string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase));
+
+    private static bool CanOfferArchitectureRiskDecision(WintainiumApplicationUpdateResult result) =>
+        result.OperationState == WintainiumOperationState.Failed &&
+        result.Errors.Any(error =>
+            string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase));
+
     private async Task<bool> ConfirmInstallOrUpdateAsync(string operation)
     {
         if (!App.Settings.Current.ConfirmBeforeInstallOrUpdate)
@@ -647,6 +701,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 _ => RuntimeInformation.OSArchitecture.ToString()
             };
 
+            var legacyMd5Authorized = false;
             var result = await _updateService.ExecuteAsync(
                 _application.ManifestPath,
                 WintainiumDesktopPaths.InstalledStateRoot,
@@ -657,6 +712,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             if (CanOfferLegacyMd5Authorization(result) &&
                 await ConfirmLegacyMd5VerificationAsync("Update"))
             {
+                legacyMd5Authorized = true;
                 UpdateResultStatusText.Text = "Retrying update with explicitly authorized legacy MD5 verification…";
                 result = await _updateService.ExecuteAsync(
                     _application.ManifestPath,
@@ -665,6 +721,27 @@ public sealed partial class ApplicationDetailsWindow : Window
                     WintainiumDesktopPaths.DownloadRoot,
                     allowLegacyMd5Verification: true,
                     cancellationToken: _operationCancellation.Token);
+            }
+
+            if (CanOfferArchitectureRiskDecision(result))
+            {
+                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync(
+                    "Update",
+                    result.Errors.First(error => string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase)).Message ?? string.Empty);
+                if (architectureDecision is not null)
+                {
+                    UpdateResultStatusText.Text = architectureDecision == "AcceptRisk"
+                        ? "Retrying update after explicit architecture-risk acceptance…"
+                        : "Retrying update with a compatible fallback artifact…";
+                    result = await _updateService.ExecuteAsync(
+                        _application.ManifestPath,
+                        WintainiumDesktopPaths.InstalledStateRoot,
+                        machineArchitecture,
+                        WintainiumDesktopPaths.DownloadRoot,
+                        allowLegacyMd5Verification: legacyMd5Authorized,
+                        architectureRiskDecision: architectureDecision,
+                        cancellationToken: _operationCancellation.Token);
+                }
             }
 
             _lastUpdateResult = result;
