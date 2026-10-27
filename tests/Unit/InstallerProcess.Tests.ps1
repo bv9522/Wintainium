@@ -58,6 +58,15 @@ Describe 'Wintainium installer process lifecycle' {
         $result.Status | Should -Be 'Completed'
         $result.StandardOutput | Should -Match 'controlled-value'
     }
+    It 'classifies the elevation-denied exit code distinctly' {
+        $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
+            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','exit 1223') -TimeoutMilliseconds 10000
+        }
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'ElevationDenied'
+        $result.ExitCode | Should -Be 1223
+        $result.ErrorMessage | Should -Match 'elevation prompt was cancelled or denied'
+    }
     It 'returns Timeout when the process exceeds the lifecycle limit' {
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
             Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -TimeoutMilliseconds 100

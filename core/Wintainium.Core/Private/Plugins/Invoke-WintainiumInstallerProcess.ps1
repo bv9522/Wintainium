@@ -209,6 +209,9 @@ function Invoke-WintainiumInstallerProcess {
         if ($timedOut) {
             return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Timeout'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage="The installer process exceeded the $TimeoutMilliseconds millisecond timeout." }
         }
+        if ($process.ExitCode -eq 1223) {
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ElevationDenied'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage='The Windows elevation prompt was cancelled or denied.' }
+        }
         if ($process.ExitCode -ne 0) {
             return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage="The installer process exited with code $($process.ExitCode)." }
         }
