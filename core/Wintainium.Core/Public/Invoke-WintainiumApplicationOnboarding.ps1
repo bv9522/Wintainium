@@ -165,6 +165,38 @@ function Invoke-WintainiumApplicationOnboarding {
         & $addStage 4 'DefinitionNormalization' 'Failed' $false $normalizationCode $normalizationReason
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=[string]$normalization.Status;SourceResolution=$sourceResolution;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
+    # Re-onboarding the same application refreshes source-derived metadata, but must
+    # not reset user-confirmed reconciliation identity rules to the default policy.
+    # Preserve those settings only when the existing and newly resolved definitions
+    # still declare the same reconciliation plugin and contract.
+    $existingManifestPath = Join-Path -Path $ManifestRoot -ChildPath ("$([string]$normalization.ApplicationDefinition.id).wintainium.json")
+    if (Test-Path -LiteralPath $existingManifestPath -PathType Leaf) {
+        try {
+            $existingManifest = Get-Content -LiteralPath $existingManifestPath -Raw -Encoding utf8 -ErrorAction Stop |
+                ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop
+            $existingReconciliation = $existingManifest['reconciliation']
+            $newReconciliation = $normalization.ApplicationDefinition.reconciliation
+            if ($existingReconciliation -is [System.Collections.IDictionary] -and
+                $null -ne $newReconciliation -and
+                [string]$existingReconciliation['pluginId'] -ieq [string]$newReconciliation['pluginId'] -and
+                [string]$existingReconciliation['requiredContractVersion'] -eq [string]$newReconciliation['requiredContractVersion'] -and
+                $existingReconciliation.Contains('settings')) {
+                $newReconciliation['settings'] = $existingReconciliation['settings']
+                $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ExistingReconciliationSettingsPreserved' -Message 'Re-onboarding preserved the existing user-configured reconciliation settings because the reconciliation plugin and contract remain unchanged.' -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;PluginId=[string]$newReconciliation['pluginId']}))
+            }
+        }
+        catch {
+            # Do not silently discard settings if the existing manifest cannot be
+            # read: make the condition visible and let normal persistence validation
+            # decide whether onboarding can safely replace the definition.
+            $warnings.Add([pscustomobject][ordered]@{
+                Code='ExistingReconciliationSettingsReadFailed'
+                Message='Wintainium could not read the existing manifest to preserve its reconciliation settings during re-onboarding.'
+                Detail=$_.Exception.GetType().Name
+            })
+        }
+    }
+
     & $addStage 4 'DefinitionNormalization' 'Completed' $true $null 'The source was normalized into an application definition.'
 
     try {
