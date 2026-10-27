@@ -899,6 +899,7 @@ public sealed partial class MainWindow : Window
 
         var onboardingComplete = false;
         var sourceUri = string.Empty;
+        WintainiumApplicationModel? onboardedApplicationForIdentityConfirmation = null;
 
         recoveryButton.Click += async (_, _) =>
         {
@@ -974,6 +975,8 @@ public sealed partial class MainWindow : Window
                         return;
                     }
 
+                    onboardedApplicationForIdentityConfirmation = result.Application;
+
                     // Keep the full source-resolution report with the onboarded application,
                     // then present it only in Application Details rather than duplicating it here.
                     if (result.Application is not null)
@@ -1024,6 +1027,111 @@ public sealed partial class MainWindow : Window
         };
 
         await dialog.ShowAsync();
+
+        // ContentDialog permits only one open dialog per XamlRoot. Run identity
+        // confirmation only after Add Software has closed.
+        if (onboardedApplicationForIdentityConfirmation is { ManifestPath: not null } onboardedApplication)
+        {
+            try
+            {
+                var identityCandidates = await _services.ApplicationRegistryIdentity.DiscoverAsync(
+                    onboardedApplication.Name,
+                    onboardedApplication.Publisher,
+                    CancellationToken.None);
+
+                if (identityCandidates.Count > 0)
+                    await ConfirmRegistryIdentityAsync(onboardedApplication, identityCandidates);
+            }
+            catch
+            {
+                // Discovery is an optional onboarding aid. Failures must not undo
+                // a successfully resolved application or weaken existing settings.
+            }
+        }
+    }
+
+    private async Task<bool> ConfirmRegistryIdentityAsync(
+        WintainiumApplicationModel application,
+        IReadOnlyList<WintainiumRegistryIdentityCandidate> candidates)
+    {
+        if (string.IsNullOrWhiteSpace(application.ManifestPath) || candidates.Count == 0)
+            return false;
+
+        var candidatePicker = new ComboBox
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var details = new List<string> { candidate.DisplayName };
+            if (!string.IsNullOrWhiteSpace(candidate.DisplayVersion))
+                details.Add(candidate.DisplayVersion);
+            if (!string.IsNullOrWhiteSpace(candidate.Publisher))
+                details.Add(candidate.Publisher);
+            if (!string.IsNullOrWhiteSpace(candidate.Scope))
+                details.Add(candidate.Scope + (string.IsNullOrWhiteSpace(candidate.View) ? string.Empty : "/" + candidate.View));
+            if (!string.IsNullOrWhiteSpace(candidate.RegistrySubKey))
+                details.Add("Key: " + candidate.RegistrySubKey);
+            details.Add("Review required");
+            candidatePicker.Items.Add(new ComboBoxItem
+            {
+                Content = string.Join(" — ", details),
+                Tag = candidate
+            });
+        }
+        candidatePicker.SelectedIndex = 0;
+
+        var content = new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = $"Wintainium found possible Windows uninstall entries for {application.DisplayName}. Select the entry that represents this exact application. Similarity is only a suggestion; nothing changes unless you confirm.",
+                    TextWrapping = TextWrapping.Wrap
+                },
+                candidatePicker,
+                new TextBlock
+                {
+                    Text = "If none is correct, choose Keep Default. Wintainium will preserve the existing strict matching rules.",
+                    TextWrapping = TextWrapping.Wrap
+                }
+            }
+        };
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "Confirm Installed Identity",
+            Content = content,
+            PrimaryButtonText = "Use Selected Match",
+            SecondaryButtonText = "Keep Default",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.None,
+            Width = 560
+        };
+        App.ApplyThemeToElement(dialog);
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            return false;
+
+        if (candidatePicker.SelectedItem is not ComboBoxItem { Tag: WintainiumRegistryIdentityCandidate selected })
+            return false;
+
+        var saved = await _services.ApplicationRegistryIdentity.ConfigureAsync(
+            application.ManifestPath,
+            selected,
+            CancellationToken.None);
+
+        if (saved)
+            return true;
+
+        await ShowExceptionAsync(
+            "Installed identity was not changed",
+            new InvalidOperationException("Wintainium could not save the selected registry identity. The existing reconciliation settings were preserved."));
+        return false;
     }
 
     private static string BuildOnboardingDiagnostics(

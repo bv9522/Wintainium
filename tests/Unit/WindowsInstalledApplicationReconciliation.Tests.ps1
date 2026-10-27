@@ -307,5 +307,45 @@ Describe 'Windows installed-application reconciliation plugin' {
         $observation.Candidates.Count | Should -Be 1
     }
 
+
+    It 'reports installed architecture only when an exact-name executable provides PE evidence' {
+        $installLocation = Join-Path $TestDrive 'Architecture Evidence'
+        New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
+        $executablePath = Join-Path $installLocation 'Example Application.exe'
+        Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination $executablePath -Force
+
+        $architecture = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Location=$installLocation } {
+            Get-WintainiumWindowsExecutableArchitecture -InstallationLocation $Location -DisplayName 'Example Application 2.4.1'
+        }
+
+        $architecture | Should -BeIn @('x86','x64','arm64')
+    }
+
+    It 'does not infer installed architecture from the registry view or unrelated executable names' {
+        $installLocation = Join-Path $TestDrive 'Unrelated Architecture Evidence'
+        New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination (Join-Path $installLocation 'Other.exe') -Force
+
+        $architecture = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Location=$installLocation } {
+            Get-WintainiumWindowsExecutableArchitecture -InstallationLocation $Location -DisplayName 'Example Application 2.4.1'
+        }
+
+        $architecture | Should -BeNullOrEmpty
+    }
+
+    It 'includes architecture evidence only when the executable inspection succeeds' {
+        $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-000000000209'; ApplicationId='example.application'; Manifest=$script:baseManifest }
+        $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{ IsSuccessful=$true; Candidates=@([pscustomobject]@{ Scope='machine'; View='32'; SubKey='Example'; DisplayName='Example Application'; DisplayVersion='1.0'; InstallLocation='C:\Example' }); Errors=@() }
+            }
+            Mock -CommandName Get-WintainiumWindowsExecutableVersion -MockWith { $null }
+            Mock -CommandName Get-WintainiumWindowsExecutableArchitecture -MockWith { 'x64' }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $r.Evidence.Architecture | Should -Be 'x64'
+    }
+
 }
 

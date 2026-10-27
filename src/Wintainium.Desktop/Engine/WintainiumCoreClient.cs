@@ -47,6 +47,41 @@ internal sealed class WintainiumCoreClient
             cancellationToken);
     }
 
+    public Task<WintainiumPowerShellInvocationResult> DiscoverApplicationRegistryIdentityCandidatesAsync(
+        string applicationName,
+        string? publisher = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ApplicationName"] = applicationName
+        };
+        AddOptional(parameters, "Publisher", publisher);
+        return _host.InvokeAsync(
+            "Get-WintainiumApplicationRegistryIdentityCandidates",
+            parameters,
+            cancellationToken);
+    }
+
+    public Task<WintainiumPowerShellInvocationResult> SetApplicationReconciliationSettingsAsync(
+        string manifestPath,
+        object settings,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+        ArgumentNullException.ThrowIfNull(settings);
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ManifestPath"] = manifestPath,
+            ["Settings"] = settings
+        };
+        return _host.InvokeAsync(
+            "Set-WintainiumApplicationReconciliationSettings",
+            parameters,
+            cancellationToken);
+    }
+
     public Task<WintainiumPowerShellInvocationResult> GetManifestsAsync(
         string path,
         bool recurse = false,
