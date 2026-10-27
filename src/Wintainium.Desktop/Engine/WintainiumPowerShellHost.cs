@@ -24,6 +24,14 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
             "Set-WintainiumApplicationIconOverride"
         };
 
+    // Internal Core capabilities are callable only through the module's private scope.
+    // They are intentionally excluded from the public CLI/export contract.
+    private static readonly IReadOnlySet<string> AllowedInternalCommands =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Get-WintainiumApplicationRegistryIdentityCandidates"
+        };
+
     private readonly Runspace _runspace;
     private readonly SemaphoreSlim _invocationGate = new(1, 1);
     private readonly string _modulePath;
@@ -71,10 +79,11 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
             throw new ArgumentException("A PowerShell command name is required.", nameof(commandName));
         }
 
-        if (!AllowedCommands.Contains(commandName))
+        var isInternalCommand = AllowedInternalCommands.Contains(commandName);
+        if (!AllowedCommands.Contains(commandName) && !isInternalCommand)
         {
             throw new ArgumentException(
-                $"The command '{commandName}' is not part of the documented Wintainium.Core desktop contract.",
+                $"The command '{commandName}' is not part of the supported Wintainium.Core desktop contract.",
                 nameof(commandName));
         }
 
@@ -86,15 +95,26 @@ internal sealed class WintainiumPowerShellHost : IAsyncDisposable
 
             using var powershell = PowerShell.Create();
             powershell.Runspace = _runspace;
-            powershell.AddCommand(commandName);
-
-            if (parameters is not null)
+            if (isInternalCommand)
             {
-                foreach (var parameter in parameters)
+                // Invoke from the imported module's own scope so private functions remain
+                // unavailable to callers and do not become public module exports.
+                powershell.AddScript("& (Get-Module -Name 'Wintainium.Core') { param($commandName, $parameters) & $commandName @parameters }")
+                    .AddArgument(commandName)
+                    .AddArgument(parameters ?? new Dictionary<string, object?>());
+            }
+            else
+            {
+                powershell.AddCommand(commandName);
+
+                if (parameters is not null)
                 {
-                    if (parameter.Value is not null)
+                    foreach (var parameter in parameters)
                     {
-                        powershell.AddParameter(parameter.Key, parameter.Value);
+                        if (parameter.Value is not null)
+                        {
+                            powershell.AddParameter(parameter.Key, parameter.Value);
+                        }
                     }
                 }
             }
