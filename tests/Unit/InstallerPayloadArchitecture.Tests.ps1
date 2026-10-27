@@ -152,4 +152,25 @@ Describe 'Wintainium provisional unknown EXE selection' {
         $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app-x64.zip'
         $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
     }
+    It 'does not promote an unknown EXE when the optional inspector is unavailable' {
+        $manifest = [pscustomobject]@{
+            artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
+        }
+        $exe = [pscustomobject]@{
+            Uri='https://example.test/setup.exe'; FileName='setup.exe'; Format='exe'; Architecture='unknown'
+            Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('A' * 64) })
+        }
+        $zip = [pscustomobject]@{ Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64' }
+        $release = [pscustomobject]@{ Version='2.0.0'; Artifacts=@($exe,$zip) }
+
+        Mock Test-WintainiumInstallerArchitectureInspectionAvailable { $false } -ModuleName Wintainium.Core
+        $result = InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest} {
+            param($Release,$Manifest)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
+        }
+
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app-x64.zip'
+        $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
+    }
+
 }
