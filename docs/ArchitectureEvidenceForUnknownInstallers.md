@@ -43,7 +43,11 @@ The implementation must preserve the governing boundary: **Manifest describes. P
 
 ## Initial format support
 
-Inno Setup is a candidate for the first supported static inspector because Core Temp is an available real-world fixture. Support must be based on actual package contents and robust format parsing, not on the presence of an Inno Setup signature alone. The implementation must not assume that an external tool such as `innoextract` is installed on user systems; any dependency or bundled parser requires an explicit repository-level design and licensing review.
+The first implementation uses `innoextract` as an optional static extraction backend for Inno Setup installers. The capability is detected at runtime; Wintainium does not assume the tool is installed or bundle it. When the inspector is unavailable, an unknown-architecture executable is not promoted for selection. When the inspector cannot parse an installer, its architecture remains unresolved and installation is blocked.
+
+The inspected `innoextract` project publishes a permissive zlib-style license that allows commercial use and redistribution subject to preserving its notice. This is a preliminary license review, not approval to bundle the binary. The current implementation uses an externally installed executable only; a bundled parser, a supported multi-architecture distribution strategy, and dependency hardening require a separate repository-level packaging/security review.
+
+Inspection is performed only after the selected artifact has passed SHA256 verification. The parser extracts to a unique temporary directory, is time-limited, and the extracted files are inspected as data only. Wintainium never launches the installer or extracted application during architecture discovery. The first supported payload relationship is deliberately narrow: a single top-level executable, or duplicate same-path executable variants that establish the target architecture. Ambiguous layouts remain unresolved.
 
 ## Regression coverage
 
