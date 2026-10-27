@@ -205,7 +205,7 @@ Describe 'Wintainium unknown-architecture artifact decision candidates' {
         $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
     }
 
-    It 'uses the compatible ZIP when the unknown EXE has no SHA256 evidence' {
+    It 'uses the compatible ZIP when the unknown EXE has no supported checksum evidence' {
         $manifest = [pscustomobject]@{
             artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
         }
