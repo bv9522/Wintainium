@@ -229,6 +229,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
             if ($rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
                 $fragment = $Body.Substring($rowStart, [Math]::Min($rowEnd + 5 - $rowStart, 3000))
                 $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
+                $isBareRowHash = $false
                 if ($rowHashes.Count -eq 0) {
                     # A checksum table often labels the column in its header and
                     # places only the digest in each data row. The same-row filename
@@ -236,6 +237,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                     $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
                     if ($bareHashes.Count -eq 1) {
                         $rowHashes = $bareHashes
+                        $isBareRowHash = $true
                     }
                 }
             }
@@ -243,7 +245,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                 continue
             }
             if ($rowHashes.Count -eq 1) {
-                if ($rowHashes[0].Groups.Count -gt 1 -and $rowHashes[0].Groups[1].Success) {
+                if (-not $isBareRowHash -and $rowHashes[0].Groups.Count -gt 1 -and $rowHashes[0].Groups[1].Success) {
                     $value = $rowHashes[0].Groups[1].Value
                 }
                 else {
@@ -257,7 +259,20 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
                         break
                     }
                 }
-                if ($matchIndex -ge 0 -and $associatedSha256.Add($matchIndex)) {
+
+                # Bare digests in a filename-matched table row are not present in
+                # $sha256Matches, which only contains explicitly labelled SHA-256
+                # claims. Permit this row-scoped association directly; labelled
+                # claims still require unique use of their parsed match.
+                $canAssociate = $false
+                if ($matchIndex -ge 0) {
+                    $canAssociate = $associatedSha256.Add($matchIndex)
+                }
+                elseif ($isBareRowHash) {
+                    $canAssociate = $true
+                }
+
+                if ($canAssociate) {
                     $artifact.Hashes = @($artifact.Hashes) + [pscustomobject][ordered]@{
                         Algorithm = 'SHA256'
                         Value = $value
