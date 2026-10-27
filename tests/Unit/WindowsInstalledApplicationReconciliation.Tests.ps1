@@ -151,6 +151,14 @@ Describe 'Windows installed-application reconciliation plugin' {
         }
     }
 
+    It 'normalizes a four-component executable build version against a three-component registry version' {
+        InModuleScope Wintainium.reconciliation.windows-installed-application {
+            ConvertTo-WintainiumComparableExecutableVersion -Version '1.21.0.207' -RegistryVersion '1.20.1' | Should -Be '1.21.0'
+            ConvertTo-WintainiumComparableExecutableVersion -Version '1.21.0' -RegistryVersion '1.20.1' | Should -Be '1.21.0'
+            ConvertTo-WintainiumComparableExecutableVersion -Version '1.21.0.207' -RegistryVersion '1.20.1.150' | Should -Be '1.21.0.207'
+        }
+    }
+
     It 'reads file version metadata from an executable matching the registry display name' {
         $installLocation = Join-Path $TestDrive 'Core Temp'
         New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
