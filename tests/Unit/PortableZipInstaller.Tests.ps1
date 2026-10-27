@@ -30,8 +30,23 @@ Describe 'Wintainium generic portable ZIP installer' {
         $result=&$script:installerCommand -Invocation $inv
         $expectedPowerShell=[System.IO.Path]::GetFullPath((Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'))
         $result.ExecutablePath | Should -Be $expectedPowerShell
-        @($result.Arguments) | Should -Contain $script:artifactPath
-        @($result.Arguments) | Should -Contain $script:destination
+        @($result.Arguments) | Should -Contain '-EncodedCommand'
+        $encodedCommand = $result.Arguments[-1]
+        $decodedCommand = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encodedCommand))
+        $decodedCommand | Should -Match ([regex]::Escape($script:artifactPath))
+        $decodedCommand | Should -Match ([regex]::Escape($script:destination))
+        $decodedCommand | Should -Match 'Expand-Archive -LiteralPath .* -DestinationPath .* -Force'
+    }
+    It 'extracts the archive using the returned encoded PowerShell command' {
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+
+        $processResult.Status | Should -Be 'Completed' -Because $processResult.StandardError
+        Test-Path -LiteralPath (Join-Path $script:destination 'payload.txt') -PathType Leaf | Should -BeTrue
+        Get-Content -LiteralPath (Join-Path $script:destination 'payload.txt') -Raw | Should -Match 'portable test'
     }
     It 'accepts an optional entryPoint setting' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint='bin/app.exe'}}
