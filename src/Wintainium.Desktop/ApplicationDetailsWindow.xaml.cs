@@ -343,9 +343,9 @@ public sealed partial class ApplicationDetailsWindow : Window
 
             if (CanOfferArchitectureRiskDecision(result))
             {
-                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync(
-                    "Install",
-                    result.Errors.First(error => string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase)).Message ?? string.Empty);
+                var architectureRiskError = result.Errors.First(error => error.Code?.StartsWith("ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase) == true);
+                var fallbackAvailable = string.Equals(architectureRiskError.Code, "ArchitectureRiskDecisionRequiredWithFallback", StringComparison.OrdinalIgnoreCase);
+                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync("Install", architectureRiskError.Message ?? string.Empty, fallbackAvailable);
                 if (architectureDecision is not null)
                 {
                     UpdateResultStatusText.Text = architectureDecision == "AcceptRisk"
@@ -465,15 +465,15 @@ public sealed partial class ApplicationDetailsWindow : Window
             string.Equals(error.Code, "UnsupportedVerificationAlgorithm", StringComparison.OrdinalIgnoreCase) &&
             error.Message?.Contains("publisher-declared MD5 checksum from the official download page is available", StringComparison.OrdinalIgnoreCase) == true);
 
-    private async Task<string?> ConfirmArchitectureRiskDecisionAsync(string operation, string details)
+    private async Task<string?> ConfirmArchitectureRiskDecisionAsync(string operation, string details, bool fallbackAvailable)
     {
         var dialog = new ContentDialog
         {
             XamlRoot = Content.XamlRoot,
             Title = "Application architecture could not be verified",
-            Content = $"Wintainium has verified the downloaded file against its accepted checksum, but it cannot establish the architecture of the application payload in this executable. {details} This is separate from file-integrity verification. Accepting this risk does not bypass checksum verification or any other safety check. You can accept the uncertainty for this {operation.ToLowerInvariant()} or use a known-compatible fallback if one is available.",
+            Content = $"Wintainium has verified the downloaded file against its accepted checksum, but it cannot establish the architecture of the application payload in this executable. {details} This is separate from file-integrity verification. Accepting this risk does not bypass checksum verification or any other safety check. " + (fallbackAvailable ? "A known-compatible alternative is available if you prefer not to use this executable." : "No known-compatible fallback is available, so the only ways forward are to accept the architecture uncertainty or cancel."),
             PrimaryButtonText = "Accept the risk and download",
-            SecondaryButtonText = "Use fallback",
+            SecondaryButtonText = fallbackAvailable ? "Use fallback" : string.Empty,
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close
         };
@@ -504,7 +504,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private static bool CanOfferArchitectureRiskDecision(WintainiumApplicationInstallResult result) =>
         result.OperationState == WintainiumOperationState.Failed &&
         result.Errors.Any(error =>
-            string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase));
+            error.Code?.StartsWith("ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase) == true);
 
     private static bool CanOfferArchitectureRiskDecision(WintainiumApplicationUpdateResult result) =>
         result.OperationState == WintainiumOperationState.Failed &&
@@ -740,9 +740,9 @@ public sealed partial class ApplicationDetailsWindow : Window
 
             if (CanOfferArchitectureRiskDecision(result))
             {
-                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync(
-                    "Update",
-                    result.Errors.First(error => string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase)).Message ?? string.Empty);
+                var architectureRiskError = result.Errors.First(error => error.Code?.StartsWith("ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase) == true);
+                var fallbackAvailable = string.Equals(architectureRiskError.Code, "ArchitectureRiskDecisionRequiredWithFallback", StringComparison.OrdinalIgnoreCase);
+                var architectureDecision = await ConfirmArchitectureRiskDecisionAsync("Update", architectureRiskError.Message ?? string.Empty, fallbackAvailable);
                 if (architectureDecision is not null)
                 {
                     UpdateResultStatusText.Text = architectureDecision == "AcceptRisk"
