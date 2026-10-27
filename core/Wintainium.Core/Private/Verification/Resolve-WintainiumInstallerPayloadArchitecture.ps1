@@ -1,7 +1,42 @@
+function Get-WintainiumInstallerArchitectureInspectorPath {
+    [CmdletBinding()]
+    param()
+
+    # Prefer normal command resolution, which honors administrator-managed installs
+    # and explicitly configured PATH entries.
+    $command = Get-Command innoextract.exe, innoextract -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandType -in @('Application', 'ExternalScript') } |
+        Select-Object -First 1
+    if ($null -ne $command) {
+        $source = if ($command.PSObject.Properties['Source']) { [string]$command.Source } else { [string]$command.Definition }
+        if (-not [string]::IsNullOrWhiteSpace($source) -and (Test-Path -LiteralPath $source -PathType Leaf)) {
+            return $source
+        }
+    }
+
+    # A running desktop process can retain an older PATH after WinGet installs a
+    # package. Check WinGet's stable per-user command-link directory directly.
+    $candidatePaths = [System.Collections.Generic.List[string]]::new()
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $candidatePaths.Add((Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\innoextract.exe'))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+        $candidatePaths.Add((Join-Path $env:ProgramFiles 'WinGet\Links\innoextract.exe'))
+    }
+
+    foreach ($candidatePath in $candidatePaths) {
+        if (Test-Path -LiteralPath $candidatePath -PathType Leaf) {
+            return $candidatePath
+        }
+    }
+
+    return $null
+}
+
 function Test-WintainiumInstallerArchitectureInspectionAvailable {
     [CmdletBinding()]
     param()
-    return $null -ne (Get-Command innoextract.exe, innoextract -ErrorAction SilentlyContinue | Select-Object -First 1)
+    return -not [string]::IsNullOrWhiteSpace([string](Get-WintainiumInstallerArchitectureInspectorPath))
 }
 
 function Get-WintainiumPortableExecutableArchitecture {
@@ -94,9 +129,11 @@ function Resolve-WintainiumInstallerPayloadArchitecture {
         return & $failure 'InspectionNotApplicable' 'Inspection applies only to executable artifacts with unknown architecture.'
     }
     if ([string]::IsNullOrWhiteSpace($InnoExtractPath)) {
-        $command = Get-Command innoextract.exe, innoextract -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($null -eq $command) { return & $failure 'ArchitectureInspectorUnavailable' 'No supported static installer inspector is available.' }
-        $InnoExtractPath = [string]$command.Source
+        $InnoExtractPath = [string](Get-WintainiumInstallerArchitectureInspectorPath)
+        if ([string]::IsNullOrWhiteSpace($InnoExtractPath)) { return & $failure 'ArchitectureInspectorUnavailable' 'No supported static installer inspector is available.' }
+    }
+    if (-not (Test-Path -LiteralPath $InnoExtractPath -PathType Leaf)) {
+        return & $failure 'ArchitectureInspectorUnavailable' 'The configured static installer inspector path is not available.'
     }
     if ((Get-Item -LiteralPath $path).Length -gt 536870912) {
         return & $failure 'InstallerTooLargeForInspection' 'The installer exceeds the static-inspection size limit.'
