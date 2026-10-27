@@ -89,6 +89,59 @@ Describe 'Official download page verification evidence discovery' {
         $artifacts[1].Hashes[0].Value | Should -Be 'F9963A9DB7F1A826353F486C0E5216FC'
     }
 
+    It 'associates a single visible SHA256 checksum with the first artifact only when the claim precedes artifact links' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Download Core Temp 1.21</h2>
+<p>Download SHA-256: FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6</p>
+<a href="https://downloads.example.com/Core-Temp-setup-v1.21.exe">Download Core Temp</a>
+<a href="https://downloads.example.com/CoreTemp32.zip">32 Bit</a>
+<a href="https://downloads.example.com/CoreTemp64.zip">64 Bit</a>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/coretemp/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifacts = @($result.Releases[0].Artifacts)
+        $artifacts.Count | Should -Be 3
+        $artifacts[0].FileName | Should -Be 'Core-Temp-setup-v1.21.exe'
+        $artifacts[0].Hashes.Count | Should -Be 1
+        $artifacts[0].Hashes[0].Algorithm | Should -Be 'SHA256'
+        $artifacts[0].Hashes[0].Value | Should -Be 'FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6'
+        $artifacts[0].Hashes[0].Source | Should -Be 'OfficialDownloadPageChecksum'
+        $artifacts[1].Hashes.Count | Should -Be 0
+        $artifacts[2].Hashes.Count | Should -Be 0
+    }
+
+    It 'does not guess the target artifact for a lone SHA256 checksum appearing after download links' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Download App 1.0.0</h2>
+<a href="https://downloads.example.com/app.exe">Installer</a>
+<a href="https://downloads.example.com/app.zip">Portable</a>
+<p>SHA-256: FBF053DB5567D55D20F8D54B8930E95914FFD44073A62ED71AC9048C89D4ECB6</p>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        @($result.Releases[0].Artifacts)[0].Hashes.Count | Should -Be 0
+        @($result.Releases[0].Artifacts)[1].Hashes.Count | Should -Be 0
+    }
+
     It 'does not guess MD5-to-artifact association when checksum and artifact counts differ' {
         Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
             [pscustomobject]@{
