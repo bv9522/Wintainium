@@ -35,7 +35,10 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encodedCommand))
         $decodedCommand | Should -Match ([regex]::Escape($script:artifactPath))
         $decodedCommand | Should -Match ([regex]::Escape($script:destination))
-        $decodedCommand | Should -Match 'Expand-Archive -LiteralPath .* -DestinationPath .* -Force'
+        $decodedCommand | Should -Match '\$ErrorActionPreference = ''Stop'''
+        $decodedCommand | Should -Match 'Expand-Archive -LiteralPath .* -DestinationPath .* -Force -ErrorAction Stop'
+        $decodedCommand | Should -Match 'catch'
+        $decodedCommand | Should -Match 'exit 1'
     }
     It 'extracts the archive using the returned encoded PowerShell command' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination}}
@@ -47,6 +50,31 @@ Describe 'Wintainium generic portable ZIP installer' {
         $processResult.Status | Should -Be 'Completed' -Because $processResult.StandardError
         Test-Path -LiteralPath (Join-Path $script:destination 'payload.txt') -PathType Leaf | Should -BeTrue
         Get-Content -LiteralPath (Join-Path $script:destination 'payload.txt') -Raw | Should -Match 'portable test'
+    }
+    It 'returns a failed process result when archive extraction fails' {
+        $invalidArtifactPath = Join-Path $script:tempRoot 'invalid.zip'
+        Set-Content -LiteralPath $invalidArtifactPath -Value 'not a zip archive' -Encoding utf8
+        $inv=[pscustomobject]@{ArtifactPath=$invalidArtifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=(Join-Path $script:tempRoot 'invalid-destination')}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+
+        $processResult.Status | Should -Be 'Failed'
+        $processResult.ExitCode | Should -Not -Be 0
+        $processResult.StandardError | Should -Not -BeNullOrEmpty
+    }
+    It 'fails when a configured entry point was not extracted' {
+        $missingEntryPointDestination = Join-Path $script:tempRoot 'missing-entrypoint-destination'
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$missingEntryPointDestination;entryPoint='missing.exe'}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+
+        $processResult.Status | Should -Be 'Failed'
+        $processResult.ExitCode | Should -Not -Be 0
+        $processResult.StandardError | Should -Match 'Expected portable ZIP entry point was not extracted'
     }
     It 'accepts an optional entryPoint setting' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint='bin/app.exe'}}
