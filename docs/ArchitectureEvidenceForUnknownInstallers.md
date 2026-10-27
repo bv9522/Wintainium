@@ -43,7 +43,7 @@ The implementation must preserve the governing boundary: **Manifest describes. P
 
 ## Initial format support
 
-The implementation does not depend on an external installer inspector. Wintainium reads a PE machine header using native static file I/O, but does not mistake the outer bootstrapper architecture for the installed payload architecture. When payload architecture remains unresolved, a SHA256-backed executable can be offered through a generic, operation-specific decision: accept the architecture risk, use a known-compatible fallback from the same release, or cancel. The normal checksum verification and all other safety gates remain mandatory.
+The implementation does not depend on an external installer inspector. Wintainium reads a PE machine header using native static file I/O, but does not mistake the outer bootstrapper architecture for the installed payload architecture. When payload architecture remains unresolved, an artifact with supported publisher checksum evidence can be offered through a generic, operation-specific decision: accept the architecture risk, use a known-compatible fallback from the same release, or cancel. SHA256 is preferred; legacy MD5 requires its separate explicit authorization before the architecture decision can be reached. The normal checksum verification and all other safety gates remain mandatory.
 
 No third-party installer-inspection executable is required or bundled. Native PE-header inspection is evidence only; it cannot establish the payload architecture of arbitrary bootstrapper installers.
 
