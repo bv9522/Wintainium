@@ -71,7 +71,8 @@ function Select-WintainiumArtifact {
         $index++
     }
 
-    $eligible = @($observations | Where-Object { ($_.Eligible -and $_.Architecture -ne 'unknown') -or $_.ArchitectureInspectionCandidate })
+    $allowUnknownArchitecture = $null -ne $Manifest.artifact -and [bool]$Manifest.artifact.allowUnknownArchitecture
+    $eligible = @($observations | Where-Object { ($_.Eligible -and ($_.Architecture -ne 'unknown' -or $allowUnknownArchitecture)) -or $_.ArchitectureInspectionCandidate })
     $selected = $null
 
     if ($eligible.Count -gt 0) {
