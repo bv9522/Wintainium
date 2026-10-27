@@ -136,6 +136,7 @@ Describe 'Wintainium unknown-architecture EXE decision candidates' {
             Version='2.0.0'
             Artifacts=@(
                 [pscustomobject]@{ Uri='https://example.test/setup.exe'; FileName='setup.exe'; Format='exe'; Architecture='unknown' },
+                [pscustomobject]@{ Uri='https://example.test/app-unknown.zip'; FileName='app-unknown.zip'; Format='zip'; Architecture='unknown' },
                 [pscustomobject]@{ Uri='https://example.test/app-x64.zip'; FileName='app-x64.zip'; Format='zip'; Architecture='x64'; Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('C' * 64) }) }
             )
         }
