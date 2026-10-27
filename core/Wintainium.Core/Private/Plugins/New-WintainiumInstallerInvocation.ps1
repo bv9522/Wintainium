@@ -102,6 +102,63 @@ function New-WintainiumInstallerInvocation {
         return [pscustomobject][ordered]@{ IsValid = $false; Invocation = $null; Error = [pscustomobject]@{ Code = 'InstallerInvocationSettingsInvalid'; Message = 'Installer selection requires structured installer settings.' } }
     }
 
+    # Normalize settings into a private copy so a derived ZIP destination never
+    # mutates the persisted manifest or the selector's result.
+    $normalizedSettings = [ordered]@{}
+    if ($settings -is [System.Collections.IDictionary]) {
+        foreach ($settingName in $settings.Keys) {
+            $normalizedSettings[[string]$settingName] = $settings[$settingName]
+        }
+    }
+    else {
+        foreach ($setting in $settings.PSObject.Properties) {
+            $normalizedSettings[$setting.Name] = $setting.Value
+        }
+    }
+
+    if ($artifactFormat.Trim().Equals('zip', [System.StringComparison]::OrdinalIgnoreCase) -and
+        (-not $normalizedSettings.Contains('destinationPath') -or [string]::IsNullOrWhiteSpace([string]$normalizedSettings['destinationPath']))) {
+        $installedState = & $getValue $Request 'InstalledState'
+        $installationState = [string](& $getValue $installedState 'InstallationState')
+        $installedLocation = [string](& $getValue $installedState 'InstallationLocation')
+
+        if ($installationState -eq 'Installed') {
+            if ([string]::IsNullOrWhiteSpace($installedLocation) -or
+                -not [System.IO.Path]::IsPathFullyQualified($installedLocation) -or
+                -not (Test-Path -LiteralPath $installedLocation -PathType Container)) {
+                return [pscustomobject][ordered]@{
+                    IsValid = $false
+                    Invocation = $null
+                    Error = [pscustomobject]@{
+                        Code = 'InstallerInvocationDestinationPathUnavailable'
+                        Message = 'The portable ZIP update has no destinationPath setting and the installed application has no valid existing installation location. Refusing to extract the update into a different directory.'
+                    }
+                }
+            }
+
+            $normalizedSettings['destinationPath'] = [System.IO.Path]::GetFullPath($installedLocation)
+        }
+        else {
+            $manifest = & $getValue $Request 'Manifest'
+            $applicationId = [string](& $getValue $manifest 'Id')
+            $localAppData = [string]$env:LOCALAPPDATA
+            if ([string]::IsNullOrWhiteSpace($applicationId) -or [string]::IsNullOrWhiteSpace($localAppData) -or
+                -not [System.IO.Path]::IsPathFullyQualified($localAppData)) {
+                return [pscustomobject][ordered]@{
+                    IsValid = $false
+                    Invocation = $null
+                    Error = [pscustomobject]@{
+                        Code = 'InstallerInvocationDestinationPathUnavailable'
+                        Message = 'A portable ZIP installation requires destinationPath or a valid per-user application destination.'
+                    }
+                }
+            }
+
+            $safeApplicationId = $applicationId -replace '[^A-Za-z0-9._-]', '_'
+            $normalizedSettings['destinationPath'] = Join-Path (Join-Path $localAppData 'Programs') $safeApplicationId
+        }
+    }
+
     [pscustomobject][ordered]@{
         IsValid = $true
         Invocation = [pscustomobject][ordered]@{
@@ -112,7 +169,7 @@ function New-WintainiumInstallerInvocation {
             ArtifactPath = [System.IO.Path]::GetFullPath($artifactPath)
             ArtifactFormat = $artifactFormat
             InstallationMode = $installationMode
-            Settings = $settings
+            Settings = $normalizedSettings
         }
         Error = $null
     }
