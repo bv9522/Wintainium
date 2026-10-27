@@ -223,24 +223,25 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
             # Prefer a containing HTML table row when present.
             $rowStart = $Body.LastIndexOf('<tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
             $rowEnd = $Body.IndexOf('</tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
+            # Only associate by filename when the filename and checksum share
+            # the same explicit HTML table row. Nearby text is not strong enough
+            # evidence because it can span unrelated downloads/checksums.
             if ($rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
                 $fragment = $Body.Substring($rowStart, [Math]::Min($rowEnd + 5 - $rowStart, 3000))
-            }
-            else {
-                $fragmentStart = [Math]::Max(0, $fileMatch.Index - 240)
-                $fragmentLength = [Math]::Min($Body.Length - $fragmentStart, 700)
-                $fragment = $Body.Substring($fragmentStart, $fragmentLength)
-            }
-            $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
-            if ($rowHashes.Count -eq 0 -and $rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
-                $headerStart = [Math]::Max(0, $rowStart - 1600)
-                $headerText = ConvertFrom-OfficialDownloadPageHtmlText $Body.Substring($headerStart, $rowStart - $headerStart)
-                if ($headerText -match '(?i)\bSHA\s*[- ]?\s*256\b') {
-                    $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
-                    if ($bareHashes.Count -eq 1) {
-                        $rowHashes = $bareHashes
+                $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
+                if ($rowHashes.Count -eq 0) {
+                    $headerStart = [Math]::Max(0, $rowStart - 1600)
+                    $headerText = ConvertFrom-OfficialDownloadPageHtmlText $Body.Substring($headerStart, $rowStart - $headerStart)
+                    if ($headerText -match '(?i)\bSHA\s*[- ]?\s*256\b') {
+                        $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
+                        if ($bareHashes.Count -eq 1) {
+                            $rowHashes = $bareHashes
+                        }
                     }
                 }
+            }
+            else {
+                continue
             }
             if ($rowHashes.Count -eq 1) {
                 if ($rowHashes[0].Groups.Count -gt 1 -and $rowHashes[0].Groups[1].Success) {
@@ -283,12 +284,8 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     }
     if ($null -ne $firstArtifactLink) {
         $leadingMatches = @($sha256Matches | Where-Object { $_.Index -lt $firstArtifactLink.Index })
-        $unmatchedLeading = @($leadingMatches | Where-Object {
-            $candidateHash = $_.Groups[1].Value
-            -not @($artifacts | ForEach-Object { $_.Hashes } | Where-Object { $_.Algorithm -eq 'SHA256' -and $_.Value -ieq $candidateHash }).Count
-        })
-        if ($unmatchedLeading.Count -eq 1 -and @($artifacts[0].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
-            $value = $unmatchedLeading[0].Groups[1].Value.ToUpperInvariant()
+        if ($sha256Matches.Count -eq 1 -and $leadingMatches.Count -eq 1 -and @($artifacts[0].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
+            $value = $leadingMatches[0].Groups[1].Value.ToUpperInvariant()
             $artifacts[0].Hashes = @($artifacts[0].Hashes) + [pscustomobject][ordered]@{
                 Algorithm = 'SHA256'
                 Value = $value
