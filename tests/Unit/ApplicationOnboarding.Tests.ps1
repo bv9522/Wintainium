@@ -66,6 +66,38 @@ Describe 'Wintainium application onboarding' {
 
     }
 
+
+    It 'preserves user-configured reconciliation settings when the same source is onboarded again' {
+        $configuredPolicy = $script:policy | ConvertTo-Json -Depth 20 | ConvertFrom-Json -Depth 20
+        $configuredPolicy.Reconciliation.Settings = @{
+            registry = @{
+                matchMode = 'any'
+                locations = @(
+                    @{ scope='machine'; view='64' }
+                    @{ scope='machine'; view='32' }
+                    @{ scope='user'; view='native' }
+                )
+                match = @(
+                    @{ value='DisplayName'; equals='Peace'; matchType='exact' }
+                    @{ value='subkey'; equals='Peace'; matchType='exact' }
+                )
+            }
+        }
+
+        $first = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $configuredPolicy
+        $first.IsSuccessful | Should -BeTrue
+
+        $defaultPolicy = $script:policy | ConvertTo-Json -Depth 20 | ConvertFrom-Json -Depth 20
+        $defaultPolicy.Reconciliation.Settings = @{}
+        $second = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $defaultPolicy
+
+        $second.IsSuccessful | Should -BeTrue
+        $manifest = Get-Content -LiteralPath $second.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        $manifest['reconciliation']['settings']['registry']['matchMode'] | Should -Be 'any'
+        $manifest['reconciliation']['settings']['registry']['match'][0]['equals'] | Should -Be 'Peace'
+        @($second.LogEvents | Where-Object EventName -eq 'ExistingReconciliationSettingsPreserved').Count | Should -Be 1
+    }
+
     It 'preserves a resolved source description in the persisted application definition model' {
         $source = [pscustomobject][ordered]@{
             ApplicationId='web.example.com.product'
