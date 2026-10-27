@@ -471,7 +471,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         {
             XamlRoot = Content.XamlRoot,
             Title = "Application architecture could not be verified",
-            Content = $"Wintainium has verified the downloaded file's SHA256 checksum, but it cannot establish the architecture of the application payload in this executable. {details} This is separate from file-integrity verification. Accepting this risk does not bypass checksum verification or any other safety check. You can accept the uncertainty for this {operation.ToLowerInvariant()} or use a known-compatible fallback if one is available.",
+            Content = $"Wintainium has verified the downloaded file against its accepted checksum, but it cannot establish the architecture of the application payload in this executable. {details} This is separate from file-integrity verification. Accepting this risk does not bypass checksum verification or any other safety check. You can accept the uncertainty for this {operation.ToLowerInvariant()} or use a known-compatible fallback if one is available.",
             PrimaryButtonText = "Accept the risk and download",
             SecondaryButtonText = "Use fallback",
             CloseButtonText = "Cancel",
