@@ -509,7 +509,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     private static bool CanOfferArchitectureRiskDecision(WintainiumApplicationUpdateResult result) =>
         result.OperationState == WintainiumOperationState.Failed &&
         result.Errors.Any(error =>
-            string.Equals(error.Code, "ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase));
+            error.Code?.StartsWith("ArchitectureRiskDecisionRequired", StringComparison.OrdinalIgnoreCase) == true);
 
     private async Task<bool> ConfirmInstallOrUpdateAsync(string operation)
     {
