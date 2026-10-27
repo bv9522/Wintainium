@@ -86,7 +86,9 @@ Describe 'Wintainium generic portable ZIP installer' {
         Add-Type -AssemblyName System.IO.Compression
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $traversalArtifactPath = Join-Path $script:tempRoot 'traversal.zip'
-        $traversalPayload = Join-Path $script:tempRoot 'outside-payload.txt'
+        $traversalSourceDirectory = Join-Path $script:tempRoot 'traversal-source'
+        New-Item -ItemType Directory -Path $traversalSourceDirectory -Force | Out-Null
+        $traversalPayload = Join-Path $traversalSourceDirectory 'payload.txt'
         Set-Content -LiteralPath $traversalPayload -Value 'must not escape' -Encoding utf8
         $archive = [System.IO.Compression.ZipFile]::Open($traversalArtifactPath, [System.IO.Compression.ZipArchiveMode]::Create)
         try { [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $traversalPayload, '../outside-payload.txt') | Out-Null } finally { $archive.Dispose() }
