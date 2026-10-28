@@ -418,9 +418,18 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         $supportedFileRowDates = [System.Collections.Generic.List[string]]::new()
         $supportedFileRows = [regex]::Matches(
             $Html,
-            '(?is)<tr\b[^>]*\btitle\s*=\s*["''][^"''>]+\.(?:exe|msi|zip)["''][^"''>]*>.*?</tr\s*>'
+            '(?is)<tr\b[^>]*>.*?</tr\s*>'
         )
         foreach ($supportedFileRow in $supportedFileRows) {
+            # SourceForge places attributes such as class after the row's title
+            # attribute, so match the title value independently rather than
+            # requiring the title attribute to be the final attribute.
+            $rowTitleMatch = [regex]::Match(
+                $supportedFileRow.Value,
+                '(?is)\btitle\s*=\s*["'']([^"'']+\.(?:exe|msi|zip))["'']'
+            )
+            if (-not $rowTitleMatch.Success) { continue }
+
             $rowDateMatch = [regex]::Match(
                 $supportedFileRow.Value,
                 '(?is)<abbr\b[^>]*\btitle\s*=\s*["''](20\d{2}-\d{2}-\d{2})(?:\s+[^"'']*)?["'']'
