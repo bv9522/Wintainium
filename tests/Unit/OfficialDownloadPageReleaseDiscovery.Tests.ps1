@@ -588,7 +588,7 @@ Released 2024-05-17</pre>
 <h3>Warnings and information</h3>
 <p>Supported OS for installer: Windows 10 1903 or newer</p>
 <h3>Security</h3>
-<p>SHA256 hash sum for gimp-3.2.6-setup.exe: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
+<p>SHA256 hash sum for <code>gimp-3.2.6-setup.exe</code>: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
 <h2>Source for version 3.2 (Stable)</h2>
 <a href="https://download.gimp.org/gimp/v3.2/windows/">Older Downloads</a>
 </body>
@@ -617,6 +617,8 @@ Released 2024-05-17</pre>
         $release.Artifacts[0].Uri | Should -Be 'https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe'
         $release.Artifacts[0].FileName | Should -Be 'gimp-3.2.6-setup.exe'
         $release.Artifacts[0].Architecture | Should -Be 'neutral'
+        @($release.Artifacts[0].Hashes | Where-Object Algorithm -eq 'SHA256').Count | Should -Be 1
+        (@($release.Artifacts[0].Hashes | Where-Object Algorithm -eq 'SHA256')[0]).Value | Should -Be '9337CCCB C01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'.Replace(' ','')
 
         $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
         $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
