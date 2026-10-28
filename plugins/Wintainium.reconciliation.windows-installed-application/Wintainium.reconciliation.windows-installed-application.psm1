@@ -113,6 +113,10 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                             HelpLink = $entryKey.GetValue('HelpLink', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
                             InstallSource = $entryKey.GetValue('InstallSource', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
                             WindowsInstaller = $entryKey.GetValue('WindowsInstaller', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+                            DisplayIcon = $entryKey.GetValue('DisplayIcon', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+                            URLUpdateInfo = $entryKey.GetValue('URLUpdateInfo', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+                            Comments = $entryKey.GetValue('Comments', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+                            InstallDate = $entryKey.GetValue('InstallDate', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
                         }
                     } finally { if ($null -ne $entryKey) { $entryKey.Dispose() } }
                 }
@@ -261,7 +265,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 $score = [Math]::Min(100, $score + 5)
                 $evidence.Add('DisplayNameAndSubKeyConsistent')
             }
-            $uninstallString = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'UninstallString')
+            $uninstallString = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'UninstallString')
             if ($displayTokens.Count -gt 0 -and $uninstallString) {
                 $commandTokens = @(Get-WintaniumIdentityTokens -Value $uninstallString)
                 if (@($displayTokens | Where-Object { $_ -in $commandTokens }).Count -gt 0) {
