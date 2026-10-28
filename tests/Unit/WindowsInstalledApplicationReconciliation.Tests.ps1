@@ -474,5 +474,39 @@ Describe 'Windows installed-application reconciliation plugin' {
         @($result.Warnings | Where-Object Code -eq 'WindowsReconciliationIdentityRequiresConfirmation').Count | Should -Be 1
     }
 
+
+    It 'uses publisher and matching product website metadata as corroborating evidence' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Old Example Name'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='Example Product'; DisplayName='Example Product'
+                DisplayVersion='2.0'; Publisher='Example Publisher'
+                InstallLocation='C:\Program Files\Example Product'
+                DisplayIcon='"C:\Program Files\Example Product\Example Product.exe",0'
+                URLInfoAbout='https://example.com/about'
+                UninstallString='"C:\Program Files\Example Product\uninstall.exe"'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='Example Product'; Publisher='Example Publisher'; Homepage='https://example.com/product'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher -ApplicationHomepage $Homepage
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'NormalizedDisplayNameExact'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'PublisherCorroborated'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'PublisherWebsiteHostCorroborated'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'DisplayIconNameCorroborated'
+    }
+
 }
 
