@@ -705,7 +705,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # This trace records what the current parser recognized without dumping HTML.
     $sectionMatches=[regex]::Matches(
         $html,
-        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)|(?:^|>)\s*(Core\s+Temp\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*:?)\s*(?=<|$)|(?:^|>)\s*(Past\s+releases)\s*(?=<|$)',
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)|(?:^|>)\s*([A-Z][^<\r\n]{0,80}?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*:?)\s*(?=<|$)|(?:^|>)\s*(Past\s+releases)\s*(?=<|$)',
         [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
     )
     $downloadLinkMatches=[regex]::Matches($html,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
@@ -737,12 +737,13 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } elseif($section.Groups[3].Success) { $section.Groups[3].Value } elseif($section.Groups[4].Success) { $section.Groups[4].Value } elseif($section.Groups[5].Success) { $section.Groups[5].Value } else { $section.Groups[6].Value }
         $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
 
-        # Core Temp's official page uses a legacy text/table layout rather than
-        # versioned heading elements. Its current download choices are followed
-        # by language packs and a historical release table. Keep this release
-        # scoped to the primary installer and standalone archives above those
-        # sections; historical archives must never inherit the current version.
-        if ($baseUri.Host -match '(?i)(^|\.)alcpu\.com$' -and $heading -match '(?i)^Core\s+Temp\s+v?([0-9]+(?:\.[0-9]+){1,3})') {
+        # Some publishers label the current release in an inline text element
+        # rather than a heading tag. When that versioned product label is followed
+        # by language-pack or historical-release sections, stop artifact collection
+        # at those structural boundaries so old archives cannot inherit the current
+        # version. This is based on page structure, not a product or host name.
+        if (-not $section.Groups[2].Success -and
+            $heading -match '(?i)^(?!Download\b|Release\b|Past releases\b).{1,80}?\s+v?([0-9]+(?:\.[0-9]+){1,3})') {
             $languageBoundary=[regex]::Match($body,'(?i)Language\s+packs')
             if ($languageBoundary.Success) { $body=$body.Substring(0,$languageBoundary.Index) }
             $pastBoundary=[regex]::Match($body,'(?i)Past\s+releases')
