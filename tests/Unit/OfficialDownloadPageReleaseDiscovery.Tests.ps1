@@ -57,7 +57,8 @@ Describe 'Wintainium official download page provider release discovery' {
 <html>
 <body>
   <a href="/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download">PeaceSetup.exe</a>
-  <a href="/projects/peace-equalizer-apo-extension/files/Peace64.exe/download">Peace64.exe</a>
+  <a href="/projects/peace-equalizer-apo-extension/files/Peace.exe/download">Peace.exe</a>
+  <a href="/projects/peace-equalizer-apo-extension/files/64 bits version/Peace64.exe/download">Peace64.exe</a>
   <p>From version 1.5.0.1 all Peace executables have a code signing certificate.</p>
   <h2>Version 1.6.9.11</h2>
   <p>Released 2025-11-02</p>
@@ -82,8 +83,9 @@ Describe 'Wintainium official download page provider release discovery' {
         $result.Status | Should -Be 'Success'
         @($result.Releases).Count | Should -Be 1
         $result.Releases[0].Version | Should -Be '1.6.9.11'
-        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        @($result.Releases[0].Artifacts).Count | Should -Be 3
         @($result.Releases[0].Artifacts | Where-Object FileName -eq 'PeaceSetup.exe').Count | Should -Be 1
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'Peace.exe').Count | Should -Be 1
         @($result.Releases[0].Artifacts | Where-Object FileName -eq 'Peace64.exe').Count | Should -Be 1
     }
 
