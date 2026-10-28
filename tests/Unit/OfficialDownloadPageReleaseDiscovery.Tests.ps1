@@ -130,6 +130,90 @@ Describe 'Wintainium official download page provider release discovery' {
         $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '2.4.1'
     }
 
+    It 'matches SourceForge release-note version to the newest supported file-row date' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h1>Peace Equalizer APO Extension Files</h1>
+<table>
+<tr title="PeaceSetup.exe" class="file">
+  <th><a href="https://sourceforge.net/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download"><span class="name">PeaceSetup.exe</span></a></th>
+  <td><abbr title="2025-11-02 11:46:55 UTC">2025-11-02</abbr></td>
+</tr>
+</table>
+<a href="/projects/peace-equalizer-apo-extension/files/latest/download">Download Latest Version PeaceSetup.exe (55.7 MB)</a>
+<div class="description">
+  <p>Version 1.6.9.11</p>
+  <p>Released 2025-11-02</p>
+  <p>added: improved configuration editor</p>
+  <p>Version 1.6.8.10</p>
+  <p>Released 2024-05-17</p>
+</div>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-peace-dated-release-notes'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '1.6.9.11'
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'PeaceSetup.exe').Count | Should -BeGreaterThan 0
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.ParsedReleaseCount | Should -Be 1
+    }
+
+    It 'does not use a historical SourceForge version when its release date differs from the latest file row' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h1>Example Project Files</h1>
+<table>
+<tr title="ExampleSetup.exe" class="file">
+  <th><a href="/projects/example-project/files/ExampleSetup.exe/download"><span class="name">ExampleSetup.exe</span></a></th>
+  <td><abbr title="2025-11-02 11:46:55 UTC">2025-11-02</abbr></td>
+</tr>
+</table>
+<div class="description">
+  <p>Version 1.2.3</p>
+  <p>Released 2024-05-17</p>
+</div>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/example-project/files/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-reject-undated-current-version'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/example-project/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'NoReleasesFound'
+        @($result.Releases).Count | Should -Be 0
+    }
+
     It 'normalizes multiple dated release sections and their supported artifacts' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
