@@ -618,7 +618,7 @@ Released 2024-05-17</pre>
         $release.Artifacts[0].FileName | Should -Be 'gimp-3.2.6-setup.exe'
         $release.Artifacts[0].Architecture | Should -Be 'neutral'
         @($release.Artifacts[0].Hashes | Where-Object Algorithm -eq 'SHA256').Count | Should -Be 1
-        (@($release.Artifacts[0].Hashes | Where-Object Algorithm -eq 'SHA256')[0]).Value | Should -Be '9337CCCB C01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'.Replace(' ','')
+        (@($release.Artifacts[0].Hashes | Where-Object Algorithm -eq 'SHA256')[0]).Value | Should -Be '9337CCCBC01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'
 
         $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
         $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
