@@ -336,14 +336,36 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         $BaseUri.AbsolutePath -notmatch '(?i)^/projects/[^/]+/files(?:/|$)') { return @() }
 
     # SourceForge file listings may expose a versioned directory path, a root-level
-    # filename, or a "latest/download" route. For root-level/latest links, the
-    # visible file listing's first current-version label supplies the version.
+    # filename, or a "latest/download" route. For root-level/latest links, prefer an
+    # explicit version heading. Searching flattened page text for the first "Version"
+    # phrase is unsafe: explanatory prose can mention an old minimum version before
+    # the current release heading (for example, "From version 1.5.0.1 ...").
     $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
-    $currentVersionMatch = [regex]::Match(
-        [string]$pageText,
-        '(?i)\bVersion\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+    $currentVersion = $null
+    $versionHeadings = [regex]::Matches(
+        $Html,
+        '(?is)<h[1-6]\b[^>]*>(.*?)</h[1-6]\s*>'
     )
-    $currentVersion = if ($currentVersionMatch.Success) { $currentVersionMatch.Groups[1].Value } else { $null }
+    foreach ($versionHeading in $versionHeadings) {
+        $headingText = ConvertFrom-OfficialDownloadPageHtmlText $versionHeading.Groups[1].Value
+        $headingVersionMatch = [regex]::Match(
+            [string]$headingText,
+            '(?i)^\s*(?:Current\s+)?(?:Version\s+)?v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+        )
+        if ($headingVersionMatch.Success) {
+            $currentVersion = $headingVersionMatch.Groups[1].Value
+            break
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Some SourceForge mirrors expose an explicit "Current Version" label
+        # outside a heading. Do not fall back to arbitrary prose mentioning a version.
+        $currentVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bCurrent\s+Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+        )
+        if ($currentVersionMatch.Success) { $currentVersion = $currentVersionMatch.Groups[1].Value }
+    }
 
     $releaseGroups = [ordered]@{}
     $links = [regex]::Matches(
