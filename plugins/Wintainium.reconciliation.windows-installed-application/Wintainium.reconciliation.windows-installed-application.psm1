@@ -203,7 +203,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $fullTokens = @(Get-WintainiumIdentityTokens -Value $ApplicationName)
         $publisherNormalized = ConvertTo-WintainiumIdentityName -Value $ApplicationPublisher
         if ($publisherNormalized -match 'sourceforge|github|browse files|download page|website') { $publisherNormalized = '' }
-        $publisherTokens = @(Get-WintainiumIdentityTokens -Value $ApplicationPublisher)
+        $publisherTokens = if ($publisherNormalized) { @(Get-WintainiumIdentityTokens -Value $ApplicationPublisher) } else { @() }
         $homepageHost = ''
         if (-not [string]::IsNullOrWhiteSpace($ApplicationHomepage)) {
             try {
