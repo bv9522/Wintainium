@@ -53,8 +53,11 @@ function ConvertTo-OfficialDownloadPageArtifactFormat {
 function ConvertTo-OfficialDownloadPageArtifactArchitecture {
     param([Parameter(Mandatory)][string]$Value)
     $name=$Value.ToLowerInvariant()
-    if ($name -match '(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)') { return 'arm64' }
-    if ($name -match '(^|[^a-z0-9])(x64|amd64|64\s*[- ]?bit|64bit)([^a-z0-9]|$)') { return 'x64' }
+    $hasArm64 = $name -match '(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)'
+    $hasX64 = $name -match '(^|[^a-z0-9])(x86[_ -]?64|x64|amd64|64\s*[- ]?bit|64bit)([^a-z0-9]|$)'
+    if ($hasArm64 -and $hasX64) { return 'neutral' }
+    if ($hasArm64) { return 'arm64' }
+    if ($hasX64) { return 'x64' }
     if ($name -match '(^|[^a-z0-9])(x86|win32|i[3-6]86|32\s*[- ]?bit|32bit)([^a-z0-9]|$)') { return 'x86' }
     return 'unknown'
 }
@@ -213,9 +216,48 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     # surrounding fragment. Then allow a single unassociated checksum before the
     # first supported artifact link to identify the primary download. Never associate
     # remaining checksums by ordinal position alone.
-    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:Checksum|Hash)\s*)?[:=]?\s*([0-9a-f]{64})\b'
+    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:<>
+]{1,160})?)?\s*[:=]?\s*([0-9a-f]{64})\b'
     $sha256Matches = [regex]::Matches($Body, $sha256Pattern)
     $associatedSha256 = [System.Collections.Generic.HashSet[int]]::new()
+
+    # Publisher pages sometimes place a filename-specific checksum in a paragraph
+    # after the download link instead of a table row or pre-download banner. Accept
+    # it only when one supported artifact filename and one SHA256 digest occur in
+    # the same compact content block; never associate by page order alone.
+    $checksumBlocks = [regex]::Matches(
+        $Body,
+        '(?is)<(?:p|li|dd)\b[^>]*>.*?</(?:p|li|dd)\s*>'
+    )
+    foreach ($checksumBlock in $checksumBlocks) {
+        $blockHtml = $checksumBlock.Value
+        $blockHashes = [regex]::Matches($blockHtml, $sha256Pattern)
+        if ($blockHashes.Count -ne 1) { continue }
+        $blockArtifacts = [System.Collections.Generic.List[object]]::new()
+        foreach ($candidateArtifact in $artifacts) {
+            if ($blockHtml -match "(?i)$([regex]::Escape([string]$candidateArtifact.FileName))") {
+                $blockArtifacts.Add($candidateArtifact)
+            }
+        }
+        if ($blockArtifacts.Count -ne 1) { continue }
+        $digest = $blockHashes[0].Groups[1].Value.ToUpperInvariant()
+        $matchIndex = -1
+        for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
+            if ($sha256Matches[$i].Groups[1].Value -ieq $digest) {
+                $matchIndex = $i
+                break
+            }
+        }
+        if ($matchIndex -lt 0 -or -not $associatedSha256.Add($matchIndex)) { continue }
+        $targetArtifact = $blockArtifacts[0]
+        if (@($targetArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
+            $targetArtifact.Hashes = @($targetArtifact.Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $digest
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
     foreach ($artifact in $artifacts) {
         $escapedFileName = [regex]::Escape([string]$artifact.FileName)
         $fileMatches = [regex]::Matches($Body, "(?i)$escapedFileName")
@@ -545,22 +587,19 @@ function Get-OfficialDownloadPageSourceForgeReleases {
 }
 
 
-function Get-OfficialDownloadPageGimpReleases {
+function Get-OfficialDownloadPagePageLevelVersionReleases {
     param(
         [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
         [Parameter(Mandatory)][Uri]$BaseUri
     )
 
-    if ($BaseUri.Host -notmatch '(?i)(^|\.)gimp\.org$' -or
-        $BaseUri.AbsolutePath -notmatch '(?i)^/downloads/?$') { return @() }
-
-    # GIMP publishes its current stable version in a page-level sentence, separate
-    # from the Windows platform section. Do not infer a version from unrelated
-    # platform downloads or older-download links.
+    # Some publishers state the current stable version at page level, separate from
+    # the platform-specific download section. Use only an explicit stable-release
+    # statement, then scope artifact parsing to the Windows heading's section.
     $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
     $stableMatch = [regex]::Match(
         [string]$pageText,
-        '(?i)\bThe\s+current\s+stable\s+release\s+of\s+GIMP\s+is\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*\((20\d{2}-\d{1,2}-\d{1,2})\)'
+        '(?i)\b(?:the\s+)?(?:current|latest)\s+stable\s+release\s+of\s+[^.\r\n]{1,120}?\s+is\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*(?:\((20\d{2}-\d{1,2}-\d{1,2})\))?'
     )
     if (-not $stableMatch.Success) { return @() }
 
@@ -568,22 +607,22 @@ function Get-OfficialDownloadPageGimpReleases {
         $Html,
         '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>'
     )
-    $windowsHeading = $null
-    $windowsHeadingIndex = -1
+    $platformHeading = $null
+    $platformHeadingIndex = -1
     for ($i = 0; $i -lt $headingMatches.Count; $i++) {
         $headingText = ConvertFrom-OfficialDownloadPageHtmlText $headingMatches[$i].Groups[2].Value
-        if ($headingText -ieq 'GIMP for Windows') {
-            $windowsHeading = $headingMatches[$i]
-            $windowsHeadingIndex = $i
+        if ($headingText -match '(?i)\bWindows\b') {
+            $platformHeading = $headingMatches[$i]
+            $platformHeadingIndex = $i
             break
         }
     }
-    if ($null -eq $windowsHeading) { return @() }
+    if ($null -eq $platformHeading) { return @() }
 
-    $headingLevel = [int]$windowsHeading.Groups[1].Value
-    $bodyStart = $windowsHeading.Index + $windowsHeading.Length
+    $headingLevel = [int]$platformHeading.Groups[1].Value
+    $bodyStart = $platformHeading.Index + $platformHeading.Length
     $bodyEnd = $Html.Length
-    for ($i = $windowsHeadingIndex + 1; $i -lt $headingMatches.Count; $i++) {
+    for ($i = $platformHeadingIndex + 1; $i -lt $headingMatches.Count; $i++) {
         if ([int]$headingMatches[$i].Groups[1].Value -le $headingLevel) {
             $bodyEnd = $headingMatches[$i].Index
             break
@@ -591,31 +630,11 @@ function Get-OfficialDownloadPageGimpReleases {
     }
     if ($bodyEnd -le $bodyStart) { return @() }
 
-    $windowsBody = $Html.Substring($bodyStart, $bodyEnd - $bodyStart)
-    $releaseHeading = "GIMP $($stableMatch.Groups[1].Value) ($($stableMatch.Groups[2].Value))"
-    $release = ConvertFrom-OfficialDownloadPageReleaseSection -Heading $releaseHeading -Body $windowsBody -BaseUri $BaseUri
+    $version = $stableMatch.Groups[1].Value
+    $publishedDate = if ($stableMatch.Groups[2].Success) { $stableMatch.Groups[2].Value } else { $null }
+    $releaseHeading = if ($publishedDate) { "Release $version ($publishedDate)" } else { "Release $version" }
+    $release = ConvertFrom-OfficialDownloadPageReleaseSection -Heading $releaseHeading -Body $Html.Substring($bodyStart, $bodyEnd - $bodyStart) -BaseUri $BaseUri
     if ($null -eq $release) { return @() }
-
-    # GIMP's single Windows setup executable explicitly supports x86_64 and ARM64.
-    # Preserve that publisher claim as a dual-architecture artifact instead of
-    # classifying it as ARM64 merely because ARM64 appears in the link label.
-    $links = [regex]::Matches(
-        $windowsBody,
-        '<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',
-        [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
-    )
-    foreach ($artifact in @($release.Artifacts)) {
-        foreach ($link in $links) {
-            try { $linkUri = [Uri]::new($BaseUri, $link.Groups[1].Value) } catch { continue }
-            if ($linkUri.AbsoluteUri -ne [string]$artifact.Uri) { continue }
-            $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
-            if ($label -match '(?i)\bx86_64\b' -and $label -match '(?i)\bARM64\b') {
-                $artifact.Architecture = 'neutral'
-            }
-            break
-        }
-    }
-
     return @($release)
 }
 
@@ -752,15 +771,13 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
     }
 
-    if ($releases.Count -eq 0 -and
-        $baseUri.Host -match '(?i)(^|\.)gimp\.org$' -and
-        $baseUri.AbsolutePath -match '(?i)^/downloads/?$') {
-        $gimpReleases = @(Get-OfficialDownloadPageGimpReleases -Html $html -BaseUri $baseUri)
-        foreach ($gimpRelease in $gimpReleases) {
-            [void]$releases.Add($gimpRelease)
-            $parsedArtifactCount += @($gimpRelease.Artifacts).Count
+    if ($releases.Count -eq 0) {
+        $pageLevelReleases = @(Get-OfficialDownloadPagePageLevelVersionReleases -Html $html -BaseUri $baseUri)
+        foreach ($pageLevelRelease in $pageLevelReleases) {
+            [void]$releases.Add($pageLevelRelease)
+            $parsedArtifactCount += @($pageLevelRelease.Artifacts).Count
         }
-        if ($gimpReleases.Count -gt 0) {
+        if ($pageLevelReleases.Count -gt 0) {
             $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
         }
     }

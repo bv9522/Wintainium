@@ -217,4 +217,28 @@ Describe 'Official download page verification evidence discovery' {
         @($result.Releases[0].Artifacts)[0].Hashes.Count | Should -Be 0
         @($result.Releases[0].Artifacts)[1].Hashes.Count | Should -Be 0
     }
+
+    It 'associates a SHA256 checksum with its artifact when filename and digest share a paragraph after the link' {
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<h2>Release 3.2.6</h2>
+<a href="https://downloads.example.com/setup-3.2.6.exe">Download</a>
+<p>SHA256 hash sum for setup-3.2.6.exe: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
+'@
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifact = $result.Releases[0].Artifacts[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
+        $artifact.Hashes[0].Value | Should -Be '9337CCBC01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'
+        $artifact.Hashes[0].Source | Should -Be 'OfficialDownloadPageChecksum'
+    }
+
 }

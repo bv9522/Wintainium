@@ -570,7 +570,7 @@ Released 2024-05-17</pre>
     }
 
 
-    It 'discovers GIMP stable version and Windows dual-architecture installer from separate page sections' {
+    It 'discovers a page-level stable version with Windows-scoped artifacts and dual-architecture support' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
                 Content = @'
