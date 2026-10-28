@@ -58,6 +58,7 @@ Describe 'Wintainium official download page provider release discovery' {
 <body>
   <a href="/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download">PeaceSetup.exe</a>
   <a href="/projects/peace-equalizer-apo-extension/files/Peace64.exe/download">Peace64.exe</a>
+  <p>From version 1.5.0.1 all Peace executables have a code signing certificate.</p>
   <h2>Version 1.6.9.11</h2>
   <p>Released 2025-11-02</p>
   <h2>Version 1.6.7.10</h2>
