@@ -408,6 +408,41 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         if ($currentVersionMatch.Success) { $currentVersion = $currentVersionMatch.Groups[1].Value }
     }
 
+
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Some SourceForge project pages publish the current version in the
+        # adjacent release notes instead of a version heading. Trust that version
+        # only when its explicit release date matches the newest dated file row
+        # containing a supported installer/archive. This prevents historical
+        # changelog versions from becoming current-release evidence.
+        $supportedFileRowDates = [System.Collections.Generic.List[string]]::new()
+        $supportedFileRows = [regex]::Matches(
+            $Html,
+            '(?is)<tr\b[^>]*\btitle\s*=\s*["''][^"''>]+\.(?:exe|msi|zip)["''][^"''>]*>.*?</tr\s*>'
+        )
+        foreach ($supportedFileRow in $supportedFileRows) {
+            $rowDateMatch = [regex]::Match(
+                $supportedFileRow.Value,
+                '(?is)<abbr\b[^>]*\btitle\s*=\s*["''](20\d{2}-\d{2}-\d{2})(?:\s+[^"'']*)?["'']'
+            )
+            if ($rowDateMatch.Success) { $supportedFileRowDates.Add($rowDateMatch.Groups[1].Value) }
+        }
+
+        if ($supportedFileRowDates.Count -gt 0) {
+            $latestSupportedFileDate = @($supportedFileRowDates | Sort-Object -Descending)[0]
+            $datedReleaseNotes = [regex]::Matches(
+                $Html,
+                '(?is)\bVersion\s+([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b[\s\S]{0,500}?\bReleased\s+(20\d{2}-\d{2}-\d{2})\b'
+            )
+            foreach ($datedReleaseNote in $datedReleaseNotes) {
+                if ($datedReleaseNote.Groups[2].Value -eq $latestSupportedFileDate) {
+                    $currentVersion = $datedReleaseNote.Groups[1].Value
+                    break
+                }
+            }
+        }
+    }
+
     $releaseGroups = [ordered]@{}
     $links = [regex]::Matches(
         $Html,
