@@ -145,11 +145,12 @@ Describe 'Wintainium official download page provider release discovery' {
 </table>
 <a href="/projects/peace-equalizer-apo-extension/files/latest/download">Download Latest Version PeaceSetup.exe (55.7 MB)</a>
 <div class="description">
-  <p>Version 1.6.9.11</p>
-  <p>Released 2025-11-02</p>
-  <p>added: improved configuration editor</p>
-  <p>Version 1.6.8.10</p>
-  <p>Released 2024-05-17</p>
+  <pre>Version 1.6.9.11
+Released 2025-11-02
+added: improved configuration editor
+
+Version 1.6.8.10
+Released 2024-05-17</pre>
 </div>
 </body>
 </html>
@@ -190,8 +191,8 @@ Describe 'Wintainium official download page provider release discovery' {
 </tr>
 </table>
 <div class="description">
-  <p>Version 1.2.3</p>
-  <p>Released 2024-05-17</p>
+  <pre>Version 1.2.3
+Released 2024-05-17</pre>
 </div>
 </body>
 </html>
