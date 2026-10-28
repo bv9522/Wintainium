@@ -545,8 +545,13 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         if ($candidateUri.Scheme -notin @('http','https')) { continue }
         $candidatePath = $candidateUri.AbsolutePath
         # SourceForge download links append /download after the real filename.
-        # Strip that routing suffix before counting supported artifact candidates.
-        if ($candidateUri.Host -match '(?i)(^|\.)sourceforge\.net
+        # Strip that routing suffix before checking the artifact extension.
+        if ($candidateUri.Host -match '(?i)(^|\.)sourceforge\.net$') {
+            $candidatePath = $candidatePath -replace '(?i)/download/?$',''
+        }
+        if ([IO.Path]::GetExtension($candidatePath).ToLowerInvariant() -in @('.exe','.msi','.zip')) {
+            $downloadArtifactCandidateCount++
+        }
     }
 
     $releases=[System.Collections.Generic.List[object]]::new()
