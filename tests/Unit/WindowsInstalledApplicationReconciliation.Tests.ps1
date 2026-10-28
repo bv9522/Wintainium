@@ -508,5 +508,14 @@ Describe 'Windows installed-application reconciliation plugin' {
         @($result.Candidates[0].IdentityEvidence) | Should -Contain 'DisplayIconNameCorroborated'
     }
 
+
+    It 'normalizes punctuation, numeric versions, and recognized architecture suffixes' {
+        InModuleScope Wintainium.reconciliation.windows-installed-application {
+            ConvertTo-WintainiumIdentityName -Value '7-Zip 26.03 (x64 edition)' | Should -Be '7 zip'
+            ConvertTo-WintainiumIdentityName -Value 'Core Temp 1.20.1' | Should -Be 'core temp'
+            ConvertTo-WintainiumIdentityName -Value 'AMD Settings' | Should -Be 'amd settings'
+        }
+    }
+
 }
 
