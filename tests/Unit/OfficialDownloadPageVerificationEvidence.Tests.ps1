@@ -237,7 +237,7 @@ Describe 'Official download page verification evidence discovery' {
         $result.IsSuccessful | Should -BeTrue
         $artifact = $result.Releases[0].Artifacts[0]
         @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
-        $artifact.Hashes[0].Value | Should -Be '9337CCBC01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'
+        $artifact.Hashes[0].Value | Should -Be '9337CCCBC01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'
         $artifact.Hashes[0].Source | Should -Be 'OfficialDownloadPageChecksum'
     }
 
