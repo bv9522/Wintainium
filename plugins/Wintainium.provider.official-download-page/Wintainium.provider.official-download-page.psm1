@@ -544,6 +544,81 @@ function Get-OfficialDownloadPageSourceForgeReleases {
     return @($releases.ToArray())
 }
 
+
+function Get-OfficialDownloadPageGimpReleases {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
+        [Parameter(Mandatory)][Uri]$BaseUri
+    )
+
+    if ($BaseUri.Host -notmatch '(?i)(^|\.)gimp\.org$' -or
+        $BaseUri.AbsolutePath -notmatch '(?i)^/downloads/?$') { return @() }
+
+    # GIMP publishes its current stable version in a page-level sentence, separate
+    # from the Windows platform section. Do not infer a version from unrelated
+    # platform downloads or older-download links.
+    $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
+    $stableMatch = [regex]::Match(
+        [string]$pageText,
+        '(?i)\bThe\s+current\s+stable\s+release\s+of\s+GIMP\s+is\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*\((20\d{2}-\d{1,2}-\d{1,2})\)'
+    )
+    if (-not $stableMatch.Success) { return @() }
+
+    $headingMatches = [regex]::Matches(
+        $Html,
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>'
+    )
+    $windowsHeading = $null
+    $windowsHeadingIndex = -1
+    for ($i = 0; $i -lt $headingMatches.Count; $i++) {
+        $headingText = ConvertFrom-OfficialDownloadPageHtmlText $headingMatches[$i].Groups[2].Value
+        if ($headingText -ieq 'GIMP for Windows') {
+            $windowsHeading = $headingMatches[$i]
+            $windowsHeadingIndex = $i
+            break
+        }
+    }
+    if ($null -eq $windowsHeading) { return @() }
+
+    $headingLevel = [int]$windowsHeading.Groups[1].Value
+    $bodyStart = $windowsHeading.Index + $windowsHeading.Length
+    $bodyEnd = $Html.Length
+    for ($i = $windowsHeadingIndex + 1; $i -lt $headingMatches.Count; $i++) {
+        if ([int]$headingMatches[$i].Groups[1].Value -le $headingLevel) {
+            $bodyEnd = $headingMatches[$i].Index
+            break
+        }
+    }
+    if ($bodyEnd -le $bodyStart) { return @() }
+
+    $windowsBody = $Html.Substring($bodyStart, $bodyEnd - $bodyStart)
+    $releaseHeading = "GIMP $($stableMatch.Groups[1].Value) ($($stableMatch.Groups[2].Value))"
+    $release = ConvertFrom-OfficialDownloadPageReleaseSection -Heading $releaseHeading -Body $windowsBody -BaseUri $BaseUri
+    if ($null -eq $release) { return @() }
+
+    # GIMP's single Windows setup executable explicitly supports x86_64 and ARM64.
+    # Preserve that publisher claim as a dual-architecture artifact instead of
+    # classifying it as ARM64 merely because ARM64 appears in the link label.
+    $links = [regex]::Matches(
+        $windowsBody,
+        '<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    )
+    foreach ($artifact in @($release.Artifacts)) {
+        foreach ($link in $links) {
+            try { $linkUri = [Uri]::new($BaseUri, $link.Groups[1].Value) } catch { continue }
+            if ($linkUri.AbsoluteUri -ne [string]$artifact.Uri) { continue }
+            $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+            if ($label -match '(?i)\bx86_64\b' -and $label -match '(?i)\bARM64\b') {
+                $artifact.Architecture = 'neutral'
+            }
+            break
+        }
+    }
+
+    return @($release)
+}
+
 function Invoke-WintainiumProviderReleaseDiscovery {
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$Request)
@@ -674,6 +749,19 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
                 (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseInvalid' 'A candidate release section could not be normalized. See discovery diagnostics for counts and failure stage.')
             ) -LogEvents $logEvents.ToArray()
+        }
+    }
+
+    if ($releases.Count -eq 0 -and
+        $baseUri.Host -match '(?i)(^|\.)gimp\.org$' -and
+        $baseUri.AbsolutePath -match '(?i)^/downloads/?$') {
+        $gimpReleases = @(Get-OfficialDownloadPageGimpReleases -Html $html -BaseUri $baseUri)
+        foreach ($gimpRelease in $gimpReleases) {
+            [void]$releases.Add($gimpRelease)
+            $parsedArtifactCount += @($gimpRelease.Artifacts).Count
+        }
+        if ($gimpReleases.Count -gt 0) {
+            $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
         }
     }
 

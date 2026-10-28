@@ -569,4 +569,60 @@ Released 2024-05-17</pre>
         $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '1.21'
     }
 
+
+    It 'discovers GIMP stable version and Windows dual-architecture installer from separate page sections' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Current Stable Version</h2>
+<p>The current stable release of GIMP is <strong>3.2.6</strong> (2026-09-10).</p>
+<h2>GIMP for Unix-like systems</h2>
+<a href="https://download.gimp.org/gimp/v3.2/linux/gimp-3.2.6-x86_64.AppImage">Download GIMP 3.2.6 AppImage for x86_64</a>
+<h2>GIMP for macOS</h2>
+<a href="https://download.gimp.org/gimp/v3.2/macOS/gimp-3.2.6-x86_64.dmg">Download GIMP 3.2.6 for Intel</a>
+<h2>GIMP for Windows</h2>
+<a href="https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe">Download GIMP 3.2.6 for x86_64 and ARM64 directly</a>
+<a href="https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe.torrent">Download via BitTorrent</a>
+<h3>Warnings and information</h3>
+<p>Supported OS for installer: Windows 10 1903 or newer</p>
+<h3>Security</h3>
+<p>SHA256 hash sum for gimp-3.2.6-setup.exe: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
+<h2>Source for version 3.2 (Stable)</h2>
+<a href="https://download.gimp.org/gimp/v3.2/windows/">Older Downloads</a>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.gimp.org/downloads/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'gimp-stable-windows-release'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.gimp.org/downloads/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+
+        $release = $result.Releases[0]
+        $release.Version | Should -Be '3.2.6'
+        $release.Channel | Should -Be 'stable'
+        $release.PublishedAt.ToString('yyyy-MM-dd') | Should -Be '2026-09-10'
+        @($release.Artifacts).Count | Should -Be 1
+        $release.Artifacts[0].Uri | Should -Be 'https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe'
+        $release.Artifacts[0].FileName | Should -Be 'gimp-3.2.6-setup.exe'
+        $release.Artifacts[0].Architecture | Should -Be 'neutral'
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
+        $parseEvent.Context.ParsedReleaseCount | Should -Be 1
+        $parseEvent.Context.ParsedArtifactCount | Should -Be 1
+        $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '3.2.6'
+    }
+
 }
