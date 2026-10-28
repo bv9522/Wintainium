@@ -517,5 +517,35 @@ Describe 'Windows installed-application reconciliation plugin' {
         }
     }
 
+
+    It 'does not confirm a publisher-only registry name for a longer product title' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='NVIDIA GeForce Experience'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='NVIDIA'; DisplayName='NVIDIA'
+                Publisher='NVIDIA Corporation'; InstallLocation='C:\Program Files\NVIDIA'
+                DisplayIcon='C:\Program Files\NVIDIA\NVIDIA.exe,0'
+                UninstallString='C:\Program Files\NVIDIA\uninstall.exe'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='NVIDIA GeForce Experience'; Publisher='NVIDIA Corporation'; Homepage='https://www.nvidia.com/geforce'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher -ApplicationHomepage $Homepage
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $result.Candidates[0].IdentityConfidence | Should -Be 'ReviewOnly'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'CandidateNameIsPublisherOnly'
+    }
+
 }
 
