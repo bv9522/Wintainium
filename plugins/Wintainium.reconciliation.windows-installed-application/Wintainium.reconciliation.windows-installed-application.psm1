@@ -468,8 +468,10 @@ function Invoke-WintainiumReconciliation {
             $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=$installationState;EvidenceSource='WindowsUninstallRegistry'}
             return & $base $true $status $evidence @() $warnings
         }
-        if ($candidateCount -eq 1 -and [string]$observation.Candidates[0].IdentityConfidence -eq 'ReviewOnly') {
-            $candidate = @($observation.Candidates)[0]
+        $firstCandidate = if ($candidateCount -gt 0) { @($observation.Candidates)[0] } else { $null }
+        $candidateConfidence = if ($null -ne $firstCandidate) { [string](Get-WintainiumWindowsSettingValue -Object $firstCandidate -Name 'IdentityConfidence') } else { '' }
+        if ($candidateCount -eq 1 -and $candidateConfidence -eq 'ReviewOnly') {
+            $candidate = $firstCandidate
             $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
             $warnings += [pscustomobject]@{
                 Code = 'WindowsReconciliationIdentityRequiresConfirmation'
@@ -493,6 +495,15 @@ function Invoke-WintainiumReconciliation {
                 MatchMode = $matchMode
                 RegistryLocationCount = $locationCount
                 RegistryReadFailureCount = $readFailureCount
+                CandidateEvidence = @($observation.Candidates | ForEach-Object {
+                    [pscustomobject]@{
+                        DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'DisplayName')
+                        RegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'SubKey')
+                        IdentityScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScore'
+                        IdentityConfidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityConfidence'
+                        IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityEvidence')
+                    }
+                })
             }
             return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
         }
@@ -507,6 +518,17 @@ function Invoke-WintainiumReconciliation {
         }
         if ($null -ne $version) { $evidence.Version=$version; $evidence.VersionSource=$versionSource }
         if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
+        if ($candidateConfidence -eq 'Strong' -and $null -ne (Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore')) {
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityResolved'
+                Message = 'Installed-state identity was resolved using layered registry evidence rather than an explicit exact-name predicate.'
+                OperationId = $operationId
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityScore = [int]$candidate.IdentityScore
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+        }
         $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
         if (-not [string]::IsNullOrWhiteSpace([string]$installedArchitecture)) {
             $evidence.Architecture = [string]$installedArchitecture
