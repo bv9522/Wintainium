@@ -17,8 +17,10 @@ function ConvertTo-WintainiumIdentityName {
 
     if ([string]::IsNullOrWhiteSpace($Value)) { return '' }
     $normalized = $Value.Trim().ToLowerInvariant()
+    $normalized = [regex]::Replace($normalized, '\s*\((?:x64|x86|x32|arm64|64[- ]bit|32[- ]bit)(?:\s+edition)?\)\s*$', '')
+    $normalized = [regex]::Replace($normalized, '\s+(?:x64|x86|x32|arm64|64[- ]bit|32[- ]bit)(?:\s+edition)?$', '')
     $normalized = [regex]::Replace($normalized, '\s+\d+(?:\.\d+)*(?:[a-z])?$', '')
-    $normalized = [regex]::Replace($normalized, '\b(?:x64|x86|x32|arm64|64[- ]bit|32[- ]bit)\b', ' ')
+    $normalized = [regex]::Replace($normalized, '\s+edition$', '')
     $normalized = [regex]::Replace($normalized, '[^a-z0-9]+', ' ')
     return [regex]::Replace($normalized.Trim(), '\s+', ' ')
 }
