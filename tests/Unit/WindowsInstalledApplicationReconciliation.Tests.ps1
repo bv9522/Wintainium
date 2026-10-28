@@ -365,8 +365,8 @@ Describe 'Windows installed-application reconciliation plugin' {
                 [pscustomobject]@{
                     Scope='machine'; View='64'; SubKey='Peace'; DisplayName='Peace'
                     DisplayVersion='1.6.9.11'; Publisher='P.E. Verbeek'
-                    InstallLocation='C:\Program Files\Peace'
-                    UninstallString='"C:\Program Files\Peace\unins000.exe"'
+                    InstallLocation=''
+                    UninstallString=''
                 },
                 [pscustomobject]@{
                     Scope='machine'; View='64'; SubKey='EqualizerAPO'; DisplayName='Equalizer APO'
@@ -387,8 +387,8 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result.Candidates[0].IdentityConfidence | Should -Be 'Strong'
         $result.Candidates[0].IdentityScore | Should -BeGreaterOrEqual 70
         @($result.Candidates[0].IdentityEvidence) | Should -Contain 'MeaningfulDisplayNameTokensContainedInPrimaryPhrase'
-        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'InstallLocationNameCorroborated'
         @($result.Candidates[0].IdentityEvidence) | Should -Contain 'DisplayNameAndSubKeyConsistent'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'SharedMeaningfulNameTokens'
     }
 
     It 'keeps a weak partial-name candidate non-authoritative' {
