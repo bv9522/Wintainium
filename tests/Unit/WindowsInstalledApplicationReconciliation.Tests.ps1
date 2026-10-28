@@ -347,5 +347,132 @@ Describe 'Windows installed-application reconciliation plugin' {
         $r.Evidence.Architecture | Should -Be 'x64'
     }
 
+
+    It 'resolves a shortened Windows product name from the primary source phrase and corroborating registry metadata' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @(
+                    [pscustomobject]@{ value='DisplayName'; equals='Peace Equalizer, interface Equalizer APO'; matchType='exact' }
+                    [pscustomobject]@{ value='subkey'; equals='Peace Equalizer, interface Equalizer APO'; matchType='exact' }
+                )
+            }
+        }
+        $reader = {
+            param($location)
+            @(
+                [pscustomobject]@{
+                    Scope='machine'; View='64'; SubKey='Peace'; DisplayName='Peace'
+                    DisplayVersion='1.6.9.11'; Publisher='P.E. Verbeek'
+                    InstallLocation='C:\Program Files\Peace'
+                    UninstallString='"C:\Program Files\Peace\unins000.exe"'
+                },
+                [pscustomobject]@{
+                    Scope='machine'; View='64'; SubKey='EqualizerAPO'; DisplayName='Equalizer APO'
+                    DisplayVersion='1.4.2'; Publisher=''
+                    InstallLocation='C:\Program Files\EqualizerAPO'
+                }
+            )
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='Peace Equalizer, interface Equalizer APO'; Publisher='Browse Files at SourceForge.net'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $result.Candidates[0].DisplayName | Should -Be 'Peace'
+        $result.Candidates[0].IdentityConfidence | Should -Be 'Strong'
+        $result.Candidates[0].IdentityScore | Should -BeGreaterOrEqual 70
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'MeaningfulDisplayNameTokensContainedInPrimaryPhrase'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'InstallLocationNameCorroborated'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'DisplayNameAndSubKeyConsistent'
+    }
+
+    It 'keeps a weak partial-name candidate non-authoritative' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='AMD'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='AMD Settings'; DisplayName='AMD Settings'
+                DisplayVersion='2026.0423'; Publisher='Advanced Micro Devices, Inc.'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='AMD'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $result.Candidates[0].IdentityConfidence | Should -Be 'ReviewOnly'
+        $result.Candidates[0].IdentityScore | Should -BeLessThan 70
+    }
+
+    It 'returns multiple review-only candidates when the available name evidence is ambiguous' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Acme Equalizer'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            @(
+                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; InstallLocation='C:\Program Files\Acme' },
+                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Equalizer'; DisplayName='Equalizer'; InstallLocation='C:\Program Files\Equalizer' }
+            )
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='Acme Equalizer'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $result.Candidates.Count | Should -Be 2
+        @($result.Candidates | Where-Object IdentityConfidence -eq 'ReviewOnly').Count | Should -Be 2
+    }
+
+    It 'does not promote a review-only identity result to Installed' {
+        $request = [pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-000000000209'
+            ApplicationId='example.application'
+            Manifest=[pscustomobject]@{
+                name='AMD'
+                publisher='Advanced Micro Devices, Inc.'
+                reconciliation=[pscustomobject]@{ settings=[pscustomobject]@{ registry=[pscustomobject]@{ matchMode='any'; locations=@([pscustomobject]@{scope='machine';view='64'}); match=@([pscustomobject]@{value='DisplayName';equals='AMD';matchType='exact'}) } } }
+            }
+        }
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{
+                    IsSuccessful=$true
+                    Candidates=@([pscustomobject]@{
+                        Scope='machine'; View='64'; SubKey='AMD Settings'; DisplayName='AMD Settings'
+                        DisplayVersion='2026.0423'; IdentityScore=31; IdentityConfidence='ReviewOnly'
+                        IdentityEvidence=@('SharedMeaningfulNameTokens')
+                    })
+                    Errors=@()
+                }
+            }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $result.Status | Should -Be 'Unknown'
+        $result.Evidence.InstallationState | Should -Be 'Unknown'
+        @($result.Warnings | Where-Object Code -eq 'WindowsReconciliationIdentityRequiresConfirmation').Count | Should -Be 1
+    }
+
 }
 
