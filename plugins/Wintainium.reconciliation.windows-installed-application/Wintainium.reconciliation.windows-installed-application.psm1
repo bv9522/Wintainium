@@ -203,6 +203,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $fullTokens = @(Get-WintainiumIdentityTokens -Value $ApplicationName)
         $publisherNormalized = ConvertTo-WintainiumIdentityName -Value $ApplicationPublisher
         if ($publisherNormalized -match 'sourceforge|github|browse files|download page|website') { $publisherNormalized = '' }
+        $publisherTokens = @(Get-WintainiumIdentityTokens -Value $ApplicationPublisher)
         $homepageHost = ''
         if (-not [string]::IsNullOrWhiteSpace($ApplicationHomepage)) {
             try {
@@ -275,6 +276,13 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             if ($displayNormalized -and $displayNormalized -eq $subKeyNormalized) {
                 $score = [Math]::Min(100, $score + 5)
                 $evidence.Add('DisplayNameAndSubKeyConsistent')
+            }
+            # A registry name that is only the publisher/vendor token must not
+            # win merely because a longer product title starts with that brand.
+            if ($primaryTokens.Count -gt 1 -and $displayTokens.Count -gt 0 -and
+                @($displayTokens | Where-Object { $_ -notin $publisherTokens }).Count -eq 0) {
+                $score = [Math]::Max(0, $score - 35)
+                $evidence.Add('CandidateNameIsPublisherOnly')
             }
             if ($homepageHost) {
                 foreach ($urlField in @('URLInfoAbout','URLUpdateInfo','HelpLink')) {
