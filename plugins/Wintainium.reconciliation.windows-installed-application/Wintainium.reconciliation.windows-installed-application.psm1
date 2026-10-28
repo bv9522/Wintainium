@@ -194,12 +194,12 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     # candidate do we evaluate the canonical manifest name against the registry
     # inventory. Weak/ambiguous results remain non-authoritative.
     if ($candidates.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($ApplicationName)) {
-        $fullName = ConvertTo-WintaniumIdentityName -Value $ApplicationName
+        $fullName = ConvertTo-WintainiumIdentityName -Value $ApplicationName
         $primaryName = ([regex]::Split($ApplicationName.Trim(), '[,;|:]', 2)[0]).Trim()
-        $primaryNormalized = ConvertTo-WintaniumIdentityName -Value $primaryName
+        $primaryNormalized = ConvertTo-WintainiumIdentityName -Value $primaryName
         $primaryTokens = @(Get-WintaniumIdentityTokens -Value $primaryName)
         $fullTokens = @(Get-WintaniumIdentityTokens -Value $ApplicationName)
-        $publisherNormalized = ConvertTo-WintaniumIdentityName -Value $ApplicationPublisher
+        $publisherNormalized = ConvertTo-WintainiumIdentityName -Value $ApplicationPublisher
         if ($publisherNormalized -match 'sourceforge|github|browse files|download page|website') { $publisherNormalized = '' }
         $homepageHost = ''
         if (-not [string]::IsNullOrWhiteSpace($ApplicationHomepage)) {
@@ -215,8 +215,8 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             $displayName = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayName')
             $subKey = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey')
             $entryPublisher = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Publisher')
-            $displayNormalized = ConvertTo-WintaniumIdentityName -Value $displayName
-            $subKeyNormalized = ConvertTo-WintaniumIdentityName -Value $subKey
+            $displayNormalized = ConvertTo-WintainiumIdentityName -Value $displayName
+            $subKeyNormalized = ConvertTo-WintainiumIdentityName -Value $subKey
             $displayTokens = @(Get-WintaniumIdentityTokens -Value $displayName)
             $subKeyTokens = @(Get-WintaniumIdentityTokens -Value $subKey)
             $score = 0
@@ -257,14 +257,14 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 }
             }
 
-            if ($publisherNormalized -and (ConvertTo-WintaniumIdentityName -Value $entryPublisher) -eq $publisherNormalized) {
+            if ($publisherNormalized -and (ConvertTo-WintainiumIdentityName -Value $entryPublisher) -eq $publisherNormalized) {
                 $score = [Math]::Min(100, $score + 18)
                 $evidence.Add('PublisherCorroborated')
             }
             $installLocation = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'InstallLocation')
             if (-not [string]::IsNullOrWhiteSpace($installLocation)) {
                 $folderName = [System.IO.Path]::GetFileName($installLocation.TrimEnd('\','/'))
-                $folderNormalized = ConvertTo-WintaniumIdentityName -Value $folderName
+                $folderNormalized = ConvertTo-WintainiumIdentityName -Value $folderName
                 if ($folderNormalized -and ($folderNormalized -eq $displayNormalized -or $folderNormalized -eq $subKeyNormalized)) {
                     $score = [Math]::Min(100, $score + 8)
                     $evidence.Add('InstallLocationNameCorroborated')
@@ -293,7 +293,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 $iconPath = ($displayIcon -replace ',\s*-?\d+\s*$', '').Trim('"')
                 if ([System.IO.Path]::IsPathRooted($iconPath)) {
                     $iconBase = [System.IO.Path]::GetFileNameWithoutExtension($iconPath)
-                    $iconNormalized = ConvertTo-WintaniumIdentityName -Value $iconBase
+                    $iconNormalized = ConvertTo-WintainiumIdentityName -Value $iconBase
                     if ($iconNormalized -and ($iconNormalized -eq $displayNormalized -or $iconNormalized -eq $subKeyNormalized)) {
                         $score = [Math]::Min(100, $score + 5)
                         $evidence.Add('DisplayIconNameCorroborated')
