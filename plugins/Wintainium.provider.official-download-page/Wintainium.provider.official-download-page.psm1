@@ -430,13 +430,25 @@ function Get-OfficialDownloadPageSourceForgeReleases {
 
         if ($supportedFileRowDates.Count -gt 0) {
             $latestSupportedFileDate = @($supportedFileRowDates | Sort-Object -Descending)[0]
-            $datedReleaseNotes = [regex]::Matches(
+            $releaseVersionMarkers = [regex]::Matches(
                 $Html,
-                '(?is)\bVersion\s+([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b[\s\S]{0,500}?\bReleased\s+(20\d{2}-\d{2}-\d{2})\b'
+                '(?i)\bVersion\s+([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
             )
-            foreach ($datedReleaseNote in $datedReleaseNotes) {
-                if ($datedReleaseNote.Groups[2].Value -eq $latestSupportedFileDate) {
-                    $currentVersion = $datedReleaseNote.Groups[1].Value
+            for ($markerIndex = 0; $markerIndex -lt $releaseVersionMarkers.Count; $markerIndex++) {
+                $releaseVersionMarker = $releaseVersionMarkers[$markerIndex]
+                $sectionEnd = $Html.Length
+                if ($markerIndex + 1 -lt $releaseVersionMarkers.Count) {
+                    $sectionEnd = $releaseVersionMarkers[$markerIndex + 1].Index
+                }
+                $sectionLength = [Math]::Min(500, $sectionEnd - $releaseVersionMarker.Index)
+                if ($sectionLength -le 0) { continue }
+                $releaseNoteSection = $Html.Substring($releaseVersionMarker.Index, $sectionLength)
+                $releaseDateMatch = [regex]::Match(
+                    $releaseNoteSection,
+                    '(?i)\bReleased\s+(20\d{2}-\d{2}-\d{2})\b'
+                )
+                if ($releaseDateMatch.Success -and $releaseDateMatch.Groups[1].Value -eq $latestSupportedFileDate) {
+                    $currentVersion = $releaseVersionMarker.Groups[1].Value
                     break
                 }
             }
