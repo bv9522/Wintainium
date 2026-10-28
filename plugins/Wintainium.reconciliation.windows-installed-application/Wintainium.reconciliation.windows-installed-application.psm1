@@ -197,8 +197,8 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $fullName = ConvertTo-WintainiumIdentityName -Value $ApplicationName
         $primaryName = ([regex]::Split($ApplicationName.Trim(), '[,;|:]', 2)[0]).Trim()
         $primaryNormalized = ConvertTo-WintainiumIdentityName -Value $primaryName
-        $primaryTokens = @(Get-WintaniumIdentityTokens -Value $primaryName)
-        $fullTokens = @(Get-WintaniumIdentityTokens -Value $ApplicationName)
+        $primaryTokens = @(Get-WintainiumIdentityTokens -Value $primaryName)
+        $fullTokens = @(Get-WintainiumIdentityTokens -Value $ApplicationName)
         $publisherNormalized = ConvertTo-WintainiumIdentityName -Value $ApplicationPublisher
         if ($publisherNormalized -match 'sourceforge|github|browse files|download page|website') { $publisherNormalized = '' }
         $homepageHost = ''
@@ -217,8 +217,8 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             $entryPublisher = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Publisher')
             $displayNormalized = ConvertTo-WintainiumIdentityName -Value $displayName
             $subKeyNormalized = ConvertTo-WintainiumIdentityName -Value $subKey
-            $displayTokens = @(Get-WintaniumIdentityTokens -Value $displayName)
-            $subKeyTokens = @(Get-WintaniumIdentityTokens -Value $subKey)
+            $displayTokens = @(Get-WintainiumIdentityTokens -Value $displayName)
+            $subKeyTokens = @(Get-WintainiumIdentityTokens -Value $subKey)
             $score = 0
             $evidence = [System.Collections.Generic.List[string]]::new()
 
@@ -302,7 +302,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             }
             $uninstallString = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'UninstallString')
             if ($displayTokens.Count -gt 0 -and $uninstallString) {
-                $commandTokens = @(Get-WintaniumIdentityTokens -Value $uninstallString)
+                $commandTokens = @(Get-WintainiumIdentityTokens -Value $uninstallString)
                 if (@($displayTokens | Where-Object { $_ -in $commandTokens }).Count -gt 0) {
                     $score = [Math]::Min(100, $score + 5)
                     $evidence.Add('UninstallCommandNameCorroborated')
