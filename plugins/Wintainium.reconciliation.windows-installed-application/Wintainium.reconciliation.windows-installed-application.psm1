@@ -245,12 +245,12 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 $subKeySubset = $subKeyTokens.Count -gt 0 -and @($subKeyTokens | Where-Object { $_ -notin $primaryTokens }).Count -eq 0
                 if ($displaySubset) {
                     $coverage = [double]$displayTokens.Count / [Math]::Max(1, $primaryTokens.Count)
-                    $score = [Math]::Max($score, [int](48 + (22 * $coverage)))
+                    $score = [Math]::Max($score, [int](52 + (26 * $coverage)))
                     $evidence.Add('MeaningfulDisplayNameTokensContainedInPrimaryPhrase')
                 }
                 if ($subKeySubset) {
                     $coverage = [double]$subKeyTokens.Count / [Math]::Max(1, $primaryTokens.Count)
-                    $score = [Math]::Max($score, [int](45 + (20 * $coverage)))
+                    $score = [Math]::Max($score, [int](49 + (24 * $coverage)))
                     $evidence.Add('MeaningfulSubKeyTokensContainedInPrimaryPhrase')
                 }
                 $overlap = @($fullTokens | Where-Object { $_ -in $displayTokens }).Count
@@ -276,13 +276,6 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             if ($displayNormalized -and $displayNormalized -eq $subKeyNormalized) {
                 $score = [Math]::Min(100, $score + 5)
                 $evidence.Add('DisplayNameAndSubKeyConsistent')
-            }
-            # A registry name that is only the publisher/vendor token must not
-            # win merely because a longer product title starts with that brand.
-            if ($primaryTokens.Count -gt 1 -and $displayTokens.Count -gt 0 -and
-                @($displayTokens | Where-Object { $_ -notin $publisherTokens }).Count -eq 0) {
-                $score = [Math]::Max(0, $score - 35)
-                $evidence.Add('CandidateNameIsPublisherOnly')
             }
             if ($homepageHost) {
                 foreach ($urlField in @('URLInfoAbout','URLUpdateInfo','HelpLink')) {
@@ -317,6 +310,13 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $score = [Math]::Min(100, $score + 5)
                     $evidence.Add('UninstallCommandNameCorroborated')
                 }
+            }
+            # Apply the vendor-only penalty after all supporting metadata so a
+            # publisher's own generic registration cannot win on accumulated fields.
+            if ($primaryTokens.Count -gt 1 -and $displayTokens.Count -gt 0 -and
+                @($displayTokens | Where-Object { $_ -notin $publisherTokens }).Count -eq 0) {
+                $score = [Math]::Max(0, $score - 35)
+                $evidence.Add('CandidateNameIsPublisherOnly')
             }
             if ($score -gt 0) {
                 [pscustomobject][ordered]@{
