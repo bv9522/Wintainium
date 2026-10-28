@@ -89,6 +89,47 @@ Describe 'Wintainium official download page provider release discovery' {
         @($result.Releases[0].Artifacts | Where-Object FileName -eq 'Peace64.exe').Count | Should -Be 1
     }
 
+    It 'discovers SourceForge root-level files when the current version is a standalone non-heading label' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+  <a href="/projects/example-project/files/ExampleSetup.exe/download">ExampleSetup.exe</a>
+  <a href="/projects/example-project/files/Example.exe/download">Example.exe</a>
+  <p>From version 1.2.0 all executables have a code signing certificate.</p>
+  <div class="release-version">Version 2.4.1</div>
+  <p>Released 2026-08-14</p>
+  <div class="history">Version 2.3.0</div>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/example-project/files/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-root-files-non-heading-version'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/example-project/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '2.4.1'
+        @($result.Releases[0].Artifacts).Count | Should -Be 2
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'ExampleSetup.exe').Count | Should -Be 1
+        @($result.Releases[0].Artifacts | Where-Object FileName -eq 'Example.exe').Count | Should -Be 1
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 2
+        $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '2.4.1'
+    }
+
     It 'normalizes multiple dated release sections and their supported artifacts' {
         Mock Invoke-WebRequest {
             [pscustomobject]@{
