@@ -358,6 +358,28 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         }
     }
     if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Prefer SourceForge's explicit release-version element when the current
+        # version is not presented as a heading. This avoids treating historical
+        # labels or explanatory prose as the current release.
+        $standaloneVersionLabels = [regex]::Matches(
+            $Html,
+            '(?is)<(?:div|span|p)\b[^>]*\bclass\s*=\s*["''][^"'']*\brelease-version\b[^"'']*["''][^>]*>(.*?)</(?:div|span|p)\s*>'
+        )
+
+        foreach ($standaloneVersionLabel in $standaloneVersionLabels) {
+            $standaloneLabelText = ConvertFrom-OfficialDownloadPageHtmlText $standaloneVersionLabel.Groups[1].Value
+            $standaloneVersionMatch = [regex]::Match(
+                [string]$standaloneLabelText,
+                '(?i)^\s*(?:Current\s+)?(?:Version\s+)?v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+            )
+
+            if ($standaloneVersionMatch.Success) {
+                $currentVersion = $standaloneVersionMatch.Groups[1].Value
+                break
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
         # SourceForge may render the current version in a generic text element
         # instead of a heading. Accept only an exact standalone version label,
         # never a version embedded in explanatory prose.
