@@ -84,38 +84,37 @@ The plugin must not accept arbitrary registry roots or paths through manifest se
 
 ## Identification
 
-Identification is declarative and deterministic.
+Identification proceeds in layers while keeping the manifest declarative and the reconciler observational.
 
-`registry.locations` declares the registry locations to inspect. `registry.match` declares exact value predicates that a candidate uninstall entry must satisfy.
+registry.locations declares the registry locations to inspect. registry.match declares explicit identity predicates. The existing matchable values remain:
 
-The initial matchable registry values are:
+- subkey — the uninstall entry's immediate subkey name.
+- DisplayName — the registered application display name.
+- Publisher — the registered publisher.
 
-- `subkey` — the uninstall entry's immediate subkey name.
-- `DisplayName` — the registered application display name.
-- `Publisher` — the registered publisher.
+Each predicate requires value and equals. It may also declare aliases, an optional list of known product-name variants, and matchType, either exact or nameOrVersionSuffix. The latter accepts a complete, whitespace-delimited numeric version suffix anchored at the end; it does not accept arbitrary substrings or extra descriptive words.
 
-Each predicate requires `value` and `equals`. It may also declare:
+Explicit predicates are evaluated first and retain their existing all/any behavior. If no explicit candidate matches, the plugin may use the manifest's canonical name as a fallback identity signal and compare it with the enumerated uninstall entries. This fallback is intentionally bounded:
 
-- `aliases` — an optional list of additional exact, case-insensitive identity names.
-- `matchType` — optional `exact` or `nameOrVersionSuffix`. If omitted for legacy `DisplayName` or `subkey` predicates, the plugin applies `nameOrVersionSuffix`; other values default to `exact`.
+1. Normalize case, punctuation, repeated whitespace, conventional numeric version suffixes, and recognized architecture labels.
+2. Give the leading product phrase more weight than comma-delimited descriptors, which may describe a component or dependency rather than the product itself.
+3. Evaluate meaningful token overlap, registry subkey consistency, installation-folder name, uninstall command, display-icon path, publisher, and product/support URLs when those fields are available.
+4. Ignore generic source-page publisher labels, such as a SourceForge listing label, as publisher corroboration.
+5. Record the evidence and score used for a candidate so diagnostics can explain the result.
 
-With `nameOrVersionSuffix`, a candidate may match the declared identity followed by a complete, whitespace-delimited numeric version suffix, such as `GIMP 2.10.38`, `Core Temp 1.20.1`, or `Attribute Changer 11.40b`. The suffix must be anchored to the end of the value. This mode does not accept arbitrary substrings, architecture tags, or extra descriptive words.
+A single candidate is confirmed only when its evidence reaches the confidence threshold and sufficiently exceeds the next candidate. Weak single candidates and close/multiple candidates remain Unknown; arbitrary substring similarity alone must never confirm installation. Missing optional registry metadata is not treated as negative evidence. Publisher, URL, path, icon, and command fields are corroborating signals, not individually authoritative product identifiers.
 
-A candidate matches only when it satisfies every declared predicate; `matchMode: any` retains its existing any-predicate behavior. Use aliases only for known product-name variants, not vendor-wide labels that could identify unrelated components.
-
-The contract does not support arbitrary substring matching, caller-supplied regular expressions, fuzzy matching, ranking, or heuristic similarity.
-
-The reconciler must not use the manifest's human-readable `name` or `id` as an implicit registry search criterion. If a registry value is intended to identify the application, the manifest must declare that criterion explicitly.
+The reconciler reads only the declared uninstall-registration domain. It must not execute commands found in registry values or use those values to trigger installation, removal, or downloads. Release discovery remains owned by the manifest's source provider; identity resolution does not change provider behavior.
 
 ## Candidate Cardinality
 
-After evaluating all declared locations and predicates:
+After evaluating all declared locations, explicit matches are considered before layered fallback identity evidence.
 
-| Candidate count | Installation state |
+| Resolution outcome | Installation state |
 | --- | --- |
-| `0` | `NotInstalled` |
-| `1` | `Installed` |
-| `>1` | `Unknown` |
+| No explicit or meaningful identity candidates after a successful registry scan | NotInstalled |
+| One high-confidence candidate with sufficient separation from alternatives | Installed |
+| One weak candidate, close-scoring candidates, or multiple explicit matches | Unknown |
 
 The reconciler must never resolve ambiguity by choosing the first candidate, preferring a registry view, preferring machine over user scope, or applying an undocumented heuristic.
 
