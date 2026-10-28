@@ -358,11 +358,9 @@ function Get-OfficialDownloadPageSourceForgeReleases {
         }
     }
     if ([string]::IsNullOrWhiteSpace($currentVersion)) {
-        # SourceForge's file listing may render the current release label in a
-        # generic block element rather than a heading (for example, a div containing
-        # only "Version 1.6.9.11"). Accept an exact, standalone version label from
-        # common text-bearing elements, but never a version embedded in explanatory
-        # prose such as "From version 1.5.0.1 ...".
+        # SourceForge may render the current version in a generic text element
+        # instead of a heading. Accept only an exact standalone version label,
+        # never a version embedded in explanatory prose.
         $versionLabelElements = [regex]::Matches(
             $Html,
             '(?is)<(h[1-6]|div|p|span|strong|b|li)\b[^>]*>(.*?)</\1\s*>'
@@ -371,7 +369,22 @@ function Get-OfficialDownloadPageSourceForgeReleases {
             $versionLabelText = ConvertFrom-OfficialDownloadPageHtmlText $versionLabelElement.Groups[2].Value
             $versionLabelMatch = [regex]::Match(
                 [string]$versionLabelText,
-                '(?i)^\s*(?:Current\s+)?Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*
+                '(?i)^\s*(?:Current\s+)?Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+            )
+            if ($versionLabelMatch.Success) {
+                $currentVersion = $versionLabelMatch.Groups[1].Value
+                break
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Last constrained fallback: an explicitly named Current Version field.
+        $currentVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bCurrent\s+Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+        )
+        if ($currentVersionMatch.Success) { $currentVersion = $currentVersionMatch.Groups[1].Value }
+    }
 
     $releaseGroups = [ordered]@{}
     $links = [regex]::Matches(
