@@ -201,6 +201,15 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         $fullTokens = @(Get-WintaniumIdentityTokens -Value $ApplicationName)
         $publisherNormalized = ConvertTo-WintaniumIdentityName -Value $ApplicationPublisher
         if ($publisherNormalized -match 'sourceforge|github|browse files|download page|website') { $publisherNormalized = '' }
+        $homepageHost = ''
+        if (-not [string]::IsNullOrWhiteSpace($ApplicationHomepage)) {
+            try {
+                $parsedHomepage = [uri]$ApplicationHomepage
+                if ($parsedHomepage.IsAbsoluteUri -and $parsedHomepage.Host -notmatch 'sourceforge\.net$|github\.com$') {
+                    $homepageHost = $parsedHomepage.Host.ToLowerInvariant()
+                }
+            } catch { $homepageHost = '' }
+        }
 
         $scored = foreach ($entry in $allEntries) {
             $displayName = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayName')
@@ -265,6 +274,32 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 $score = [Math]::Min(100, $score + 5)
                 $evidence.Add('DisplayNameAndSubKeyConsistent')
             }
+            if ($homepageHost) {
+                foreach ($urlField in @('URLInfoAbout','URLUpdateInfo','HelpLink')) {
+                    $urlValue = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name $urlField)
+                    if (-not $urlValue) { continue }
+                    try {
+                        $entryUri = [uri]$urlValue
+                        if ($entryUri.IsAbsoluteUri -and $entryUri.Host -ieq $homepageHost) {
+                            $score = [Math]::Min(100, $score + 12)
+                            $evidence.Add('PublisherWebsiteHostCorroborated')
+                            break
+                        }
+                    } catch { }
+                }
+            }
+            $displayIcon = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayIcon')
+            if ($displayIcon) {
+                $iconPath = ($displayIcon -replace ',\s*-?\d+\s*$', '').Trim('"')
+                if ([System.IO.Path]::IsPathRooted($iconPath)) {
+                    $iconBase = [System.IO.Path]::GetFileNameWithoutExtension($iconPath)
+                    $iconNormalized = ConvertTo-WintaniumIdentityName -Value $iconBase
+                    if ($iconNormalized -and ($iconNormalized -eq $displayNormalized -or $iconNormalized -eq $subKeyNormalized)) {
+                        $score = [Math]::Min(100, $score + 5)
+                        $evidence.Add('DisplayIconNameCorroborated')
+                    }
+                }
+            }
             $uninstallString = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'UninstallString')
             if ($displayTokens.Count -gt 0 -and $uninstallString) {
                 $commandTokens = @(Get-WintaniumIdentityTokens -Value $uninstallString)
@@ -275,19 +310,23 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             }
             if ($score -gt 0) {
                 [pscustomobject][ordered]@{
-                    Scope = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'Scope')
-                    View = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'View')
+                    Scope = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Scope')
+                    View = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'View')
                     SubKey = $subKey
                     DisplayName = $displayName
-                    DisplayVersion = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'DisplayVersion')
+                    DisplayVersion = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayVersion')
                     Publisher = $entryPublisher
                     InstallLocation = $installLocation
                     UninstallString = $uninstallString
-                    QuietUninstallString = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'QuietUninstallString')
-                    URLInfoAbout = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'URLInfoAbout')
-                    HelpLink = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'HelpLink')
-                    InstallSource = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'InstallSource')
-                    WindowsInstaller = [string](Get-WintaniumWindowsSettingValue -Object $entry -Name 'WindowsInstaller')
+                    QuietUninstallString = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'QuietUninstallString')
+                    URLInfoAbout = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'URLInfoAbout')
+                    HelpLink = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'HelpLink')
+                    InstallSource = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'InstallSource')
+                    WindowsInstaller = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'WindowsInstaller')
+                    DisplayIcon = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayIcon')
+                    URLUpdateInfo = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'URLUpdateInfo')
+                    Comments = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'Comments')
+                    InstallDate = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'InstallDate')
                     EvidenceSource = 'WindowsUninstallRegistry'
                     IdentityScore = $score
                     IdentityConfidence = if ($score -ge 70) { 'Strong' } else { 'ReviewOnly' }
@@ -395,7 +434,7 @@ function Invoke-WintainiumReconciliation {
         if ($null -eq $settings) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
         $applicationName = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'name')
         $applicationPublisher = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'publisher')
-        $applicationHomepage = [string](Get-WintaniumWindowsSettingValue -Object $Request.Manifest -Name 'homepage')
+        $applicationHomepage = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'homepage')
         $observation = Get-WintainiumWindowsInstalledApplicationCandidates -Settings $settings -ApplicationName $applicationName -ApplicationPublisher $applicationPublisher -ApplicationHomepage $applicationHomepage
         $warnings = @($observation.Errors | ForEach-Object {
             [pscustomobject]@{
