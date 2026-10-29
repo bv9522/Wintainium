@@ -835,7 +835,8 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         FailureStage=$failureStage
         DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
     }
-    $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message 'Official download page parsing completed.' -Context $traceContext -Severity $traceSeverity
+    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s).' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount
+    $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message $parseMessage -Context $traceContext -Severity $traceSeverity
     $logEvents.Add($parseEvent)
 
     if($releases.Count -eq 0){
