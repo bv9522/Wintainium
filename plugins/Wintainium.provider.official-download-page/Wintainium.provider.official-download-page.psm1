@@ -216,7 +216,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     # surrounding fragment. Then allow a single unassociated checksum before the
     # first supported artifact link to identify the primary download. Never associate
     # remaining checksums by ordinal position alone.
-    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?\s*[:=]?\s*([0-9a-f]{64})\b'
+    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
     $sha256Matches = [regex]::Matches($Body, $sha256Pattern)
     $associatedSha256 = [System.Collections.Generic.HashSet[int]]::new()
 
@@ -804,7 +804,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # Record counts only; never include raw page text or digest values in diagnostics.
     $pageSha256ClaimCount = [regex]::Matches(
         $html,
-        '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?\s*[:=]?\s*([0-9a-f]{64})\b'
+        '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
     ).Count
     $artifactsWithSha256EvidenceCount = 0
     $attachedSha256EvidenceCount = 0
