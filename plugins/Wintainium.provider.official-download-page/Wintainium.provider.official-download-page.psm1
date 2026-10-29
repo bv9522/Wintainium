@@ -795,6 +795,48 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
     }
 
+    # A publisher may place the download link and its checksum under different
+    # headings (for example, the installer under "Windows" and the digest under
+    # a later "Security" heading). Section-local parsing cannot associate those
+    # records. Make a second page-level pass using the explicit filename and digest
+    # together in one compact HTML block; never associate by page order alone.
+    $pageChecksumBlocks = [regex]::Matches(
+        $html,
+        '(?is)<(?:p|li|dd)\\b[^>]*>.*?</(?:p|li|dd)\\s*>'
+    )
+    foreach ($pageChecksumBlock in $pageChecksumBlocks) {
+        $blockHtml = $pageChecksumBlock.Value
+        $blockHashes = [regex]::Matches(
+            $blockHtml,
+            '(?i)\\bSHA\\s*[- ]?\\s*256\\b(?:\\s+(?:checksum|hash(?:\\s+sum)?)(?:\\s+for\\s+[^:\\r\\n]{1,200}?)?)?(?:\\s|<[^>]*>)*[:=]?(?:\\s|<[^>]*>)*([0-9a-f]{64})\\b'
+        )
+        if ($blockHashes.Count -ne 1) { continue }
+
+        $blockArtifacts = [System.Collections.Generic.List[object]]::new()
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                if ([string]::IsNullOrWhiteSpace([string]$parsedArtifact.FileName)) { continue }
+                if ($blockHtml -match "(?i)$([regex]::Escape([string]$parsedArtifact.FileName))") {
+                    $blockArtifacts.Add($parsedArtifact)
+                }
+            }
+        }
+        if ($blockArtifacts.Count -ne 1) { continue }
+
+        $targetArtifact = $blockArtifacts[0]
+        $digest = $blockHashes[0].Groups[1].Value.ToUpperInvariant()
+        $existingSha256 = @($targetArtifact.Hashes | Where-Object {
+            [string]$_.Algorithm -ieq 'SHA256' -and [string]$_.Value -ieq $digest
+        })
+        if ($existingSha256.Count -gt 0) { continue }
+
+        $targetArtifact.Hashes = @($targetArtifact.Hashes) + [pscustomobject][ordered]@{
+            Algorithm = 'SHA256'
+            Value = $digest
+            Source = 'OfficialDownloadPageChecksum'
+        }
+    }
+
     $stopwatch.Stop()
     $outcome=if($releases.Count -gt 0){'ReleasesParsed'}elseif($sectionMatches.Count -eq 0){'NoReleaseSectionCandidates'}elseif($downloadArtifactCandidateCount -eq 0){'NoSupportedDownloadLinks'}else{'ReleaseSectionsProducedNoArtifacts'}
     $failureStage = if ($releases.Count -eq 0) { 'Parsing' } else { 'None' }
