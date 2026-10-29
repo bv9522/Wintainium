@@ -802,13 +802,13 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # together in one compact HTML block; never associate by page order alone.
     $pageChecksumBlocks = [regex]::Matches(
         $html,
-        '(?is)<(?:p|li|dd)\\b[^>]*>.*?</(?:p|li|dd)\\s*>'
+        '(?is)<(?:p|li|dd)\b[^>]*>.*?</(?:p|li|dd)\s*>'
     )
     foreach ($pageChecksumBlock in $pageChecksumBlocks) {
         $blockHtml = $pageChecksumBlock.Value
         $blockHashes = [regex]::Matches(
             $blockHtml,
-            '(?i)\\bSHA\\s*[- ]?\\s*256\\b(?:\\s+(?:checksum|hash(?:\\s+sum)?)(?:\\s+for\\s+[^:\\r\\n]{1,200}?)?)?(?:\\s|<[^>]*>)*[:=]?(?:\\s|<[^>]*>)*([0-9a-f]{64})\\b'
+            '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
         )
         if ($blockHashes.Count -ne 1) { continue }
 
