@@ -631,4 +631,39 @@ Released 2024-05-17</pre>
         $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '3.2.6'
     }
 
+
+    It 'associates a filename-specific SHA256 checksum when security metadata is in a separate heading section' {
+        Mock Invoke-WebRequest {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Example 3.2.6</h2>
+<p>Current stable release.</p>
+<a href="/downloads/example-3.2.6-setup.exe">Download Example</a>
+<h3>Security</h3>
+<p>SHA256 hash sum for <code>example-3.2.6-setup.exe</code>: <code>9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</code></p>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.example.test/downloads/' }
+            }
+        } -ModuleName Wintainium.provider.official-download-page
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'checksum-across-heading-sections'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.example.test/downloads/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        $artifact.FileName | Should -Be 'example-3.2.6-setup.exe'
+        @($artifact.Hashes | Where-Object Algorithm -eq 'SHA256').Count | Should -Be 1
+        (@($artifact.Hashes | Where-Object Algorithm -eq 'SHA256')[0]).Value | Should -Be '9337CCCBC01D4098EE7A3DAB215B3AFBE6ECE99C5287C92441D6F12CF541EBCA'
+    }
+
 }
