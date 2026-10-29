@@ -224,7 +224,7 @@ Describe 'Official download page verification evidence discovery' {
                 Content = @'
 <h2>Release 3.2.6</h2>
 <a href="https://downloads.example.com/setup-3.2.6.exe">Download</a>
-<p>SHA256 hash sum for <code>setup-3.2.6.exe</code>: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
+<p>SHA256 hash sum for <code>setup-3.2.6.exe</code>: <code>9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</code></p>
 '@
             }
         }
