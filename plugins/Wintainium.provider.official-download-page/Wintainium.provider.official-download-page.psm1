@@ -825,6 +825,9 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         SectionCandidateCount=$sectionMatches.Count
         DownloadArtifactCandidateCount=$downloadArtifactCandidateCount
         ParsedArtifactCount=$parsedArtifactCount
+        PageSha256ClaimCount=$pageSha256ClaimCount
+        ArtifactsWithSha256EvidenceCount=$artifactsWithSha256EvidenceCount
+        AttachedSha256EvidenceCount=$attachedSha256EvidenceCount
         ParsedReleaseCount=$releases.Count
         # Make version extraction and provider ordering observable without exposing artifact URLs.
         ParsedReleaseVersions=@($releases | ForEach-Object { [string]$_.Version })
