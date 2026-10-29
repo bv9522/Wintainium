@@ -799,6 +799,23 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $outcome=if($releases.Count -gt 0){'ReleasesParsed'}elseif($sectionMatches.Count -eq 0){'NoReleaseSectionCandidates'}elseif($downloadArtifactCandidateCount -eq 0){'NoSupportedDownloadLinks'}else{'ReleaseSectionsProducedNoArtifacts'}
     $failureStage = if ($releases.Count -eq 0) { 'Parsing' } else { 'None' }
     $traceSeverity = if ($releases.Count -eq 0) { 'Warning' } else { 'Information' }
+    # Trace checksum evidence at the provider boundary so a missing hash can be
+    # localized to live-page parsing versus a later selection/orchestration handoff.
+    # Record counts only; never include raw page text or digest values in diagnostics.
+    $pageSha256ClaimCount = [regex]::Matches(
+        $html,
+        '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?\s*[:=]?\s*([0-9a-f]{64})\b'
+    ).Count
+    $artifactsWithSha256EvidenceCount = 0
+    $attachedSha256EvidenceCount = 0
+    foreach ($parsedRelease in $releases) {
+        foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+            $sha256Evidence = @($parsedArtifact.Hashes | Where-Object { [string]$_.Algorithm -ieq 'SHA256' })
+            if ($sha256Evidence.Count -gt 0) { $artifactsWithSha256EvidenceCount++ }
+            $attachedSha256EvidenceCount += $sha256Evidence.Count
+        }
+    }
+
     $traceContext = @{
         RequestedUrl=$safeRequestedUri
         FinalUrl=$safeFinalUri
