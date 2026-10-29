@@ -588,7 +588,7 @@ Released 2024-05-17</pre>
 <h3>Warnings and information</h3>
 <p>Supported OS for installer: Windows 10 1903 or newer</p>
 <h3>Security</h3>
-<p>SHA256 hash sum for <code>gimp-3.2.6-setup.exe</code>: 9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</p>
+<p>SHA256 hash sum for <code>gimp-3.2.6-setup.exe</code>: <code>9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</code></p>
 <h2>Source for version 3.2 (Stable)</h2>
 <a href="https://download.gimp.org/gimp/v3.2/windows/">Older Downloads</a>
 </body>
