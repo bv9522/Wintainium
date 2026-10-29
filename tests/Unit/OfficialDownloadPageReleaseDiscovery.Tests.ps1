@@ -624,6 +624,9 @@ Released 2024-05-17</pre>
         $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
         $parseEvent.Context.ParsedReleaseCount | Should -Be 1
         $parseEvent.Context.ParsedArtifactCount | Should -Be 1
+        $parseEvent.Context.PageSha256ClaimCount | Should -Be 1
+        $parseEvent.Context.ArtifactsWithSha256EvidenceCount | Should -Be 1
+        $parseEvent.Context.AttachedSha256EvidenceCount | Should -Be 1
         $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '3.2.6'
     }
 
