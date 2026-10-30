@@ -795,36 +795,29 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
     }
 
-    # A publisher may place the download link and its checksum under different
-    # headings (for example, the installer under "Windows" and the digest under
-    # a later "Security" heading). Section-local parsing cannot associate those
-    # records. Make a second page-level pass using the explicit filename and digest
-    # together in one compact HTML block; never associate by page order alone.
-    $pageChecksumBlocks = [regex]::Matches(
-        $html,
-        '(?is)<(?:p|li|dd)\b[^>]*>.*?</(?:p|li|dd)\s*>'
-    )
-    foreach ($pageChecksumBlock in $pageChecksumBlocks) {
-        $blockHtml = $pageChecksumBlock.Value
-        $blockHashes = [regex]::Matches(
-            $blockHtml,
-            '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
-        )
-        if ($blockHashes.Count -ne 1) { continue }
-
-        $blockArtifacts = [System.Collections.Generic.List[object]]::new()
+    # A publisher may put a checksum in a different heading/section from its
+    # download link. Parse rendered page text, not HTML container boundaries:
+    # real pages can wrap the label, filename, and digest in nested list/strong/code
+    # elements, so paragraph-only HTML matching is not reliable. Require the claim
+    # itself to name a concrete artifact filename and digest; never use page order.
+    $pageVisibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
+    $pageFilenameChecksumPattern = '(?is)\bSHA\s*[- ]?\s*256\b(?:(?!\bSHA\s*[- ]?\s*256\b).){0,240}?\bfor\s+[\x60"'“”]?([A-Za-z0-9][A-Za-z0-9._+-]*\.(?:exe|msi|zip|dmg|appimage|tar\.[A-Za-z0-9.]+))[\x60"'“”]?\s*:\s*[\x60"'“”]?([0-9a-f]{64})\b'
+    $pageFilenameChecksumClaims = [regex]::Matches($pageVisibleText, $pageFilenameChecksumPattern)
+    foreach ($checksumClaim in $pageFilenameChecksumClaims) {
+        $claimedFileName = $checksumClaim.Groups[1].Value
+        $digest = $checksumClaim.Groups[2].Value.ToUpperInvariant()
+        $matchingArtifacts = [System.Collections.Generic.List[object]]::new()
         foreach ($parsedRelease in $releases) {
             foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
-                if ([string]::IsNullOrWhiteSpace([string]$parsedArtifact.FileName)) { continue }
-                if ($blockHtml -match "(?i)$([regex]::Escape([string]$parsedArtifact.FileName))") {
-                    $blockArtifacts.Add($parsedArtifact)
+                if ([string]::Equals([string]$parsedArtifact.FileName, $claimedFileName, [StringComparison]::OrdinalIgnoreCase)) {
+                    $matchingArtifacts.Add($parsedArtifact)
                 }
             }
         }
-        if ($blockArtifacts.Count -ne 1) { continue }
+        # Duplicate filenames across parsed releases are ambiguous; do not attach.
+        if ($matchingArtifacts.Count -ne 1) { continue }
 
-        $targetArtifact = $blockArtifacts[0]
-        $digest = $blockHashes[0].Groups[1].Value.ToUpperInvariant()
+        $targetArtifact = $matchingArtifacts[0]
         $existingSha256 = @($targetArtifact.Hashes | Where-Object {
             [string]$_.Algorithm -ieq 'SHA256' -and [string]$_.Value -ieq $digest
         })
