@@ -821,7 +821,7 @@ Describe 'SourceForge directory-download alias reconciliation' {
                 StatusCode = 200
                 BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/' }
             }
-        } -ModuleName 'Wintainium.provider.official-download-page'
+        }
 
         $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
             OperationId = 'sourceforge-directory-alias-reconciliation'
