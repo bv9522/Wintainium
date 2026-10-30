@@ -799,3 +799,50 @@ Describe 'Official download page explicit current-version metadata' {
         $parseEvent.Context.ParsedArtifactCount | Should -Be 4
     }
 }
+
+Describe 'SourceForge latest-download alias reconciliation' {
+    It 'prefers a concrete file-row URL when the latest-download alias identifies the same artifact' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h1>Peace Equalizer, interface Equalizer APO Files</h1>
+<h2>Version 1.6.9.11</h2>
+<a href="/projects/peace-equalizer-apo-extension/files/latest/download">Download Latest Version PeaceSetup.exe (55.7 MB)</a>
+<table>
+<tr><td><a href="/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download">PeaceSetup.exe</a></td></tr>
+<tr><td><a href="/projects/peace-equalizer-apo-extension/files/Peace.exe/download">Peace.exe</a></td></tr>
+</table>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-latest-alias-reconciliation'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+
+        $artifacts = @($result.Releases[0].Artifacts)
+        $artifacts.Count | Should -Be 2
+        @($artifacts | Where-Object FileName -eq 'PeaceSetup.exe').Count | Should -Be 1
+        @($artifacts | Where-Object FileName -eq 'Peace.exe').Count | Should -Be 1
+        (@($artifacts | Where-Object FileName -eq 'PeaceSetup.exe')[0]).Uri |
+            Should -Be 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download'
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.ParsedReleaseCount | Should -Be 1
+        $parseEvent.Context.ParsedArtifactCount | Should -Be 2
+    }
+}
