@@ -161,7 +161,7 @@ public sealed partial class ApplicationDetailsWindow
             builder.AppendLine(WintainiumApplicationRefreshReportFormatter.Format(refreshResult));
         }
 
-        var updateLogs = WintainiumDesktopDiagnosticsStore.LastUpdateResult?.LogEvents;
+        var updateLogs = _lastUpdateResult?.LogEvents;
         if (updateLogs is not null)
             AppendDiagnostics(builder, "Update Log Events", updateLogs);
 
