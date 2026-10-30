@@ -630,10 +630,10 @@ Released 2024-05-17</pre>
         $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
         $parseEvent.Context.ParsedReleaseCount | Should -Be 1
         $parseEvent.Context.ParsedArtifactCount | Should -Be 1
-        $parseEvent.Context.PageSha256ClaimCount | Should -Be 1
+        $parseEvent.Context.PageSha256ClaimCount | Should -Be 5
         $parseEvent.Context.ArtifactsWithSha256EvidenceCount | Should -Be 1
         $parseEvent.Context.AttachedSha256EvidenceCount | Should -Be 1
-        $parseEvent.Message | Should -Match '1 page claim\(s\), 1 artifact\(s\) with evidence, 1 attached claim\(s\)'
+        $parseEvent.Message | Should -Match '5 page claim\(s\), 1 artifact\(s\) with evidence, 1 attached claim\(s\)'
         $parseEvent.Context.ParsedReleaseVersions[0] | Should -Be '3.2.6'
     }
 
