@@ -222,9 +222,9 @@ public sealed partial class ApplicationDetailsWindow
         if (IsUsefulDiagnosticPath(path))
             parts.Add($"Path: {path}");
 
-        if (diagnostic.Details.Count > 0)
+        if (diagnostic.Details is { Count: > 0 } details)
         {
-            var context = diagnostic.Details
+            var context = details
                 .Where(static pair => !string.IsNullOrWhiteSpace(pair.Value))
                 .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
                 .Select(static pair => $"{pair.Key}={pair.Value}")
