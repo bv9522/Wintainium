@@ -800,6 +800,47 @@ Describe 'Official download page explicit current-version metadata' {
     }
 }
 
+Describe 'SourceForge directory-download alias reconciliation' {
+    It 'prefers the concrete file-row URL over a label-derived directory download' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h1>Peace Equalizer, interface Equalizer APO Files</h1>
+<div class="release-version">1.6.9.11</div>
+<a href="/projects/peace-equalizer-apo-extension/files/Peace/1.6.9.11/download">Download PeaceSetup.exe</a>
+<table>
+<tr><td><a href="/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download">PeaceSetup.exe</a></td></tr>
+<tr><td><a href="/projects/peace-equalizer-apo-extension/files/Peace.exe/download">Peace.exe</a></td></tr>
+</table>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/' }
+            }
+        } -ModuleName 'Wintainium.provider.official-download-page'
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sourceforge-directory-alias-reconciliation'
+            Settings = [pscustomobject]@{
+                pageUri = 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/'
+            }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases).Count | Should -Be 1
+        $artifacts = @($result.Releases[0].Artifacts)
+        $artifacts.Count | Should -Be 2
+        @($artifacts | Where-Object FileName -eq 'PeaceSetup.exe').Count | Should -Be 1
+        @($artifacts | Where-Object FileName -eq 'Peace.exe').Count | Should -Be 1
+        (@($artifacts | Where-Object FileName -eq 'PeaceSetup.exe')[0]).Uri |
+            Should -Be 'https://sourceforge.net/projects/peace-equalizer-apo-extension/files/PeaceSetup.exe/download'
+    }
+}
+
 Describe 'SourceForge latest-download alias reconciliation' {
     It 'prefers a concrete file-row URL when the latest-download alias identifies the same artifact' {
         Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
