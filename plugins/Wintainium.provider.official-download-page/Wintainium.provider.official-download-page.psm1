@@ -897,7 +897,17 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         FailureStage=$failureStage
         DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
     }
-    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s).' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount
+    # Keep the filename boundary visible in the human-readable diagnostic message too.
+    # Some diagnostic surfaces flatten scalar context fields but omit nested arrays/objects.
+    $claimSummary = @($pageSha256ClaimAssociations | ForEach-Object {
+        '{0} (exact matches: {1})' -f $_.ClaimedFileName, $_.ExactFileNameMatchCount
+    }) -join '; '
+    $artifactSummary = @(
+        for ($artifactIndex = 0; $artifactIndex -lt $parsedArtifactFileNames.Count; $artifactIndex++) {
+            '{0} [URI basename: {1}]' -f $parsedArtifactFileNames[$artifactIndex], $parsedArtifactUriFileNames[$artifactIndex]
+        }
+    ) -join '; '
+    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s). Checksum claims: [{3}]. Parsed artifacts: [{4}].' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount, $claimSummary, $artifactSummary
     $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message $parseMessage -Context $traceContext -Severity $traceSeverity
     $logEvents.Add($parseEvent)
 
