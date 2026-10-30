@@ -837,10 +837,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # Trace checksum evidence at the provider boundary so a missing hash can be
     # localized to live-page parsing versus a later selection/orchestration handoff.
     # Record counts only; never include raw page text or digest values in diagnostics.
-    $pageSha256ClaimCount = [regex]::Matches(
-        $html,
-        '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
-    ).Count
+    $pageSha256ClaimCount = $pageFilenameChecksumClaims.Count
     $artifactsWithSha256EvidenceCount = 0
     $attachedSha256EvidenceCount = 0
     foreach ($parsedRelease in $releases) {
