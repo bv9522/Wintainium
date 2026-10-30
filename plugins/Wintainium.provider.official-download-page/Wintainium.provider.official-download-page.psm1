@@ -801,7 +801,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     # elements, so paragraph-only HTML matching is not reliable. Require the claim
     # itself to name a concrete artifact filename and digest; never use page order.
     $pageVisibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
-    $pageFilenameChecksumPattern = '(?is)\bSHA\s*[- ]?\s*256\b(?:(?!\bSHA\s*[- ]?\s*256\b).){0,240}?\bfor\s+[\x60"'“”]?([A-Za-z0-9][A-Za-z0-9._+-]*\.(?:exe|msi|zip|dmg|appimage|tar\.[A-Za-z0-9.]+))[\x60"'“”]?\s*:\s*[\x60"'“”]?([0-9a-f]{64})\b'
+    $pageFilenameChecksumPattern = '(?is)\bSHA\s*[- ]?\s*256\b(?:(?!\bSHA\s*[- ]?\s*256\b).){0,240}?\bfor\s+[\x60"“”]?([A-Za-z0-9][A-Za-z0-9._+-]*\.(?:exe|msi|zip|dmg|appimage|tar\.[A-Za-z0-9.]+))[\x60"“”]?\s*:\s*[\x60"“”]?([0-9a-f]{64})\b'
     $pageFilenameChecksumClaims = [regex]::Matches($pageVisibleText, $pageFilenameChecksumPattern)
     foreach ($checksumClaim in $pageFilenameChecksumClaims) {
         $claimedFileName = $checksumClaim.Groups[1].Value
