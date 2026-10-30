@@ -51,7 +51,7 @@ upstream software provider.
 
 ## Cumulative layered resolution architecture
 
-Wintanium builds a reusable library of resolution capabilities, not a collection
+Wintainium builds a reusable library of resolution capabilities, not a collection
 of temporary, application-specific fixes. Every new fix should expand that
 library while protecting all behavior and capabilities already established.
 
