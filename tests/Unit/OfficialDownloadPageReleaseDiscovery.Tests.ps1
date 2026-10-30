@@ -588,7 +588,13 @@ Released 2024-05-17</pre>
 <h3>Warnings and information</h3>
 <p>Supported OS for installer: Windows 10 1903 or newer</p>
 <h3>Security</h3>
-<p>SHA256 hash sum for <code>gimp-3.2.6-setup.exe</code>: <code>9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</code></p>
+<ul>
+<li><p><strong>SHA256 hash sum for</strong> <code>GIMP-3.2.6-aarch64.AppImage</code>: <code>d1b8271e440dc4e36065ca25f219c0534abd2dfb43aeb033c76b16832d395e19</code></p></li>
+<li><p><strong>SHA256 hash sum for</strong> <code>GIMP-3.2.6-x86_64.AppImage</code>: <code>79ea41bc9b06f78fda181849a9ca8e42d83f1124dedb756f4d52352e2465010f</code></p></li>
+<li><p><strong>SHA256 hash sum for</strong> <code>gimp-3.2.6-arm64.dmg</code>: <code>854573aec2be6a185aa021109c3c0ca94f210379204b704231bdd191b4060294</code></p></li>
+<li><p><strong>SHA256 hash sum for</strong> <code>gimp-3.2.6-x86_64.dmg</code>: <code>ebe633642445d4d6fc6b68e7be7ca581c0b28c18dc9de7747849528c982e5677</code></p></li>
+<li><p><strong>SHA256 hash sum for</strong> <code>gimp-3.2.6-setup.exe</code>: <code>9337cccbc01d4098ee7a3dab215b3afbe6ece99c5287c92441d6f12cf541ebca</code></p></li>
+</ul>
 <h2>Source for version 3.2 (Stable)</h2>
 <a href="https://download.gimp.org/gimp/v3.2/windows/">Older Downloads</a>
 </body>
