@@ -584,6 +584,7 @@ Released 2024-05-17</pre>
 <a href="https://download.gimp.org/gimp/v3.2/macOS/gimp-3.2.6-x86_64.dmg">Download GIMP 3.2.6 for Intel</a>
 <h2>GIMP for Windows</h2>
 <a href="https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe">Download GIMP 3.2.6 for x86_64 and ARM64 directly</a>
+<a href="https://www.gimp.org/downloads/" >gimp-3.2.6-setup.exe</a>
 <a href="https://download.gimp.org/gimp/v3.2/windows/gimp-3.2.6-setup.exe.torrent">Download via BitTorrent</a>
 <h3>Warnings and information</h3>
 <p>Supported OS for installer: Windows 10 1903 or newer</p>
