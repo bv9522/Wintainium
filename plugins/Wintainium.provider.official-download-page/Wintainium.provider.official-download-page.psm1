@@ -803,6 +803,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $pageVisibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
     $pageFilenameChecksumPattern = '(?is)\bSHA\s*[- ]?\s*256\b(?:(?!\bSHA\s*[- ]?\s*256\b).){0,240}?\bfor\s+[\x60"“”]?([A-Za-z0-9][A-Za-z0-9._+-]*\.(?:exe|msi|zip|dmg|appimage|tar\.[A-Za-z0-9.]+))[\x60"“”]?\s*:\s*[\x60"“”]?([0-9a-f]{64})\b'
     $pageFilenameChecksumClaims = [regex]::Matches($pageVisibleText, $pageFilenameChecksumPattern)
+    $pageSha256ClaimAssociations = [System.Collections.Generic.List[object]]::new()
     foreach ($checksumClaim in $pageFilenameChecksumClaims) {
         $claimedFileName = $checksumClaim.Groups[1].Value
         $digest = $checksumClaim.Groups[2].Value.ToUpperInvariant()
@@ -814,6 +815,12 @@ function Invoke-WintainiumProviderReleaseDiscovery {
                 }
             }
         }
+        # Keep the matching boundary observable without logging checksum values.
+        # URI-derived names are diagnostic only here; association remains exact FileName matching.
+        $pageSha256ClaimAssociations.Add([pscustomobject][ordered]@{
+            ClaimedFileName = $claimedFileName
+            ExactFileNameMatchCount = $matchingArtifacts.Count
+        })
         # Duplicate filenames across parsed releases are ambiguous; do not attach.
         if ($matchingArtifacts.Count -ne 1) { continue }
 
@@ -840,6 +847,25 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $pageSha256ClaimCount = $pageFilenameChecksumClaims.Count
     $artifactsWithSha256EvidenceCount = 0
     $attachedSha256EvidenceCount = 0
+    $parsedArtifactFileNames = @(
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                [string]$parsedArtifact.FileName
+            }
+        }
+    )
+    $parsedArtifactUriFileNames = @(
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                $artifactUri = $null
+                if ([uri]::TryCreate([string]$parsedArtifact.Uri, [UriKind]::Absolute, [ref]$artifactUri)) {
+                    [System.IO.Path]::GetFileName($artifactUri.AbsolutePath)
+                } else {
+                    ''
+                }
+            }
+        }
+    )
     foreach ($parsedRelease in $releases) {
         foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
             $sha256Evidence = @($parsedArtifact.Hashes | Where-Object { [string]$_.Algorithm -ieq 'SHA256' })
@@ -858,6 +884,10 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         DownloadArtifactCandidateCount=$downloadArtifactCandidateCount
         ParsedArtifactCount=$parsedArtifactCount
         PageSha256ClaimCount=$pageSha256ClaimCount
+        PageSha256ClaimFileNames=@($pageSha256ClaimAssociations | ForEach-Object { $_.ClaimedFileName })
+        PageSha256ClaimAssociations=@($pageSha256ClaimAssociations.ToArray())
+        ParsedArtifactFileNames=$parsedArtifactFileNames
+        ParsedArtifactUriFileNames=$parsedArtifactUriFileNames
         ArtifactsWithSha256EvidenceCount=$artifactsWithSha256EvidenceCount
         AttachedSha256EvidenceCount=$attachedSha256EvidenceCount
         ParsedReleaseCount=$releases.Count
