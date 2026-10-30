@@ -162,6 +162,14 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
         if ($uri.Scheme -notin @('http','https')) { continue }
 
         $fileName=[IO.Path]::GetFileName($uri.AbsolutePath)
+        # A directory/self link is not a downloadable artifact, even when its
+        # anchor label resembles a filename. Falling back to that label here can
+        # create a duplicate phantom artifact and make a real filename checksum
+        # ambiguous (for example, a publisher's "download" control linking back
+        # to the current downloads directory).
+        if ([string]::IsNullOrWhiteSpace($fileName) -and $uri.AbsolutePath.EndsWith('/', [StringComparison]::Ordinal)) {
+            continue
+        }
         if ([string]::IsNullOrWhiteSpace($fileName)) { $fileName=$label }
         $format=ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
         if ($format -eq 'unknown') { continue }
