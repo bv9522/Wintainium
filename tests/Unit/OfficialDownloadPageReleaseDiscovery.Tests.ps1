@@ -674,3 +674,73 @@ Released 2024-05-17</pre>
     }
 
 }
+
+Describe 'Official download page query-declared artifact filenames' {
+    It 'discovers a same-origin wrapper download whose supported filename is declared in the file query parameter' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>HandBrake 1.11.2</h2>
+<p>Windows download</p>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Win_GUI.exe">Download HandBrake</a>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://handbrake.fr/downloads.php' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'handbrake-query-filename'
+            Settings = [pscustomobject]@{ pageUri = 'https://handbrake.fr/downloads.php' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        $artifact.FileName | Should -Be 'HandBrake-1.11.2-x86_64-Win_GUI.exe'
+        $artifact.Format | Should -Be 'exe'
+        $artifact.Architecture | Should -Be 'x64'
+        $artifact.Uri | Should -Be 'https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Win_GUI.exe'
+        $artifact.SourcePageUri | Should -Be 'https://handbrake.fr/downloads.php'
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 1
+        $parseEvent.Context.ParsedArtifactCount | Should -Be 1
+    }
+
+    It 'rejects cross-origin query-declared filenames and ambiguous filename parameters' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Example 1.2.3</h2>
+<a href="https://cdn.example.test/rotation.php?file=example-1.2.3-x64.exe">cross-origin-installer.exe</a>
+<a href="https://example.test/rotation.php?file=example-1.2.3-x64.exe&amp;filename=other-1.2.3-x64.exe">Ambiguous wrapper</a>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads.php' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'reject-unsafe-query-filename'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads.php' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'NoReleasesFound'
+        @($result.Releases).Count | Should -Be 0
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 0
+    }
+}

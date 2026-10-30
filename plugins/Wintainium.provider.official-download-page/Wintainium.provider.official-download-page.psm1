@@ -50,6 +50,69 @@ function ConvertTo-OfficialDownloadPageArtifactFormat {
     }
 }
 
+function Get-OfficialDownloadPageArtifactFileName {
+    param(
+        [Parameter(Mandatory)][Uri]$ArtifactUri,
+        [Parameter(Mandatory)][Uri]$SourcePageUri
+    )
+
+    # Prefer a real filename in the URL path. Signed query strings on ordinary
+    # download URLs must not change the artifact identity.
+    $artifactPath = $ArtifactUri.AbsolutePath
+    # SourceForge appends /download after the actual filename; preserve its
+    # established direct-file route while sharing the same filename resolver.
+    if ($ArtifactUri.Host -ieq 'sourceforge.net' -or
+        $ArtifactUri.Host.EndsWith('.sourceforge.net', [StringComparison]::OrdinalIgnoreCase)) {
+        $artifactPath = $artifactPath -replace '/download/?$',''
+    }
+    $pathFileName = [IO.Path]::GetFileName($artifactPath)
+    if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName $pathFileName) -ne 'unknown') {
+        return $pathFileName
+    }
+
+    # Some publisher-owned download buttons use a same-origin wrapper endpoint
+    # (for example, rotation.php?file=product-1.2.3-x64.exe). Accept only a
+    # plain filename in an explicitly named query parameter. Do not interpret
+    # arbitrary redirect URLs, paths, or cross-origin wrapper parameters.
+    $artifactOrigin = $ArtifactUri.GetLeftPart([System.UriPartial]::Authority)
+    $sourceOrigin = $SourcePageUri.GetLeftPart([System.UriPartial]::Authority)
+    if (-not [string]::Equals($artifactOrigin, $sourceOrigin, [StringComparison]::OrdinalIgnoreCase)) {
+        return $null
+    }
+
+    $declaredFileNames = [System.Collections.Generic.List[string]]::new()
+    $declaredParameterCount = 0
+    foreach ($queryPart in $ArtifactUri.Query.TrimStart('?').Split('&')) {
+        if ([string]::IsNullOrWhiteSpace($queryPart)) { continue }
+        $separator = $queryPart.IndexOf('=')
+        if ($separator -lt 1) { continue }
+        try {
+            $parameterName = [Uri]::UnescapeDataString($queryPart.Substring(0, $separator).Replace('+', ' '))
+            if ($parameterName -notin @('file', 'filename')) { continue }
+            $declaredParameterCount++
+            $candidateName = [Uri]::UnescapeDataString($queryPart.Substring($separator + 1).Replace('+', ' '))
+            $candidateName = [System.Net.WebUtility]::HtmlDecode($candidateName)
+        }
+        catch { continue }
+
+        if ([string]::IsNullOrWhiteSpace($candidateName) -or
+            $candidateName.Contains('/') -or
+            $candidateName.Contains([char]92) -or
+            $candidateName.Contains(':') -or
+            $candidateName -match '[\x00-\x1F\x7F<>:"|?*]' -or
+            [IO.Path]::GetFileName($candidateName) -cne $candidateName -or
+            $candidateName -in @('.', '..')) {
+            continue
+        }
+        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName $candidateName) -eq 'unknown') { continue }
+        $declaredFileNames.Add($candidateName)
+    }
+
+    # Multiple filename declarations are ambiguous; never choose one by order.
+    if ($declaredParameterCount -ne 1 -or $declaredFileNames.Count -ne 1) { return $null }
+    return $declaredFileNames[0]
+}
+
 function ConvertTo-OfficialDownloadPageArtifactArchitecture {
     param([Parameter(Mandatory)][string]$Value)
     $name=$Value.ToLowerInvariant()
@@ -103,9 +166,9 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     $versionEvidenceText=$headingText
     $versionEvidenceHtml=$Body
     foreach ($candidateLink in $links) {
-        $candidateHref=$candidateLink.Groups[1].Value
+        $candidateHref=[System.Net.WebUtility]::HtmlDecode($candidateLink.Groups[1].Value)
         try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
-        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -eq 'unknown') { continue }
+        if ([string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) { continue }
         $versionEvidenceHtml=$Body.Substring(0,$candidateLink.Index)
         break
     }
@@ -140,9 +203,9 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     # Use release-level architecture only when source text explicitly establishes its scope.
     $releaseMetadataHtml=$Body
     foreach ($candidateLink in $links) {
-        $candidateHref=$candidateLink.Groups[1].Value
+        $candidateHref=[System.Net.WebUtility]::HtmlDecode($candidateLink.Groups[1].Value)
         try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
-        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -eq 'unknown') { continue }
+        if ([string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) { continue }
         $releaseMetadataHtml=$Body.Substring(0,$candidateLink.Index)
         break
     }
@@ -155,13 +218,20 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     $hasExplicitSingleArchitecture = $releaseMetadataText -match '(?i)(64-bit only|x64 only|32-bit only|x86 only|arm64 only|aarch64 only)'
 
     foreach ($link in $links) {
-        $href=$link.Groups[1].Value
+        $href=[System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
         $label=ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
         if ([string]::IsNullOrWhiteSpace($href)) { continue }
         try { $uri=[Uri]::new($BaseUri,$href) } catch { continue }
         if ($uri.Scheme -notin @('http','https')) { continue }
 
-        $fileName=[IO.Path]::GetFileName($uri.AbsolutePath)
+        $fileName=Get-OfficialDownloadPageArtifactFileName -ArtifactUri $uri -SourcePageUri $BaseUri
+        # Do not fall back to an anchor label when a non-empty endpoint path has
+        # an unsupported extension (for example, a cross-origin wrapper.php).
+        # Labels remain a fallback only for links without a path filename.
+        if ([string]::IsNullOrWhiteSpace($fileName) -and
+            -not [string]::IsNullOrWhiteSpace([IO.Path]::GetFileName($uri.AbsolutePath))) {
+            continue
+        }
         # A directory/self link is not a downloadable artifact, even when its
         # anchor label resembles a filename. Falling back to that label here can
         # create a duplicate phantom artifact and make a real filename checksum
@@ -340,7 +410,7 @@ function ConvertFrom-OfficialDownloadPageReleaseSection {
     foreach ($candidateLink in $links) {
         $candidateHref = $candidateLink.Groups[1].Value
         try { $candidateUri = [Uri]::new($BaseUri, $candidateHref) } catch { continue }
-        if ((ConvertTo-OfficialDownloadPageArtifactFormat -FileName ([IO.Path]::GetFileName($candidateUri.AbsolutePath))) -ne 'unknown') {
+        if (-not [string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) {
             $firstArtifactLink = $candidateLink
             break
         }
@@ -719,16 +789,10 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $downloadLinkMatches=[regex]::Matches($html,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
     $downloadArtifactCandidateCount=0
     foreach($linkMatch in $downloadLinkMatches) {
-        $href=$linkMatch.Groups[1].Value
+        $href=[System.Net.WebUtility]::HtmlDecode($linkMatch.Groups[1].Value)
         try { $candidateUri=[Uri]::new($baseUri,$href) } catch { continue }
         if ($candidateUri.Scheme -notin @('http','https')) { continue }
-        $candidatePath = $candidateUri.AbsolutePath
-        # SourceForge download links append /download after the real filename.
-        # Strip that routing suffix before checking the artifact extension.
-        if ($candidateUri.Host -match '(?i)(^|\.)sourceforge\.net$') {
-            $candidatePath = $candidatePath -replace '(?i)/download/?$',''
-        }
-        if ([IO.Path]::GetExtension($candidatePath).ToLowerInvariant() -in @('.exe','.msi','.zip')) {
+        if (-not [string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $baseUri))) {
             $downloadArtifactCandidateCount++
         }
     }
@@ -867,7 +931,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
                 $artifactUri = $null
                 if ([uri]::TryCreate([string]$parsedArtifact.Uri, [UriKind]::Absolute, [ref]$artifactUri)) {
-                    [System.IO.Path]::GetFileName($artifactUri.AbsolutePath)
+                    Get-OfficialDownloadPageArtifactFileName -ArtifactUri $artifactUri -SourcePageUri $baseUri
                 } else {
                     ''
                 }
