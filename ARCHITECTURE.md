@@ -49,6 +49,57 @@ upstream software provider.
 - Provider and installer plugins communicate only with the core.
 - Provider descriptors declare stable identity, contract versions, capabilities, and constrained module entry points; they do not contain arbitrary executable commands.
 
+## Cumulative layered resolution architecture
+
+Wintanium builds a reusable library of resolution capabilities, not a collection
+of temporary, application-specific fixes. Every new fix should expand that
+library while protecting all behavior and capabilities already established.
+
+Layered resolution is the standard approach across Wintanium plugins. When
+onboarding, installing, updating, or reconciling an application exposes a
+problem, the responsible shared plugin is extended with a reusable resolution
+capability wherever the behavior is genuinely generalizable. That capability
+becomes a permanent part of the plugin architecture and is available to all
+applications that need it.
+
+Resolution proceeds through appropriate layers rather than forcing every
+application through every strategy. A typical strategy may begin with standard
+resolution, continue through conditional or specialized resolution when the
+standard path is insufficient, and finish with a structured failure and
+diagnostics when no safe resolution is possible. Applications that do not need
+a particular layer simply pass over it. The layer remains available for other
+applications and future sources.
+
+This principle applies across source discovery, release discovery, artifact
+identification and selection, verification, installation, installed-state
+detection, update decisions, and reconciliation. Core owns shared contracts,
+orchestration, policy, and cross-plugin decisions; plugins own their specialized
+discovery and execution strategies. Application-specific behavior belongs in
+shared plugin capabilities when it can be expressed safely and reused, not in
+temporary Core branches or one-off patches.
+
+Changes must be cumulative and regression-protected:
+- Inspect the current implementation and existing regression coverage before
+  changing a plugin.
+- Prefer minimal additive extensions that preserve established resolution
+  layers and their behavior.
+- Add regression tests for the new capability and retain tests for prior
+  capabilities.
+- Verify that existing strategies remain available after each change.
+- Refactor only when necessary, preserving prior semantics and documenting
+  the reason and scope of the change.
+- If no safe layer can resolve a case, return a structured failure with
+  actionable diagnostics rather than guessing or silently weakening policy.
+
+Layered fallback must never bypass trust, verification, architecture,
+compatibility, or other Core-owned safety guarantees. A fallback may discover
+or select an alternative candidate only within the same declared policy and
+security boundaries; it cannot convert untrusted metadata into trusted
+evidence.
+
+The governing principle is: **Diagnose the layer. Correct the shared plugin.
+Preserve the resolution strategy. Test the regression. Reuse the capability.**
+
 ## Provider contract
 
 Phase 3 establishes a versioned provider contract. Provider Contract Version
