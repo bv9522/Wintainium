@@ -678,7 +678,27 @@ function Get-OfficialDownloadPagePageLevelVersionReleases {
         [string]$pageText,
         '(?i)\b(?:the\s+)?(?:current|latest)\s+stable\s+release\s+of\s+[^.\r\n]{1,120}?\s+is\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*(?:\((20\d{2}-\d{1,2}-\d{1,2})\))?'
     )
-    if (-not $stableMatch.Success) { return @() }
+
+    # Some publishers expose the current release as a concise metadata field
+    # (for example, "Current Version: 1.11.2") rather than prose about a stable
+    # release. Keep this fallback deliberately explicit: arbitrary version
+    # numbers elsewhere on the page are not sufficient current-release evidence.
+    $currentVersion = $null
+    $publishedDate = $null
+    if ($stableMatch.Success) {
+        $currentVersion = $stableMatch.Groups[1].Value
+        if ($stableMatch.Groups[2].Success) { $publishedDate = $stableMatch.Groups[2].Value }
+    }
+    else {
+        $currentVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bCurrent\s+Version\s*[:=]\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+        )
+        if ($currentVersionMatch.Success) {
+            $currentVersion = $currentVersionMatch.Groups[1].Value
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) { return @() }
 
     $headingMatches = [regex]::Matches(
         $Html,
@@ -707,8 +727,7 @@ function Get-OfficialDownloadPagePageLevelVersionReleases {
     }
     if ($bodyEnd -le $bodyStart) { return @() }
 
-    $version = $stableMatch.Groups[1].Value
-    $publishedDate = if ($stableMatch.Groups[2].Success) { $stableMatch.Groups[2].Value } else { $null }
+    $version = $currentVersion
     $releaseHeading = if ($publishedDate) { "Release $version ($publishedDate)" } else { "Release $version" }
     $release = ConvertFrom-OfficialDownloadPageReleaseSection -Heading $releaseHeading -Body $Html.Substring($bodyStart, $bodyEnd - $bodyStart) -BaseUri $BaseUri
     if ($null -eq $release) { return @() }

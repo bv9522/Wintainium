@@ -744,3 +744,58 @@ Describe 'Official download page query-declared artifact filenames' {
         $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 0
     }
 }
+
+Describe 'Official download page explicit current-version metadata' {
+    It 'associates nested Windows architecture downloads with an explicit Current Version field' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<body>
+<h2>Downloads</h2>
+<h2>Current Version: 1.11.2</h2>
+<h4>macOS</h4>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Mac_GUI.dmg">Download macOS</a>
+<h4>Windows</h4>
+<p>For Windows 10 and later. Choose the processor type used by your PC:</p>
+<h5>Intel or AMD (x64)</h5>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Win_GUI.exe">Download installer (.exe)</a>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Win_GUI.zip">Portable ZIP package</a>
+<h5>Qualcomm (ARM64)</h5>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-arm64-Win_GUI.exe">Download installer (.exe)</a>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-arm64-Win_GUI.zip">Portable ZIP package</a>
+<h4>Linux</h4>
+<a href="https://handbrake.fr/rotation.php?file=HandBrake-1.11.2-x86_64-Linux.tar.gz">Linux archive</a>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://handbrake.fr/downloads.php' }
+            }
+        }
+
+        $result = Invoke-WintaniumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'handbrake-current-version-nested-windows'
+            Settings = [pscustomobject]@{ pageUri = 'https://handbrake.fr/downloads.php' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+
+        $release = $result.Releases[0]
+        $release.Version | Should -Be '1.11.2'
+        @($release.Artifacts).Count | Should -Be 4
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'HandBrake-1.11.2-x86_64-Win_GUI.exe' -and $_.Architecture -eq 'x64' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'HandBrake-1.11.2-x86_64-Win_GUI.zip' -and $_.Architecture -eq 'x64' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'HandBrake-1.11.2-arm64-Win_GUI.exe' -and $_.Architecture -eq 'arm64' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -eq 'HandBrake-1.11.2-arm64-Win_GUI.zip' -and $_.Architecture -eq 'arm64' }).Count | Should -Be 1
+        @($release.Artifacts | Where-Object { $_.FileName -match 'Mac_GUI|Linux' }).Count | Should -Be 0
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 6
+        $parseEvent.Context.ParsedArtifactCount | Should -Be 4
+    }
+}
