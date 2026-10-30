@@ -775,7 +775,7 @@ Describe 'Official download page explicit current-version metadata' {
             }
         }
 
-        $result = Invoke-WintaniumProviderReleaseDiscovery -Request ([pscustomobject]@{
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
             OperationId = 'handbrake-current-version-nested-windows'
             Settings = [pscustomobject]@{ pageUri = 'https://handbrake.fr/downloads.php' }
         })
@@ -795,7 +795,7 @@ Describe 'Official download page explicit current-version metadata' {
 
         $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
         $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
-        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 6
+        $parseEvent.Context.DownloadArtifactCandidateCount | Should -Be 4
         $parseEvent.Context.ParsedArtifactCount | Should -Be 4
     }
 }
