@@ -95,7 +95,7 @@ Describe 'Wintainium native static architecture evidence' {
 }
 
 Describe 'Wintainium unknown-architecture artifact decision candidates' {
-    It 'allows a SHA256-backed unknown EXE to reach the explicit risk-decision step without an external inspector' {
+    It 'prefers a known-compatible artifact over a checksum-backed unknown-architecture EXE' {
         $manifest = [pscustomobject]@{
             artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
         }
@@ -113,8 +113,8 @@ Describe 'Wintainium unknown-architecture artifact decision candidates' {
             Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
         }
 
-        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/setup.exe'
-        $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app-x64.zip'
+        $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
     }
 
     It 'recognizes only well-formed publisher SHA256 or MD5 checksum evidence' {
@@ -162,7 +162,7 @@ Describe 'Wintainium unknown-architecture artifact decision candidates' {
         $selection.SelectedArtifact.FileName | Should -Be 'app-x64.zip'
     }
 
-    It 'allows a publisher-declared MD5-backed EXE to reach the separate MD5 and architecture decisions' {
+    It 'prefers a known-compatible artifact over a publisher-declared MD5-backed unknown EXE' {
         $manifest = [pscustomobject]@{
             artifact = [pscustomobject]@{ formats=@('exe','zip'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
         }
@@ -180,8 +180,8 @@ Describe 'Wintainium unknown-architecture artifact decision candidates' {
             Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
         }
 
-        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/setup.exe'
-        $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
+        $result.SelectedArtifact.Uri | Should -Be 'https://example.test/app-x64.zip'
+        $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
     }
 
     It 'applies the same architecture-risk decision to a checksum-backed unknown ZIP artifact' {
@@ -203,8 +203,52 @@ Describe 'Wintainium unknown-architecture artifact decision candidates' {
             Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
         }
 
-        $result.SelectedArtifact.FileName | Should -Be 'app-unknown.zip'
+        $result.SelectedArtifact.FileName | Should -Be 'app-x64.zip'
+        $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
+    }
+
+    It 'retains the architecture-risk decision when no known-compatible or neutral artifact exists' {
+        $manifest = [pscustomobject]@{
+            artifact = [pscustomobject]@{ formats=@('msi'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
+        }
+        $unknownArm64 = [pscustomobject]@{
+            Uri='https://example.test/audacity-win-4.0.1-arm64.msi'
+            FileName='audacity-win-4.0.1-arm64.msi'
+            Format='msi'
+            Architecture='unknown'
+            Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('F' * 64) })
+        }
+        $release = [pscustomobject]@{ Version='4.0.1'; Artifacts=@($unknownArm64) }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest} {
+            param($Release,$Manifest)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
+        }
+
+        $result.SelectedArtifact.FileName | Should -Be 'audacity-win-4.0.1-arm64.msi'
         $result.SelectedArtifact.ArchitectureInspectionRequired | Should -BeTrue
+    }
+
+    It 'prefers a neutral artifact over a checksum-backed unknown-architecture candidate' {
+        $manifest = [pscustomobject]@{
+            artifact = [pscustomobject]@{ formats=@('msi'); architectures=@('x64','neutral'); allowUnknownArchitecture=$false }
+        }
+        $unknown = [pscustomobject]@{
+            Uri='https://example.test/app-unknown.msi'; FileName='app-unknown.msi'; Format='msi'; Architecture='unknown'
+            Hashes=@([pscustomobject]@{ Algorithm='SHA256'; Value=('1' * 64) })
+        }
+        $neutral = [pscustomobject]@{
+            Uri='https://example.test/app-neutral.msi'; FileName='app-neutral.msi'; Format='msi'; Architecture='neutral'
+        }
+        $release = [pscustomobject]@{ Version='2.0.0'; Artifacts=@($unknown,$neutral) }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{Release=$release;Manifest=$manifest} {
+            param($Release,$Manifest)
+            Select-WintainiumArtifact -Release $Release -Manifest $Manifest -MachineArchitecture 'x64'
+        }
+
+        $result.SelectedArtifact.FileName | Should -Be 'app-neutral.msi'
+        $result.SelectedArtifact.PSObject.Properties['ArchitectureInspectionRequired'] | Should -BeNullOrEmpty
     }
 
     It 'uses the compatible ZIP when the unknown EXE has no supported checksum evidence' {
