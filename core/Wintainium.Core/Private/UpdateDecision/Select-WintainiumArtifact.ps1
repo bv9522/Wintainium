@@ -80,13 +80,14 @@ function Select-WintainiumArtifact {
         $machine = $targetArchitecture.Trim().ToLowerInvariant()
 
         $ranked = foreach ($item in $eligible) {
-            $architectureRank = if ($item.ArchitectureInspectionCandidate) { -1 } else {
-                switch ($item.Architecture) {
-                    $machine { 0 }
-                    'neutral' { 1 }
-                    'unknown' { 2 }
-                    default { 3 }
-                }
+            # A checksum-backed unknown-architecture artifact is a risk-decision
+            # candidate, not a preferred architecture. Preserve the normal order:
+            # exact machine architecture, neutral, then unknown/risk candidates.
+            $architectureRank = switch ($item.Architecture) {
+                $machine { 0 }
+                'neutral' { 1 }
+                'unknown' { 2 }
+                default { 3 }
             }
             $formatRank = [array]::IndexOf($formats, $item.Format)
             if ($formatRank -lt 0) { $formatRank = [int]::MaxValue }
