@@ -162,7 +162,7 @@ Describe 'Windows installed-application reconciliation plugin' {
     It 'normalizes culture-formatted numeric executable versions without changing other version labels' {
         InModuleScope Wintainium.reconciliation.windows-installed-application {
             ConvertTo-WintainiumComparableExecutableVersion -Version '3,7,8,0' -RegistryVersion '3.7.8' | Should -Be '3.7.8'
-            ConvertTo-WintaniumComparableExecutableVersion -Version '3, 7, 9' -RegistryVersion '3.7.8' | Should -Be '3.7.9'
+            ConvertTo-WintainiumComparableExecutableVersion -Version '3, 7, 9' -RegistryVersion '3.7.8' | Should -Be '3.7.9'
             ConvertTo-WintainiumComparableExecutableVersion -Version '1.21.0.207' -RegistryVersion '1.20.1' | Should -Be '1.21.0'
             ConvertTo-WintainiumComparableExecutableVersion -Version 'v2-beta,preview' -RegistryVersion 'v2-beta' | Should -Be 'v2-beta,preview'
         }
