@@ -372,6 +372,12 @@ function ConvertTo-WintainiumComparableExecutableVersion {
         [AllowNull()] [string]$RegistryVersion
     )
 
+    # FileVersionInfo may expose numeric version-resource components using
+    # a culture-specific separator. Version identifiers are invariant, so
+    # normalize only strictly numeric, comma-delimited three/four-part values.
+    if ($Version -match '^\s*\d+(?:\s*,\s*\d+){2,3}\s*$') {
+        $Version = [regex]::Replace($Version.Trim(), '\s*,\s*', '.')
+    }
     # Windows file resources sometimes append a fourth build/revision component
     # while the publisher's release feed uses three components (for example,
     # file 1.21.0.207 vs release 1.21.0). When the executable has exactly one
