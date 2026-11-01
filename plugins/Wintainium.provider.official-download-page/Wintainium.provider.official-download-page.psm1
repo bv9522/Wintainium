@@ -750,7 +750,7 @@ function Get-OfficialDownloadPagePlatformMetadataReleases {
         if($platform -notmatch '(?i)\bWindows\b') { continue }
         # Normalize publisher labels such as "Windows ARM 64" for the shared classifier.
         $platform = $platform -replace '(?i)\bARM\s+64\b','ARM64'
-        $location=[System.Net.WebUtility]::HtmlDecode(($loc.Groups['v'].Value -replace '\\/','/'))
+        $location=[System.Net.WebUtility]::HtmlDecode(($loc.Groups['v'].Value -replace '\\+/','/'))
         if([string]::IsNullOrWhiteSpace($location) -or $location -match '[\x00-\x20"'']') { continue }
         try { $uri=[Uri]::new($BaseUri,$location) } catch { continue }
         if($uri.Scheme -notin @('http','https')) { continue }
