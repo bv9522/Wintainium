@@ -739,6 +739,22 @@ function Get-OfficialDownloadPagePageLevelVersionReleases {
             $currentVersion = $currentVersionMatch.Groups[1].Value
         }
     }
+
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Some publishers present the current release as a compact platform
+        # metadata label (for example, "Version 3.0.24 • Windows • 43 MB").
+        # Accept only a version explicitly adjacent to the Windows platform
+        # marker; do not mine arbitrary version numbers from page text or
+        # artifact filenames.
+        $platformVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bVersion\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*[•·|]\s*Windows\b'
+        )
+        if ($platformVersionMatch.Success) {
+            $currentVersion = $platformVersionMatch.Groups[1].Value
+        }
+    }
+
     if ([string]::IsNullOrWhiteSpace($currentVersion)) { return @() }
 
     $headingMatches = [regex]::Matches(
