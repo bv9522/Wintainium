@@ -993,6 +993,7 @@ var PLATFORMS = {
         $release.Version | Should -Be '3.0.24'
         @($release.Artifacts).Count | Should -Be 3
         @($release.Artifacts | Where-Object Architecture -eq 'x86').Count | Should -Be 1
+        ($release.Artifacts | Where-Object Architecture -eq 'x86').Uri | Should -Be 'https://www.example.test/player-3.0.24-win32.exe'
         @($release.Artifacts | Where-Object Architecture -eq 'x64').Count | Should -Be 1
         @($release.Artifacts | Where-Object Architecture -eq 'arm64').Count | Should -Be 1
         @($release.Artifacts | Where-Object Uri -match '\.dmg').Count | Should -Be 0
