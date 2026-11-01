@@ -710,7 +710,7 @@ function Get-OfficialDownloadPagePlatformMetadataReleases {
     # Parse explicit platform metadata as inert text; never execute publisher scripts.
     $mapMatch=[regex]::Match($Html,'(?is)\b(?:var|let|const)\s+PLATFORMS\s*=\s*\{(?<map>.*?)\}\s*;')
     if (-not $mapMatch.Success) { return @() }
-    $entries=[regex]::Matches($mapMatch.Groups['map'].Value,'(?is)(?:^|,)\s*(?<key>[A-Za-z][A-Za-z0-9_]*)\s*:\s*\{(?<properties>[^{}]*)\}')
+    $entries=[regex]::Matches($mapMatch.Groups['map'].Value,'(?is)(?:^|,)\s*["'']?(?<key>[A-Za-z][A-Za-z0-9_]*)["'']?\s*:\s*\{(?<properties>[^{}]*)\}')
     $groups=@{}
     foreach($entry in $entries) {
         $props=$entry.Groups['properties'].Value
