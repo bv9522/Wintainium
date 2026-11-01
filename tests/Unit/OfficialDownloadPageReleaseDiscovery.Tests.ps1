@@ -961,3 +961,89 @@ Describe 'Official download page platform-scoped version metadata' {
         @($result.Releases).Count | Should -Be 0
     }
 }
+
+Describe 'Official download page structured platform metadata' {
+    It 'discovers versioned Windows artifacts from a JavaScript platform map without executing it' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html><body>
+<a href="https://downloads.example.test/player-3.0.24-win32.exe">Default</a>
+<script>
+var PLATFORMS = {
+ "windows":{"name":"Windows","latestVersion":"3.0.24","location":"\\/player-3.0.24-win32.exe"},
+ "windows64":{"name":"Windows 64bit","latestVersion":"3.0.24","location":"https://downloads.example.test/player-3.0.24-win64.exe"},
+ "windowsarm64":{"name":"Windows ARM 64","latestVersion":"3.0.24","location":"https://downloads.example.test/player-3.0.24-arm64.exe"},
+ "osx":{"name":"macOS","latestVersion":"3.0.24","location":"https://downloads.example.test/player.dmg"},
+ "linux":{"name":"Linux","latestVersion":"3.0.24","location":"/downloads"}
+};
+</script></body></html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html' }; StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.example.test/player/' }
+            }
+        }
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId='structured-platform-map'; Settings=[pscustomobject]@{pageUri='https://www.example.test/player/'}
+        })
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $release=$result.Releases[0]
+        $release.Version | Should -Be '3.0.24'
+        @($release.Artifacts).Count | Should -Be 3
+        @($release.Artifacts | Where-Object Architecture -eq 'x86').Count | Should -Be 1
+        @($release.Artifacts | Where-Object Architecture -eq 'x64').Count | Should -Be 1
+        @($release.Artifacts | Where-Object Architecture -eq 'arm64').Count | Should -Be 1
+        @($release.Artifacts | Where-Object Uri -match '\.dmg').Count | Should -Be 0
+    }
+
+    It 'rejects malformed, unversioned, unsupported, and unsafe platform-map entries' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html><body><script>
+var PLATFORMS = {
+ "windows":{"name":"Windows","location":"https://downloads.example.test/no-version.exe"},
+ "windows64":{"name":"Windows 64bit","latestVersion":"bad","location":"https://downloads.example.test/bad.exe"},
+ "windowsarm64":{"name":"Windows ARM 64","latestVersion":"3.0.24","location":"javascript:alert(1)"},
+ "osx":{"name":"macOS","latestVersion":"3.0.24","location":"https://downloads.example.test/player.dmg"},
+ "linux":{"name":"Linux","latestVersion":"3.0.24","location":"https://downloads.example.test/player.exe"}
+};
+</script></body></html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html' }; StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.example.test/player/' }
+            }
+        }
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId='structured-platform-map-invalid'; Settings=[pscustomobject]@{pageUri='https://www.example.test/player/'}
+        })
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'NoReleasesFound'
+        @($result.Releases).Count | Should -Be 0
+    }
+
+    It 'preserves existing heading-based resolution ahead of platform metadata' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html><body><h2>Example 5.4.3</h2>
+<a href="https://downloads.example.test/example-5.4.3-x64.exe">Windows x64</a>
+<script>var PLATFORMS = {"windows":{"name":"Windows","latestVersion":"9.9.9","location":"https://downloads.example.test/example-9.9.9-x86.exe"}};</script>
+</body></html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html' }; StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.example.test/downloads/' }
+            }
+        }
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId='structured-platform-map-priority'; Settings=[pscustomobject]@{pageUri='https://www.example.test/downloads/'}
+        })
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $result.Releases[0].Version | Should -Be '5.4.3'
+        @($result.Releases[0].Artifacts).Count | Should -Be 1
+    }
+}
