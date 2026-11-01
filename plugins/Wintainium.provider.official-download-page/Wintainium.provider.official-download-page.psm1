@@ -708,9 +708,37 @@ function Get-OfficialDownloadPageSourceForgeReleases {
 function Get-OfficialDownloadPagePlatformMetadataReleases {
     param([Parameter(Mandatory)][AllowEmptyString()][string]$Html,[Parameter(Mandatory)][Uri]$BaseUri)
     # Parse explicit platform metadata as inert text; never execute publisher scripts.
-    $mapMatch=[regex]::Match($Html,'(?is)\b(?:var|let|const)\s+PLATFORMS\s*=\s*\{(?<map>.*?)\}\s*;')
-    if (-not $mapMatch.Success) { return @() }
-    $entries=[regex]::Matches($mapMatch.Groups['map'].Value,'(?is)(?:^|,)\s*["'']?(?<key>[A-Za-z][A-Za-z0-9_]*)["'']?\s*:\s*\{(?<properties>[^{}]*)\}')
+    $assignmentMatch=[regex]::Match($Html,'(?is)\b(?:var|let|const)\s+PLATFORMS\s*=\s*\{')
+    if (-not $assignmentMatch.Success) { return @() }
+
+    # The platform map contains nested objects. A non-greedy regex stops at the
+    # first platform object's closing brace, not the outer map boundary. Find
+    # the matching outer brace while respecting quoted strings and JS escapes.
+    # This is lexical extraction only; publisher JavaScript is never evaluated.
+    $mapStart=$assignmentMatch.Index + $assignmentMatch.Length - 1
+    $braceDepth=0
+    $quote=[char]0
+    $escaped=$false
+    $mapEnd=-1
+    for($scanIndex=$mapStart;$scanIndex -lt $Html.Length;$scanIndex++) {
+        $character=$Html[$scanIndex]
+        if($quote -ne [char]0) {
+            if($escaped) { $escaped=$false; continue }
+            if($character -eq [char]92) { $escaped=$true; continue }
+            if($character -eq $quote) { $quote=[char]0 }
+            continue
+        }
+        if($character -eq [char]34 -or $character -eq [char]39) { $quote=$character; continue }
+        if($character -eq [char]123) { $braceDepth++; continue }
+        if($character -eq [char]125) {
+            $braceDepth--
+            if($braceDepth -eq 0) { $mapEnd=$scanIndex; break }
+            if($braceDepth -lt 0) { return @() }
+        }
+    }
+    if($mapEnd -le $mapStart) { return @() }
+    $platformMap=$Html.Substring($mapStart + 1,$mapEnd - $mapStart - 1)
+    $entries=[regex]::Matches($platformMap,'(?is)(?:^|,)\s*["'']?(?<key>[A-Za-z][A-Za-z0-9_]*)["'']?\s*:\s*\{(?<properties>[^{}]*)\}')
     $groups=@{}
     foreach($entry in $entries) {
         $props=$entry.Groups['properties'].Value
