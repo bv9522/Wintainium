@@ -38,6 +38,12 @@ Download links and release/artifact candidates are intentionally outside source 
 
 Later provider release/artifact discovery can use the normalized `pageUri`. Core remains responsible for environment-aware artifact eligibility and final selection.
 
+## Layered release-version evidence
+
+Official download-page release discovery uses cumulative, constrained evidence layers rather than application-specific parsing rules. It first recognizes versioned release sections and explicitly labeled version metadata within those sections. When a publisher places the current version at page level, the resolver accepts established explicit forms such as a `Current Version` field or a stable-release statement. It also recognizes a version explicitly paired with the Windows platform in compact metadata (for example, `Version 3.0.24 • Windows • 43 MB`), then scopes artifact discovery to the Windows heading section.
+
+The platform-scoped form does not authorize arbitrary version extraction from filenames or unrelated page text. A version paired with another platform is not accepted as Windows release evidence. Existing release-section, SourceForge, and explicit current-version paths remain in place; pages that do not provide sufficient evidence continue to produce structured no-release results.
+
 Interactive, authenticated, JavaScript-only, anti-bot, or otherwise non-deterministic pages remain candidates for structured `InteractiveResolutionRequired` or `SourceUnsupported` outcomes.
 
 ## Security boundary
