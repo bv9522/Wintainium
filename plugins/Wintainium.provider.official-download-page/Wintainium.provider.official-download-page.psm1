@@ -742,9 +742,9 @@ function Get-OfficialDownloadPagePlatformMetadataReleases {
     $groups=@{}
     foreach($entry in $entries) {
         $props=$entry.Groups['properties'].Value
-        $name=[regex]::Match($props,'(?is)\bname\s*:\s*["''](?<v>[^"'']+)["'']')
-        $ver=[regex]::Match($props,'(?is)\blatestVersion\s*:\s*["''](?<v>[0-9]+(?:\.[0-9]+){1,3}[a-z]?)["'']')
-        $loc=[regex]::Match($props,'(?is)\blocation\s*:\s*["''](?<v>(?:\\.|[^"''])+)["'']')
+        $name=[regex]::Match($props,'(?is)\b["'']?name["'']?\s*:\s*["''](?<v>[^"'']+)["'']')
+        $ver=[regex]::Match($props,'(?is)\b["'']?latestVersion["'']?\s*:\s*["''](?<v>[0-9]+(?:\.[0-9]+){1,3}[a-z]?)["'']')
+        $loc=[regex]::Match($props,'(?is)\b["'']?location["'']?\s*:\s*["''](?<v>(?:\\.|[^"''])+)["'']')
         if(-not $name.Success -or -not $ver.Success -or -not $loc.Success) { continue }
         $platform=[System.Net.WebUtility]::HtmlDecode($name.Groups['v'].Value)
         if($platform -notmatch '(?i)\bWindows\b') { continue }
