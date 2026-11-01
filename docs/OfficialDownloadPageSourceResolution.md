@@ -51,3 +51,8 @@ Interactive, authenticated, JavaScript-only, anti-bot, or otherwise non-determin
 The resolver treats page content as untrusted data. It does not execute scripts, follow page-provided commands, or execute downloaded content.
 
 Network timeout, redirect, content-size, and trust controls remain part of the provider hardening work before broad real-world validation.
+
+
+## Structured platform metadata fallback
+
+Some publishers expose current platform downloads in a JavaScript object (for example, a `PLATFORMS` map) rather than heading-delimited HTML sections. The provider has a final conditional text-parsing layer for this structure; it does not execute JavaScript. It accepts entries only when they declare a Windows platform name, a strictly formatted version, and an HTTP/HTTPS location resolving to a supported artifact filename. Artifacts are grouped by declared version and normalized through the existing release/artifact parser. Non-Windows entries, malformed metadata, unsafe schemes, unsupported filenames, and duplicate locations are ignored. Existing heading-based and page-level resolvers retain priority.
