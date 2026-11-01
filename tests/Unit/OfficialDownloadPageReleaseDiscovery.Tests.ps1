@@ -887,3 +887,77 @@ Describe 'SourceForge latest-download alias reconciliation' {
         $parseEvent.Context.ParsedArtifactCount | Should -Be 2
     }
 }
+
+
+Describe 'Official download page platform-scoped version metadata' {
+    It 'discovers Windows artifacts from an explicit Version bullet Windows size label' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = @'
+<html>
+<head><title>VLC media player</title></head>
+<body>
+<h1>VLC media player</h1>
+<div class="download-version">Version 3.0.24 • Windows • 43 MB</div>
+<h2>Windows</h2>
+<p>Choose the package for your system.</p>
+<a href="/pub/videolan/vlc/3.0.24/win64/vlc-3.0.24-win64.exe">64-bit installer</a>
+<a href="/pub/videolan/vlc/3.0.24/win64/vlc-3.0.24-win64.msi">64-bit MSI</a>
+<a href="/pub/videolan/vlc/3.0.24/win64/vlc-3.0.24-win64.zip">64-bit ZIP</a>
+<a href="/pub/videolan/vlc/3.0.24/win32/vlc-3.0.24-win32.exe">32-bit installer</a>
+<a href="/pub/videolan/vlc/3.0.24/win32/vlc-3.0.24-win32.zip">32-bit ZIP</a>
+<a href="/pub/videolan/vlc/3.0.24/win-arm64/vlc-3.0.24-win-arm64.exe">ARM64 installer</a>
+<a href="/pub/videolan/vlc/3.0.24/win-arm64/vlc-3.0.24-win-arm64.zip">ARM64 ZIP</a>
+<h2>macOS</h2>
+<a href="/pub/videolan/vlc/3.0.24/macosx/vlc-3.0.24.dmg">macOS package</a>
+</body>
+</html>
+'@
+                Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://www.videolan.org/vlc/download-windows.html' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'videolan-platform-version-label'
+            Settings = [pscustomobject]@{ pageUri = 'https://www.videolan.org/vlc/download-windows.html' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Success'
+        @($result.Releases).Count | Should -Be 1
+        $release = $result.Releases[0]
+        $release.Version | Should -Be '3.0.24'
+        @($release.Artifacts).Count | Should -Be 7
+        @($release.Artifacts | Where-Object { $_.Architecture -eq 'x64' }).Count | Should -Be 3
+        @($release.Artifacts | Where-Object { $_.Architecture -eq 'x86' }).Count | Should -Be 2
+        @($release.Artifacts | Where-Object { $_.Architecture -eq 'arm64' }).Count | Should -Be 2
+        @($release.Artifacts | Where-Object { $_.FileName -match 'macosx' }).Count | Should -Be 0
+
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Context.Outcome | Should -Be 'ReleasesParsed'
+        $parseEvent.Context.ParsedReleaseCount | Should -Be 1
+        $parseEvent.Context.ParsedArtifactCount | Should -Be 7
+    }
+
+    It 'does not treat an unrelated page version as Windows release evidence' {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            [pscustomobject]@{
+                Content = '<html><body><p>Version 9.9.9 • Linux • 20 MB</p><h2>Windows</h2><a href="/downloads/example-x64.exe">Windows installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'reject-non-windows-platform-version-label'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'NoReleasesFound'
+        @($result.Releases).Count | Should -Be 0
+    }
+}
