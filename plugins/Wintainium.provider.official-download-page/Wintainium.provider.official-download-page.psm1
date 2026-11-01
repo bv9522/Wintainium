@@ -705,6 +705,46 @@ function Get-OfficialDownloadPageSourceForgeReleases {
 }
 
 
+function Get-OfficialDownloadPagePlatformMetadataReleases {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Html,[Parameter(Mandatory)][Uri]$BaseUri)
+    # Parse explicit platform metadata as inert text; never execute publisher scripts.
+    $mapMatch=[regex]::Match($Html,'(?is)\b(?:var|let|const)\s+PLATFORMS\s*=\s*\{(?<map>.*?)\}\s*;')
+    if (-not $mapMatch.Success) { return @() }
+    $entries=[regex]::Matches($mapMatch.Groups['map'].Value,'(?is)(?:^|,)\s*(?<key>[A-Za-z][A-Za-z0-9_]*)\s*:\s*\{(?<properties>[^{}]*)\}')
+    $groups=@{}
+    foreach($entry in $entries) {
+        $props=$entry.Groups['properties'].Value
+        $name=[regex]::Match($props,'(?is)\bname\s*:\s*["''](?<v>[^"'']+)["'']')
+        $ver=[regex]::Match($props,'(?is)\blatestVersion\s*:\s*["''](?<v>[0-9]+(?:\.[0-9]+){1,3}[a-z]?)["'']')
+        $loc=[regex]::Match($props,'(?is)\blocation\s*:\s*["''](?<v>(?:\\.|[^"''])+)["'']')
+        if(-not $name.Success -or -not $ver.Success -or -not $loc.Success) { continue }
+        $platform=[System.Net.WebUtility]::HtmlDecode($name.Groups['v'].Value)
+        if($platform -notmatch '(?i)\bWindows\b') { continue }
+        $location=[System.Net.WebUtility]::HtmlDecode(($loc.Groups['v'].Value -replace '\\/','/'))
+        if([string]::IsNullOrWhiteSpace($location) -or $location -match '[\x00-\x20"'']') { continue }
+        try { $uri=[Uri]::new($BaseUri,$location) } catch { continue }
+        if($uri.Scheme -notin @('http','https')) { continue }
+        $fileName=Get-OfficialDownloadPageArtifactFileName -ArtifactUri $uri -SourcePageUri $BaseUri
+        if([string]::IsNullOrWhiteSpace($fileName) -or (ConvertTo-OfficialDownloadPageArtifactFormat $fileName) -eq 'unknown') { continue }
+        $version=$ver.Groups['v'].Value
+        if(-not $groups.ContainsKey($version)) { $groups[$version]=[System.Collections.Generic.List[string]]::new() }
+        $groups[$version].Add('<a href="' + [System.Net.WebUtility]::HtmlEncode($uri.AbsoluteUri) + '">' + [System.Net.WebUtility]::HtmlEncode($platform + ' ' + $fileName) + '</a>')
+    }
+    $releases=[System.Collections.Generic.List[object]]::new()
+    foreach($version in $groups.Keys) {
+        $links=[System.Collections.Generic.List[string]]::new()
+        $seen=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach($anchor in $groups[$version]) {
+            $href=[regex]::Match($anchor,'(?i)\bhref="([^"]+)"')
+            if($href.Success -and $seen.Add([System.Net.WebUtility]::HtmlDecode($href.Groups[1].Value))) { $links.Add($anchor) }
+        }
+        if($links.Count -eq 0) { continue }
+        $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading ("Release " + $version) -Body ($links -join [Environment]::NewLine) -BaseUri $BaseUri
+        if($null -ne $release) { $releases.Add($release) }
+    }
+    return @($releases.ToArray())
+}
+
 function Get-OfficialDownloadPagePageLevelVersionReleases {
     param(
         [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
@@ -926,6 +966,18 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             $parsedArtifactCount += @($pageLevelRelease.Artifacts).Count
         }
         if ($pageLevelReleases.Count -gt 0) {
+            $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
+        }
+    }
+
+    # Conditional final layer for explicit platform maps; prior resolvers retain priority.
+    if ($releases.Count -eq 0) {
+        $platformMetadataReleases = @(Get-OfficialDownloadPagePlatformMetadataReleases -Html $html -BaseUri $baseUri)
+        foreach ($platformMetadataRelease in $platformMetadataReleases) {
+            [void]$releases.Add($platformMetadataRelease)
+            $parsedArtifactCount += @($platformMetadataRelease.Artifacts).Count
+        }
+        if ($platformMetadataReleases.Count -gt 0) {
             $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
         }
     }
