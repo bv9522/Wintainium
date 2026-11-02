@@ -902,5 +902,44 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result.Candidates.Count | Should -Be 0
     }
 
+
+    It 'does not use a publisher signature when executable product metadata conflicts with the registry identity' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='VLC for Windows'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='VLC media player'; DisplayName='VLC media player'
+                Publisher='VideoLAN'; InstallLocation='C:\Program Files\VideoLAN\VLC'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='VLC for Windows'; Publisher='VideoLAN'
+        } {
+            Mock -CommandName Get-WintainiumWindowsExecutableIdentityEvidence -MockWith {
+                [pscustomobject]@{
+                    ProductMatchesRegistration=$false
+                    CompanyMatchesPublisher=$true
+                    TrustedPublisherSignature=$true
+                    SignatureStatus='Valid'
+                    SignerName='VideoLAN'
+                }
+            }
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
+        }
+
+        $candidate = $result.Candidates[0]
+        @($candidate.IdentityEvidence) | Should -Not -Contain 'ExecutableProductNameMatchesRegisteredName'
+        @($candidate.IdentityEvidence) | Should -Not -Contain 'ExecutableCompanyNameCorroborated'
+        @($candidate.IdentityEvidence) | Should -Not -Contain 'AuthenticodePublisherSignatureValid'
+        $candidate.IdentityScore | Should -Be 49
+    }
+
 }
 
