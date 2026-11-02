@@ -31,13 +31,17 @@ Describe 'Wintainium install diagnostic trace' {
                 OperationId = $operationId
                 Severity = 'Information'
                 Component = 'OfficialDownloadPageProvider'
-                EventName = 'AdjacentSha256SidecarResolutionCompleted'
-                Message = 'Conditional adjacent SHA-256 sidecar discovery completed.'
+                EventName = 'ArtifactSha256EvidenceResolutionCompleted'
+                Message = 'Conditional artifact SHA-256 evidence discovery completed.'
                 Context = @{
                     AttemptedCount = 3
                     ResolvedCount = 3
                     RejectedCount = 0
                     UnavailableCount = 0
+                    ArtifactEndpointAttemptedCount = 3
+                    ArtifactEndpointResolvedCount = 2
+                    ArtifactEndpointRejectedCount = 1
+                    ArtifactEndpointUnavailableCount = 0
                 }
             }
             $releaseResult = [pscustomobject]@{
@@ -84,9 +88,12 @@ Describe 'Wintainium install diagnostic trace' {
             $trace.Count | Should -Be 2
             $trace[0].Message | Should -Match 'NoReleaseSectionCandidates'
             $trace[0].Message | Should -Match 'SectionCandidateCount=0'
-            $trace[1].Message | Should -Match 'AdjacentSha256SidecarResolutionCompleted'
+            $trace[1].Message | Should -Match 'ArtifactSha256EvidenceResolutionCompleted'
             $trace[1].Message | Should -Match 'AttemptedCount=3'
             $trace[1].Message | Should -Match 'ResolvedCount=3'
+            $trace[1].Message | Should -Match 'ArtifactEndpointAttemptedCount=3'
+            $trace[1].Message | Should -Match 'ArtifactEndpointResolvedCount=2'
+            $trace[1].Message | Should -Match 'ArtifactEndpointRejectedCount=1'
             $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
             $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
             $result.Stages[1].Reason | Should -Be 'No discovered release has a selectable artifact for this machine.'
