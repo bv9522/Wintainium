@@ -9,9 +9,12 @@ function Invoke-WintainiumArtifactVerification {
 
     $resolvedOperationId = if ($PSBoundParameters.ContainsKey('OperationId')) { $OperationId } elseif ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['OperationId']) { [string]$DownloadResult.OperationId } else { $null }
     $destinationPath = if ($null -ne $DownloadResult -and $DownloadResult.PSObject.Properties['DestinationPath']) { [string]$DownloadResult.DestinationPath } else { $null }
+    $artifactFileName = if ($null -ne $SelectedArtifact -and $SelectedArtifact.PSObject.Properties['FileName']) { [string]$SelectedArtifact.FileName } else { $null }
+    $downloadedFileName = if (-not [string]::IsNullOrWhiteSpace($destinationPath)) { [IO.Path]::GetFileName($destinationPath) } else { $null }
+    $downloadedFileLength = $null
     $failed = {
         param([string]$Kind,[string]$Message)
-        [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind=$Kind; Algorithm=$null; ExpectedHash=$null; ActualHash=$null; VerificationLevel=$null; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$Message }
+        [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind=$Kind; Algorithm=$null; ExpectedHash=$null; ActualHash=$null; VerificationLevel=$null; UserAuthorized=$false; ArtifactFileName=$artifactFileName; DownloadedFileName=$downloadedFileName; DownloadedFileLength=$downloadedFileLength; DestinationPath=$destinationPath; ErrorMessage=$Message }
     }
 
     if ($null -eq $DownloadResult -or $null -eq $SelectedArtifact) { return & $failed 'InputInvalid' 'DownloadResult and SelectedArtifact are required.' }
@@ -19,6 +22,8 @@ function Invoke-WintainiumArtifactVerification {
     if ([string]$DownloadResult.Status -ne 'Downloaded') { return & $failed 'DownloadNotCompleted' 'Artifact verification requires a completed download.' }
     if ([string]::IsNullOrWhiteSpace($destinationPath)) { return & $failed 'DestinationMissing' 'The download result does not contain a destination path.' }
     if (-not (Test-Path -LiteralPath $destinationPath -PathType Leaf)) { return & $failed 'DestinationMissing' 'The downloaded artifact does not exist as a regular file.' }
+    try { $downloadedFileLength = [long](Get-Item -LiteralPath $destinationPath -ErrorAction Stop).Length }
+    catch { return & $failed 'VerificationFailed' 'The downloaded artifact file metadata could not be read.' }
     if (-not $SelectedArtifact.PSObject.Properties['Hashes'] -or $null -eq $SelectedArtifact.Hashes) { return & $failed 'VerificationMetadataMissing' 'The selected artifact contains no verification hash evidence.' }
 
     $claims = [System.Collections.Generic.List[object]]::new()
@@ -59,10 +64,10 @@ function Invoke-WintainiumArtifactVerification {
             catch { return & $failed 'VerificationFailed' 'The downloaded artifact could not be hashed for legacy MD5 verification.' }
             foreach ($claim in $publisherMd5Claims) {
                 if ($actualMd5 -cne $claim.Value.ToUpperInvariant()) {
-                    return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='MD5'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact MD5 does not match the publisher-declared checksum.' }
+                    return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='MD5'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; ArtifactFileName=$artifactFileName; DownloadedFileName=$downloadedFileName; DownloadedFileLength=$downloadedFileLength; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact MD5 does not match the publisher-declared checksum.' }
                 }
             }
-            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='VerifiedWithReducedAssurance'; IsSuccessful=$true; FailureKind=$null; ReasonCode='LegacyMd5UserAuthorized'; Reason='Publisher-declared MD5 matched after explicit user authorization; verification assurance is reduced.'; Algorithm='MD5'; ExpectedHash=$publisherMd5Claims[0].Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; DestinationPath=$destinationPath; ErrorMessage=$null }
+            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='VerifiedWithReducedAssurance'; IsSuccessful=$true; FailureKind=$null; ReasonCode='LegacyMd5UserAuthorized'; Reason='Publisher-declared MD5 matched after explicit user authorization; verification assurance is reduced.'; Algorithm='MD5'; ExpectedHash=$publisherMd5Claims[0].Value.ToUpperInvariant(); ActualHash=$actualMd5; VerificationLevel='ReducedAssurance'; UserAuthorized=$true; ArtifactFileName=$artifactFileName; DownloadedFileName=$downloadedFileName; DownloadedFileLength=$downloadedFileLength; DestinationPath=$destinationPath; ErrorMessage=$null }
         }
         if ($publisherMd5Claims.Count -gt 0) { return & $failed 'UnsupportedVerificationAlgorithm' 'A publisher-declared MD5 checksum from the official download page is available; explicit per-operation user authorization is required to use reduced-assurance verification.' }
         return & $failed 'UnsupportedVerificationAlgorithm' 'The artifact declares no supported SHA256 verification evidence.'
@@ -78,9 +83,9 @@ function Invoke-WintainiumArtifactVerification {
 
     foreach ($claim in $sha256Claims) {
         if ($actualHash -cne $claim.Value.ToUpperInvariant()) {
-            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
+            return [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Failed'; IsSuccessful=$false; FailureKind='HashMismatch'; Algorithm='SHA256'; ExpectedHash=$claim.Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; ArtifactFileName=$artifactFileName; DownloadedFileName=$downloadedFileName; DownloadedFileLength=$downloadedFileLength; DestinationPath=$destinationPath; ErrorMessage='The downloaded artifact hash does not match the declared SHA256 verification evidence.' }
         }
     }
 
-    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; IsSuccessful=$true; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; DestinationPath=$destinationPath; ErrorMessage=$null }
+    [pscustomobject][ordered]@{ OperationId=$resolvedOperationId; Status='Verified'; IsSuccessful=$true; FailureKind=$null; Algorithm='SHA256'; ExpectedHash=$sha256Claims[0].Value.ToUpperInvariant(); ActualHash=$actualHash; VerificationLevel='Strong'; UserAuthorized=$false; ArtifactFileName=$artifactFileName; DownloadedFileName=$downloadedFileName; DownloadedFileLength=$downloadedFileLength; DestinationPath=$destinationPath; ErrorMessage=$null }
 }
