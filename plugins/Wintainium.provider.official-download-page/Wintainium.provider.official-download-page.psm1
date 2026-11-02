@@ -196,6 +196,24 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
     }
     catch {
         $result.Status = 'Unavailable'
+        # Preserve HTTP failure evidence when the PowerShell web exception exposes
+        # a response, without copying exception text or signed request URLs.
+        try {
+            $errorResponse = $_.Exception.Response
+            if ($null -ne $errorResponse.StatusCode) {
+                $result.HttpStatusCode = [int]$errorResponse.StatusCode
+            }
+            if ($null -ne $errorResponse.ResponseUri) {
+                $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri ([Uri]$errorResponse.ResponseUri)
+            }
+            elseif ($null -ne $errorResponse.RequestMessage -and $null -ne $errorResponse.RequestMessage.RequestUri) {
+                $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri ([Uri]$errorResponse.RequestMessage.RequestUri)
+            }
+            if ($null -ne $errorResponse.Headers -and $null -ne $errorResponse.Headers['Content-Type']) {
+                $result.ContentType = [string]$errorResponse.Headers['Content-Type']
+            }
+        }
+        catch {}
         return $result
     }
 
