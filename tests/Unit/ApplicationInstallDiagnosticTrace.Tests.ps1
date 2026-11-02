@@ -218,4 +218,54 @@ Describe 'Wintainium install diagnostic trace' {
             $result.Stages[0].Error.Code | Should -Be 'AuthoritativeStateReconciliationFailed'
         }
     }
+
+    It 'exposes expected and actual verification hashes and the downloaded file path on mismatch' {
+        InModuleScope Wintainium.Core {
+            $operationId = '00000000-0000-0000-0000-000000000206'
+            $expectedHash = 'A' * 64
+            $actualHash = 'B' * 64
+            $destinationPath = 'C:\\Users\\Test\\AppData\\Local\\Wintainium\\Downloads\\operations\\test\\vlc-3.0.24-win64.exe'
+            $verificationResult = [pscustomobject][ordered]@{
+                OperationId = $operationId
+                IsSuccessful = $false
+                Status = 'Failed'
+                FailureKind = 'HashMismatch'
+                Algorithm = 'SHA256'
+                ExpectedHash = $expectedHash
+                ActualHash = $actualHash
+                DestinationPath = $destinationPath
+                ErrorMessage = 'The downloaded artifact hash does not match the declared SHA256 verification evidence.'
+                Errors = @()
+                Warnings = @()
+                LogEvents = @()
+            }
+            $lifecycle = [pscustomobject][ordered]@{
+                OperationId = $operationId
+                IsSuccessful = $false
+                WasCancelled = $false
+                StageResults = @(
+                    [pscustomobject][ordered]@{
+                        StageName = 'Verification'
+                        Stage = [pscustomobject][ordered]@{ Sequence = 5; Name = 'Verification' }
+                        Execution = [pscustomobject][ordered]@{
+                            IsSuccessful = $false
+                            Status = 'Failed'
+                            Result = $verificationResult
+                            Error = [pscustomobject]@{ Code = 'OrchestrationStageExecutionFailed'; Message = 'A lifecycle stage failed.' }
+                        }
+                    }
+                )
+                Error = $null
+            }
+
+            $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+            $diagnostic = @($result.TroubleshootingDiagnostics | Where-Object Code -eq 'InstallDiagnostic.Verification')
+
+            $diagnostic.Count | Should -Be 1
+            $diagnostic[0].Message | Should -Match ([regex]::Escape($expectedHash))
+            $diagnostic[0].Message | Should -Match ([regex]::Escape($actualHash))
+            $diagnostic[0].Message | Should -Match ([regex]::Escape($destinationPath))
+            $result.Error.Code | Should -Be 'HashMismatch'
+        }
+    }
 }
