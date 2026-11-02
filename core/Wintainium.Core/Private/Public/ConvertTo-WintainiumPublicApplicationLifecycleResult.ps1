@@ -178,6 +178,28 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                             Code = 'InstallDiagnostic.ReleaseDiscoveryTrace'
                             Message = ('Discovery trace: ' + ($traceParts -join '; ') + '.')
                         })
+
+                        # Artifact-level checksum resolution details are carried as
+                        # structured provider context. Surface only bounded metadata:
+                        # never expose response bodies, digest values, or exception text.
+                        $artifactResults = $null
+                        if ($null -ne $context) {
+                            $artifactResults = if ($context -is [System.Collections.IDictionary] -and $context.Contains('ArtifactResults')) { @($context['ArtifactResults']) } elseif ($null -ne $context.PSObject.Properties['ArtifactResults']) { @($context.ArtifactResults) } else { @() }
+                        }
+                        foreach ($artifactResult in @($artifactResults)) {
+                            if ($null -eq $artifactResult) { continue }
+                            $artifactTraceParts = [System.Collections.Generic.List[string]]::new()
+                            foreach ($key in @('ArtifactFileName','Status','SidecarUrl','FinalUrl','HttpStatusCode','ContentType','ArtifactEndpointStatus','ArtifactEndpointUrl','ArtifactEndpointFinalUrl','ArtifactEndpointHttpStatusCode','ArtifactEndpointContentType','ArtifactEndpointErrorType')) {
+                                $value = if ($artifactResult -is [System.Collections.IDictionary] -and $artifactResult.Contains($key)) { [string]$artifactResult[$key] } elseif ($null -ne $artifactResult.PSObject.Properties[$key]) { [string]$artifactResult.$key } else { $null }
+                                if (-not [string]::IsNullOrWhiteSpace($value)) { $artifactTraceParts.Add($key + '=' + $value) }
+                            }
+                            if ($artifactTraceParts.Count -gt 0) {
+                                $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
+                                    Code = 'InstallDiagnostic.ReleaseDiscoveryTrace'
+                                    Message = ('Artifact checksum evidence: ' + ($artifactTraceParts -join '; ') + '.')
+                                })
+                            }
+                        }
                     }
                 }
                 'UpdateDecision' {
