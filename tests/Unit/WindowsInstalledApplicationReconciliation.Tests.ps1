@@ -787,5 +787,36 @@ Describe 'Windows installed-application reconciliation plugin' {
         } | Should -Throw '*not a valid GUID*'
     }
 
+
+    It 'returns MSI registration provenance when a direct ProductCode candidate is reconciled' {
+        $request = [pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-00000000020B'
+            ApplicationId='example.msi'
+            Manifest=$script:baseManifest
+        }
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{
+                    IsSuccessful=$true
+                    Candidates=@([pscustomobject]@{
+                        Scope='machine'; View='64'; SubKey='{90160000-0011-0000-0000-0000000FF1CE}'
+                        DisplayName='Example MSI'; DisplayVersion='4.2'
+                        IdentityConfidence='Direct'
+                        EvidenceSource='WindowsInstallerProductRegistration'
+                        MsiProductCode='{90160000-0011-0000-0000-0000000FF1CE}'
+                    })
+                    Errors=@()
+                }
+            }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $result.Status | Should -Be 'Reconciled'
+        $result.Evidence.InstallationState | Should -Be 'Installed'
+        $result.Evidence.EvidenceSource | Should -Be 'WindowsInstallerProductRegistration'
+        $result.Evidence.IdentityConfidence | Should -Be 'Direct'
+        $result.Evidence.MsiProductCode | Should -Be '{90160000-0011-0000-0000-0000000FF1CE}'
+    }
+
 }
 
