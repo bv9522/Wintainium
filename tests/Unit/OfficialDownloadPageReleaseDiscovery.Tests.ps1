@@ -1129,6 +1129,38 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         $hash.Source | Should -Be 'OfficialDownloadPageAdjacentChecksumSidecar'
     }
 
+    It 'rejects an HTML checksum landing page that does not identify the exact artifact filename' {
+        $digest = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789'
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = '<html><body><h2>Downloading Example 1.2.3 for Windows 64 bits</h2>SHA-256 checksum: ' + $digest + '</body></html>'
+                    Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-html-unbound-artifact'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.RejectedCount | Should -Be 1
+        $event.Context.ArtifactResults[0].Status | Should -Be 'RejectedFilename'
+    }
+
     It 'rejects malformed and ambiguous sidecar digest content' {
         Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
