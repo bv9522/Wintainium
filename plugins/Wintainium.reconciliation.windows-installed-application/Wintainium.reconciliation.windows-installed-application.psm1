@@ -133,8 +133,16 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     $configuredMsiProductCodes = @()
     if ($null -ne $windowsInstallerSettings) {
         $configuredMsiProductCodes = @(Get-WintainiumWindowsSettingValue -Object $windowsInstallerSettings -Name 'productCodes' | ForEach-Object {
-            $code = ([string]$_).Trim().Trim('{','}')
-            if ($code -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}
+            $code = ([string]$_).Trim().Trim([char[]]@('{','}'))
+            if ($code -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
+                throw [System.ArgumentException]::new("Configured Windows Installer product code '$_' is not a valid GUID.")
+            }
+            $code.ToUpperInvariant()
+        } | Select-Object -Unique)
+    }
+
+    $candidates = [System.Collections.Generic.List[object]]::new()
+    $allEntries = [System.Collections.Generic.List[object]]::new()
     $errors = [System.Collections.Generic.List[object]]::new()
     foreach ($location in @($locations)) {
         if ($null -eq $location) { throw [System.ArgumentException]::new('Registry locations must not be null.') }
@@ -150,40 +158,41 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         foreach ($entry in $entries) {
             $allEntries.Add($entry)
             $entryWindowsInstaller = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'WindowsInstaller')
-            $entrySubKey = ([string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey')).Trim().Trim('{','}')
+            $entrySubKey = ([string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey')).Trim().Trim([char[]]@('{','}'))
             $msiProductCodeMatch = $entryWindowsInstaller -eq '1' -and
-                $entrySubKey -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}
-                $actual = switch ($predicate.Value) {
-                    'subkey' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey' }
-                    'DisplayName' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayName' }
-                    'Publisher' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'Publisher' }
-                }
-                if ($actual -is [System.Array]) {
-                    $matches = $false
-                    $errors.Add([pscustomobject]@{ Code='WindowsRegistryValueMalformed'; Message="Registry value '$($predicate.Value)' for uninstall entry '$($entry.SubKey)' is not a scalar value."; Scope=$scope; View=$locationView; SubKey=[string]$entry.SubKey })
-                    break
-                }
-                $identityNames = @($predicate.Equals) + @($predicate.Aliases)
-                $predicateMatches = $false
-                foreach ($identityName in $identityNames) {
-                    if ([string]$actual -ieq [string]$identityName) {
-                        $predicateMatches = $true
+                $entrySubKey -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' -and
+                $configuredMsiProductCodes -contains $entrySubKey.ToUpperInvariant()
+            $matches = if ($msiProductCodeMatch) { $true } elseif ($matchMode -eq 'any') { $false } else { $true }
+            if (-not $msiProductCodeMatch) {
+                foreach ($predicate in $predicates) {
+                    $actual = switch ($predicate.Value) {
+                        'subkey' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'SubKey' }
+                        'DisplayName' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'DisplayName' }
+                        'Publisher' { Get-WintainiumWindowsSettingValue -Object $entry -Name 'Publisher' }
+                    }
+                    if ($actual -is [System.Array]) {
+                        $matches = $false
+                        $errors.Add([pscustomobject]@{ Code='WindowsRegistryValueMalformed'; Message="Registry value '$($predicate.Value)' for uninstall entry '$($entry.SubKey)' is not a scalar value."; Scope=$scope; View=$locationView; SubKey=[string]$entry.SubKey })
                         break
                     }
-                    # Controlled normalization only accepts a complete, whitespace-delimited
-                    # numeric version suffix (optionally followed by one release letter).
-                    # It does not accept arbitrary substrings, architecture tags, or extra words.
-                    if ($predicate.MatchType -eq 'nameOrVersionSuffix' -and
-                        [string]$actual -match ('(?i)^' + [regex]::Escape([string]$identityName) + '\s+\d+(?:\.\d+)*(?:[a-z])?$')) {
-                        $predicateMatches = $true
-                        break
+                    $identityNames = @($predicate.Equals) + @($predicate.Aliases)
+                    $predicateMatches = $false
+                    foreach ($identityName in $identityNames) {
+                        if ([string]$actual -ieq [string]$identityName) {
+                            $predicateMatches = $true
+                            break
+                        }
+                        if ($predicate.MatchType -eq 'nameOrVersionSuffix' -and
+                            [string]$actual -match ('(?i)^' + [regex]::Escape([string]$identityName) + '\s+\d+(?:\.\d+)*(?:[a-z])?$')) {
+                            $predicateMatches = $true
+                            break
+                        }
                     }
+                    if ($matchMode -eq 'any') {
+                        if ($predicateMatches) { $matches = $true; break }
+                    }
+                    elseif (-not $predicateMatches) { $matches = $false; break }
                 }
-                if ($matchMode -eq 'any') {
-                    if ($predicateMatches) { $matches = $true; break }
-                }
-                elseif (-not $predicateMatches) { $matches = $false; break }
-            }
             }
             if ($matches) {
                 $candidates.Add([pscustomobject]@{
