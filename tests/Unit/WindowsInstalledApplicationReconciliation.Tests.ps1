@@ -821,6 +821,9 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result.Evidence.EvidenceSource | Should -Be 'WindowsInstallerProductRegistration'
         $result.Evidence.IdentityConfidence | Should -Be 'Direct'
         $result.Evidence.MsiProductCode | Should -Be '{90160000-0011-0000-0000-0000000FF1CE}'
+        $resolutionWarning = @($result.Warnings | Where-Object Code -eq 'WindowsReconciliationIdentityResolved')[0]
+        $resolutionWarning.IdentityConfidence | Should -Be 'Direct'
+        $resolutionWarning.MsiProductCode | Should -Be '{90160000-0011-0000-0000-0000000FF1CE}'
     }
 
 }
