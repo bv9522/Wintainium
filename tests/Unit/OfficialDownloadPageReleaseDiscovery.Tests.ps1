@@ -1239,6 +1239,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 }
 
 
+Describe 'Current release sidecar lookup boundary' {
     It 'limits sidecar requests to artifacts in the highest parsed release' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
         Mock Invoke-WebRequest {
@@ -1276,3 +1277,5 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         $event.Context.AttemptedCount | Should -Be 1
         $event.Context.ResolvedCount | Should -Be 1
     }
+
+}
