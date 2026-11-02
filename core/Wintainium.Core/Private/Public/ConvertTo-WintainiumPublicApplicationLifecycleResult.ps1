@@ -128,7 +128,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         if ($null -eq $traceStageResult -or -not $traceStageResult.PSObject.Properties['LogEvents'] -or $null -eq $traceStageResult.LogEvents) { continue }
         foreach ($traceCandidate in @($traceStageResult.LogEvents)) {
             if ($null -ne $traceCandidate -and $traceCandidate.PSObject.Properties['EventName'] -and
-                $traceCandidate.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')) {
+                $traceCandidate.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted')) {
                 $hasReleaseDiscoveryTrace = $true
                 break
             }
@@ -162,14 +162,14 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     }
                     foreach ($traceEvent in @($providerLogEvents | Where-Object {
                         $null -ne $_ -and $_.PSObject.Properties['EventName'] -and
-                            $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected')
+                            $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted')
                     })) {
                         $traceParts = [System.Collections.Generic.List[string]]::new()
                         $traceParts.Add([string]$traceEvent.EventName)
                         if (-not [string]::IsNullOrWhiteSpace([string]$traceEvent.Message)) { $traceParts.Add(([string]$traceEvent.Message).Trim().TrimEnd('.', ';', ' ')) }
                         $context = $traceEvent.Context
                         if ($null -ne $context) {
-                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','DurationMilliseconds','ExceptionType')) {
+                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','AttemptedCount','ResolvedCount','RejectedCount','UnavailableCount','DurationMilliseconds','ExceptionType')) {
                                 $value = if ($context -is [System.Collections.IDictionary] -and $context.Contains($key)) { [string]$context[$key] } elseif ($null -ne $context.PSObject.Properties[$key]) { [string]$context.$key } else { $null }
                                 if (-not [string]::IsNullOrWhiteSpace($value)) { $traceParts.Add($key + '=' + $value) }
                             }
