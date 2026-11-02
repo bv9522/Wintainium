@@ -241,4 +241,133 @@ Describe 'Official download page verification evidence discovery' {
         $artifact.Hashes[0].Source | Should -Be 'OfficialDownloadPageChecksum'
     }
 
+
+    It 'resolves a SHA256 checksum from the exact artifact endpoint after an unbound HTML sidecar is rejected' {
+        $digest = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                '<html><body><p>SHA256: ' + $digest + '</p></body></html>'
+            }
+            elseif ($Uri -eq 'https://downloads.example.com/app-1.0.0.exe') {
+                '<html><body><p>SHA256: ' + $digest + '</p><a href="https://mirror.example.net/releases/app-1.0.0.exe">Download mirror</a></body></html>'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html; charset=UTF-8' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifact = $result.Releases[0].Artifacts[0]
+        @($artifact.Hashes).Count | Should -Be 1
+        $artifact.Hashes[0].Algorithm | Should -Be 'SHA256'
+        $artifact.Hashes[0].Value | Should -Be $digest
+        $artifact.Hashes[0].Source | Should -Be 'OfficialDownloadPageArtifactEndpointChecksum'
+    }
+
+    It 'rejects an artifact endpoint checksum when its HTML contains no matching download link' {
+        $digest = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                '<html><body>SHA256: ' + $digest + '</body></html>'
+            }
+            elseif ($Uri -eq 'https://downloads.example.com/app-1.0.0.exe') {
+                '<html><body>SHA256: ' + $digest + '<a href="https://mirror.example.net/other-file.exe">Download</a></body></html>'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html; charset=UTF-8' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
+    }
+
+    It 'rejects an artifact endpoint HTML page containing multiple SHA256 claims' {
+        $digest1 = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        $digest2 = '1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                '<html><body>SHA256: ' + $digest1 + '</body></html>'
+            }
+            elseif ($Uri -eq 'https://downloads.example.com/app-1.0.0.exe') {
+                '<html><body>SHA256: ' + $digest1 + '<p>SHA-256 checksum: ' + $digest2 + '</p><a href="https://mirror.example.net/app-1.0.0.exe">Download</a></body></html>'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html; charset=UTF-8' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
+    }
+
+    It 'rejects an artifact endpoint checksum page redirected to a different resource' {
+        $digest = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                '<html><body>SHA256: ' + $digest + '</body></html>'
+            }
+            elseif ($Uri -eq 'https://downloads.example.com/app-1.0.0.exe') {
+                '<html><body>SHA256: ' + $digest + '<a href="https://mirror.example.net/app-1.0.0.exe">Download</a></body></html>'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            $finalUri = if ($Uri -eq 'https://downloads.example.com/app-1.0.0.exe') {
+                [Uri]'https://downloads.example.com/landing/app-1.0.0.exe'
+            } else { [Uri]$Uri }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html; charset=UTF-8' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = $finalUri }
+            }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
+    }
+
 }
