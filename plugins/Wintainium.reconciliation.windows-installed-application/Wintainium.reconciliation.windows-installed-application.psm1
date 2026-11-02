@@ -718,6 +718,18 @@ function Invoke-WintainiumReconciliation {
                 IdentityEvidence = @($candidate.IdentityEvidence)
             }
         }
+        if ($candidateConfidence -eq 'Direct') {
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityResolved'
+                Message = 'Installed-state identity was resolved by an exact configured Windows Installer ProductCode.'
+                OperationId = $operationId
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityConfidence = 'Direct'
+                MsiProductCode = [string]$candidate.MsiProductCode
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+        }
         $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
         if (-not [string]::IsNullOrWhiteSpace([string]$installedArchitecture)) {
             $evidence.Architecture = [string]$installedArchitecture
