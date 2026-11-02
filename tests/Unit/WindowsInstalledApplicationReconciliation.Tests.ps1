@@ -726,7 +726,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         $reader = {
             param($location)
             [pscustomobject]@{
-                Scope='machine'; View='64'; SubKey=$productCode
+                Scope='machine'; View='64'; SubKey='{90160000-0011-0000-0000-0000000FF1CE}'
                 DisplayName='Unrelated Product Name'; DisplayVersion='4.2'
                 Publisher='Example Publisher'; WindowsInstaller='1'
             }
