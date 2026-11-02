@@ -388,7 +388,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
             Settings=$settings; Reader=$reader; Name='Peace Equalizer, interface Equalizer APO'; Publisher='Browse Files at SourceForge.net'
         } {
-            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationHomepage $Homepage
         }
 
         $result.Candidates.Count | Should -Be 1
@@ -438,24 +438,24 @@ Describe 'Windows installed-application reconciliation plugin' {
         $reader = {
             param($location)
             @(
-                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; Publisher='Example Vendor'; InstallLocation='C:\Program Files\Acme' },
+                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; URLInfoAbout='https://example.com/about'; InstallLocation='C:\Program Files\Acme' },
                 [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Equalizer'; DisplayName='Equalizer'; InstallLocation='C:\Program Files\Equalizer' }
             )
         }
 
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
-            Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Publisher='Example Vendor'
+            Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Homepage='https://example.com/product'
         } {
             Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
         }
 
         $result.Candidates.Count | Should -Be 2
         @($result.Candidates | Where-Object IdentityConfidence -eq 'ReviewOnly').Count | Should -Be 2
-        $result.Candidates[0].IdentityScore | Should -Be 57
-        $result.Candidates[0].IdentityRunnerUpScore | Should -Be 39
-        $result.Candidates[0].IdentityScoreMargin | Should -Be 18
-        $result.Candidates[1].IdentityRunnerUpScore | Should -Be 57
-        $result.Candidates[1].IdentityScoreMargin | Should -Be -18
+        $result.Candidates[0].IdentityScore | Should -Be 90
+        $result.Candidates[0].IdentityRunnerUpScore | Should -Be 78
+        $result.Candidates[0].IdentityScoreMargin | Should -Be 12
+        $result.Candidates[1].IdentityRunnerUpScore | Should -Be 90
+        $result.Candidates[1].IdentityScoreMargin | Should -Be -12
     }
 
     It 'does not promote a review-only identity result to Installed' {
