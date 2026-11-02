@@ -413,9 +413,11 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         if ($orderedScored.Count -gt 0) {
             $topScore = [int]$orderedScored[0].IdentityScore
             $secondScore = if ($orderedScored.Count -gt 1) { [int]$orderedScored[1].IdentityScore } else { 0 }
-            foreach ($scoredCandidate in $orderedScored) {
-                $scoredCandidate.IdentityRunnerUpScore = $secondScore
-                $scoredCandidate.IdentityScoreMargin = $topScore - $secondScore
+            for ($candidateIndex = 0; $candidateIndex -lt $orderedScored.Count; $candidateIndex++) {
+                $scoredCandidate = $orderedScored[$candidateIndex]
+                $runnerUpScore = if ($candidateIndex -eq 0) { $secondScore } else { $topScore }
+                $scoredCandidate.IdentityRunnerUpScore = $runnerUpScore
+                $scoredCandidate.IdentityScoreMargin = [int]$scoredCandidate.IdentityScore - $runnerUpScore
             }
             if ($topScore -ge 70 -and ($orderedScored.Count -eq 1 -or ($topScore - $secondScore) -ge 15)) {
                 $winner = $orderedScored[0]
