@@ -386,7 +386,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         }
 
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
-            Settings=$settings; Reader=$reader; Name='Peace Equalizer, interface Equalizer APO'; Publisher='Browse Files at SourceForge.net'
+            Settings=$settings; Reader=$reader; Name='Peace Equalizer, interface Equalizer APO'; Publisher='Browse Files at SourceForge.net'; Homepage=''
         } {
             Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationHomepage $Homepage
         }
