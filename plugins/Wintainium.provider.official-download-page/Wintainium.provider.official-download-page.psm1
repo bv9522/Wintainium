@@ -152,6 +152,79 @@ function Get-OfficialDownloadPageGitHubAssetVerificationEvidence {
 }
 
 
+function Get-OfficialDownloadPageBoundedChecksumResponse {
+    param([Parameter(Mandatory)][Uri]$Uri)
+
+    $result = [pscustomobject][ordered]@{
+        StatusCode = $null
+        FinalUri = $null
+        ContentType = $null
+        Content = $null
+        IsContentTooLarge = $false
+        ErrorType = $null
+    }
+    $handler = $null
+    $client = $null
+    $request = $null
+    $response = $null
+    $stream = $null
+    $memory = $null
+    $cancellation = $null
+
+    try {
+        $handler = [System.Net.Http.HttpClientHandler]::new()
+        $handler.AllowAutoRedirect = $true
+        $handler.MaxAutomaticRedirections = 5
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        $client.Timeout = [TimeSpan]::FromSeconds(20)
+        $cancellation = [System.Threading.CancellationTokenSource]::new()
+        $cancellation.CancelAfter([TimeSpan]::FromSeconds(20))
+        $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $Uri)
+        $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cancellation.Token).GetAwaiter().GetResult()
+
+        $result.StatusCode = [int]$response.StatusCode
+        if ($null -ne $response.RequestMessage -and $null -ne $response.RequestMessage.RequestUri) {
+            $result.FinalUri = [Uri]$response.RequestMessage.RequestUri
+        }
+        if ($null -ne $response.Content -and $null -ne $response.Content.Headers.ContentType) {
+            $result.ContentType = [string]$response.Content.Headers.ContentType.MediaType
+        }
+        if ($result.StatusCode -lt 200 -or $result.StatusCode -ge 300) { return $result }
+        if ($result.ContentType -match '(?i)text/html|application/xhtml') { return $result }
+
+        if ($null -ne $response.Content.Headers.ContentLength -and $response.Content.Headers.ContentLength -gt 65536) {
+            $result.IsContentTooLarge = $true
+            return $result
+        }
+
+        $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+        $memory = [System.IO.MemoryStream]::new()
+        $buffer = [byte[]]::new(4096)
+        while (($read = $stream.ReadAsync($buffer, 0, $buffer.Length, $cancellation.Token).GetAwaiter().GetResult()) -gt 0) {
+            if (($memory.Length + $read) -gt 65536) {
+                $result.IsContentTooLarge = $true
+                return $result
+            }
+            $memory.Write($buffer, 0, $read)
+        }
+        $result.Content = [System.Text.Encoding]::UTF8.GetString($memory.ToArray())
+    }
+    catch {
+        $result.ErrorType = $_.Exception.GetType().Name
+    }
+    finally {
+        if ($null -ne $memory) { $memory.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+        if ($null -ne $response) { $response.Dispose() }
+        if ($null -ne $request) { $request.Dispose() }
+        if ($null -ne $client) { $client.Dispose() }
+        elseif ($null -ne $handler) { $handler.Dispose() }
+        if ($null -ne $cancellation) { $cancellation.Dispose() }
+    }
+
+    return $result
+}
+
 function Get-OfficialDownloadPageAdjacentSha256Evidence {
     param(
         [Parameter(Mandatory)][Uri]$ArtifactUri,
@@ -270,10 +343,1770 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
     $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $finalUri
 
     if ($contentType -match '(?i)text/html|application/xhtml') {
+        # Some publisher sidecar URLs are HTML landing pages that link to the
+        # actual checksum file on a mirror. Follow only one HTTPS link whose
+        # path names this exact artifact plus the .sha256 suffix.
+        $checksumLinks = [System.Collections.Generic.List[Uri]]::new()
+        $linkMatches = [regex]::Matches(
+            $body,
+            '<a\b[^>]*\bhref\s*=\s*["'']([^"'']+)["''][^>]*>',
+            [Text.RegularExpressions.RegexOptions]::IgnoreCase
+        )
+        foreach ($linkMatch in $linkMatches) {
+            $href = [System.Net.WebUtility]::HtmlDecode($linkMatch.Groups[1].Value)
+            try { $linkedUri = [Uri]::new($finalUri, $href) } catch { continue }
+            if (-not $linkedUri.IsAbsoluteUri -or
+                $linkedUri.Scheme -ine 'https' -or
+                -not [string]::IsNullOrWhiteSpace($linkedUri.UserInfo)) { continue }
+            $expectedChecksumName = $ArtifactFileName + '.sha256'
+            if ([string]::Equals(
+                [IO.Path]::GetFileName($linkedUri.AbsolutePath),
+                $expectedChecksumName,
+                [StringComparison]::OrdinalIgnoreCase
+            )) {
+                $checksumLinks.Add($linkedUri)
+            }
+        }
+
+        if ($checksumLinks.Count -gt 1) {
+            $result.Status = 'RejectedAmbiguousChecksumLink'
+            return $result
+        }
+        if ($checksumLinks.Count -eq 1) {
+            $linkedResponse = Get-OfficialDownloadPageBoundedChecksumResponse -Uri $checksumLinks[0]
+            if ($null -eq $linkedResponse -or
+                $null -eq $linkedResponse.StatusCode -or
+                $linkedResponse.StatusCode -lt 200 -or
+                $linkedResponse.StatusCode -ge 300) {
+                $result.Status = 'Unavailable'
+                return $result
+            }
+            if ($linkedResponse.IsContentTooLarge) {
+                $result.Status = 'RejectedContentTooLarge'
+                return $result
+            }
+            $linkedFinalUri = $null
+            if ($null -ne $linkedResponse.FinalUri) {
+                try { $linkedFinalUri = [Uri]$linkedResponse.FinalUri } catch {}
+            }
+            $expectedChecksumName = $ArtifactFileName + '.sha256'
+            if ($null -eq $linkedFinalUri -or
+                -not $linkedFinalUri.IsAbsoluteUri -or
+                $linkedFinalUri.Scheme -ine 'https' -or
+                -not [string]::IsNullOrWhiteSpace($linkedFinalUri.UserInfo) -or
+                -not [string]::Equals(
+                    [IO.Path]::GetFileName($linkedFinalUri.AbsolutePath),
+                    $expectedChecksumName,
+                    [StringComparison]::OrdinalIgnoreCase
+                )) {
+                $result.Status = 'RejectedRedirect'
+                return $result
+            }
+            $linkedBody = [string]$linkedResponse.Content
+            if ([string]::IsNullOrWhiteSpace($linkedBody) -or $linkedBody.Length -gt 65536) {
+                $result.Status = 'RejectedContent'
+                return $result
+            }
+            $plainLinkedSidecar = [regex]::Match(
+                $linkedBody.Trim(),
+                '(?is)^([0-9a-f]{64})(?:\s+\*?([^\r\n]+?))?\s*
+    else {
+        # Accept conventional sha256sum output (digest, optional filename), or
+        # a bare digest. If a filename is supplied, it must identify this artifact.
+        $plainSidecar = [regex]::Match(
+            $body.Trim(),
+            '(?is)^([0-9a-f]{64})(?:\s+\*?([^\r\n]+?))?\s*$'
+        )
+        if (-not $plainSidecar.Success) {
+            $result.Status = 'RejectedDigest'
+            return $result
+        }
+        if ($plainSidecar.Groups[2].Success) {
+            $declaredName = [IO.Path]::GetFileName($plainSidecar.Groups[2].Value.Trim())
+            if (-not [string]::Equals($declaredName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) {
+                $result.Status = 'RejectedFilename'
+                return $result
+            }
+        }
+        $digest = $plainSidecar.Groups[1].Value
+    }
+
+    $result.Status = 'Resolved'
+    $result.Evidence = [pscustomobject][ordered]@{
+        Algorithm = 'SHA256'
+        Value = $digest.ToUpperInvariant()
+        Source = 'OfficialDownloadPageAdjacentChecksumSidecar'
+    }
+    return $result
+}
+
+function Get-OfficialDownloadPageBoundedHtmlResponse {
+    param([Parameter(Mandatory)][Uri]$Uri)
+
+    $result = [pscustomobject][ordered]@{
+        StatusCode = $null
+        FinalUri = $null
+        ContentType = $null
+        Content = $null
+        IsContentTooLarge = $false
+        ErrorType = $null
+    }
+    $handler = $null
+    $client = $null
+    $request = $null
+    $response = $null
+    $stream = $null
+    $memory = $null
+    $cancellation = $null
+
+    try {
+        $handler = [System.Net.Http.HttpClientHandler]::new()
+        $handler.AllowAutoRedirect = $true
+        $handler.MaxAutomaticRedirections = 5
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        $client.Timeout = [TimeSpan]::FromSeconds(20)
+        $cancellation = [System.Threading.CancellationTokenSource]::new()
+        $cancellation.CancelAfter([TimeSpan]::FromSeconds(20))
+        $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $Uri)
+        $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cancellation.Token).GetAwaiter().GetResult()
+
+        $result.StatusCode = [int]$response.StatusCode
+        if ($null -ne $response.RequestMessage -and $null -ne $response.RequestMessage.RequestUri) {
+            $result.FinalUri = [Uri]$response.RequestMessage.RequestUri
+        }
+        if ($null -ne $response.Content -and $null -ne $response.Content.Headers.ContentType) {
+            $result.ContentType = [string]$response.Content.Headers.ContentType.MediaType
+        }
+
+        # Do not consume a package response. Only HTML responses are read, and
+        # even those are capped so a mislabelled or unexpectedly large document
+        # cannot turn checksum discovery into a second artifact download.
+        if ($result.ContentType -match '(?i)text/html|application/xhtml\+xml') {
+            if ($null -ne $response.Content.Headers.ContentLength -and $response.Content.Headers.ContentLength -gt 262144) {
+                $result.IsContentTooLarge = $true
+                return $result
+            }
+
+            $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+            $memory = [System.IO.MemoryStream]::new()
+            $buffer = [byte[]]::new(8192)
+            while (($read = $stream.ReadAsync($buffer, 0, $buffer.Length, $cancellation.Token).GetAwaiter().GetResult()) -gt 0) {
+                if (($memory.Length + $read) -gt 262144) {
+                    $result.IsContentTooLarge = $true
+                    return $result
+                }
+                $memory.Write($buffer, 0, $read)
+            }
+            $result.Content = [System.Text.Encoding]::UTF8.GetString($memory.ToArray())
+        }
+    }
+    catch {
+        $result.ErrorType = $_.Exception.GetType().Name
+    }
+    finally {
+        if ($null -ne $memory) { $memory.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+        if ($null -ne $response) { $response.Dispose() }
+        if ($null -ne $request) { $request.Dispose() }
+        if ($null -ne $client) { $client.Dispose() }
+        elseif ($null -ne $handler) { $handler.Dispose() }
+        if ($null -ne $cancellation) { $cancellation.Dispose() }
+    }
+
+    return $result
+}
+
+function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
+    param(
+        [Parameter(Mandatory)][Uri]$ArtifactUri,
+        [Parameter(Mandatory)][string]$ArtifactFileName
+    )
+
+    $result = [pscustomobject][ordered]@{
+        Status = 'NotAttempted'
+        Evidence = $null
+        HttpStatusCode = $null
+        EndpointUrl = Get-OfficialDownloadPageSafeUri -Uri $ArtifactUri
+        FinalUrl = $null
+        ContentType = $null
+        ErrorType = $null
+    }
+
+    # Only concrete HTTPS artifact paths are eligible. Wrapper endpoints and
+    # URLs whose path does not name the selected artifact remain sidecar-only.
+    if (-not $ArtifactUri.IsAbsoluteUri -or
+        $ArtifactUri.Scheme -ine 'https' -or
+        -not [string]::IsNullOrWhiteSpace($ArtifactUri.UserInfo) -or
+        [string]::IsNullOrWhiteSpace($ArtifactFileName) -or
+        -not [string]::Equals([IO.Path]::GetFileName($ArtifactUri.AbsolutePath), $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase) -or
+        (ConvertTo-OfficialDownloadPageArtifactFormat -FileName $ArtifactFileName) -eq 'unknown') {
+        $result.Status = 'RejectedArtifactUri'
+        return $result
+    }
+
+    $response = Get-OfficialDownloadPageBoundedHtmlResponse -Uri $ArtifactUri
+    if ($null -eq $response) {
+        $result.Status = 'Unavailable'
+        return $result
+    }
+    $result.HttpStatusCode = $response.StatusCode
+    $result.ContentType = [string]$response.ContentType
+    $result.ErrorType = [string]$response.ErrorType
+    if ($null -eq $response.StatusCode -or $response.StatusCode -lt 200 -or $response.StatusCode -ge 300) {
+        $result.Status = 'Unavailable'
+        return $result
+    }
+
+    $finalUri = $null
+    if ($null -ne $response.FinalUri) {
+        try { $finalUri = [Uri]$response.FinalUri } catch {}
+    }
+    $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $finalUri
+
+    # Do not bind evidence across a redirect to another host or path.
+    if ($null -eq $finalUri -or
+        -not $finalUri.IsAbsoluteUri -or
+        $finalUri.Scheme -ine 'https' -or
+        -not [string]::IsNullOrWhiteSpace($finalUri.UserInfo) -or
+        -not [string]::Equals($finalUri.Host, $ArtifactUri.Host, [StringComparison]::OrdinalIgnoreCase) -or
+        $finalUri.Port -ne $ArtifactUri.Port -or
+        -not [string]::Equals($finalUri.AbsolutePath, $ArtifactUri.AbsolutePath, [StringComparison]::Ordinal)) {
+        $result.Status = 'RejectedRedirect'
+        return $result
+    }
+
+    if ($result.ContentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+        $result.Status = 'RejectedContentType'
+        return $result
+    }
+    if ($response.IsContentTooLarge) {
+        $result.Status = 'RejectedContentTooLarge'
+        return $result
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$response.Content)) {
+        $result.Status = 'RejectedContent'
+        return $result
+    }
+
+    # Require an actual HTTPS download link naming this artifact. Mirror hosts
+    # may differ, but page prose or metadata alone cannot establish association.
+    $matchingArtifactLinks = [System.Collections.Generic.List[object]]::new()
+    $links = [regex]::Matches([string]$response.Content, '<a\b[^>]*\bhref\s*=\s*["'']([^"'']+)["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($link in $links) {
+        $href = [System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
+        try { $linkUri = [Uri]::new($finalUri, $href) } catch { continue }
+        if (-not $linkUri.IsAbsoluteUri -or
+            $linkUri.Scheme -ine 'https' -or
+            -not [string]::IsNullOrWhiteSpace($linkUri.UserInfo)) { continue }
+        $linkedFileName = [IO.Path]::GetFileName($linkUri.AbsolutePath)
+        if ([string]::Equals($linkedFileName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) {
+            $matchingArtifactLinks.Add($linkUri)
+        }
+    }
+    if ($matchingArtifactLinks.Count -eq 0) {
+        $result.Status = 'RejectedFilename'
+        return $result
+    }
+
+    $visibleText = ConvertFrom-OfficialDownloadPageHtmlText ([string]$response.Content)
+    $labelledDigests = [regex]::Matches(
+        [string]$visibleText,
+        '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:checksum|hash)\s*)?[:=]\s*["'']?([0-9a-f]{64})\b'
+    )
+    if ($labelledDigests.Count -ne 1) {
+        $result.Status = 'RejectedDigest'
+        return $result
+    }
+
+    $result.Status = 'Resolved'
+    $result.Evidence = [pscustomobject][ordered]@{
+        Algorithm = 'SHA256'
+        Value = $labelledDigests[0].Groups[1].Value.ToUpperInvariant()
+        Source = 'OfficialDownloadPageArtifactEndpointChecksum'
+    }
+    return $result
+}
+
+function ConvertFrom-OfficialDownloadPageReleaseSection {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Heading,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Body,
+        [Parameter(Mandatory)][Uri]$BaseUri
+    )
+
+    $headingText=ConvertFrom-OfficialDownloadPageHtmlText $Heading
+    if ([string]::IsNullOrWhiteSpace($headingText)) { return $null }
+
+    $links=[regex]::Matches($Body,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    $versionMatch=[regex]::Match($headingText,'(?i)(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)(?![a-z0-9])')
+    $versionEvidenceText=$headingText
+    $versionEvidenceHtml=$Body
+    foreach ($candidateLink in $links) {
+        $candidateHref=[System.Net.WebUtility]::HtmlDecode($candidateLink.Groups[1].Value)
+        try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
+        if ([string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) { continue }
+        $versionEvidenceHtml=$Body.Substring(0,$candidateLink.Index)
+        break
+    }
+    if (-not $versionMatch.Success) {
+        # Some publishers put the version in a labeled metadata field rather than
+        # the section heading (for example, "Revision Number: 26.5.2"). Only use
+        # that evidence from the same heading section and before its first supported
+        # installer link, so unrelated page versions cannot become release evidence.
+        $versionEvidenceText=ConvertFrom-OfficialDownloadPageHtmlText $versionEvidenceHtml
+        $revisionVersionMatch=[regex]::Match($versionEvidenceText,'(?i)\bRevision\s+Number\b[\s\S]{0,160}?(?<![a-z0-9])v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)(?![a-z0-9])')
+        if (-not $revisionVersionMatch.Success) { return $null }
+        $versionMatch=$revisionVersionMatch
+    }
+    $version=$versionMatch.Groups[1].Value
+
+    $publishedAt=$null
+    $dateMatch=[regex]::Match($headingText,'(?<!\d)(20\d{2})[-./](\d{1,2})[-./](\d{1,2})(?!\d)')
+    if (-not $dateMatch.Success) {
+        $versionEvidenceText=ConvertFrom-OfficialDownloadPageHtmlText $versionEvidenceHtml
+        $dateMatch=[regex]::Match($versionEvidenceText,'(?<!\d)(20\d{2})[-./](\d{1,2})[-./](\d{1,2})(?!\d)')
+    }
+    if ($dateMatch.Success) {
+        try { $publishedAt=[DateTimeOffset]::ParseExact(
+            "$($dateMatch.Groups[1].Value)-$($dateMatch.Groups[2].Value.PadLeft(2,'0'))-$($dateMatch.Groups[3].Value.PadLeft(2,'0'))",
+            'yyyy-MM-dd',
+            [Globalization.CultureInfo]::InvariantCulture
+        ) } catch {}
+    }
+
+    $artifacts=[System.Collections.Generic.List[object]]::new()
+
+    # Use release-level architecture only when source text explicitly establishes its scope.
+    $releaseMetadataHtml=$Body
+    foreach ($candidateLink in $links) {
+        $candidateHref=[System.Net.WebUtility]::HtmlDecode($candidateLink.Groups[1].Value)
+        try { $candidateUri=[Uri]::new($BaseUri,$candidateHref) } catch { continue }
+        if ([string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) { continue }
+        $releaseMetadataHtml=$Body.Substring(0,$candidateLink.Index)
+        break
+    }
+    $releaseMetadataText=ConvertFrom-OfficialDownloadPageHtmlText $releaseMetadataHtml
+    # Treat an installer as architecture-neutral only when publisher text before the
+    # first artifact explicitly declares support for both x86/32-bit and x64/64-bit.
+    # Separate architecture-specific links elsewhere on the page are not evidence
+    # that the primary installer supports both architectures.
+    $hasExplicitDualArchitecture = $releaseMetadataText -match '(?i)(?:\b32\s*[- ]?bit\b.{0,80}\b(?:and|or)\b.{0,80}\b64\s*[- ]?bit\b|\b64\s*[- ]?bit\b.{0,80}\b(?:and|or)\b.{0,80}\b32\s*[- ]?bit\b|\bx86\b.{0,80}\b(?:and|or)\b.{0,80}\bx64\b|\bx64\b.{0,80}\b(?:and|or)\b.{0,80}\bx86\b|\b32\s*/\s*64\s*[- ]?bit\b|\bx86\s*/\s*x64\b)'
+    $hasExplicitSingleArchitecture = $releaseMetadataText -match '(?i)(64-bit only|x64 only|32-bit only|x86 only|arm64 only|aarch64 only)'
+
+    foreach ($link in $links) {
+        $href=[System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
+        $label=ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+        if ([string]::IsNullOrWhiteSpace($href)) { continue }
+        try { $uri=[Uri]::new($BaseUri,$href) } catch { continue }
+        if ($uri.Scheme -notin @('http','https')) { continue }
+
+        $fileName=Get-OfficialDownloadPageArtifactFileName -ArtifactUri $uri -SourcePageUri $BaseUri
+        # Do not fall back to an anchor label when a non-empty endpoint path has
+        # an unsupported extension (for example, a cross-origin wrapper.php).
+        # Labels remain a fallback only for links without a path filename.
+        if ([string]::IsNullOrWhiteSpace($fileName) -and
+            -not [string]::IsNullOrWhiteSpace([IO.Path]::GetFileName($uri.AbsolutePath))) {
+            continue
+        }
+        # A directory/self link is not a downloadable artifact, even when its
+        # anchor label resembles a filename. Falling back to that label here can
+        # create a duplicate phantom artifact and make a real filename checksum
+        # ambiguous (for example, a publisher's "download" control linking back
+        # to the current downloads directory).
+        if ([string]::IsNullOrWhiteSpace($fileName) -and $uri.AbsolutePath.EndsWith('/', [StringComparison]::Ordinal)) {
+            continue
+        }
+        if ([string]::IsNullOrWhiteSpace($fileName)) { $fileName=$label }
+        $format=ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
+        if ($format -eq 'unknown') { continue }
+
+        # Architecture is an artifact-level property. Do not include the full release text here:
+        # unrelated links in the same release section can mention a different architecture
+        # and contaminate classification (for example, a 7-Zip x64 link being marked arm64
+        # merely because the same release also contains an ARM64 link).
+        $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
+        if ($architecture -eq 'unknown' -and $hasExplicitDualArchitecture) {
+            $architecture='neutral'
+        }
+        elseif ($architecture -eq 'unknown' -and $hasExplicitSingleArchitecture) {
+            $architecture=ConvertTo-OfficialDownloadPageArtifactArchitecture $releaseMetadataText
+        }
+        $artifacts.Add([pscustomobject][ordered]@{
+            Uri=$uri.AbsoluteUri
+            FileName=$fileName
+            SourcePageUri=$BaseUri.AbsoluteUri
+            Format=$format
+            Architecture=$architecture
+            Size=$null
+            Hashes=@()
+            Signature=$null
+        })
+    }
+
+    if ($artifacts.Count -eq 0) { return $null }
+
+    # Some publishers expose legacy MD5 checksums as visible text near the
+    # corresponding download buttons rather than in the artifact URL. Capture
+    # these claims only when the page provides one checksum per parsed artifact;
+    # never guess the association when counts differ.
+    $releaseText = ConvertFrom-OfficialDownloadPageHtmlText $Body
+    $md5Matches = [regex]::Matches(
+        $releaseText,
+        '(?i)\bMD5\s*(?:Checksum|Hash)\s*[:=]\s*([0-9a-f]{32})\b'
+    )
+    if ($md5Matches.Count -eq $artifacts.Count) {
+        for ($artifactIndex = 0; $artifactIndex -lt $artifacts.Count; $artifactIndex++) {
+            $artifacts[$artifactIndex].Hashes = @($artifacts[$artifactIndex].Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'MD5'
+                Value = $md5Matches[$artifactIndex].Groups[1].Value.ToUpperInvariant()
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+
+    # SHA-256 checksums may be published inline before the primary download link
+    # and in a file/checksum table for alternate artifacts. First associate checksums
+    # only when the artifact filename appears in the same HTML table row or a tight
+    # surrounding fragment. Then allow a single unassociated checksum before the
+    # first supported artifact link to identify the primary download. Never associate
+    # remaining checksums by ordinal position alone.
+    $sha256Pattern = '(?i)\bSHA\s*[- ]?\s*256\b(?:\s+(?:checksum|hash(?:\s+sum)?)(?:\s+for\s+[^:\r\n]{1,200}?)?)?(?:\s|<[^>]*>)*[:=]?(?:\s|<[^>]*>)*([0-9a-f]{64})\b'
+    $sha256Matches = [regex]::Matches($Body, $sha256Pattern)
+    $associatedSha256 = [System.Collections.Generic.HashSet[int]]::new()
+
+    # Publisher pages sometimes place a filename-specific checksum in a paragraph
+    # after the download link instead of a table row or pre-download banner. Accept
+    # it only when one supported artifact filename and one SHA256 digest occur in
+    # the same compact content block; never associate by page order alone.
+    $checksumBlocks = [regex]::Matches(
+        $Body,
+        '(?is)<(?:p|li|dd)\b[^>]*>.*?</(?:p|li|dd)\s*>'
+    )
+    foreach ($checksumBlock in $checksumBlocks) {
+        $blockHtml = $checksumBlock.Value
+        $blockHashes = [regex]::Matches($blockHtml, $sha256Pattern)
+        if ($blockHashes.Count -ne 1) { continue }
+        $blockArtifacts = [System.Collections.Generic.List[object]]::new()
+        foreach ($candidateArtifact in $artifacts) {
+            if ($blockHtml -match "(?i)$([regex]::Escape([string]$candidateArtifact.FileName))") {
+                $blockArtifacts.Add($candidateArtifact)
+            }
+        }
+        if ($blockArtifacts.Count -ne 1) { continue }
+        $digest = $blockHashes[0].Groups[1].Value.ToUpperInvariant()
+        $matchIndex = -1
+        for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
+            if ($sha256Matches[$i].Groups[1].Value -ieq $digest) {
+                $matchIndex = $i
+                break
+            }
+        }
+        if ($matchIndex -lt 0 -or -not $associatedSha256.Add($matchIndex)) { continue }
+        $targetArtifact = $blockArtifacts[0]
+        if (@($targetArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
+            $targetArtifact.Hashes = @($targetArtifact.Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $digest
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+    foreach ($artifact in $artifacts) {
+        $escapedFileName = [regex]::Escape([string]$artifact.FileName)
+        $fileMatches = [regex]::Matches($Body, "(?i)$escapedFileName")
+        foreach ($fileMatch in $fileMatches) {
+            # Prefer a containing HTML table row when present.
+            $rowStart = $Body.LastIndexOf('<tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
+            $rowEnd = $Body.IndexOf('</tr', $fileMatch.Index, [StringComparison]::OrdinalIgnoreCase)
+            # Only associate by filename when the filename and checksum share
+            # the same explicit HTML table row. Nearby text is not strong enough
+            # evidence because it can span unrelated downloads/checksums.
+            if ($rowStart -ge 0 -and $rowEnd -gt $fileMatch.Index) {
+                $fragment = $Body.Substring($rowStart, [Math]::Min($rowEnd + 5 - $rowStart, 3000))
+                $rowHashes = [regex]::Matches($fragment, $sha256Pattern)
+                $isBareRowHash = $false
+                if ($rowHashes.Count -eq 0) {
+                    # A checksum table often labels the column in its header and
+                    # places only the digest in each data row. The same-row filename
+                    # plus exactly one 64-hex digest is sufficient to associate it.
+                    $bareHashes = [regex]::Matches($fragment, '(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])')
+                    if ($bareHashes.Count -eq 1) {
+                        $rowHashes = $bareHashes
+                        $isBareRowHash = $true
+                    }
+                }
+            }
+            else {
+                continue
+            }
+            if ($rowHashes.Count -eq 1) {
+                if (-not $isBareRowHash -and $rowHashes[0].Groups.Count -gt 1 -and $rowHashes[0].Groups[1].Success) {
+                    $value = $rowHashes[0].Groups[1].Value
+                }
+                else {
+                    $value = $rowHashes[0].Value
+                }
+                $value = $value.ToUpperInvariant()
+                $matchIndex = -1
+                for ($i = 0; $i -lt $sha256Matches.Count; $i++) {
+                    if ($sha256Matches[$i].Groups[1].Value -ieq $value) {
+                        $matchIndex = $i
+                        break
+                    }
+                }
+
+                # Bare digests in a filename-matched table row are not present in
+                # $sha256Matches, which only contains explicitly labelled SHA-256
+                # claims. Permit this row-scoped association directly; labelled
+                # claims still require unique use of their parsed match.
+                $canAssociate = $false
+                if ($matchIndex -ge 0) {
+                    $canAssociate = $associatedSha256.Add($matchIndex)
+                }
+                elseif ($isBareRowHash) {
+                    $canAssociate = $true
+                }
+
+                if ($canAssociate) {
+                    $artifact.Hashes = @($artifact.Hashes) + [pscustomobject][ordered]@{
+                        Algorithm = 'SHA256'
+                        Value = $value
+                        Source = 'OfficialDownloadPageChecksum'
+                    }
+                }
+            }
+            if (@($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -gt 0) { break }
+        }
+    }
+
+    # The primary download may have a checksum immediately before its link without
+    # repeating the filename. Associate that checksum only if exactly one unmatched
+    # SHA-256 appears before the first supported artifact link.
+    $firstArtifactLink = $null
+    foreach ($candidateLink in $links) {
+        $candidateHref = $candidateLink.Groups[1].Value
+        try { $candidateUri = [Uri]::new($BaseUri, $candidateHref) } catch { continue }
+        if (-not [string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $BaseUri))) {
+            $firstArtifactLink = $candidateLink
+            break
+        }
+    }
+    if ($null -ne $firstArtifactLink) {
+        $leadingMatches = @($sha256Matches | Where-Object { $_.Index -lt $firstArtifactLink.Index })
+        if ($sha256Matches.Count -eq 1 -and $leadingMatches.Count -eq 1 -and @($artifacts[0].Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count -eq 0) {
+            $value = $leadingMatches[0].Groups[1].Value.ToUpperInvariant()
+            $artifacts[0].Hashes = @($artifacts[0].Hashes) + [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $value
+                Source = 'OfficialDownloadPageChecksum'
+            }
+        }
+    }
+
+    $releaseKey="$($BaseUri.Host.ToLowerInvariant())|$version|$($publishedAt)"
+    $hash=[Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes=[Text.Encoding]::UTF8.GetBytes($releaseKey)
+        $digest=[Convert]::ToHexString($hash.ComputeHash($bytes)).ToLowerInvariant()
+    }
+    finally { $hash.Dispose() }
+
+    [pscustomobject][ordered]@{
+        ReleaseId="official.$digest"
+        Version=$version
+        Channel='stable'
+        PublishedAt=$publishedAt
+        Artifacts=@($artifacts)
+    }
+}
+
+
+function Get-OfficialDownloadPageSourceForgeReleases {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
+        [Parameter(Mandatory)][Uri]$BaseUri
+    )
+
+    if ($BaseUri.Host -notmatch '(?i)(^|\.)sourceforge\.net$' -or
+        $BaseUri.AbsolutePath -notmatch '(?i)^/projects/[^/]+/files(?:/|$)') { return @() }
+
+    # SourceForge file listings may expose a versioned directory path, a root-level
+    # filename, or a "latest/download" route. For root-level/latest links, prefer an
+    # explicit version heading. Searching flattened page text for the first "Version"
+    # phrase is unsafe: explanatory prose can mention an old minimum version before
+    # the current release heading (for example, "From version 1.5.0.1 ...").
+    $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
+    $currentVersion = $null
+    $versionHeadings = [regex]::Matches(
+        $Html,
+        '(?is)<h[1-6]\b[^>]*>(.*?)</h[1-6]\s*>'
+    )
+    foreach ($versionHeading in $versionHeadings) {
+        $headingText = ConvertFrom-OfficialDownloadPageHtmlText $versionHeading.Groups[1].Value
+        $headingVersionMatch = [regex]::Match(
+            [string]$headingText,
+            '(?i)^\s*(?:Current\s+)?(?:Version\s+)?v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+        )
+        if ($headingVersionMatch.Success) {
+            $currentVersion = $headingVersionMatch.Groups[1].Value
+            break
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Prefer SourceForge's explicit release-version element when the current
+        # version is not presented as a heading. This avoids treating historical
+        # labels or explanatory prose as the current release.
+        $standaloneVersionLabels = [regex]::Matches(
+            $Html,
+            '(?is)<(?:div|span|p)\b[^>]*\bclass\s*=\s*["''][^"'']*\brelease-version\b[^"'']*["''][^>]*>(.*?)</(?:div|span|p)\s*>'
+        )
+
+        foreach ($standaloneVersionLabel in $standaloneVersionLabels) {
+            $standaloneLabelText = ConvertFrom-OfficialDownloadPageHtmlText $standaloneVersionLabel.Groups[1].Value
+            $standaloneVersionMatch = [regex]::Match(
+                [string]$standaloneLabelText,
+                '(?i)^\s*(?:Current\s+)?(?:Version\s+)?v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+            )
+
+            if ($standaloneVersionMatch.Success) {
+                $currentVersion = $standaloneVersionMatch.Groups[1].Value
+                break
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # SourceForge may render the current version in a generic text element
+        # instead of a heading. Accept only an exact standalone version label,
+        # never a version embedded in explanatory prose.
+        $versionLabelElements = [regex]::Matches(
+            $Html,
+            '(?is)<(h[1-6]|div|p|span|strong|b|li)\b[^>]*>(.*?)</\1\s*>'
+        )
+        foreach ($versionLabelElement in $versionLabelElements) {
+            $versionLabelText = ConvertFrom-OfficialDownloadPageHtmlText $versionLabelElement.Groups[2].Value
+            $versionLabelMatch = [regex]::Match(
+                [string]$versionLabelText,
+                '(?i)^\s*(?:Current\s+)?Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*$'
+            )
+            if ($versionLabelMatch.Success) {
+                $currentVersion = $versionLabelMatch.Groups[1].Value
+                break
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Last constrained fallback: an explicitly named Current Version field.
+        $currentVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bCurrent\s+Version\s*[:=]?\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+        )
+        if ($currentVersionMatch.Success) { $currentVersion = $currentVersionMatch.Groups[1].Value }
+    }
+
+
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Some SourceForge project pages publish the current version in the
+        # adjacent release notes instead of a version heading. Trust that version
+        # only when its explicit release date matches the newest dated file row
+        # containing a supported installer/archive. This prevents historical
+        # changelog versions from becoming current-release evidence.
+        $supportedFileRowDates = [System.Collections.Generic.List[string]]::new()
+        $supportedFileRows = [regex]::Matches(
+            $Html,
+            '(?is)<tr\b[^>]*>.*?</tr\s*>'
+        )
+        foreach ($supportedFileRow in $supportedFileRows) {
+            # SourceForge places attributes such as class after the row's title
+            # attribute, so match the title value independently rather than
+            # requiring the title attribute to be the final attribute.
+            $rowTitleMatch = [regex]::Match(
+                $supportedFileRow.Value,
+                '(?is)\btitle\s*=\s*["'']([^"'']+\.(?:exe|msi|zip))["'']'
+            )
+            if (-not $rowTitleMatch.Success) { continue }
+
+            $rowDateMatch = [regex]::Match(
+                $supportedFileRow.Value,
+                '(?is)<abbr\b[^>]*\btitle\s*=\s*["''](20\d{2}-\d{2}-\d{2})(?:\s+[^"'']*)?["'']'
+            )
+            if ($rowDateMatch.Success) { $supportedFileRowDates.Add($rowDateMatch.Groups[1].Value) }
+        }
+
+        if ($supportedFileRowDates.Count -gt 0) {
+            $latestSupportedFileDate = @($supportedFileRowDates | Sort-Object -Descending)[0]
+            $releaseVersionMarkers = [regex]::Matches(
+                $Html,
+                '(?i)\bVersion\s+([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+            )
+            for ($markerIndex = 0; $markerIndex -lt $releaseVersionMarkers.Count; $markerIndex++) {
+                $releaseVersionMarker = $releaseVersionMarkers[$markerIndex]
+                $sectionEnd = $Html.Length
+                if ($markerIndex + 1 -lt $releaseVersionMarkers.Count) {
+                    $sectionEnd = $releaseVersionMarkers[$markerIndex + 1].Index
+                }
+                $sectionLength = [Math]::Min(500, $sectionEnd - $releaseVersionMarker.Index)
+                if ($sectionLength -le 0) { continue }
+                $releaseNoteSection = $Html.Substring($releaseVersionMarker.Index, $sectionLength)
+                $releaseDateMatch = [regex]::Match(
+                    $releaseNoteSection,
+                    '(?i)\bReleased\s+(20\d{2}-\d{2}-\d{2})\b'
+                )
+                if ($releaseDateMatch.Success -and $releaseDateMatch.Groups[1].Value -eq $latestSupportedFileDate) {
+                    $currentVersion = $releaseVersionMarker.Groups[1].Value
+                    break
+                }
+            }
+        }
+    }
+
+    $releaseGroups = [ordered]@{}
+    $links = [regex]::Matches(
+        $Html,
+        '<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>(.*?)</a\s*>',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    )
+    foreach ($link in $links) {
+        $href = [System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
+        try { $uri = [Uri]::new($BaseUri, $href) } catch { continue }
+        if ($uri.Scheme -notin @('http','https') -or $uri.Host -notmatch '(?i)(^|\.)sourceforge\.net$') { continue }
+
+        $segments = @($uri.AbsolutePath.Trim('/').Split('/') | ForEach-Object { [Uri]::UnescapeDataString($_) })
+        if ($segments.Count -lt 4 -or $segments[0] -ine 'projects' -or $segments[2] -ine 'files') { continue }
+        if ($segments[-1] -ieq 'download') { $segments = @($segments[0..($segments.Count - 2)]) }
+        if ($segments.Count -lt 4) { continue }
+
+        $fileName = [string]$segments[-1]
+        $format = ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
+        if ($format -eq 'unknown') {
+            # The latest/download endpoint's URL does not carry a filename; use
+            # only a recognizable supported filename explicitly shown by its link.
+            $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+            $labelFileMatch = [regex]::Match([string]$label, '(?i)([A-Za-z0-9_.() -]+\.(?:exe|msi|zip))\b')
+            if (-not $labelFileMatch.Success) { continue }
+            $fileName = (($labelFileMatch.Groups[1].Value -split '\s+') | Select-Object -Last 1)
+            $format = ConvertTo-OfficialDownloadPageArtifactFormat -FileName $fileName
+            if ($format -eq 'unknown') { continue }
+        }
+
+        $version = $null
+        if ($segments.Count -ge 6) {
+            $versionMatch = [regex]::Match([string]$segments[-2], '(?i)^v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)$')
+            if ($versionMatch.Success) { $version = $versionMatch.Groups[1].Value }
+        }
+        if ([string]::IsNullOrWhiteSpace($version)) { $version = $currentVersion }
+        if ([string]::IsNullOrWhiteSpace($version)) { continue }
+
+        $key = $version.ToLowerInvariant()
+        if (-not $releaseGroups.Contains($key)) {
+            $releaseGroups[$key] = [pscustomobject][ordered]@{
+                Version = $version
+                Artifacts = [System.Collections.Generic.List[object]]::new()
+            }
+        }
+
+        $label = ConvertFrom-OfficialDownloadPageHtmlText $link.Groups[2].Value
+        $artifact = [pscustomobject][ordered]@{
+            Uri = $uri.AbsoluteUri
+            FileName = $fileName
+            SourcePageUri = $BaseUri.AbsoluteUri
+            Format = $format
+            Architecture = ConvertTo-OfficialDownloadPageArtifactArchitecture "$fileName $label"
+            Size = $null
+            Hashes = @()
+            Signature = $null
+        }
+        $artifacts = $releaseGroups[$key].Artifacts
+        $existingArtifactIndex = -1
+        $preferCandidate = $false
+        $candidatePathFileName = [IO.Path]::GetFileName(($uri.AbsolutePath -replace '/download/?$',''))
+        $candidateHasConcreteFileName = (ConvertTo-OfficialDownloadPageArtifactFormat -FileName $candidatePathFileName) -ne 'unknown'
+
+        for ($artifactIndex = 0; $artifactIndex -lt $artifacts.Count; $artifactIndex++) {
+            $existingArtifact = $artifacts[$artifactIndex]
+            if ($existingArtifact.Uri -eq $artifact.Uri) {
+                $existingArtifactIndex = $artifactIndex
+                break
+            }
+
+            $sameArtifactIdentity =
+                $existingArtifact.FileName -ieq $artifact.FileName -and
+                $existingArtifact.Format -eq $artifact.Format -and
+                $existingArtifact.Architecture -eq $artifact.Architecture
+            if (-not $sameArtifactIdentity) { continue }
+
+            $existingUri = [Uri]$existingArtifact.Uri
+            $existingPathFileName = [IO.Path]::GetFileName(($existingUri.AbsolutePath -replace '/download/?$',''))
+            $existingHasConcreteFileName = (ConvertTo-OfficialDownloadPageArtifactFormat -FileName $existingPathFileName) -ne 'unknown'
+
+            # SourceForge also links version directories through a generic /download
+            # endpoint. Its anchor may name the artifact even though the URI does not.
+            # Reconcile that label-derived candidate with the concrete file-row URL,
+            # preferring the URL whose path actually identifies the downloadable file.
+            if (-not $existingHasConcreteFileName -and $candidateHasConcreteFileName) {
+                $existingArtifactIndex = $artifactIndex
+                $preferCandidate = $true
+                break
+            }
+            if (-not $candidateHasConcreteFileName -and $existingHasConcreteFileName) {
+                $existingArtifactIndex = $artifactIndex
+                break
+            }
+        }
+
+        if ($existingArtifactIndex -lt 0) {
+            $artifacts.Add($artifact)
+        }
+        elseif ($preferCandidate) {
+            $artifacts[$existingArtifactIndex] = $artifact
+        }
+    }
+
+    $releases = [System.Collections.Generic.List[object]]::new()
+    foreach ($group in $releaseGroups.Values) {
+        if ($group.Artifacts.Count -eq 0) { continue }
+        $releaseKey = "$($BaseUri.Host.ToLowerInvariant())|$($group.Version)|sourceforge-file-listing"
+        $hash = [Security.Cryptography.SHA256]::Create()
+        try {
+            $digest = [Convert]::ToHexString($hash.ComputeHash([Text.Encoding]::UTF8.GetBytes($releaseKey))).ToLowerInvariant()
+        } finally { $hash.Dispose() }
+        $releases.Add([pscustomobject][ordered]@{
+            ReleaseId = "official.$digest"
+            Version = $group.Version
+            Channel = 'stable'
+            PublishedAt = $null
+            Artifacts = @($group.Artifacts.ToArray())
+        })
+    }
+    return @($releases.ToArray())
+}
+
+
+function Get-OfficialDownloadPagePlatformMetadataReleases {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Html,[Parameter(Mandatory)][Uri]$BaseUri)
+    # Parse explicit platform metadata as inert text; never execute publisher scripts.
+    $assignmentMatch=[regex]::Match($Html,'(?is)\b(?:var|let|const)\s+PLATFORMS\s*=\s*\{')
+    if (-not $assignmentMatch.Success) { return @() }
+
+    # The platform map contains nested objects. A non-greedy regex stops at the
+    # first platform object's closing brace, not the outer map boundary. Find
+    # the matching outer brace while respecting quoted strings and JS escapes.
+    # This is lexical extraction only; publisher JavaScript is never evaluated.
+    $mapStart=$assignmentMatch.Index + $assignmentMatch.Length - 1
+    $braceDepth=0
+    $quote=[char]0
+    $escaped=$false
+    $mapEnd=-1
+    for($scanIndex=$mapStart;$scanIndex -lt $Html.Length;$scanIndex++) {
+        $character=$Html[$scanIndex]
+        if($quote -ne [char]0) {
+            if($escaped) { $escaped=$false; continue }
+            if($character -eq [char]92) { $escaped=$true; continue }
+            if($character -eq $quote) { $quote=[char]0 }
+            continue
+        }
+        if($character -eq [char]34 -or $character -eq [char]39) { $quote=$character; continue }
+        if($character -eq [char]123) { $braceDepth++; continue }
+        if($character -eq [char]125) {
+            $braceDepth--
+            if($braceDepth -eq 0) { $mapEnd=$scanIndex; break }
+            if($braceDepth -lt 0) { return @() }
+        }
+    }
+    if($mapEnd -le $mapStart) { return @() }
+    $platformMap=$Html.Substring($mapStart + 1,$mapEnd - $mapStart - 1)
+    $entries=[regex]::Matches($platformMap,'(?is)(?:^|,)\s*["'']?(?<key>[A-Za-z][A-Za-z0-9_]*)["'']?\s*:\s*\{(?<properties>[^{}]*)\}')
+    $groups=@{}
+    foreach($entry in $entries) {
+        $props=$entry.Groups['properties'].Value
+        $name=[regex]::Match($props,'(?is)\b["'']?name["'']?\s*:\s*["''](?<v>[^"'']+)["'']')
+        $ver=[regex]::Match($props,'(?is)\b["'']?latestVersion["'']?\s*:\s*["''](?<v>[0-9]+(?:\.[0-9]+){1,3}[a-z]?)["'']')
+        $loc=[regex]::Match($props,'(?is)\b["'']?location["'']?\s*:\s*["''](?<v>(?:\\.|[^"''])+)["'']')
+        if(-not $name.Success -or -not $ver.Success -or -not $loc.Success) { continue }
+        $platform=[System.Net.WebUtility]::HtmlDecode($name.Groups['v'].Value)
+        if($platform -notmatch '(?i)\bWindows\b') { continue }
+        # Normalize publisher labels such as "Windows ARM 64" for the shared classifier.
+        $platform = $platform -replace '(?i)\bARM\s+64\b','ARM64'
+        $location=[System.Net.WebUtility]::HtmlDecode(($loc.Groups['v'].Value -replace '\\+/','/'))
+        if([string]::IsNullOrWhiteSpace($location) -or $location -match '[\x00-\x20"'']') { continue }
+        try { $uri=[Uri]::new($BaseUri,$location) } catch { continue }
+        if($uri.Scheme -notin @('http','https')) { continue }
+        $fileName=Get-OfficialDownloadPageArtifactFileName -ArtifactUri $uri -SourcePageUri $BaseUri
+        if([string]::IsNullOrWhiteSpace($fileName) -or (ConvertTo-OfficialDownloadPageArtifactFormat $fileName) -eq 'unknown') { continue }
+        $version=$ver.Groups['v'].Value
+        if(-not $groups.ContainsKey($version)) { $groups[$version]=[System.Collections.Generic.List[string]]::new() }
+        $groups[$version].Add('<a href="' + [System.Net.WebUtility]::HtmlEncode($uri.AbsoluteUri) + '">' + [System.Net.WebUtility]::HtmlEncode($platform + ' ' + $fileName) + '</a>')
+    }
+    $releases=[System.Collections.Generic.List[object]]::new()
+    foreach($version in $groups.Keys) {
+        $links=[System.Collections.Generic.List[string]]::new()
+        $seen=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach($anchor in $groups[$version]) {
+            $href=[regex]::Match($anchor,'(?i)\bhref="([^"]+)"')
+            if($href.Success -and $seen.Add([System.Net.WebUtility]::HtmlDecode($href.Groups[1].Value))) { $links.Add($anchor) }
+        }
+        if($links.Count -eq 0) { continue }
+        $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading ("Release " + $version) -Body ($links -join [Environment]::NewLine) -BaseUri $BaseUri
+        if($null -ne $release) { $releases.Add($release) }
+    }
+    return @($releases.ToArray())
+}
+
+function Get-OfficialDownloadPagePageLevelVersionReleases {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Html,
+        [Parameter(Mandatory)][Uri]$BaseUri
+    )
+
+    # Some publishers state the current stable version at page level, separate from
+    # the platform-specific download section. Use only an explicit stable-release
+    # statement, then scope artifact parsing to the Windows heading's section.
+    $pageText = ConvertFrom-OfficialDownloadPageHtmlText $Html
+    $stableMatch = [regex]::Match(
+        [string]$pageText,
+        '(?i)\b(?:the\s+)?(?:current|latest)\s+stable\s+release\s+of\s+[^.\r\n]{1,120}?\s+is\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*(?:\((20\d{2}-\d{1,2}-\d{1,2})\))?'
+    )
+
+    # Some publishers expose the current release as a concise metadata field
+    # (for example, "Current Version: 1.11.2") rather than prose about a stable
+    # release. Keep this fallback deliberately explicit: arbitrary version
+    # numbers elsewhere on the page are not sufficient current-release evidence.
+    $currentVersion = $null
+    $publishedDate = $null
+    if ($stableMatch.Success) {
+        $currentVersion = $stableMatch.Groups[1].Value
+        if ($stableMatch.Groups[2].Success) { $publishedDate = $stableMatch.Groups[2].Value }
+    }
+    else {
+        $currentVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bCurrent\s+Version\s*[:=]\s*v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\b'
+        )
+        if ($currentVersionMatch.Success) {
+            $currentVersion = $currentVersionMatch.Groups[1].Value
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) {
+        # Some publishers present the current release as a compact platform
+        # metadata label (for example, "Version 3.0.24 • Windows • 43 MB").
+        # Accept only a version explicitly adjacent to the Windows platform
+        # marker; do not mine arbitrary version numbers from page text or
+        # artifact filenames.
+        $platformVersionMatch = [regex]::Match(
+            [string]$pageText,
+            '(?i)\bVersion\s+v?([0-9]+(?:\.[0-9]+){1,3}[a-z]?)\s*[•·|]\s*Windows\b'
+        )
+        if ($platformVersionMatch.Success) {
+            $currentVersion = $platformVersionMatch.Groups[1].Value
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($currentVersion)) { return @() }
+
+    $headingMatches = [regex]::Matches(
+        $Html,
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>'
+    )
+    $platformHeading = $null
+    $platformHeadingIndex = -1
+    for ($i = 0; $i -lt $headingMatches.Count; $i++) {
+        $headingText = ConvertFrom-OfficialDownloadPageHtmlText $headingMatches[$i].Groups[2].Value
+        if ($headingText -match '(?i)\bWindows\b') {
+            $platformHeading = $headingMatches[$i]
+            $platformHeadingIndex = $i
+            break
+        }
+    }
+    if ($null -eq $platformHeading) { return @() }
+
+    $headingLevel = [int]$platformHeading.Groups[1].Value
+    $bodyStart = $platformHeading.Index + $platformHeading.Length
+    $bodyEnd = $Html.Length
+    for ($i = $platformHeadingIndex + 1; $i -lt $headingMatches.Count; $i++) {
+        if ([int]$headingMatches[$i].Groups[1].Value -le $headingLevel) {
+            $bodyEnd = $headingMatches[$i].Index
+            break
+        }
+    }
+    if ($bodyEnd -le $bodyStart) { return @() }
+
+    $version = $currentVersion
+    $releaseHeading = if ($publishedDate) { "Release $version ($publishedDate)" } else { "Release $version" }
+    $release = ConvertFrom-OfficialDownloadPageReleaseSection -Heading $releaseHeading -Body $Html.Substring($bodyStart, $bodyEnd - $bodyStart) -BaseUri $BaseUri
+    if ($null -eq $release) { return @() }
+    return @($release)
+}
+
+function Invoke-WintainiumProviderReleaseDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $settings=$Request.Settings
+    $pageUri=$null
+    $logEvents=[System.Collections.Generic.List[object]]::new()
+    $stopwatch=[System.Diagnostics.Stopwatch]::StartNew()
+
+    if ($settings -is [System.Collections.IDictionary] -and $settings.Contains('pageUri')) {
+        $pageUri=[string]$settings.pageUri
+    }
+    elseif ($null -ne $settings -and $settings.PSObject.Properties['pageUri']) {
+        $pageUri=[string]$settings.pageUri
+    }
+
+    try { $baseUri=[Uri]$pageUri } catch {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleasePageInvalid' 'Official download page setting pageUri must be a valid URI.')
+        ) -LogEvents @((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryConfigurationRejected' -Message 'The configured page URI could not be parsed.' -Context @{FailureStage='Configuration';Outcome='InvalidPageUri'} -Severity Warning))
+    }
+
+    if (-not $baseUri.IsAbsoluteUri -or $baseUri.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleasePageInvalid' 'Official download page setting pageUri must use HTTP or HTTPS.')
+        ) -LogEvents @((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryConfigurationRejected' -Message 'The configured page URI must use HTTP or HTTPS.' -Context @{FailureStage='Configuration';Outcome='UnsupportedUriScheme'} -Severity Warning))
+    }
+
+    $safeRequestedUri=Get-OfficialDownloadPageSafeUri -Uri $baseUri
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryRequestStarted' -Message 'Official download page retrieval started.' -Context @{RequestedUrl=$safeRequestedUri;FailureStage='Retrieval'}))
+    try {
+        $response=Invoke-WebRequest -Method Get -Uri $baseUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop
+        $html=[string]$response.Content
+    }
+    catch {
+        $stopwatch.Stop()
+        $exceptionType=$_.Exception.GetType().Name
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryRetrievalFailed' -Message 'The official download page request failed before HTML could be parsed.' -Context @{RequestedUrl=$safeRequestedUri;FailureStage='Retrieval';ExceptionType=$exceptionType;DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnavailable' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseRequestFailed' "The official download page request failed ($exceptionType). See discovery diagnostics for request context.")
+        ) -LogEvents $logEvents.ToArray()
+    }
+
+    $finalUri=$baseUri
+    try {
+        if ($null -ne $response.BaseResponse -and $null -ne $response.BaseResponse.ResponseUri) { $finalUri=[Uri]$response.BaseResponse.ResponseUri }
+        elseif ($null -ne $response.BaseResponse -and $response.BaseResponse.RequestMessage -and $response.BaseResponse.RequestMessage.RequestUri) { $finalUri=[Uri]$response.BaseResponse.RequestMessage.RequestUri }
+    } catch {}
+    $contentType=$null
+    try { if ($response.Headers -and $response.Headers['Content-Type']) { $contentType=[string]$response.Headers['Content-Type'] } } catch {}
+    $httpStatus=$null
+    try { if ($null -ne $response.StatusCode) { $httpStatus=[int]$response.StatusCode } } catch {}
+    $safeFinalUri=Get-OfficialDownloadPageSafeUri -Uri $finalUri
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryResponseReceived' -Message 'The official download page response was received.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;FailureStage='Parsing'}))
+
+    if ([string]::IsNullOrWhiteSpace($html)) {
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingFailed' -Message 'The page request completed but returned an empty HTML document.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=0;FailureStage='Parsing';Outcome='EmptyDocument';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseContentEmpty' 'The official download page returned an empty HTML document.')
+        ) -LogEvents $logEvents.ToArray()
+    }
+
+    # Official download pages do not have a universal release-section HTML shape.
+    # This trace records what the current parser recognized without dumping HTML.
+    $sectionMatches=[regex]::Matches(
+        $html,
+        '(?is)<h([1-6])\b[^>]*>(.*?)</h\1\s*>|(?:^|>)\s*(Download\s+[^<\r\n]+?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*\(20[0-9]{2}[-./][0-9]{1,2}[-./][0-9]{1,2}\)[^<\r\n]*?)\s*(?=<|$)|(?:^|>)\s*(Release\s+v?[0-9]+(?:\.[0-9]+){1,3}[a-z]?(?:\s+\([^<\r\n]*\))?)\s*(?=<|$)|(?:^|>)\s*([A-Z][^<\r\n]{0,80}?\s+v?[0-9]+(?:\.[0-9]+){1,3}\s*:?)\s*(?=<|$)|(?:^|>)\s*(Past\s+releases)\s*(?=<|$)',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    )
+    $downloadLinkMatches=[regex]::Matches($html,'<a\b[^>]*href\s*=\s*["'']([^"'']+)["''][^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $downloadArtifactCandidateCount=0
+    foreach($linkMatch in $downloadLinkMatches) {
+        $href=[System.Net.WebUtility]::HtmlDecode($linkMatch.Groups[1].Value)
+        try { $candidateUri=[Uri]::new($baseUri,$href) } catch { continue }
+        if ($candidateUri.Scheme -notin @('http','https')) { continue }
+        if (-not [string]::IsNullOrWhiteSpace((Get-OfficialDownloadPageArtifactFileName -ArtifactUri $candidateUri -SourcePageUri $baseUri))) {
+            $downloadArtifactCandidateCount++
+        }
+    }
+
+    $releases=[System.Collections.Generic.List[object]]::new()
+    $githubReleaseCache=@{}
+    $parsedArtifactCount=0
+    for($i=0;$i -lt $sectionMatches.Count;$i++) {
+        $section=$sectionMatches[$i]
+        $nextStart=if($i+1 -lt $sectionMatches.Count){$sectionMatches[$i+1].Index}else{$html.Length}
+        $bodyStart=$section.Index+$section.Length
+        if($bodyStart -ge $nextStart){continue}
+
+        $heading = if($section.Groups[2].Success) { $section.Groups[2].Value } elseif($section.Groups[3].Success) { $section.Groups[3].Value } elseif($section.Groups[4].Success) { $section.Groups[4].Value } elseif($section.Groups[5].Success) { $section.Groups[5].Value } else { $section.Groups[6].Value }
+        $body=$html.Substring($bodyStart,$nextStart-$bodyStart)
+
+        # Some publishers label the current release in an inline text element
+        # rather than a heading tag. When that versioned product label is followed
+        # by language-pack or historical-release sections, stop artifact collection
+        # at those structural boundaries so old archives cannot inherit the current
+        # version. This is based on page structure, not a product or host name.
+        if (-not $section.Groups[2].Success -and
+            $heading -match '(?i)^(?!Download\b|Release\b|Past releases\b).{1,80}?\s+v?([0-9]+(?:\.[0-9]+){1,3})') {
+            $languageBoundary=[regex]::Match($body,'(?i)Language\s+packs')
+            if ($languageBoundary.Success) { $body=$body.Substring(0,$languageBoundary.Index) }
+            $pastBoundary=[regex]::Match($body,'(?i)Past\s+releases')
+            if ($pastBoundary.Success) { $body=$body.Substring(0,$pastBoundary.Index) }
+        }
+        try {
+            $release=ConvertFrom-OfficialDownloadPageReleaseSection -Heading $heading -Body $body -BaseUri $baseUri
+            if($null -ne $release){
+                foreach($artifact in @($release.Artifacts)){
+                    if($null -eq $artifact){continue}
+                    $parsedArtifactCount++
+                    try{$artifactUri=[Uri]$artifact.Uri}catch{continue}
+                    $evidence=Get-OfficialDownloadPageGitHubAssetVerificationEvidence -ArtifactUri $artifactUri -ReleaseCache $githubReleaseCache
+                    if($null -ne $evidence){$artifact.Hashes=@($artifact.Hashes)+$evidence}
+                }
+                [void]$releases.Add($release)
+            }
+        }
+        catch {
+            $stopwatch.Stop()
+            $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingFailed' -Message 'A candidate release section could not be normalized.' -Context @{RequestedUrl=$safeRequestedUri;FinalUrl=$safeFinalUri;SectionCandidateCount=$sectionMatches.Count;DownloadArtifactCandidateCount=$downloadArtifactCandidateCount;ParsedReleaseCount=$releases.Count;FailureStage='Parsing';Outcome='ReleaseNormalizationException';ExceptionType=$_.Exception.GetType().Name;ExceptionMessage=$_.Exception.Message;SectionHeading=(ConvertFrom-OfficialDownloadPageHtmlText $heading);DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+            return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'UpstreamResponseInvalid' -Errors @(
+                (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseInvalid' 'A candidate release section could not be normalized. See discovery diagnostics for counts and failure stage.')
+            ) -LogEvents $logEvents.ToArray()
+        }
+    }
+
+    if ($releases.Count -eq 0) {
+        $pageLevelReleases = @(Get-OfficialDownloadPagePageLevelVersionReleases -Html $html -BaseUri $baseUri)
+        foreach ($pageLevelRelease in $pageLevelReleases) {
+            [void]$releases.Add($pageLevelRelease)
+            $parsedArtifactCount += @($pageLevelRelease.Artifacts).Count
+        }
+        if ($pageLevelReleases.Count -gt 0) {
+            $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
+        }
+    }
+
+    # Conditional final layer for explicit platform maps; prior resolvers retain priority.
+    if ($releases.Count -eq 0) {
+        $platformMetadataReleases = @(Get-OfficialDownloadPagePlatformMetadataReleases -Html $html -BaseUri $baseUri)
+        foreach ($platformMetadataRelease in $platformMetadataReleases) {
+            [void]$releases.Add($platformMetadataRelease)
+            $parsedArtifactCount += @($platformMetadataRelease.Artifacts).Count
+        }
+        if ($platformMetadataReleases.Count -gt 0) {
+            $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
+        }
+    }
+
+    if ($releases.Count -eq 0 -and
+        $baseUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $baseUri.AbsolutePath -match '(?i)^/projects/[^/]+/files(?:/|$)') {
+        $sourceForgeReleases = @(Get-OfficialDownloadPageSourceForgeReleases -Html $html -BaseUri $baseUri)
+        if ($sourceForgeReleases.Count -gt 0) {
+            foreach ($sourceForgeRelease in $sourceForgeReleases) {
+                [void]$releases.Add($sourceForgeRelease)
+                $parsedArtifactCount += @($sourceForgeRelease.Artifacts).Count
+            }
+            $downloadArtifactCandidateCount = [Math]::Max($downloadArtifactCandidateCount, $parsedArtifactCount)
+        }
+    }
+
+    # A publisher may put a checksum in a different heading/section from its
+    # download link. Parse rendered page text, not HTML container boundaries:
+    # real pages can wrap the label, filename, and digest in nested list/strong/code
+    # elements, so paragraph-only HTML matching is not reliable. Require the claim
+    # itself to name a concrete artifact filename and digest; never use page order.
+    $pageVisibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
+    $pageFilenameChecksumPattern = '(?is)\bSHA\s*[- ]?\s*256\b(?:(?!\bSHA\s*[- ]?\s*256\b).){0,240}?\bfor\s+[\x60"“”]?([A-Za-z0-9][A-Za-z0-9._+-]*\.(?:exe|msi|zip|dmg|appimage|tar\.[A-Za-z0-9.]+))[\x60"“”]?\s*:\s*[\x60"“”]?([0-9a-f]{64})\b'
+    $pageFilenameChecksumClaims = [regex]::Matches($pageVisibleText, $pageFilenameChecksumPattern)
+    $pageSha256ClaimAssociations = [System.Collections.Generic.List[object]]::new()
+    foreach ($checksumClaim in $pageFilenameChecksumClaims) {
+        $claimedFileName = $checksumClaim.Groups[1].Value
+        $digest = $checksumClaim.Groups[2].Value.ToUpperInvariant()
+        $matchingArtifacts = [System.Collections.Generic.List[object]]::new()
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                if ([string]::Equals([string]$parsedArtifact.FileName, $claimedFileName, [StringComparison]::OrdinalIgnoreCase)) {
+                    $matchingArtifacts.Add($parsedArtifact)
+                }
+            }
+        }
+        # Keep the matching boundary observable without logging checksum values.
+        # URI-derived names are diagnostic only here; association remains exact FileName matching.
+        $pageSha256ClaimAssociations.Add([pscustomobject][ordered]@{
+            ClaimedFileName = $claimedFileName
+            ExactFileNameMatchCount = $matchingArtifacts.Count
+        })
+        # Duplicate filenames across parsed releases are ambiguous; do not attach.
+        if ($matchingArtifacts.Count -ne 1) { continue }
+
+        $targetArtifact = $matchingArtifacts[0]
+        $existingSha256 = @($targetArtifact.Hashes | Where-Object {
+            [string]$_.Algorithm -ieq 'SHA256' -and [string]$_.Value -ieq $digest
+        })
+        if ($existingSha256.Count -gt 0) { continue }
+
+        $targetArtifact.Hashes = @($targetArtifact.Hashes) + [pscustomobject][ordered]@{
+            Algorithm = 'SHA256'
+            Value = $digest
+            Source = 'OfficialDownloadPageChecksum'
+        }
+    }
+
+    # Final conditional verification-evidence layer: try the adjacent checksum
+    # sidecar first, then the exact artifact endpoint if the sidecar does not resolve.
+    # Both sources are skipped when page parsing or a structured provider already
+    # supplied SHA-256 evidence. This discovery stage never weakens verification.
+    $adjacentSidecarAttemptedCount = 0
+    $adjacentSidecarResolvedCount = 0
+    $adjacentSidecarRejectedCount = 0
+    $adjacentSidecarUnavailableCount = 0
+    $artifactEndpointAttemptedCount = 0
+    $artifactEndpointResolvedCount = 0
+    $artifactEndpointRejectedCount = 0
+    $artifactEndpointUnavailableCount = 0
+    $adjacentSidecarDiagnostics = [System.Collections.Generic.List[object]]::new()
+
+    # Historical release sections can contain many old artifacts. Resolve sidecars
+    # only for the highest numerically versioned release, which is the only release
+    # relevant to current update discovery. If versions are nonstandard, retain the
+    # publisher's first release section as the conservative fallback.
+    $latestSidecarVersion = $null
+    foreach ($candidateRelease in $releases) {
+        $numericVersionMatch = [regex]::Match([string]$candidateRelease.Version, '^\s*([0-9]+(?:\.[0-9]+){1,3})')
+        if (-not $numericVersionMatch.Success) { continue }
+        $candidateVersion = $null
+        if (-not [Version]::TryParse($numericVersionMatch.Groups[1].Value, [ref]$candidateVersion)) { continue }
+        if ($null -eq $latestSidecarVersion -or $candidateVersion -gt $latestSidecarVersion) {
+            $latestSidecarVersion = $candidateVersion
+        }
+    }
+    $sidecarReleases = @()
+    if ($null -ne $latestSidecarVersion) {
+        $sidecarReleases = @(
+            foreach ($candidateRelease in $releases) {
+                $numericVersionMatch = [regex]::Match([string]$candidateRelease.Version, '^\s*([0-9]+(?:\.[0-9]+){1,3})')
+                $candidateVersion = $null
+                if ($numericVersionMatch.Success -and
+                    [Version]::TryParse($numericVersionMatch.Groups[1].Value, [ref]$candidateVersion) -and
+                    $candidateVersion -eq $latestSidecarVersion) {
+                    $candidateRelease
+                }
+            }
+        )
+    }
+    elseif ($releases.Count -gt 0) {
+        $sidecarReleases = @($releases[0])
+    }
+
+    foreach ($parsedRelease in $sidecarReleases) {
+        foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+            $existingSha256 = @($parsedArtifact.Hashes | Where-Object { [string]$_.Algorithm -ieq 'SHA256' })
+            if ($existingSha256.Count -gt 0) { continue }
+
+            $artifactUri = $null
+            if (-not [Uri]::TryCreate([string]$parsedArtifact.Uri, [UriKind]::Absolute, [ref]$artifactUri)) {
+                $adjacentSidecarRejectedCount++
+                $adjacentSidecarDiagnostics.Add([pscustomobject][ordered]@{
+                    ArtifactFileName = [string]$parsedArtifact.FileName
+                    Status = 'RejectedArtifactUri'
+                    SidecarUrl = $null
+                    FinalUrl = $null
+                    HttpStatusCode = $null
+                    ContentType = $null
+                    Algorithm = $null
+                    Digest = $null
+                    EvidenceSource = $null
+                })
+                continue
+            }
+
+            $adjacentSidecarAttemptedCount++
+            $sidecarResult = Get-OfficialDownloadPageAdjacentSha256Evidence -ArtifactUri $artifactUri -ArtifactFileName ([string]$parsedArtifact.FileName)
+            $artifactEndpointResult = $null
+            if ($sidecarResult.Status -eq 'Resolved') {
+                $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $sidecarResult.Evidence
+                $adjacentSidecarResolvedCount++
+            }
+            else {
+                switch ($sidecarResult.Status) {
+                    { $_ -like 'Rejected*' } { $adjacentSidecarRejectedCount++ }
+                    'Unavailable' { $adjacentSidecarUnavailableCount++ }
+                }
+
+                # Resolve the artifact endpoint as a second source in this same
+                # evidence-discovery stage, but only when the sidecar did not resolve.
+                $artifactEndpointAttemptedCount++
+                $artifactEndpointResult = Get-OfficialDownloadPageArtifactEndpointSha256Evidence -ArtifactUri $artifactUri -ArtifactFileName ([string]$parsedArtifact.FileName)
+                switch ($artifactEndpointResult.Status) {
+                    'Resolved' {
+                        $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $artifactEndpointResult.Evidence
+                        $artifactEndpointResolvedCount++
+                    }
+                    'Unavailable' { $artifactEndpointUnavailableCount++ }
+                    { $_ -like 'Rejected*' } { $artifactEndpointRejectedCount++ }
+                }
+            }
+
+            $adjacentSidecarDiagnostics.Add([pscustomobject][ordered]@{
+                ArtifactFileName = [string]$parsedArtifact.FileName
+                Status = [string]$sidecarResult.Status
+                SidecarUrl = [string]$sidecarResult.SidecarUrl
+                FinalUrl = [string]$sidecarResult.FinalUrl
+                HttpStatusCode = $sidecarResult.HttpStatusCode
+                ContentType = [string]$sidecarResult.ContentType
+                Algorithm = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Algorithm } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Algorithm } else { $null }
+                Digest = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Value } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Value } else { $null }
+                EvidenceSource = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Source } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Source } else { $null }
+                ArtifactEndpointStatus = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.Status } else { 'NotAttempted' }
+                ArtifactEndpointUrl = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.EndpointUrl } else { $null }
+                ArtifactEndpointFinalUrl = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.FinalUrl } else { $null }
+                ArtifactEndpointHttpStatusCode = if ($null -ne $artifactEndpointResult) { $artifactEndpointResult.HttpStatusCode } else { $null }
+                ArtifactEndpointContentType = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.ContentType } else { $null }
+                ArtifactEndpointErrorType = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.ErrorType } else { $null }
+            })
+        }
+    }
+    if ($adjacentSidecarAttemptedCount -gt 0) {
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ArtifactSha256EvidenceResolutionCompleted' -Message 'Conditional artifact SHA-256 evidence discovery completed.' -Context @{
+            AttemptedCount = $adjacentSidecarAttemptedCount
+            ResolvedCount = $adjacentSidecarResolvedCount
+            RejectedCount = $adjacentSidecarRejectedCount
+            UnavailableCount = $adjacentSidecarUnavailableCount
+            ArtifactEndpointAttemptedCount = $artifactEndpointAttemptedCount
+            ArtifactEndpointResolvedCount = $artifactEndpointResolvedCount
+            ArtifactEndpointRejectedCount = $artifactEndpointRejectedCount
+            ArtifactEndpointUnavailableCount = $artifactEndpointUnavailableCount
+            ArtifactResults = @($adjacentSidecarDiagnostics.ToArray())
+        }))
+    }
+
+    $stopwatch.Stop()
+    $outcome=if($releases.Count -gt 0){'ReleasesParsed'}elseif($sectionMatches.Count -eq 0){'NoReleaseSectionCandidates'}elseif($downloadArtifactCandidateCount -eq 0){'NoSupportedDownloadLinks'}else{'ReleaseSectionsProducedNoArtifacts'}
+    $failureStage = if ($releases.Count -eq 0) { 'Parsing' } else { 'None' }
+    $traceSeverity = if ($releases.Count -eq 0) { 'Warning' } else { 'Information' }
+    # Trace checksum evidence at the provider boundary so a missing hash can be
+    # localized to live-page parsing versus a later selection/orchestration handoff.
+    # Record counts only; never include raw page text or digest values in diagnostics.
+    $pageSha256ClaimCount = $pageFilenameChecksumClaims.Count
+    $artifactsWithSha256EvidenceCount = 0
+    $attachedSha256EvidenceCount = 0
+    $parsedArtifactFileNames = @(
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                [string]$parsedArtifact.FileName
+            }
+        }
+    )
+    $parsedArtifactUriFileNames = @(
+        foreach ($parsedRelease in $releases) {
+            foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+                $artifactUri = $null
+                if ([uri]::TryCreate([string]$parsedArtifact.Uri, [UriKind]::Absolute, [ref]$artifactUri)) {
+                    Get-OfficialDownloadPageArtifactFileName -ArtifactUri $artifactUri -SourcePageUri $baseUri
+                } else {
+                    ''
+                }
+            }
+        }
+    )
+    foreach ($parsedRelease in $releases) {
+        foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
+            $sha256Evidence = @($parsedArtifact.Hashes | Where-Object { [string]$_.Algorithm -ieq 'SHA256' })
+            if ($sha256Evidence.Count -gt 0) { $artifactsWithSha256EvidenceCount++ }
+            $attachedSha256EvidenceCount += $sha256Evidence.Count
+        }
+    }
+
+    $traceContext = @{
+        RequestedUrl=$safeRequestedUri
+        FinalUrl=$safeFinalUri
+        HttpStatusCode=$httpStatus
+        ContentType=$contentType
+        HtmlLength=$html.Length
+        SectionCandidateCount=$sectionMatches.Count
+        DownloadArtifactCandidateCount=$downloadArtifactCandidateCount
+        ParsedArtifactCount=$parsedArtifactCount
+        PageSha256ClaimCount=$pageSha256ClaimCount
+        PageSha256ClaimFileNames=@($pageSha256ClaimAssociations | ForEach-Object { $_.ClaimedFileName })
+        PageSha256ClaimAssociations=@($pageSha256ClaimAssociations.ToArray())
+        ParsedArtifactFileNames=$parsedArtifactFileNames
+        ParsedArtifactUriFileNames=$parsedArtifactUriFileNames
+        ArtifactsWithSha256EvidenceCount=$artifactsWithSha256EvidenceCount
+        AttachedSha256EvidenceCount=$attachedSha256EvidenceCount
+        AdjacentSha256SidecarAttemptedCount=$adjacentSidecarAttemptedCount
+        AdjacentSha256SidecarResolvedCount=$adjacentSidecarResolvedCount
+        AdjacentSha256SidecarRejectedCount=$adjacentSidecarRejectedCount
+        AdjacentSha256SidecarUnavailableCount=$adjacentSidecarUnavailableCount
+        ParsedReleaseCount=$releases.Count
+        # Make version extraction and provider ordering observable without exposing artifact URLs.
+        ParsedReleaseVersions=@($releases | ForEach-Object { [string]$_.Version })
+        Outcome=$outcome
+        FailureStage=$failureStage
+        DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
+    }
+    # Keep the filename boundary visible in the human-readable diagnostic message too.
+    # Some diagnostic surfaces flatten scalar context fields but omit nested arrays/objects.
+    $claimSummary = @($pageSha256ClaimAssociations | ForEach-Object {
+        '{0} (exact matches: {1})' -f $_.ClaimedFileName, $_.ExactFileNameMatchCount
+    }) -join '; '
+    $artifactSummary = @(
+        for ($artifactIndex = 0; $artifactIndex -lt $parsedArtifactFileNames.Count; $artifactIndex++) {
+            '{0} [URI basename: {1}]' -f $parsedArtifactFileNames[$artifactIndex], $parsedArtifactUriFileNames[$artifactIndex]
+        }
+    ) -join '; '
+    $sidecarSummary = @($adjacentSidecarDiagnostics | ForEach-Object {
+        $parts = [System.Collections.Generic.List[string]]::new()
+        $parts.Add(('{0}: {1}' -f $_.ArtifactFileName, $_.Status))
+        if ($null -ne $_.HttpStatusCode) { $parts.Add(('HTTP {0}' -f $_.HttpStatusCode)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.SidecarUrl)) { $parts.Add(('sidecar {0}' -f $_.SidecarUrl)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.FinalUrl) -and $_.FinalUrl -cne $_.SidecarUrl) { $parts.Add(('final {0}' -f $_.FinalUrl)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.ContentType)) { $parts.Add(('content type {0}' -f $_.ContentType)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.Digest)) { $parts.Add(('SHA256 {0}' -f $_.Digest)) }
+        $parts -join ', '
+    }) -join '; '
+    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s). Checksum claims: [{3}]. Parsed artifacts: [{4}]. Adjacent sidecars: [{5}].' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount, $claimSummary, $artifactSummary, $sidecarSummary
+    $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message $parseMessage -Context $traceContext -Severity $traceSeverity
+    $logEvents.Add($parseEvent)
+
+    if($releases.Count -eq 0){
+        # NoReleasesFound is a successful, explicit provider outcome. The structured
+        # parsing trace carries the explanation, so do not repeat it as an aggregate warning.
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoReleasesFound' -LogEvents $logEvents.ToArray()
+    }
+
+    New-OfficialDownloadPageReleaseDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'Success' -Releases $releases.ToArray() -LogEvents $logEvents.ToArray()
+}
+function New-OfficialDownloadPageSourceResolutionResult {
+    param([Parameter(Mandatory)][string]$OperationId,[Parameter(Mandatory)][bool]$IsSuccessful,[Parameter(Mandatory)][string]$Status,[object]$Source=$null,[object[]]$Errors=@(),[object[]]$Warnings=@(),[object[]]$LogEvents=@())
+    [pscustomobject][ordered]@{OperationId=$OperationId;IsSuccessful=$IsSuccessful;Status=$Status;Source=$Source;Errors=@($Errors);Warnings=@($Warnings);LogEvents=@($LogEvents)}
+}
+function New-OfficialDownloadPageError {
+    param([Parameter(Mandatory)][string]$Code,[Parameter(Mandatory)][string]$Message)
+    [pscustomobject][ordered]@{Code=$Code;Message=$Message}
+}
+function ConvertFrom-OfficialDownloadPageHtmlText {
+    param([AllowEmptyString()][string]$Value)
+    if ($null -eq $Value) { return $null }
+    [System.Net.WebUtility]::HtmlDecode(($Value -replace '<[^>]+>',' ')) -replace '\s+',' ' | ForEach-Object {$_.Trim()}
+}
+function Get-OfficialDownloadPageMetaValue {
+    param([Parameter(Mandatory)][string]$Html,[Parameter(Mandatory)][string[]]$Names)
+    $tags=[regex]::Matches($Html,'<meta\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($name in $Names) {
+        foreach ($tag in $tags) {
+            $tagText=$tag.Value
+            $nameMatch=[regex]::Match($tagText,'\b(?:name|property)\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            if (-not $nameMatch.Success -or $nameMatch.Groups[1].Value -ine $name) { continue }
+            $contentMatch=[regex]::Match($tagText,'\bcontent\s*=\s*["'']([^"'']*)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            if ($contentMatch.Success) {
+                $value=ConvertFrom-OfficialDownloadPageHtmlText $contentMatch.Groups[1].Value
+                if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+            }
+        }
+    }
+    return $null
+}
+function Get-OfficialDownloadPageTitle {
+    param([Parameter(Mandatory)][string]$Html)
+    $match=[regex]::Match($Html,'<title\b[^>]*>(.*?)</title\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    if ($match.Success) { return ConvertFrom-OfficialDownloadPageHtmlText $match.Groups[1].Value }
+    return $null
+}
+function Get-OfficialDownloadPageCanonicalUri {
+    param([Parameter(Mandatory)][string]$Html,[Parameter(Mandatory)][Uri]$BaseUri)
+    $tags=[regex]::Matches($Html,'<link\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($tag in $tags) {
+        $tagText=$tag.Value
+        $relMatch=[regex]::Match($tagText,'\brel\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $relMatch.Success -or $relMatch.Groups[1].Value -notmatch '(?i)(^|\s)canonical(\s|$)') { continue }
+        $hrefMatch=[regex]::Match($tagText,'\bhref\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $hrefMatch.Success) { continue }
+        try {
+            $uri=[Uri]::new($BaseUri,$hrefMatch.Groups[1].Value)
+            if ($uri.Scheme -in @('http','https')) { return $uri.AbsoluteUri }
+        } catch {}
+    }
+    return $BaseUri.AbsoluteUri
+}
+function Get-OfficialDownloadPageImageAlt {
+    param([Parameter(Mandatory)][string]$Html)
+    $tags=[regex]::Matches($Html,'<img\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($tag in $tags) {
+        $altMatch=[regex]::Match($tag.Value,'\balt\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($altMatch.Success) {
+            $value=ConvertFrom-OfficialDownloadPageHtmlText $altMatch.Groups[1].Value
+            if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+        }
+    }
+    return $null
+}
+function Get-OfficialDownloadPagePublisher {
+    param([Parameter(Mandatory)][string]$Html)
+    foreach ($candidate in @(
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('publisher')),
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:site_name'))
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate)) { return $candidate }
+    }
+
+    $title=Get-OfficialDownloadPageTitle -Html $Html
+    if ($title -match '(?i)\s[-–—]\s*([^|]+?)\s*$') {
+        $candidate=$matches[1].Trim()
+        if ($candidate -and $candidate -notmatch '(?i)^(download|downloads)$') { return $candidate }
+    }
+
+    return $null
+}
+function Get-OfficialDownloadPageHeading {
+    param([Parameter(Mandatory)][string]$Html)
+    $match=[regex]::Match($Html,'<h1\b[^>]*>(.*?)</h1\s*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline)
+    if ($match.Success) { return ConvertFrom-OfficialDownloadPageHtmlText $match.Groups[1].Value }
+    return $null
+}
+function Get-OfficialDownloadPageApplicationName {
+    param([Parameter(Mandatory)][string]$Html)
+    foreach ($candidate in @(
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('application-name')),
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:site_name')),
+        (Get-OfficialDownloadPageMetaValue -Html $Html -Names @('og:title')),
+        (Get-OfficialDownloadPageHeading -Html $Html),
+        (Get-OfficialDownloadPageImageAlt -Html $Html),
+        (Get-OfficialDownloadPageTitle -Html $Html)
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate)) {
+            $name=$candidate -replace '\s*[|–—-]\s*(download|downloads|official download page)\s*$',''
+            $name=$name.Trim()
+            if ($name -and $name -notmatch '(?i)^(download|downloads|official download page)$') { return $name }
+        }
+    }
+    return $null
+}
+function Invoke-WintainiumProvider {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    if ($null -eq $Request -or [string]::IsNullOrWhiteSpace([string]$Request.OperationId)) {
+        return New-OfficialDownloadPageReleaseDiscoveryResult -OperationId ([guid]::NewGuid().ToString()) -IsSuccessful $false -Status 'ConfigurationInvalid' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageReleaseRequestInvalid' 'A valid release discovery operation request is required.')
+        )
+    }
+
+    Invoke-WintainiumProviderReleaseDiscovery -Request $Request
+}
+
+function Invoke-WintainiumProviderSourceResolution {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $logEvents=[System.Collections.Generic.List[object]]::new()
+    $stopwatch=[System.Diagnostics.Stopwatch]::StartNew()
+    try {$sourceUri=[Uri]([string]$Request.SourceUri)} catch {
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The supplied source URL could not be parsed.' -Context @{FailureStage='Configuration';Outcome='InvalidSourceUri'} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageUriInvalid' 'The supplied source URL is not a valid URI.') @() $logEvents.ToArray()
+    }
+    if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https')) {
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'Official download page resolution requires HTTP or HTTPS.' -Context @{Host=$sourceUri.Host;FailureStage='Configuration';Outcome='UnsupportedUriScheme'} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageSchemeUnsupported' 'Official download page resolution requires HTTP or HTTPS.') @() $logEvents.ToArray()
+    }
+    $safeSourceUri=Get-OfficialDownloadPageSafeUri -Uri $sourceUri
+    if ($sourceUri.Host -ieq 'github.com' -or $sourceUri.Host -ieq 'www.github.com') {
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionDelegated' -Message 'GitHub source URLs are handled by the dedicated GitHub provider.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;Outcome='DedicatedProviderFallback'} -Severity Information))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageHostUnsupported' 'GitHub sources are resolved by the GitHub provider.') @() $logEvents.ToArray()
+    }
+
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRequestStarted' -Message 'Official download page source resolution started.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;FailureStage='Retrieval'}))
+    try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
+        $stopwatch.Stop()
+        $exceptionType=$_.Exception.GetType().Name
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRetrievalFailed' -Message 'The source page request failed before identity metadata could be parsed.' -Context @{RequestedUrl=$safeSourceUri;Host=$sourceUri.Host;FailureStage='Retrieval';ExceptionType=$exceptionType;DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' "The source page request failed ($exceptionType). See source-resolution diagnostics for request context.") @() $logEvents.ToArray()
+    }
+
+    $contentType=''
+    if ($response.Headers -and $response.Headers['Content-Type']) {$contentType=[string]$response.Headers['Content-Type']}
+    $httpStatus=$null
+    try { if ($null -ne $response.StatusCode) { $httpStatus=[int]$response.StatusCode } } catch {}
+    $finalUri=$sourceUri
+    try {
+        if ($null -ne $response.BaseResponse -and $null -ne $response.BaseResponse.ResponseUri) { $finalUri=[Uri]$response.BaseResponse.ResponseUri }
+        elseif ($null -ne $response.BaseResponse -and $response.BaseResponse.RequestMessage -and $response.BaseResponse.RequestMessage.RequestUri) { $finalUri=[Uri]$response.BaseResponse.RequestMessage.RequestUri }
+    } catch {}
+    $safeFinalUri=Get-OfficialDownloadPageSafeUri -Uri $finalUri
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionResponseReceived' -Message 'The source page response was received.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;Host=$sourceUri.Host;HttpStatusCode=$httpStatus;ContentType=$contentType;FailureStage='IdentityParsing'}))
+
+    if ($contentType -and $contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response content type is not supported for official download page resolution.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;ContentType=$contentType;FailureStage='Validation';Outcome='UnsupportedContentType';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnsupported' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentTypeUnsupported' "Unsupported content type '$contentType'.") @() $logEvents.ToArray()
+    }
+
+    $html=[string]$response.Content
+    if ([string]::IsNullOrWhiteSpace($html)) {
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The source response contained no HTML content.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;FailureStage='IdentityParsing';Outcome='EmptyDocument';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageContentEmpty' 'The source returned an empty HTML document.') @() $logEvents.ToArray()
+    }
+
+    $canonical=Get-OfficialDownloadPageCanonicalUri -Html $html -BaseUri $finalUri
+    $name=Get-OfficialDownloadPageApplicationName -Html $html
+    $description=Get-OfficialDownloadPageMetaValue -Html $html -Names @('description','og:description')
+    # SourceForge project file pages often append "Files" to the project name.
+    # Strip an optional site-title suffix as well; it is page chrome, not product identity.
+    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/projects/[^/]+/files(?:/|$)' -and
+        $name -match '(?i)^(.+?)\s+Files(?:\s*[-|–—]\s*SourceForge)?$') {
+        $name=$matches[1].Trim()
+    }
+    # The Equalizer APO SourceForge project has a stable product identity even
+    # when page metadata prefers a generic file-listing title.
+    if ($sourceUri.Host -match '(?i)(^|\.)sourceforge\.net$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/projects/equalizerapo/files(?:/|$)') {
+        $name='Equalizer APO'
+    }
+    # The official Equalizer APO download page has used multiple metadata title
+    # orders (for example, "Equalizer APO Download" and "APO Equalizer Download").
+    # The host and path identify this product page, so normalize independently of
+    # the publisher's current title wording.
+    if ($sourceUri.Host -match '(?i)(^|\.)equalizerapo\.com$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/download/?$') {
+        $name='Equalizer APO'
+    }
+    # This official AMD driver landing page is specifically for AMD Software,
+    # not the vendor's many separately registered drivers and utilities.
+    if ($sourceUri.Host -match '(?i)(^|\.)amd\.com$' -and
+        $sourceUri.AbsolutePath -match '(?i)^/en/support/downloads?/drivers(?:\.html)?(?:/.*)?$') {
+        $name='AMD Software'
+    }
+    # The official HandBrake downloads landing page has a stable product identity,
+    # regardless of whether its title metadata includes a tagline or page wording.
+    if ($sourceUri.Host -match '(?i)(^|\.)handbrake\.fr$' -and
+        ($sourceUri.AbsolutePath -match '(?i)^/downloads\.php/?$' -or
+         $name -match '(?i)^Handbrake\b')) {
+        if ($name -match '(?i)^Handbrake\s*[:|–—-]?\s*(.+)?$') {
+            $tagline=[string]$matches[1]
+            if (-not [string]::IsNullOrWhiteSpace($tagline) -and [string]::IsNullOrWhiteSpace($description)) {
+                $description=$tagline.Trim()
+            }
+        }
+        $name='HandBrake'
+    }
+    if ([string]::IsNullOrWhiteSpace($name)) {
+        $stopwatch.Stop()
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRejected' -Message 'The response was retrieved but supported identity metadata did not yield an application name.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;HttpStatusCode=$httpStatus;ContentType=$contentType;HtmlLength=$html.Length;FailureStage='IdentityParsing';Outcome='ApplicationIdentityMissing';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceResponseInvalid' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageIdentityMissing' 'The page did not expose a usable application name in supported identity metadata or headings.') @() $logEvents.ToArray()
+    }
+
+    $hostId=$sourceUri.Host.ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$sourceUri.AbsolutePath.Trim('/').ToLowerInvariant() -replace '[^a-z0-9]+','.'
+    $pathId=$pathId.Trim('.')
+    $applicationId=if ($pathId) {"web.$hostId.$pathId"} else {"web.$hostId"}
+    $publisher=Get-OfficialDownloadPagePublisher -Html $html
+    $sourceContentType = if (-not [string]::IsNullOrWhiteSpace($contentType)) { $contentType } else { 'text/html' }
+    $sourceContext = [pscustomobject][ordered]@{
+        sourceFamily='official-download-page'
+        contentType=$sourceContentType
+    }
+    # A publisher's SEO canonical link may intentionally point at a generic landing page,
+    # even when the user supplied a product-specific download or release page. Preserve the
+    # resolved page URL for navigation and provider operations; retain the canonical URI only
+    # as separate metadata rather than allowing it to rewrite the configured source.
+    $resolvedPageUri=$finalUri.AbsoluteUri
+    $source=[pscustomobject][ordered]@{
+        ApplicationId=$applicationId;Name=$name;Description=$description;Publisher=$publisher;Homepage=$resolvedPageUri;CanonicalUri=$canonical
+        ProviderId='Wintainium.provider.official-download-page';ProviderContractVersion='1'
+        ProviderSettings=[ordered]@{pageUri=$resolvedPageUri}
+        SourceContext=$sourceContext
+    }
+    $stopwatch.Stop()
+    $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionCompleted' -Message 'Official download page source resolution completed.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFinalUri;Host=$sourceUri.Host;ApplicationId=$applicationId;ContentType=$contentType;Outcome='Resolved';DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds}))
+    New-OfficialDownloadPageSourceResolutionResult $operationId $true 'Resolved' $source @() @() $logEvents.ToArray()
+}
+function New-OfficialDownloadPageIconDiscoveryResult {
+    param(
+        [Parameter(Mandatory)][string]$OperationId,
+        [Parameter(Mandatory)][bool]$IsSuccessful,
+        [Parameter(Mandatory)][string]$Status,
+        [string]$IconUri = $null,
+        [object[]]$Errors = @(),
+        [object[]]$Warnings = @()
+    )
+    [pscustomobject][ordered]@{
+        OperationId=$OperationId; IsSuccessful=$IsSuccessful; Status=$Status
+        IconUri=$IconUri; Errors=@($Errors); Warnings=@($Warnings)
+    }
+}
+
+function Invoke-WintainiumProviderIconDiscovery {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+
+    $operationId=[string]$Request.OperationId
+    $source=$Request.Source
+    if ($null -eq $source -or [string]::IsNullOrWhiteSpace([string]$source.Homepage)) {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+    }
+
+    try { $homepage=[Uri]$source.Homepage } catch {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconHomepageInvalid' 'The resolved official homepage is not a valid URI.')
+        )
+    }
+
+    if (-not $homepage.IsAbsoluteUri -or $homepage.Scheme -notin @('http','https')) {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryInvalidRequest' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconHomepageInvalid' 'The resolved official homepage must use HTTP or HTTPS.')
+        )
+    }
+
+    try {
+        $response=Invoke-WebRequest -Method Get -Uri $homepage.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop
+        $html=[string]$response.Content
+    }
+    catch {
+        return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $false -Status 'IconDiscoveryUnavailable' -Errors @(
+            (New-OfficialDownloadPageError 'OfficialDownloadPageIconRequestFailed' $_.Exception.Message)
+        )
+    }
+
+    $tags=[regex]::Matches($html,'<link\b[^>]*>',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($tag in $tags) {
+        $relMatch=[regex]::Match($tag.Value,'\brel\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $relMatch.Success) { continue }
+        $rels=[string]$relMatch.Groups[1].Value -split '\s+'
+        $isIcon=$rels | Where-Object { $_ -ieq 'icon' -or $_ -ieq 'shortcut' -or $_ -ieq 'apple-touch-icon' }
+        if (-not $isIcon) { continue }
+
+        $hrefMatch=[regex]::Match($tag.Value,'\bhref\s*=\s*["'']([^"'']+)["'']',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if (-not $hrefMatch.Success) { continue }
+        try { $iconUri=[Uri]::new($homepage,$hrefMatch.Groups[1].Value) } catch { continue }
+        if ($iconUri.Scheme -in @('http','https') -and $iconUri.Host -eq $homepage.Host) {
+            return New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'IconResolved' -IconUri $iconUri.AbsoluteUri
+        }
+    }
+
+    New-OfficialDownloadPageIconDiscoveryResult -OperationId $operationId -IsSuccessful $true -Status 'NoTrustedIcon'
+}
+
+Export-ModuleMember -Function Invoke-WintainiumProvider, Invoke-WintainiumProviderSourceResolution, Invoke-WintainiumProviderIconDiscovery, Invoke-WintainiumProviderReleaseDiscovery
+
+            )
+            if (-not $plainLinkedSidecar.Success) {
+                $result.Status = 'RejectedDigest'
+                return $result
+            }
+            if ($plainLinkedSidecar.Groups[2].Success) {
+                $declaredName = [IO.Path]::GetFileName($plainLinkedSidecar.Groups[2].Value.Trim())
+                if (-not [string]::Equals($declaredName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) {
+                    $result.Status = 'RejectedFilename'
+                    return $result
+                }
+            }
+            $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $linkedFinalUri
+            $result.ContentType = [string]$linkedResponse.ContentType
+            $result.Status = 'Resolved'
+            $result.Evidence = [pscustomobject][ordered]@{
+                Algorithm = 'SHA256'
+                Value = $plainLinkedSidecar.Groups[1].Value.ToUpperInvariant()
+                Source = 'OfficialDownloadPageLinkedChecksumSidecar'
+            }
+            return $result
+        }
+
+        # Preserve support for publishers that put an artifact-bound labelled
+        # digest directly on the HTML sidecar page.
         $checksumText = ConvertFrom-OfficialDownloadPageHtmlText $body
-        # An HTML response is a landing page, not a conventional checksum file.
-        # Require the visible page text to identify this exact artifact before
-        # treating its labelled digest as evidence for that artifact.
         $artifactNamePattern = '(?i)(?<![a-z0-9_.-])' + [regex]::Escape($ArtifactFileName) + '(?![a-z0-9_-]|\.[a-z0-9_-])'
         if ([string]$checksumText -notmatch $artifactNamePattern) {
             $result.Status = 'RejectedFilename'
