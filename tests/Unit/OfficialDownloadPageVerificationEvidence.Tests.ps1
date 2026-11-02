@@ -397,10 +397,11 @@ Describe 'Official download page verification evidence discovery' {
             else {
                 '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
             }
+            $contentType = if ($Uri -like '*.sha256') { 'text/plain' } else { 'text/html; charset=UTF-8' }
             [pscustomobject]@{
                 Content = $content
                 StatusCode = 200
-                Headers = @{ 'Content-Type' = if ($Uri -like '*.sha256') { 'text/plain' } else { 'text/html; charset=UTF-8' } }
+                Headers = @{ 'Content-Type' = $contentType }
                 BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
             }
         }
