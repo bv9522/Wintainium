@@ -826,5 +826,54 @@ Describe 'Windows installed-application reconciliation plugin' {
         $resolutionWarning.MsiProductCode | Should -Be '{90160000-0011-0000-0000-0000000FF1CE}'
     }
 
+
+    It 'inspects executable version resources only for a registered executable inside the installation directory' {
+        $installLocation = Join-Path $TestDrive 'Executable Identity'
+        New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
+        $executablePath = Join-Path $installLocation 'PowerShell 7.exe'
+        Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination $executablePath -Force
+        $entry = [pscustomobject]@{
+            DisplayName='PowerShell 7'
+            InstallLocation=$installLocation
+            DisplayIcon='"' + $executablePath + '",0'
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Entry=$entry
+        } {
+            Mock -CommandName Get-AuthenticodeSignature -MockWith {
+                [pscustomobject]@{ Status='NotSigned'; SignerCertificate=$null }
+            }
+            Get-WintainiumWindowsExecutableIdentityEvidence -Entry $Entry -ApplicationPublisher 'Microsoft Corporation'
+        }
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.Path | Should -Be $executablePath
+        $result.SignatureStatus | Should -Be 'NotSigned'
+        $result.TrustedPublisherSignature | Should -BeFalse
+    }
+
+    It 'rejects a DisplayIcon executable outside the registered installation directory' {
+        $installLocation = Join-Path $TestDrive 'Scoped Executable Identity'
+        $externalLocation = Join-Path $TestDrive 'External Executable'
+        New-Item -ItemType Directory -Path $installLocation -Force | Out-Null
+        New-Item -ItemType Directory -Path $externalLocation -Force | Out-Null
+        $externalExecutable = Join-Path $externalLocation 'Other.exe'
+        Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination $externalExecutable -Force
+        $entry = [pscustomobject]@{
+            DisplayName='Example Application'
+            InstallLocation=$installLocation
+            DisplayIcon=$externalExecutable
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Entry=$entry
+        } {
+            Get-WintainiumWindowsExecutableIdentityEvidence -Entry $Entry -ApplicationPublisher 'Example Publisher'
+        }
+
+        $result | Should -BeNullOrEmpty
+    }
+
 }
 
