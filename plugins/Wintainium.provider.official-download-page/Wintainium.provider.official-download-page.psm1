@@ -1210,7 +1210,40 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $adjacentSidecarResolvedCount = 0
     $adjacentSidecarRejectedCount = 0
     $adjacentSidecarUnavailableCount = 0
-    foreach ($parsedRelease in $releases) {
+
+    # Historical release sections can contain many old artifacts. Resolve sidecars
+    # only for the highest numerically versioned release, which is the only release
+    # relevant to current update discovery. If versions are nonstandard, retain the
+    # publisher's first release section as the conservative fallback.
+    $latestSidecarVersion = $null
+    foreach ($candidateRelease in $releases) {
+        $numericVersionMatch = [regex]::Match([string]$candidateRelease.Version, '^\s*([0-9]+(?:\.[0-9]+){1,3})')
+        if (-not $numericVersionMatch.Success) { continue }
+        $candidateVersion = $null
+        if (-not [Version]::TryParse($numericVersionMatch.Groups[1].Value, [ref]$candidateVersion)) { continue }
+        if ($null -eq $latestSidecarVersion -or $candidateVersion -gt $latestSidecarVersion) {
+            $latestSidecarVersion = $candidateVersion
+        }
+    }
+    $sidecarReleases = @()
+    if ($null -ne $latestSidecarVersion) {
+        $sidecarReleases = @(
+            foreach ($candidateRelease in $releases) {
+                $numericVersionMatch = [regex]::Match([string]$candidateRelease.Version, '^\s*([0-9]+(?:\.[0-9]+){1,3})')
+                $candidateVersion = $null
+                if ($numericVersionMatch.Success -and
+                    [Version]::TryParse($numericVersionMatch.Groups[1].Value, [ref]$candidateVersion) -and
+                    $candidateVersion -eq $latestSidecarVersion) {
+                    $candidateRelease
+                }
+            }
+        )
+    }
+    elseif ($releases.Count -gt 0) {
+        $sidecarReleases = @($releases[0])
+    }
+
+    foreach ($parsedRelease in $sidecarReleases) {
         foreach ($parsedArtifact in @($parsedRelease.Artifacts)) {
             $existingSha256 = @($parsedArtifact.Hashes | Where-Object { [string]$_.Algorithm -ieq 'SHA256' })
             if ($existingSha256.Count -gt 0) { continue }
