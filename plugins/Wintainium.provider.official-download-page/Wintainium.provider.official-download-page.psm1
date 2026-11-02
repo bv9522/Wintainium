@@ -319,6 +319,142 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
     return $result
 }
 
+function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
+    param(
+        [Parameter(Mandatory)][Uri]$ArtifactUri,
+        [Parameter(Mandatory)][string]$ArtifactFileName
+    )
+
+    $result = [pscustomobject][ordered]@{
+        Status = 'NotAttempted'
+        Evidence = $null
+        HttpStatusCode = $null
+        EndpointUrl = Get-OfficialDownloadPageSafeUri -Uri $ArtifactUri
+        FinalUrl = $null
+        ContentType = $null
+    }
+
+    # Only concrete HTTPS artifact paths are eligible. Wrapper endpoints and
+    # URLs whose path does not name the selected artifact remain sidecar-only.
+    if (-not $ArtifactUri.IsAbsoluteUri -or
+        $ArtifactUri.Scheme -ine 'https' -or
+        -not [string]::IsNullOrWhiteSpace($ArtifactUri.UserInfo) -or
+        [string]::IsNullOrWhiteSpace($ArtifactFileName) -or
+        -not [string]::Equals([IO.Path]::GetFileName($ArtifactUri.AbsolutePath), $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase) -or
+        (ConvertTo-OfficialDownloadPageArtifactFormat -FileName $ArtifactFileName) -eq 'unknown') {
+        $result.Status = 'RejectedArtifactUri'
+        return $result
+    }
+
+    try {
+        $response = Invoke-WebRequest -Method Get -Uri $ArtifactUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 20 -ErrorAction Stop
+    }
+    catch {
+        $result.Status = 'Unavailable'
+        try {
+            $errorResponse = $_.Exception.Response
+            if ($null -ne $errorResponse.StatusCode) { $result.HttpStatusCode = [int]$errorResponse.StatusCode }
+            if ($null -ne $errorResponse.ResponseUri) { $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri ([Uri]$errorResponse.ResponseUri) }
+            if ($null -ne $errorResponse.Headers -and $null -ne $errorResponse.Headers['Content-Type']) {
+                $result.ContentType = [string]$errorResponse.Headers['Content-Type']
+            }
+        } catch {}
+        return $result
+    }
+
+    try {
+        if ($null -ne $response.StatusCode) {
+            $result.HttpStatusCode = [int]$response.StatusCode
+            if ($result.HttpStatusCode -lt 200 -or $result.HttpStatusCode -ge 300) {
+                $result.Status = 'Unavailable'
+                return $result
+            }
+        }
+    } catch {}
+
+    $finalUri = $ArtifactUri
+    try {
+        if ($null -ne $response.BaseResponse -and $null -ne $response.BaseResponse.ResponseUri) {
+            $finalUri = [Uri]$response.BaseResponse.ResponseUri
+        }
+        elseif ($null -ne $response.BaseResponse -and
+            $response.BaseResponse.RequestMessage -and
+            $response.BaseResponse.RequestMessage.RequestUri) {
+            $finalUri = [Uri]$response.BaseResponse.RequestMessage.RequestUri
+        }
+    } catch {}
+
+    $contentType = ''
+    try {
+        if ($response.Headers -and $response.Headers['Content-Type']) {
+            $contentType = [string]$response.Headers['Content-Type']
+        }
+    } catch {}
+    $result.ContentType = $contentType
+    $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $finalUri
+
+    # Do not bind evidence across a redirect to another host or path.
+    if ($null -eq $finalUri -or
+        -not $finalUri.IsAbsoluteUri -or
+        $finalUri.Scheme -ine 'https' -or
+        -not [string]::IsNullOrWhiteSpace($finalUri.UserInfo) -or
+        -not [string]::Equals($finalUri.Host, $ArtifactUri.Host, [StringComparison]::OrdinalIgnoreCase) -or
+        $finalUri.Port -ne $ArtifactUri.Port -or
+        -not [string]::Equals($finalUri.AbsolutePath, $ArtifactUri.AbsolutePath, [StringComparison]::Ordinal)) {
+        $result.Status = 'RejectedRedirect'
+        return $result
+    }
+
+    if ($contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+        $result.Status = 'RejectedContentType'
+        return $result
+    }
+
+    $html = [string]$response.Content
+    if ([string]::IsNullOrWhiteSpace($html) -or $html.Length -gt 262144) {
+        $result.Status = 'RejectedContent'
+        return $result
+    }
+
+    # Require an actual HTTPS download link naming this artifact. Mirror hosts
+    # may differ, but page prose or metadata alone cannot establish association.
+    $matchingArtifactLinks = [System.Collections.Generic.List[object]]::new()
+    $links = [regex]::Matches($html, '<a\b[^>]*\bhref\s*=\s*["'']([^"'']+)["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    foreach ($link in $links) {
+        $href = [System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
+        try { $linkUri = [Uri]::new($finalUri, $href) } catch { continue }
+        if (-not $linkUri.IsAbsoluteUri -or
+            $linkUri.Scheme -ine 'https' -or
+            -not [string]::IsNullOrWhiteSpace($linkUri.UserInfo)) { continue }
+        $linkedFileName = [IO.Path]::GetFileName($linkUri.AbsolutePath)
+        if ([string]::Equals($linkedFileName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) {
+            $matchingArtifactLinks.Add($linkUri)
+        }
+    }
+    if ($matchingArtifactLinks.Count -eq 0) {
+        $result.Status = 'RejectedFilename'
+        return $result
+    }
+
+    $visibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
+    $labelledDigests = [regex]::Matches(
+        [string]$visibleText,
+        '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:checksum|hash)\s*)?[:=]\s*["'']?([0-9a-f]{64})\b'
+    )
+    if ($labelledDigests.Count -ne 1) {
+        $result.Status = 'RejectedDigest'
+        return $result
+    }
+
+    $result.Status = 'Resolved'
+    $result.Evidence = [pscustomobject][ordered]@{
+        Algorithm = 'SHA256'
+        Value = $labelledDigests[0].Groups[1].Value.ToUpperInvariant()
+        Source = 'OfficialDownloadPageArtifactEndpointChecksum'
+    }
+    return $result
+}
+
 function ConvertFrom-OfficialDownloadPageReleaseSection {
     param(
         [Parameter(Mandatory)][AllowEmptyString()][string]$Heading,
@@ -1242,6 +1378,10 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $adjacentSidecarResolvedCount = 0
     $adjacentSidecarRejectedCount = 0
     $adjacentSidecarUnavailableCount = 0
+    $artifactEndpointAttemptedCount = 0
+    $artifactEndpointResolvedCount = 0
+    $artifactEndpointRejectedCount = 0
+    $artifactEndpointUnavailableCount = 0
     $adjacentSidecarDiagnostics = [System.Collections.Generic.List[object]]::new()
 
     # Historical release sections can contain many old artifacts. Resolve sidecars
@@ -1300,6 +1440,31 @@ function Invoke-WintainiumProviderReleaseDiscovery {
 
             $adjacentSidecarAttemptedCount++
             $sidecarResult = Get-OfficialDownloadPageAdjacentSha256Evidence -ArtifactUri $artifactUri -ArtifactFileName ([string]$parsedArtifact.FileName)
+            $artifactEndpointResult = $null
+            if ($sidecarResult.Status -eq 'Resolved') {
+                $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $sidecarResult.Evidence
+                $adjacentSidecarResolvedCount++
+            }
+            else {
+                switch ($sidecarResult.Status) {
+                    { $_ -like 'Rejected*' } { $adjacentSidecarRejectedCount++ }
+                    'Unavailable' { $adjacentSidecarUnavailableCount++ }
+                }
+
+                # Resolve the artifact endpoint as a second source in this same
+                # evidence-discovery stage, but only when the sidecar did not resolve.
+                $artifactEndpointAttemptedCount++
+                $artifactEndpointResult = Get-OfficialDownloadPageArtifactEndpointSha256Evidence -ArtifactUri $artifactUri -ArtifactFileName ([string]$parsedArtifact.FileName)
+                switch ($artifactEndpointResult.Status) {
+                    'Resolved' {
+                        $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $artifactEndpointResult.Evidence
+                        $artifactEndpointResolvedCount++
+                    }
+                    'Unavailable' { $artifactEndpointUnavailableCount++ }
+                    { $_ -like 'Rejected*' } { $artifactEndpointRejectedCount++ }
+                }
+            }
+
             $adjacentSidecarDiagnostics.Add([pscustomobject][ordered]@{
                 ArtifactFileName = [string]$parsedArtifact.FileName
                 Status = [string]$sidecarResult.Status
@@ -1307,18 +1472,15 @@ function Invoke-WintainiumProviderReleaseDiscovery {
                 FinalUrl = [string]$sidecarResult.FinalUrl
                 HttpStatusCode = $sidecarResult.HttpStatusCode
                 ContentType = [string]$sidecarResult.ContentType
-                Algorithm = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Algorithm } else { $null }
-                Digest = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Value } else { $null }
-                EvidenceSource = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Source } else { $null }
+                Algorithm = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Algorithm } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Algorithm } else { $null }
+                Digest = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Value } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Value } else { $null }
+                EvidenceSource = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Source } elseif ($null -ne $artifactEndpointResult -and $null -ne $artifactEndpointResult.Evidence) { [string]$artifactEndpointResult.Evidence.Source } else { $null }
+                ArtifactEndpointStatus = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.Status } else { 'NotAttempted' }
+                ArtifactEndpointUrl = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.EndpointUrl } else { $null }
+                ArtifactEndpointFinalUrl = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.FinalUrl } else { $null }
+                ArtifactEndpointHttpStatusCode = if ($null -ne $artifactEndpointResult) { $artifactEndpointResult.HttpStatusCode } else { $null }
+                ArtifactEndpointContentType = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.ContentType } else { $null }
             })
-            switch ($sidecarResult.Status) {
-                'Resolved' {
-                    $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $sidecarResult.Evidence
-                    $adjacentSidecarResolvedCount++
-                }
-                { $_ -like 'Rejected*' } { $adjacentSidecarRejectedCount++ }
-                'Unavailable' { $adjacentSidecarUnavailableCount++ }
-            }
         }
     }
     if ($adjacentSidecarAttemptedCount -gt 0) {
@@ -1327,6 +1489,10 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             ResolvedCount = $adjacentSidecarResolvedCount
             RejectedCount = $adjacentSidecarRejectedCount
             UnavailableCount = $adjacentSidecarUnavailableCount
+            ArtifactEndpointAttemptedCount = $artifactEndpointAttemptedCount
+            ArtifactEndpointResolvedCount = $artifactEndpointResolvedCount
+            ArtifactEndpointRejectedCount = $artifactEndpointRejectedCount
+            ArtifactEndpointUnavailableCount = $artifactEndpointUnavailableCount
             ArtifactResults = @($adjacentSidecarDiagnostics.ToArray())
         }))
     }
