@@ -1048,3 +1048,192 @@ var PLATFORMS = {
         @($result.Releases[0].Artifacts).Count | Should -Be 1
     }
 }
+
+
+Describe 'Official download page adjacent SHA-256 sidecar resolution' {
+    It 'attaches a valid plain-text SHA256 sidecar to its exact artifact' {
+        $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = "$digest  player-1.2.3-x64.exe"
+                    Headers = @{ 'Content-Type' = 'text/plain' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-plain-text'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
+        $hash = @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]
+        $hash.Value | Should -Be $digest.ToUpperInvariant()
+        $hash.Source | Should -Be 'OfficialDownloadPageAdjacentChecksumSidecar'
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.AttemptedCount | Should -Be 1
+        $event.Context.ResolvedCount | Should -Be 1
+    }
+
+    It 'extracts a labelled digest from a publisher HTML checksum landing page' {
+        $digest = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = '<html><body>Downloading player-1.2.3-x64.exe. Display checksum.SHA-256 checksum: ' + $digest + '</body></html>'
+                    Headers = @{ 'Content-Type' = 'text/html; charset=utf-8' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-html-landing-page'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        $hash = @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]
+        $hash.Value | Should -Be $digest.ToUpperInvariant()
+        $hash.Source | Should -Be 'OfficialDownloadPageAdjacentChecksumSidecar'
+    }
+
+    It 'rejects malformed and ambiguous sidecar digest content' {
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = ('a' * 64) + [Environment]::NewLine + ('b' * 64)
+                    Headers = @{ 'Content-Type' = 'text/plain' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-ambiguous-digest'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.RejectedCount | Should -Be 1
+    }
+
+    It 'rejects a sidecar that declares a different artifact filename' {
+        $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = "$digest  another-player.exe"
+                    Headers = @{ 'Content-Type' = 'text/plain' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-filename-mismatch'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.RejectedCount | Should -Be 1
+    }
+
+    It 'rejects HTTPS-to-HTTP sidecar redirects' {
+        $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                return [pscustomobject]@{
+                    Content = $digest
+                    Headers = @{ 'Content-Type' = 'text/plain' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'http://mirror.example.test/player-1.2.3-x64.exe.sha256' }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-redirect-downgrade'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.RejectedCount | Should -Be 1
+    }
+
+    It 'preserves existing page checksum evidence and does not request a sidecar' {
+        $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                throw 'Sidecar must not be requested when page evidence already exists.'
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.2.3</h2><p>SHA-256 checksum for player-1.2.3-x64.exe: ' + $digest + '</p><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-preserves-page-evidence'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        $artifact = @($result.Releases[0].Artifacts)[0]
+        $hash = @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]
+        $hash.Value | Should -Be $digest.ToUpperInvariant()
+        $hash.Source | Should -Be 'OfficialDownloadPageChecksum'
+        @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted').Count | Should -Be 0
+    }
+}
