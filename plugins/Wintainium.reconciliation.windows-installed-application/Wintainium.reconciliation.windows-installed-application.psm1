@@ -647,8 +647,8 @@ function Invoke-WintainiumReconciliation {
                 Message = 'Registry identity evidence is suggestive but does not meet the confidence and separation thresholds required to confirm the installed application.'
                 OperationId = $operationId
                 CandidateCount = 1
-                CandidateDisplayName = [string]$candidate.DisplayName
-                CandidateRegistrySubKey = [string]$candidate.SubKey
+                CandidateDisplayName = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'DisplayName')
+                CandidateRegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'SubKey')
                 IdentityScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore'
                 IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreThreshold'
                 IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityRunnerUpScore'
