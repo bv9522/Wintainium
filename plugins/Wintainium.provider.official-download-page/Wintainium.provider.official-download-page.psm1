@@ -1416,9 +1416,10 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
     }
 
-    # Final conditional verification-evidence layer: request a checksum sidecar
-    # only for artifacts that did not receive SHA-256 evidence from existing
-    # page parsing or a structured release provider. This never weakens verification.
+    # Final conditional verification-evidence layer: try the adjacent checksum
+    # sidecar first, then the exact artifact endpoint if the sidecar does not resolve.
+    # Both sources are skipped when page parsing or a structured provider already
+    # supplied SHA-256 evidence. This discovery stage never weakens verification.
     $adjacentSidecarAttemptedCount = 0
     $adjacentSidecarResolvedCount = 0
     $adjacentSidecarRejectedCount = 0
