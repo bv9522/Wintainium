@@ -1053,7 +1053,7 @@ var PLATFORMS = {
 Describe 'Official download page adjacent SHA-256 sidecar resolution' {
     It 'attaches a valid plain-text SHA256 sidecar to its exact artifact' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 return [pscustomobject]@{
@@ -1089,7 +1089,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
     It 'extracts a labelled digest from a publisher HTML checksum landing page' {
         $digest = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 return [pscustomobject]@{
@@ -1119,7 +1119,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
     }
 
     It 'rejects malformed and ambiguous sidecar digest content' {
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 return [pscustomobject]@{
@@ -1150,7 +1150,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
     It 'rejects a sidecar that declares a different artifact filename' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 return [pscustomobject]@{
@@ -1181,7 +1181,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
     It 'rejects HTTPS-to-HTTP sidecar redirects' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 return [pscustomobject]@{
@@ -1212,7 +1212,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
     It 'preserves existing page checksum evidence and does not request a sidecar' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 throw 'Sidecar must not be requested when page evidence already exists.'
@@ -1242,7 +1242,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 Describe 'Current release sidecar lookup boundary' {
     It 'limits sidecar requests to artifacts in the highest parsed release' {
         $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-        Mock Invoke-WebRequest {
+        Mock Invoke-WebRequest -ModuleName 'Wintainium.provider.official-download-page' {
             param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
             if ([string]$Uri -like '*.sha256') {
                 if ([string]$Uri -match 'old-player') {
