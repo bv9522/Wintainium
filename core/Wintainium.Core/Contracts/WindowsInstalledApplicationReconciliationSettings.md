@@ -33,6 +33,7 @@ The reconciler observes Windows state only. It does not discover releases, compa
 
 The plugin-specific settings object is:
 
+
 ```json
 {
   "registry": {
@@ -61,6 +62,23 @@ The plugin-specific settings object is:
 ```
 
 The application-manifest schema continues to treat `reconciliation.settings` as an opaque object. This contract belongs to the Windows reconciliation plugin and must not add Windows-specific semantics to generic Core manifest validation.
+
+The following optional, plugin-owned identity declarations may also be supplied alongside `registry`:
+
+```json
+{
+  "windowsInstaller": {
+    "productCodes": [
+      "{90160000-0011-0000-0000-0000000FF1CE}"
+    ]
+  }
+}
+```
+
+A configured Windows Installer ProductCode is an exact identity declaration. It is accepted only when the corresponding uninstall registration declares `WindowsInstaller = 1` and its uninstall subkey is the same GUID. A GUID-shaped subkey without the Windows Installer marker, or an MSI registration whose ProductCode was not explicitly declared, is not a direct identity match. Multiple matching registrations remain ambiguous.
+
+The optional declaration is intended for known publisher/product identities supplied by a trusted manifest author. Default onboarding does not invent ProductCodes.
+
 
 ## Registry Domain
 
@@ -104,7 +122,18 @@ Explicit predicates are evaluated first and retain their existing all/any behavi
 
 A single candidate is confirmed only when its evidence reaches the confidence threshold and sufficiently exceeds the next candidate. Weak single candidates and close/multiple candidates remain Unknown; arbitrary substring similarity alone must never confirm installation. Missing optional registry metadata is not treated as negative evidence. Publisher, URL, path, icon, and command fields are corroborating signals, not individually authoritative product identifiers.
 
+When a candidate has a safely located executable under its registered installation directory, the plugin may inspect its version-resource fields and Authenticode signature. Executable inspection is restricted to the registered `DisplayIcon` executable (when it is inside `InstallLocation`) or an executable whose basename is an exact derivation of the registered display name. The plugin does not launch the executable.
+
+The executable's product name matching the registered display name and company name matching the manifest publisher are corroborating signals. A signature contributes trusted-publisher evidence only when Authenticode reports `Valid` and the certificate's simple signer name matches the manifest publisher. Missing, invalid, unavailable, or mismatched signatures never receive trusted-signature points. Executable metadata is evidence about the registry candidate; it does not independently establish that an arbitrary file elsewhere on the machine is the application.
+
+The fallback identity diagnostics expose the aggregate score, per-factor score contributions, confidence threshold, runner-up score, score margin, and required separation. The initial probabilistic thresholds remain 70 points and a 15-point lead. These values are deliberately held constant until representative test results justify calibration. Exact configured MSI ProductCode matches use a separate direct-identity path and do not rely on the probabilistic score.
+
+
 The reconciler reads only the declared uninstall-registration domain. It must not execute commands found in registry values or use those values to trigger installation, removal, or downloads. Release discovery remains owned by the manifest's source provider; identity resolution does not change provider behavior.
+
+## MSIX and AppX Identity
+
+MSIX/AppX package identity is a promising independent source because a package family name is a stable package identifier, unlike a display-name token. It is not enabled as an automatic fallback in this contract yet. A safe implementation must define whether package observation is current-user or all-user, handle access-denied and package-registration states without converting them to NotInstalled, and require an explicitly declared package family identity rather than guessing from a display name. This remains a follow-up identity source after the executable and Windows Installer paths have been validated.
 
 ## Candidate Cardinality
 
