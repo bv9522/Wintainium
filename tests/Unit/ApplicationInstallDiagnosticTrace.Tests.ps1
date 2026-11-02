@@ -42,6 +42,23 @@ Describe 'Wintainium install diagnostic trace' {
                     ArtifactEndpointResolvedCount = 2
                     ArtifactEndpointRejectedCount = 1
                     ArtifactEndpointUnavailableCount = 0
+                    ArtifactResults = @(
+                        @{
+                            ArtifactFileName = 'vlc-3.0.24-win64.exe'
+                            Status = 'RejectedFilename'
+                            SidecarUrl = 'https://get.example.test/vlc-3.0.24-win64.exe.sha256'
+                            FinalUrl = 'https://get.example.test/vlc-3.0.24-win64.exe.sha256'
+                            HttpStatusCode = 200
+                            ContentType = 'text/html; charset=UTF-8'
+                            ArtifactEndpointStatus = 'RejectedDigest'
+                            ArtifactEndpointUrl = 'https://get.example.test/vlc-3.0.24-win64.exe'
+                            ArtifactEndpointFinalUrl = 'https://get.example.test/vlc-3.0.24-win64.exe'
+                            ArtifactEndpointHttpStatusCode = 200
+                            ArtifactEndpointContentType = 'text/html'
+                            ArtifactEndpointErrorType = $null
+                            Digest = 'DO-NOT-EXPOSE-' + ('A' * 64)
+                        }
+                    )
                 }
             }
             $releaseResult = [pscustomobject]@{
@@ -85,7 +102,7 @@ Describe 'Wintainium install diagnostic trace' {
             $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
             $trace = @($result.TroubleshootingDiagnostics | Where-Object Code -eq 'InstallDiagnostic.ReleaseDiscoveryTrace')
 
-            $trace.Count | Should -Be 2
+            $trace.Count | Should -Be 3
             $trace[0].Message | Should -Match 'NoReleaseSectionCandidates'
             $trace[0].Message | Should -Match 'SectionCandidateCount=0'
             $trace[1].Message | Should -Match 'ArtifactSha256EvidenceResolutionCompleted'
@@ -94,6 +111,14 @@ Describe 'Wintainium install diagnostic trace' {
             $trace[1].Message | Should -Match 'ArtifactEndpointAttemptedCount=3'
             $trace[1].Message | Should -Match 'ArtifactEndpointResolvedCount=2'
             $trace[1].Message | Should -Match 'ArtifactEndpointRejectedCount=1'
+            $trace[2].Message | Should -Match 'Artifact checksum evidence:'
+            $trace[2].Message | Should -Match 'ArtifactFileName=vlc-3.0.24-win64.exe'
+            $trace[2].Message | Should -Match 'Status=RejectedFilename'
+            $trace[2].Message | Should -Match 'ArtifactEndpointStatus=RejectedDigest'
+            $trace[2].Message | Should -Match 'ArtifactEndpointHttpStatusCode=200'
+            $trace[2].Message | Should -Match 'ArtifactEndpointContentType=text/html'
+            $trace[2].Message | Should -Match 'ArtifactEndpointUrl=https://get.example.test/vlc/3.0.24-win64.exe'
+            $trace[2].Message | Should -Not -Match 'DO-NOT-EXPOSE'
             $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
             $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
             $result.Stages[1].Reason | Should -Be 'No discovered release has a selectable artifact for this machine.'
