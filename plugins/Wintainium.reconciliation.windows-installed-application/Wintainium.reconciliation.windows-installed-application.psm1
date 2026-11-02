@@ -649,14 +649,14 @@ function Invoke-WintainiumReconciliation {
                 CandidateCount = 1
                 CandidateDisplayName = [string]$candidate.DisplayName
                 CandidateRegistrySubKey = [string]$candidate.SubKey
-                IdentityScore = [int]$candidate.IdentityScore
-                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
-                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
-                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
-                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
-                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
-                ExecutableIdentityEvidence = $candidate.ExecutableIdentityEvidence
-                IdentityEvidence = @($candidate.IdentityEvidence)
+                IdentityScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore'
+                IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreThreshold'
+                IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityRunnerUpScore'
+                IdentityScoreMargin = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreMargin'
+                IdentitySeparationThreshold = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentitySeparationThreshold'
+                IdentityScoreBreakdown = @(Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreBreakdown')
+                ExecutableIdentityEvidence = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'ExecutableIdentityEvidence'
+                IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityEvidence')
             }
             return & $base $true 'Unknown' $evidence @() $warnings
         }
@@ -689,18 +689,23 @@ function Invoke-WintainiumReconciliation {
             return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
         }
         $candidate=@($observation.Candidates)[0]
-        $candidateEvidenceSource = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.EvidenceSource)) { [string]$candidate.EvidenceSource } else { 'WindowsUninstallRegistry' }
+        $candidateEvidenceSource = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'EvidenceSource')
+        if ([string]::IsNullOrWhiteSpace($candidateEvidenceSource)) { $candidateEvidenceSource = 'WindowsUninstallRegistry' }
+        $candidateMsiProductCode = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'MsiProductCode')
+        $candidateInstallLocation = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'InstallLocation')
+        $candidateDisplayName = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'DisplayName')
+        $candidateDisplayVersion = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'DisplayVersion')
         $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource=$candidateEvidenceSource;IdentityConfidence=$candidateConfidence}
-        if (-not [string]::IsNullOrWhiteSpace([string]$candidate.MsiProductCode)) { $evidence.MsiProductCode=[string]$candidate.MsiProductCode }
-        $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
+        if (-not [string]::IsNullOrWhiteSpace($candidateMsiProductCode)) { $evidence.MsiProductCode=$candidateMsiProductCode }
+        $version = if (-not [string]::IsNullOrWhiteSpace($candidateDisplayVersion)) { $candidateDisplayVersion } else { $null }
         $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
-        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName) -RegistryVersion ([string]$candidate.DisplayVersion)
+        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation $candidateInstallLocation -DisplayName $candidateDisplayName -RegistryVersion $candidateDisplayVersion
         if ($null -ne $executableVersion -and -not [string]::IsNullOrWhiteSpace([string]$executableVersion.Version)) {
             $version = [string]$executableVersion.Version
             $versionSource = 'ExecutableFileVersion'
         }
         if ($null -ne $version) { $evidence.Version=$version; $evidence.VersionSource=$versionSource }
-        if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
+        if($candidateInstallLocation){$evidence.InstallationLocation=$candidateInstallLocation}
         if ($candidateConfidence -eq 'Strong' -and $null -ne (Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore')) {
             $warnings += [pscustomobject]@{
                 Code = 'WindowsReconciliationIdentityResolved'
@@ -723,14 +728,14 @@ function Invoke-WintainiumReconciliation {
                 Code = 'WindowsReconciliationIdentityResolved'
                 Message = 'Installed-state identity was resolved by an exact configured Windows Installer ProductCode.'
                 OperationId = $operationId
-                CandidateDisplayName = [string]$candidate.DisplayName
-                CandidateRegistrySubKey = [string]$candidate.SubKey
+                CandidateDisplayName = $candidateDisplayName
+                CandidateRegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'SubKey')
                 IdentityConfidence = 'Direct'
-                MsiProductCode = [string]$candidate.MsiProductCode
-                IdentityEvidence = @($candidate.IdentityEvidence)
+                MsiProductCode = $candidateMsiProductCode
+                IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityEvidence')
             }
         }
-        $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
+        $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation $candidateInstallLocation -DisplayName $candidateDisplayName
         if (-not [string]::IsNullOrWhiteSpace([string]$installedArchitecture)) {
             $evidence.Architecture = [string]$installedArchitecture
         }
