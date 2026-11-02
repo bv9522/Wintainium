@@ -556,5 +556,75 @@ Describe 'Windows installed-application reconciliation plugin' {
         @($result.Candidates[0].IdentityEvidence) | Should -Contain 'CandidateNameIsPublisherOnly'
     }
 
+
+    It 'exposes each identity score contribution and the confidence thresholds' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='AMD'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='AMD Settings'; DisplayName='AMD Settings'
+                DisplayVersion='2026.0423'; Publisher='Advanced Micro Devices, Inc.'
+                InstallLocation='C:\\Program Files\\AMD Settings'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='AMD'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $candidate = $result.Candidates[0]
+        $candidate.IdentityScore | Should -Be 39
+        $candidate.IdentityScoreThreshold | Should -Be 70
+        $candidate.IdentitySeparationThreshold | Should -Be 15
+        $candidate.IdentityRunnerUpScore | Should -Be 0
+        $candidate.IdentityScoreMargin | Should -Be 39
+        @($candidate.IdentityScoreBreakdown | ForEach-Object Factor) | Should -Contain 'NameIdentity'
+        @($candidate.IdentityScoreBreakdown | ForEach-Object Factor) | Should -Contain 'InstallLocationNameCorroborated'
+        @($candidate.IdentityScoreBreakdown | ForEach-Object Factor) | Should -Contain 'DisplayNameAndSubKeyConsistent'
+        (@($candidate.IdentityScoreBreakdown | Measure-Object -Property Points -Sum).Sum) | Should -Be 39
+    }
+
+    It 'includes score, threshold, margin, and factor breakdown in review diagnostics' {
+        $request = [pscustomobject]@{
+            OperationId='00000000-0000-0000-0000-00000000020A'
+            ApplicationId='example.application'
+            Manifest=$script:baseManifest
+        }
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{
+                    IsSuccessful=$true
+                    Candidates=@([pscustomobject]@{
+                        Scope='machine'; View='64'; SubKey='AMD Settings'; DisplayName='AMD Settings'
+                        IdentityScore=39; IdentityConfidence='ReviewOnly'
+                        IdentityScoreThreshold=70; IdentityRunnerUpScore=0
+                        IdentityScoreMargin=39; IdentitySeparationThreshold=15
+                        IdentityScoreBreakdown=@([pscustomobject]@{Factor='NameIdentity';Points=26},[pscustomobject]@{Factor='DisplayNameAndSubKeyConsistent';Points=5},[pscustomobject]@{Factor='InstallLocationNameCorroborated';Points=8})
+                        IdentityEvidence=@('SharedMeaningfulNameTokens')
+                    })
+                    Errors=@()
+                }
+            }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $warning = @($result.Warnings | Where-Object Code -eq 'WindowsReconciliationIdentityRequiresConfirmation')[0]
+        $warning.IdentityScore | Should -Be 39
+        $warning.IdentityScoreThreshold | Should -Be 70
+        $warning.IdentityRunnerUpScore | Should -Be 0
+        $warning.IdentityScoreMargin | Should -Be 39
+        $warning.IdentitySeparationThreshold | Should -Be 15
+        @($warning.IdentityScoreBreakdown).Count | Should -Be 3
+    }
+
 }
 
