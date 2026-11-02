@@ -27,6 +27,19 @@ Describe 'Wintainium install diagnostic trace' {
                     FailureStage = 'Parsing'
                 }
             }
+            $sidecarEvent = [pscustomobject]@{
+                OperationId = $operationId
+                Severity = 'Information'
+                Component = 'OfficialDownloadPageProvider'
+                EventName = 'AdjacentSha256SidecarResolutionCompleted'
+                Message = 'Conditional adjacent SHA-256 sidecar discovery completed.'
+                Context = @{
+                    AttemptedCount = 3
+                    ResolvedCount = 3
+                    RejectedCount = 0
+                    UnavailableCount = 0
+                }
+            }
             $releaseResult = [pscustomobject]@{
                 OperationId = $operationId
                 IsSuccessful = $true
@@ -35,7 +48,7 @@ Describe 'Wintainium install diagnostic trace' {
                 Releases = @()
                 Errors = @()
                 Warnings = @()
-                LogEvents = @($providerEvent)
+                LogEvents = @($providerEvent, $sidecarEvent)
             }
             $decisionResult = [pscustomobject]@{
                 OperationId = $operationId
@@ -68,9 +81,12 @@ Describe 'Wintainium install diagnostic trace' {
             $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
             $trace = @($result.TroubleshootingDiagnostics | Where-Object Code -eq 'InstallDiagnostic.ReleaseDiscoveryTrace')
 
-            $trace.Count | Should -Be 1
+            $trace.Count | Should -Be 2
             $trace[0].Message | Should -Match 'NoReleaseSectionCandidates'
             $trace[0].Message | Should -Match 'SectionCandidateCount=0'
+            $trace[1].Message | Should -Match 'AdjacentSha256SidecarResolutionCompleted'
+            $trace[1].Message | Should -Match 'AttemptedCount=3'
+            $trace[1].Message | Should -Match 'ResolvedCount=3'
             $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
             $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
             $result.Stages[1].Reason | Should -Be 'No discovered release has a selectable artifact for this machine.'
