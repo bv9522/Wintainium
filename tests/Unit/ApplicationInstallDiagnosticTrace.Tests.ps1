@@ -233,6 +233,9 @@ Describe 'Wintainium install diagnostic trace' {
                 Algorithm = 'SHA256'
                 ExpectedHash = $expectedHash
                 ActualHash = $actualHash
+                ArtifactFileName = 'vlc-3.0.24-win64.exe'
+                DownloadedFileName = 'vlc-3.0.24-win64.exe'
+                DownloadedFileLength = 12345678
                 DestinationPath = $destinationPath
                 ErrorMessage = 'The downloaded artifact hash does not match the declared SHA256 verification evidence.'
                 Errors = @()
@@ -264,6 +267,8 @@ Describe 'Wintainium install diagnostic trace' {
             $diagnostic.Count | Should -Be 1
             $diagnostic[0].Message | Should -Match ([regex]::Escape($expectedHash))
             $diagnostic[0].Message | Should -Match ([regex]::Escape($actualHash))
+            $diagnostic[0].Message | Should -Match ([regex]::Escape('vlc-3.0.24-win64.exe'))
+            $diagnostic[0].Message | Should -Match 'downloaded bytes 12345678'
             $diagnostic[0].Message | Should -Match ([regex]::Escape($destinationPath))
             $result.Error.Code | Should -Be 'HashMismatch'
         }
