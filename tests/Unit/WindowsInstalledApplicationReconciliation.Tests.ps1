@@ -446,7 +446,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
             Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Homepage='https://example.com/product'
         } {
-            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationHomepage $Homepage
         }
 
         $result.Candidates.Count | Should -Be 2
