@@ -1085,6 +1085,14 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
         $event.Context.AttemptedCount | Should -Be 1
         $event.Context.ResolvedCount | Should -Be 1
+        @($event.Context.ArtifactResults).Count | Should -Be 1
+        $event.Context.ArtifactResults[0].ArtifactFileName | Should -Be 'player-1.2.3-x64.exe'
+        $event.Context.ArtifactResults[0].Status | Should -Be 'Resolved'
+        $event.Context.ArtifactResults[0].SidecarUrl | Should -Be 'https://downloads.example.test/player-1.2.3-x64.exe.sha256'
+        $event.Context.ArtifactResults[0].Digest | Should -Be $digest.ToUpperInvariant()
+        $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
+        $parseEvent.Message | Should -Match 'player-1.2.3-x64.exe: Resolved'
+        $parseEvent.Message | Should -Match ([regex]::Escape($digest.ToUpperInvariant()))
     }
 
     It 'extracts a labelled digest from a publisher HTML checksum landing page' {
