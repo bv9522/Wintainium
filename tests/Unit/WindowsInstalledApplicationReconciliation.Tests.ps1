@@ -875,5 +875,32 @@ Describe 'Windows installed-application reconciliation plugin' {
         $result | Should -BeNullOrEmpty
     }
 
+
+    It 'requires the WindowsInstaller registration marker for a direct ProductCode match' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Unrelated Product' })
+            }
+            windowsInstaller = [pscustomobject]@{ productCodes=@('{90160000-0011-0000-0000-0000000FF1CE}') }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='{90160000-0011-0000-0000-0000000FF1CE}'
+                DisplayName='Another Product'; Publisher='Example Publisher'; WindowsInstaller='0'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='Unrelated Product'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $result.Candidates.Count | Should -Be 0
+    }
+
 }
 
