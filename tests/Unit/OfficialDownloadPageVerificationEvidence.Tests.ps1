@@ -263,6 +263,10 @@ Describe 'Official download page verification evidence discovery' {
             }
         }
 
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            param($Uri)
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]$Uri; ContentType='text/html'; Content='<html><body><p>SHA256: ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789</p><a href="https://mirror.example.net/releases/app-1.0.0.exe">Download mirror</a></body></html>'; IsContentTooLarge=$false; ErrorType=$null }
+        }
         $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
             OperationId = [guid]::NewGuid().ToString()
             Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
@@ -297,6 +301,10 @@ Describe 'Official download page verification evidence discovery' {
             }
         }
 
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            param($Uri)
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]$Uri; ContentType='text/html'; Content='<html><body>SHA256: ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789<a href="https://mirror.example.net/other-file.exe">Download</a></body></html>'; IsContentTooLarge=$false; ErrorType=$null }
+        }
         $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
             OperationId = [guid]::NewGuid().ToString()
             Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
@@ -328,6 +336,10 @@ Describe 'Official download page verification evidence discovery' {
             }
         }
 
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            param($Uri)
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]$Uri; ContentType='text/html'; Content='<html><body>SHA256: ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789<p>SHA-256 checksum: 1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF</p><a href="https://mirror.example.net/app-1.0.0.exe">Download</a></body></html>'; IsContentTooLarge=$false; ErrorType=$null }
+        }
         $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
             OperationId = [guid]::NewGuid().ToString()
             Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
@@ -361,6 +373,10 @@ Describe 'Official download page verification evidence discovery' {
             }
         }
 
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            param($Uri)
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]'https://downloads.example.com/landing/app-1.0.0.exe'; ContentType='text/html'; Content='<html><body>SHA256: ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789<a href="https://mirror.example.net/app-1.0.0.exe">Download</a></body></html>'; IsContentTooLarge=$false; ErrorType=$null }
+        }
         $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
             OperationId = [guid]::NewGuid().ToString()
             Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
