@@ -1237,3 +1237,42 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted').Count | Should -Be 0
     }
 }
+
+
+    It 'limits sidecar requests to artifacts in the highest parsed release' {
+        $digest = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        Mock Invoke-WebRequest {
+            param($Method, $Uri, $MaximumRedirection, $TimeoutSec, $ErrorAction)
+            if ([string]$Uri -like '*.sha256') {
+                if ([string]$Uri -match 'old-player') {
+                    throw 'Historical release sidecars must not be requested.'
+                }
+                return [pscustomobject]@{
+                    Content = $digest
+                    Headers = @{ 'Content-Type' = 'text/plain' }
+                    StatusCode = 200
+                    BaseResponse = [pscustomobject]@{ ResponseUri = [Uri][string]$Uri }
+                }
+            }
+            [pscustomobject]@{
+                Content = '<html><body><h2>Example 1.0.0</h2><a href="https://downloads.example.test/old-player-1.0.0-x64.exe">Old x64 installer</a><h2>Example 2.0.0</h2><a href="https://downloads.example.test/new-player-2.0.0-x64.exe">Current x64 installer</a></body></html>'
+                Headers = @{ 'Content-Type' = 'text/html' }
+                StatusCode = 200
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
+            }
+        }
+
+        $result = Invoke-WintainiumProviderReleaseDiscovery -Request ([pscustomobject]@{
+            OperationId = 'sidecar-current-release-only'
+            Settings = [pscustomobject]@{ pageUri = 'https://example.test/downloads' }
+        })
+
+        @($result.Releases).Count | Should -Be 2
+        $oldArtifact = @($result.Releases | Where-Object Version -eq '1.0.0')[0].Artifacts[0]
+        $currentArtifact = @($result.Releases | Where-Object Version -eq '2.0.0')[0].Artifacts[0]
+        @($oldArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
+        @($currentArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
+        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event.Context.AttemptedCount | Should -Be 1
+        $event.Context.ResolvedCount | Should -Be 1
+    }
