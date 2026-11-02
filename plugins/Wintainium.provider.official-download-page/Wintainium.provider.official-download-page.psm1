@@ -1368,7 +1368,17 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             '{0} [URI basename: {1}]' -f $parsedArtifactFileNames[$artifactIndex], $parsedArtifactUriFileNames[$artifactIndex]
         }
     ) -join '; '
-    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s). Checksum claims: [{3}]. Parsed artifacts: [{4}].' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount, $claimSummary, $artifactSummary
+    $sidecarSummary = @($adjacentSidecarDiagnostics | ForEach-Object {
+        $parts = [System.Collections.Generic.List[string]]::new()
+        $parts.Add(('{0}: {1}' -f $_.ArtifactFileName, $_.Status))
+        if ($null -ne $_.HttpStatusCode) { $parts.Add(('HTTP {0}' -f $_.HttpStatusCode)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.SidecarUrl)) { $parts.Add(('sidecar {0}' -f $_.SidecarUrl)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.FinalUrl) -and $_.FinalUrl -cne $_.SidecarUrl) { $parts.Add(('final {0}' -f $_.FinalUrl)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.ContentType)) { $parts.Add(('content type {0}' -f $_.ContentType)) }
+        if (-not [string]::IsNullOrWhiteSpace([string]$_.Digest)) { $parts.Add(('SHA256 {0}' -f $_.Digest)) }
+        $parts -join ', '
+    }) -join '; '
+    $parseMessage = 'Official download page parsing completed. SHA256 evidence: {0} page claim(s), {1} artifact(s) with evidence, {2} attached claim(s). Checksum claims: [{3}]. Parsed artifacts: [{4}]. Adjacent sidecars: [{5}].' -f $pageSha256ClaimCount, $artifactsWithSha256EvidenceCount, $attachedSha256EvidenceCount, $claimSummary, $artifactSummary, $sidecarSummary
     $parseEvent = New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ReleaseDiscoveryParsingCompleted' -Message $parseMessage -Context $traceContext -Severity $traceSeverity
     $logEvents.Add($parseEvent)
 
