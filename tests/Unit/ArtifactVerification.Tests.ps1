@@ -18,6 +18,9 @@ Describe 'Wintainium artifact verification' {
         $result.Algorithm | Should -Be 'SHA256'
         $result.ExpectedHash | Should -Be $result.ActualHash
         $result.OperationId | Should -Be 'operation-1'
+        $result.ArtifactFileName | Should -Be 'app.msi'
+        $result.DownloadedFileName | Should -Be 'artifact.bin'
+        $result.DownloadedFileLength | Should -Be ([IO.FileInfo]$path).Length
     }
 
     It 'preserves an explicitly supplied OperationId' {
@@ -34,6 +37,9 @@ Describe 'Wintainium artifact verification' {
         $result.Algorithm | Should -Be 'SHA256'
         $result.ExpectedHash | Should -Be ('0' * 64)
         $result.ActualHash | Should -Be $hash
+        $result.ArtifactFileName | Should -Be 'app.msi'
+        $result.DownloadedFileName | Should -Be 'artifact.bin'
+        $result.DownloadedFileLength | Should -Be ([IO.FileInfo]$path).Length
     }
 
     It 'rejects a download that did not complete' {
