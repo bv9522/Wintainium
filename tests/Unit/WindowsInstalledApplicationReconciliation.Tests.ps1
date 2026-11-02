@@ -438,13 +438,13 @@ Describe 'Windows installed-application reconciliation plugin' {
         $reader = {
             param($location)
             @(
-                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; Publisher='Acme Corp'; InstallLocation='C:\Program Files\Acme' },
+                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; Publisher='Example Vendor'; InstallLocation='C:\Program Files\Acme' },
                 [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Equalizer'; DisplayName='Equalizer'; InstallLocation='C:\Program Files\Equalizer' }
             )
         }
 
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
-            Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Publisher='Acme Corp'
+            Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Publisher='Example Vendor'
         } {
             Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
         }
