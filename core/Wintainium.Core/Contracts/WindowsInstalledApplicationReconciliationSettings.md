@@ -33,7 +33,6 @@ The reconciler observes Windows state only. It does not discover releases, compa
 
 The plugin-specific settings object is:
 
-
 ```json
 {
   "registry": {
@@ -127,6 +126,23 @@ When a candidate has a safely located executable under its registered installati
 The executable's product name matching the registered display name and company name matching the manifest publisher are corroborating signals. A signature contributes trusted-publisher evidence only when Authenticode reports `Valid` and the certificate's simple signer name matches the manifest publisher. Missing, invalid, unavailable, or mismatched signatures never receive trusted-signature points. Executable metadata is evidence about the registry candidate; it does not independently establish that an arbitrary file elsewhere on the machine is the application.
 
 The fallback identity diagnostics expose the aggregate score, per-factor score contributions, confidence threshold, runner-up score, score margin, and required separation. The initial probabilistic thresholds remain 70 points and a 15-point lead. These values are deliberately held constant until representative test results justify calibration. Exact configured MSI ProductCode matches use a separate direct-identity path and do not rely on the probabilistic score.
+
+The current probabilistic score is intentionally explainable. Its name-identity base is the strongest applicable name signal, not a sum of every name comparison:
+
+| Signal | Current points |
+| --- | ---: |
+| Normalized display name exact | 100 |
+| Normalized registry subkey exact | 95 |
+| Primary product phrase exact in display name | 90 |
+| Primary product phrase exact in subkey | 88 |
+| Display-name meaningful tokens contained in primary phrase | 52 + 26 × token coverage |
+| Subkey meaningful tokens contained in primary phrase | 49 + 24 × token coverage |
+| Shared meaningful tokens | 18 + 8 per overlap, capped at 42 |
+
+Corroborating contributions are publisher +18, installation-folder name +8, display-name/subkey consistency +5, publisher website host +12, display-icon executable name +5, uninstall-command name +5, executable product name matching the registered name +15, executable company matching the manifest publisher +10, and a valid Authenticode signature from that publisher +25. A publisher-only candidate-name penalty subtracts 35. Positive contributions are capped at 100; the breakdown records the actual contribution after the cap, so a corroborating factor may show zero when the score is already saturated.
+
+A candidate's score margin is its score minus its strongest alternative. The winning candidate must reach 70 and lead by at least 15 points. Lower-ranked candidates can therefore show a negative margin in diagnostics. A single candidate is compared with a zero-point runner-up. These values describe confidence, not a probability.
+
 
 
 The reconciler reads only the declared uninstall-registration domain. It must not execute commands found in registry values or use those values to trigger installation, removal, or downloads. Release discovery remains owned by the manifest's source provider; identity resolution does not change provider behavior.
