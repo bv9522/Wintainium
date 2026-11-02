@@ -1484,7 +1484,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
         }
     }
     if ($adjacentSidecarAttemptedCount -gt 0) {
-        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'AdjacentSha256SidecarResolutionCompleted' -Message 'Conditional adjacent SHA-256 sidecar discovery completed.' -Context @{
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'ArtifactSha256EvidenceResolutionCompleted' -Message 'Conditional artifact SHA-256 evidence discovery completed.' -Context @{
             AttemptedCount = $adjacentSidecarAttemptedCount
             ResolvedCount = $adjacentSidecarResolvedCount
             RejectedCount = $adjacentSidecarRejectedCount
