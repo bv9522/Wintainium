@@ -626,5 +626,91 @@ Describe 'Windows installed-application reconciliation plugin' {
         @($warning.IdentityScoreBreakdown).Count | Should -Be 3
     }
 
+
+    It 'uses matching executable product metadata and a valid publisher signature as independent corroboration' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='VLC for Windows'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='VLC media player'; DisplayName='VLC media player'
+                DisplayVersion='3.0.23'; Publisher='VideoLAN'; InstallLocation='C:\\Program Files\\VideoLAN\\VLC'
+                DisplayIcon='C:\\Program Files\\VideoLAN\\VLC\\vlc.exe,0'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='VLC for Windows'; Publisher='VideoLAN'; Homepage='https://www.videolan.org/vlc/'
+        } {
+            Mock -CommandName Get-WintainiumWindowsExecutableIdentityEvidence -MockWith {
+                [pscustomobject]@{
+                    Path='C:\\Program Files\\VideoLAN\\VLC\\vlc.exe'
+                    ProductName='VLC media player'
+                    CompanyName='VideoLAN'
+                    OriginalFilename='vlc.exe'
+                    SignatureStatus='Valid'
+                    SignerName='VideoLAN'
+                    ProductMatchesRegistration=$true
+                    CompanyMatchesPublisher=$true
+                    TrustedPublisherSignature=$true
+                }
+            }
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher -ApplicationHomepage $Homepage
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $candidate = $result.Candidates[0]
+        $candidate.IdentityConfidence | Should -Be 'Strong'
+        $candidate.IdentityScore | Should -BeGreaterOrEqual 70
+        @($candidate.IdentityEvidence) | Should -Contain 'ExecutableProductNameMatchesRegisteredName'
+        @($candidate.IdentityEvidence) | Should -Contain 'ExecutableCompanyNameCorroborated'
+        @($candidate.IdentityEvidence) | Should -Contain 'AuthenticodePublisherSignatureValid'
+        $candidate.ExecutableIdentityEvidence.SignatureStatus | Should -Be 'Valid'
+        @($candidate.IdentityScoreBreakdown | ForEach-Object Factor) | Should -Contain 'AuthenticodePublisherSignatureValid'
+    }
+
+    It 'does not award trusted-signature points for an invalid or mismatched publisher signature' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='VLC for Windows'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='VLC media player'; DisplayName='VLC media player'
+                Publisher='VideoLAN'; InstallLocation='C:\\Program Files\\VideoLAN\\VLC'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='VLC for Windows'; Publisher='VideoLAN'
+        } {
+            Mock -CommandName Get-WintainiumWindowsExecutableIdentityEvidence -MockWith {
+                [pscustomobject]@{
+                    ProductMatchesRegistration=$true
+                    CompanyMatchesPublisher=$false
+                    TrustedPublisherSignature=$false
+                    SignatureStatus='HashMismatch'
+                    SignerName='Unrelated Publisher'
+                }
+            }
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
+        }
+
+        $candidate = $result.Candidates[0]
+        @($candidate.IdentityEvidence) | Should -Contain 'ExecutableProductNameMatchesRegisteredName'
+        @($candidate.IdentityEvidence) | Should -Not -Contain 'ExecutableCompanyNameCorroborated'
+        @($candidate.IdentityEvidence) | Should -Not -Contain 'AuthenticodePublisherSignatureValid'
+        $candidate.IdentityScore | Should -BeLessThan 70
+    }
+
 }
 
