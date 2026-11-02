@@ -219,8 +219,14 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     $hashAlgorithm = if ([string]::IsNullOrWhiteSpace($algorithm)) { 'SHA256' } else { $algorithm.ToUpperInvariant() }
                     $parts.Add("expected $hashAlgorithm $(if ([string]::IsNullOrWhiteSpace($expected)) { 'not available' } else { $expected })")
                     $parts.Add("actual $hashAlgorithm $(if ([string]::IsNullOrWhiteSpace($actual)) { 'not available' } else { $actual })")
+                    $artifactFileName = if ($result.PSObject.Properties['ArtifactFileName']) { [string]$result.ArtifactFileName } else { $null }
+                    $downloadedFileName = if ($result.PSObject.Properties['DownloadedFileName']) { [string]$result.DownloadedFileName } else { $null }
+                    $downloadedFileLength = if ($result.PSObject.Properties['DownloadedFileLength'] -and $null -ne $result.DownloadedFileLength) { [long]$result.DownloadedFileLength } else { $null }
+                    if (-not [string]::IsNullOrWhiteSpace($artifactFileName)) { $parts.Add("selected artifact '$artifactFileName'") }
+                    if (-not [string]::IsNullOrWhiteSpace($downloadedFileName)) { $parts.Add("downloaded filename '$downloadedFileName'") }
+                    if ($null -ne $downloadedFileLength) { $parts.Add("downloaded bytes $downloadedFileLength") }
                     $destinationPath = if ($result.PSObject.Properties['DestinationPath']) { [string]$result.DestinationPath } else { $null }
-                    if (-not [string]::IsNullOrWhiteSpace($destinationPath)) { $parts.Add("downloaded file '$destinationPath'") }
+                    if (-not [string]::IsNullOrWhiteSpace($destinationPath)) { $parts.Add("download destination '$destinationPath'") }
                     $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.Verification'; Message="Verification: $($parts -join '; ')." })
                     if ($result.PSObject.Properties['ArchitectureRiskDecision'] -and -not [string]::IsNullOrWhiteSpace([string]$result.ArchitectureRiskDecision)) {
                         $riskArtifact = if ($result.PSObject.Properties['ArchitectureRiskArtifact']) { [string]$result.ArchitectureRiskArtifact } else { 'selected artifact' }
