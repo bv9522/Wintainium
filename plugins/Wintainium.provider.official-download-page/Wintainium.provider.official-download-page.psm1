@@ -318,27 +318,40 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
             $expectedChecksumName = $ArtifactFileName + '.sha256'
             if ([string]::Equals([IO.Path]::GetFileName($linkedUri.AbsolutePath), $expectedChecksumName, [StringComparison]::OrdinalIgnoreCase)) { $checksumLinks.Add($linkedUri) }
         }
-        if ($checksumLinks.Count -gt 1) { $result.Status = 'RejectedAmbiguousChecksumLink'; return $result }
-        if ($checksumLinks.Count -eq 1) {
-            $linkedResponse = Get-OfficialDownloadPageBoundedChecksumResponse -Uri $checksumLinks[0]
-            if ($null -eq $linkedResponse -or $null -eq $linkedResponse.StatusCode -or $linkedResponse.StatusCode -lt 200 -or $linkedResponse.StatusCode -ge 300) { $result.Status = 'Unavailable'; return $result }
-            if ($linkedResponse.IsContentTooLarge) { $result.Status = 'RejectedContentTooLarge'; return $result }
-            $linkedFinalUri = $null
-            if ($null -ne $linkedResponse.FinalUri) { try { $linkedFinalUri = [Uri]$linkedResponse.FinalUri } catch {} }
-            $expectedChecksumName = $ArtifactFileName + '.sha256'
-            if ($null -eq $linkedFinalUri -or -not $linkedFinalUri.IsAbsoluteUri -or $linkedFinalUri.Scheme -ine 'https' -or -not [string]::IsNullOrWhiteSpace($linkedFinalUri.UserInfo) -or -not [string]::Equals([IO.Path]::GetFileName($linkedFinalUri.AbsolutePath), $expectedChecksumName, [StringComparison]::OrdinalIgnoreCase)) { $result.Status = 'RejectedRedirect'; return $result }
-            $linkedBody = [string]$linkedResponse.Content
-            if ([string]::IsNullOrWhiteSpace($linkedBody) -or $linkedBody.Length -gt 65536) { $result.Status = 'RejectedContent'; return $result }
-            $plainLinkedSidecar = [regex]::Match($linkedBody.Trim(), '^([0-9a-f]{64})(?:\s+\*?(.+))?$', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
-            if (-not $plainLinkedSidecar.Success) { $result.Status = 'RejectedDigest'; return $result }
-            if ($plainLinkedSidecar.Groups[2].Success) {
-                $declaredName = [IO.Path]::GetFileName($plainLinkedSidecar.Groups[2].Value.Trim())
-                if (-not [string]::Equals($declaredName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) { $result.Status = 'RejectedFilename'; return $result }
+        if ($checksumLinks.Count -gt 0) {
+            # Publishers commonly expose the same checksum file on multiple mirrors.
+            # Each candidate is independently bound to the exact artifact filename;
+            # accept the mirror set only when every reachable response agrees.
+            $resolvedChecksums = [System.Collections.Generic.List[object]]::new()
+            foreach ($checksumLink in $checksumLinks) {
+                $linkedResponse = Get-OfficialDownloadPageBoundedChecksumResponse -Uri $checksumLink
+                if ($null -eq $linkedResponse -or $null -eq $linkedResponse.StatusCode -or $linkedResponse.StatusCode -lt 200 -or $linkedResponse.StatusCode -ge 300) { continue }
+                if ($linkedResponse.IsContentTooLarge) { $result.Status = 'RejectedContentTooLarge'; return $result }
+                $linkedFinalUri = $null
+                if ($null -ne $linkedResponse.FinalUri) { try { $linkedFinalUri = [Uri]$linkedResponse.FinalUri } catch {} }
+                $expectedChecksumName = $ArtifactFileName + '.sha256'
+                if ($null -eq $linkedFinalUri -or -not $linkedFinalUri.IsAbsoluteUri -or $linkedFinalUri.Scheme -ine 'https' -or -not [string]::IsNullOrWhiteSpace($linkedFinalUri.UserInfo) -or -not [string]::Equals([IO.Path]::GetFileName($linkedFinalUri.AbsolutePath), $expectedChecksumName, [StringComparison]::OrdinalIgnoreCase)) { $result.Status = 'RejectedRedirect'; return $result }
+                $linkedBody = [string]$linkedResponse.Content
+                if ([string]::IsNullOrWhiteSpace($linkedBody) -or $linkedBody.Length -gt 65536) { $result.Status = 'RejectedContent'; return $result }
+                $plainLinkedSidecar = [regex]::Match($linkedBody.Trim(), '^([0-9a-f]{64})(?:\s+\*?(.+))?$', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                if (-not $plainLinkedSidecar.Success) { $result.Status = 'RejectedDigest'; return $result }
+                if ($plainLinkedSidecar.Groups[2].Success) {
+                    $declaredName = [IO.Path]::GetFileName($plainLinkedSidecar.Groups[2].Value.Trim())
+                    if (-not [string]::Equals($declaredName, $ArtifactFileName, [StringComparison]::OrdinalIgnoreCase)) { $result.Status = 'RejectedFilename'; return $result }
+                }
+                $resolvedChecksums.Add([pscustomobject]@{
+                    Digest = $plainLinkedSidecar.Groups[1].Value.ToUpperInvariant()
+                    FinalUri = $linkedFinalUri
+                    ContentType = [string]$linkedResponse.ContentType
+                })
             }
-            $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $linkedFinalUri
-            $result.ContentType = [string]$linkedResponse.ContentType
+            if ($resolvedChecksums.Count -eq 0) { $result.Status = 'Unavailable'; return $result }
+            $distinctDigests = @($resolvedChecksums | ForEach-Object { $_.Digest } | Select-Object -Unique)
+            if ($distinctDigests.Count -ne 1) { $result.Status = 'RejectedAmbiguousChecksumLink'; return $result }
+            $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $resolvedChecksums[0].FinalUri
+            $result.ContentType = $resolvedChecksums[0].ContentType
             $result.Status = 'Resolved'
-            $result.Evidence = [pscustomobject][ordered]@{ Algorithm = 'SHA256'; Value = $plainLinkedSidecar.Groups[1].Value.ToUpperInvariant(); Source = 'OfficialDownloadPageLinkedChecksumSidecar' }
+            $result.Evidence = [pscustomobject][ordered]@{ Algorithm = 'SHA256'; Value = $distinctDigests[0]; Source = 'OfficialDownloadPageLinkedChecksumSidecar' }
             return $result
         }
         $checksumText = ConvertFrom-OfficialDownloadPageHtmlText $body
