@@ -1276,6 +1276,17 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             $artifactUri = $null
             if (-not [Uri]::TryCreate([string]$parsedArtifact.Uri, [UriKind]::Absolute, [ref]$artifactUri)) {
                 $adjacentSidecarRejectedCount++
+                $adjacentSidecarDiagnostics.Add([pscustomobject][ordered]@{
+                    ArtifactFileName = [string]$parsedArtifact.FileName
+                    Status = 'RejectedArtifactUri'
+                    SidecarUrl = $null
+                    FinalUrl = $null
+                    HttpStatusCode = $null
+                    ContentType = $null
+                    Algorithm = $null
+                    Digest = $null
+                    EvidenceSource = $null
+                })
                 continue
             }
 
