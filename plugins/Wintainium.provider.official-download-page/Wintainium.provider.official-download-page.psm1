@@ -274,7 +274,7 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
         # An HTML response is a landing page, not a conventional checksum file.
         # Require the visible page text to identify this exact artifact before
         # treating its labelled digest as evidence for that artifact.
-        $artifactNamePattern = '(?i)(?<![a-z0-9_.-])' + [regex]::Escape($ArtifactFileName) + '(?![a-z0-9_.-])'
+        $artifactNamePattern = '(?i)(?<![a-z0-9_.-])' + [regex]::Escape($ArtifactFileName) + '(?![a-z0-9_-]|\.[a-z0-9_-])'
         if ([string]$checksumText -notmatch $artifactNamePattern) {
             $result.Status = 'RejectedFilename'
             return $result
