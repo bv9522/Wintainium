@@ -169,7 +169,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                         if (-not [string]::IsNullOrWhiteSpace([string]$traceEvent.Message)) { $traceParts.Add(([string]$traceEvent.Message).Trim().TrimEnd('.', ';', ' ')) }
                         $context = $traceEvent.Context
                         if ($null -ne $context) {
-                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','AttemptedCount','ResolvedCount','RejectedCount','UnavailableCount','DurationMilliseconds','ExceptionType')) {
+                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','AttemptedCount','ResolvedCount','RejectedCount','UnavailableCount','ArtifactEndpointAttemptedCount','ArtifactEndpointResolvedCount','ArtifactEndpointRejectedCount','ArtifactEndpointUnavailableCount','DurationMilliseconds','ExceptionType')) {
                                 $value = if ($context -is [System.Collections.IDictionary] -and $context.Contains($key)) { [string]$context[$key] } elseif ($null -ne $context.PSObject.Properties[$key]) { [string]$context.$key } else { $null }
                                 if (-not [string]::IsNullOrWhiteSpace($value)) { $traceParts.Add($key + '=' + $value) }
                             }
