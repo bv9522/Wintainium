@@ -613,7 +613,8 @@ Describe 'Official download page verification evidence discovery' {
         @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
     }
 
-    It 'rejects ambiguous HTML sidecar pages that link multiple checksum files for the same artifact' {
+    It 'accepts multiple publisher checksum mirrors when every returned digest agrees' {
+        $digest = '2A9E62747A5E67BA80ACFAEB6924E1CEE0B128BDAC46E6D6D206EC1A2CE96CED'
         Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
             param($Method, $Uri)
             $content = if ($Uri -eq 'https://example.com/download/') {
@@ -629,7 +630,59 @@ Describe 'Official download page verification evidence discovery' {
             }
         }
         Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedChecksumResponse {
-            throw 'Ambiguous checksum links must not be fetched.'
+            param($Uri)
+            [pscustomobject]@{
+                StatusCode = 200
+                FinalUri = $Uri
+                ContentType = 'application/octet-stream'
+                Content = $digest + '  app-1.0.exe'
+                IsContentTooLarge = $false
+                ErrorType = $null
+            }
+        }
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]'https://downloads.example.com/app-1.0.exe'; ContentType='application/octet-stream'; Content=$null; IsContentTooLarge=$false; ErrorType=$null }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Releases[0].Artifacts[0].Hashes[0].Value | Should -Be $digest
+        $result.Releases[0].Artifacts[0].Hashes[0].Source | Should -Be 'OfficialDownloadPageLinkedChecksumSidecar'
+        Should -Invoke -CommandName Get-OfficialDownloadPageBoundedChecksumResponse -ModuleName Wintainium.provider.official-download-page -Times 2
+    }
+
+    It 'rejects publisher checksum mirrors when their returned digests disagree' {
+        $digestOne = '2A9E62747A5E67BA80ACFAEB6924E1CEE0B128BDAC46E6D6D206EC1A2CE96CED'
+        $digestTwo = '3A9E62747A5E67BA80ACFAEB6924E1CEE0B128BDAC46E6D6D206EC1A2CE96CED'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -eq 'https://example.com/download/') {
+                '<h2>Release 1.0</h2><a href="https://downloads.example.com/app-1.0.exe">Download</a>'
+            } else {
+                '<html><a href="https://mirror-one.example/app-1.0.exe.sha256">One</a><a href="https://mirror-two.example/app-1.0.exe.sha256">Two</a></html>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedChecksumResponse {
+            param($Uri)
+            $digest = if ($Uri.Host -eq 'mirror-one.example') { $digestOne } else { $digestTwo }
+            [pscustomobject]@{
+                StatusCode = 200
+                FinalUri = $Uri
+                ContentType = 'application/octet-stream'
+                Content = $digest
+                IsContentTooLarge = $false
+                ErrorType = $null
+            }
         }
         Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
             [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]'https://downloads.example.com/app-1.0.exe'; ContentType='application/octet-stream'; Content=$null; IsContentTooLarge=$false; ErrorType=$null }
@@ -642,7 +695,7 @@ Describe 'Official download page verification evidence discovery' {
 
         $result.IsSuccessful | Should -BeTrue
         @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
-        Should -Not -Invoke -CommandName Get-OfficialDownloadPageBoundedChecksumResponse -ModuleName Wintainium.provider.official-download-page
+        Should -Invoke -CommandName Get-OfficialDownloadPageBoundedChecksumResponse -ModuleName Wintainium.provider.official-download-page -Times 2
     }
 
 }
