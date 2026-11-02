@@ -678,7 +678,9 @@ function Invoke-WintainiumReconciliation {
             return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
         }
         $candidate=@($observation.Candidates)[0]
-        $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
+        $candidateEvidenceSource = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.EvidenceSource)) { [string]$candidate.EvidenceSource } else { 'WindowsUninstallRegistry' }
+        $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource=$candidateEvidenceSource;IdentityConfidence=$candidateConfidence}
+        if (-not [string]::IsNullOrWhiteSpace([string]$candidate.MsiProductCode)) { $evidence.MsiProductCode=[string]$candidate.MsiProductCode }
         $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
         $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
         $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName) -RegistryVersion ([string]$candidate.DisplayVersion)
