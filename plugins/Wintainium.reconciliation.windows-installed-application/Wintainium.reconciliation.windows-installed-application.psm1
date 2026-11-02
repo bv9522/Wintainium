@@ -353,13 +353,13 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $evidence.Add('ExecutableProductNameMatchesRegisteredName')
                     $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='ExecutableProductNameMatchesRegisteredName'; Points=($score - $previousScore) })
                 }
-                if ($executableIdentity.CompanyMatchesPublisher) {
+                if ($executableIdentity.ProductMatchesRegistration -and $executableIdentity.CompanyMatchesPublisher) {
                     $previousScore = $score
                     $score = [Math]::Min(100, $score + 10)
                     $evidence.Add('ExecutableCompanyNameCorroborated')
                     $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='ExecutableCompanyNameCorroborated'; Points=($score - $previousScore) })
                 }
-                if ($executableIdentity.TrustedPublisherSignature) {
+                if ($executableIdentity.ProductMatchesRegistration -and $executableIdentity.TrustedPublisherSignature) {
                     $previousScore = $score
                     $score = [Math]::Min(100, $score + 25)
                     $evidence.Add('AuthenticodePublisherSignatureValid')
