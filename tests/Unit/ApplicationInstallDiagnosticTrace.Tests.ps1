@@ -224,7 +224,7 @@ Describe 'Wintainium install diagnostic trace' {
             $operationId = '00000000-0000-0000-0000-000000000206'
             $expectedHash = 'A' * 64
             $actualHash = 'B' * 64
-            $destinationPath = 'C:\\Users\\Test\\AppData\\Local\\Wintainium\\Downloads\\operations\\test\\vlc-3.0.24-win64.exe'
+            $destinationPath = 'C:\Users\Test\AppData\Local\Wintainium\Downloads\operations\test\vlc-3.0.24-win64.exe'
             $verificationResult = [pscustomobject][ordered]@{
                 OperationId = $operationId
                 IsSuccessful = $false
