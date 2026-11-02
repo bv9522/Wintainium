@@ -408,6 +408,7 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
         EndpointUrl = Get-OfficialDownloadPageSafeUri -Uri $ArtifactUri
         FinalUrl = $null
         ContentType = $null
+        ErrorType = $null
     }
 
     # Only concrete HTTPS artifact paths are eligible. Wrapper endpoints and
@@ -429,6 +430,7 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
     }
     $result.HttpStatusCode = $response.StatusCode
     $result.ContentType = [string]$response.ContentType
+    $result.ErrorType = [string]$response.ErrorType
     if ($null -eq $response.StatusCode -or $response.StatusCode -lt 200 -or $response.StatusCode -ge 300) {
         $result.Status = 'Unavailable'
         return $result
@@ -456,7 +458,11 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
         $result.Status = 'RejectedContentType'
         return $result
     }
-    if ($response.IsContentTooLarge -or [string]::IsNullOrWhiteSpace([string]$response.Content)) {
+    if ($response.IsContentTooLarge) {
+        $result.Status = 'RejectedContentTooLarge'
+        return $result
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$response.Content)) {
         $result.Status = 'RejectedContent'
         return $result
     }
@@ -1526,6 +1532,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
                 ArtifactEndpointFinalUrl = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.FinalUrl } else { $null }
                 ArtifactEndpointHttpStatusCode = if ($null -ne $artifactEndpointResult) { $artifactEndpointResult.HttpStatusCode } else { $null }
                 ArtifactEndpointContentType = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.ContentType } else { $null }
+                ArtifactEndpointErrorType = if ($null -ne $artifactEndpointResult) { [string]$artifactEndpointResult.ErrorType } else { $null }
             })
         }
     }
