@@ -128,7 +128,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
         if ($null -eq $traceStageResult -or -not $traceStageResult.PSObject.Properties['LogEvents'] -or $null -eq $traceStageResult.LogEvents) { continue }
         foreach ($traceCandidate in @($traceStageResult.LogEvents)) {
             if ($null -ne $traceCandidate -and $traceCandidate.PSObject.Properties['EventName'] -and
-                $traceCandidate.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted')) {
+                $traceCandidate.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted','ArtifactSha256EvidenceResolutionCompleted')) {
                 $hasReleaseDiscoveryTrace = $true
                 break
             }
@@ -162,7 +162,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     }
                     foreach ($traceEvent in @($providerLogEvents | Where-Object {
                         $null -ne $_ -and $_.PSObject.Properties['EventName'] -and
-                            $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted')
+                            $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted','ArtifactSha256EvidenceResolutionCompleted')
                     })) {
                         $traceParts = [System.Collections.Generic.List[string]]::new()
                         $traceParts.Add([string]$traceEvent.EventName)
