@@ -327,6 +327,27 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='UninstallCommandNameCorroborated'; Points=($score - $previousScore) })
                 }
             }
+            $executableIdentity = Get-WintainiumWindowsExecutableIdentityEvidence -Entry $entry -ApplicationPublisher $ApplicationPublisher
+            if ($null -ne $executableIdentity) {
+                if ($executableIdentity.ProductMatchesRegistration) {
+                    $previousScore = $score
+                    $score = [Math]::Min(100, $score + 15)
+                    $evidence.Add('ExecutableProductNameMatchesRegisteredName')
+                    $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='ExecutableProductNameMatchesRegisteredName'; Points=($score - $previousScore) })
+                }
+                if ($executableIdentity.CompanyMatchesPublisher) {
+                    $previousScore = $score
+                    $score = [Math]::Min(100, $score + 10)
+                    $evidence.Add('ExecutableCompanyNameCorroborated')
+                    $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='ExecutableCompanyNameCorroborated'; Points=($score - $previousScore) })
+                }
+                if ($executableIdentity.TrustedPublisherSignature) {
+                    $previousScore = $score
+                    $score = [Math]::Min(100, $score + 25)
+                    $evidence.Add('AuthenticodePublisherSignatureValid')
+                    $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='AuthenticodePublisherSignatureValid'; Points=($score - $previousScore) })
+                }
+            }
             # Apply the vendor-only penalty after all supporting metadata so a
             # publisher's own generic registration cannot win on accumulated fields.
             if ($primaryTokens.Count -gt 1 -and $displayTokens.Count -gt 0 -and
@@ -360,6 +381,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     IdentityConfidence = if ($score -ge 70) { 'Strong' } else { 'ReviewOnly' }
                     IdentityEvidence = @($evidence)
                     IdentityScoreBreakdown = @($scoreBreakdown)
+                    ExecutableIdentityEvidence = $executableIdentity
                     IdentityScoreThreshold = 70
                     IdentitySeparationThreshold = 15
                     IdentityRunnerUpScore = 0
@@ -390,6 +412,613 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     }
 
     [pscustomobject]@{ IsSuccessful=($errors.Count -eq 0); Candidates=@($candidates); Errors=@($errors) }
+}
+
+function Get-WintainiumWindowsExecutableIdentityEvidence {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][object]$Entry,
+        [AllowNull()][string]$ApplicationPublisher
+    )
+
+    $installLocation = [string](Get-WintainiumWindowsSettingValue -Object $Entry -Name 'InstallLocation')
+    if ([string]::IsNullOrWhiteSpace($installLocation) -or
+        -not [System.IO.Path]::IsPathFullyQualified($installLocation) -or
+        -not (Test-Path -LiteralPath $installLocation -PathType Container)) {
+        return $null
+    }
+
+    $installRoot = [System.IO.Path]::GetFullPath($installLocation).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $paths = [System.Collections.Generic.List[string]]::new()
+    $displayIcon = [string](Get-WintainiumWindowsSettingValue -Object $Entry -Name 'DisplayIcon')
+    if ($displayIcon) {
+        $iconPath = ($displayIcon -replace ',\s*-?\d+\s*
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$Version,
+        [AllowNull()] [string]$RegistryVersion
+    )
+
+    # FileVersionInfo may expose numeric version-resource components using
+    # a culture-specific separator. Version identifiers are invariant, so
+    # normalize only strictly numeric, comma-delimited three/four-part values.
+    if ($Version -match '^\s*\d+(?:\s*,\s*\d+){2,3}\s*$') {
+        $Version = [regex]::Replace($Version.Trim(), '\s*,\s*', '.')
+    }
+    # Windows file resources sometimes append a fourth build/revision component
+    # while the publisher's release feed uses three components (for example,
+    # file 1.21.0.207 vs release 1.21.0). When the executable has exactly one
+    # more numeric component than the stale registry version, discard only that
+    # extra component so the values remain comparable.
+    if ($Version -match '^\d+(?:\.\d+){3}$' -and
+        $RegistryVersion -match '^\d+(?:\.\d+){2}$') {
+        return ($Version -split '\.')[0..2] -join '.'
+    }
+
+    return $Version
+}
+
+function Get-WintainiumWindowsExecutableVersion {
+    [CmdletBinding()]
+    param(
+        [AllowNull()] [string]$InstallationLocation,
+        [AllowNull()] [string]$DisplayName,
+        [AllowNull()] [string]$RegistryVersion
+    )
+
+    if ([string]::IsNullOrWhiteSpace($InstallationLocation) -or
+        -not [System.IO.Path]::IsPathFullyQualified($InstallationLocation) -or
+        -not (Test-Path -LiteralPath $InstallationLocation -PathType Container) -or
+        [string]::IsNullOrWhiteSpace($DisplayName)) {
+        return $null
+    }
+
+    # Portable ZIP updates often replace an application's executable without
+    # updating its uninstall-registry DisplayVersion. Use executable metadata
+    # only when its filename unambiguously matches the registered display name
+    # after removing a conventional trailing numeric version suffix.
+    $baseName = [regex]::Replace($DisplayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?$', '').Trim()
+    if ([string]::IsNullOrWhiteSpace($baseName) -or $baseName -match '[\\/:*?"<>|]') {
+        return $null
+    }
+
+    $executablePath = Join-Path -Path ([System.IO.Path]::GetFullPath($InstallationLocation)) -ChildPath ($baseName + '.exe')
+    if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
+        return $null
+    }
+
+    try {
+        $versionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($executablePath)
+        $version = [string]$versionInfo.ProductVersion
+        if ([string]::IsNullOrWhiteSpace($version)) { $version = [string]$versionInfo.FileVersion }
+        if ([string]::IsNullOrWhiteSpace($version)) { return $null }
+
+        $version = ConvertTo-WintainiumComparableExecutableVersion -Version $version -RegistryVersion $RegistryVersion
+        [pscustomobject][ordered]@{ Version=$version; Path=$executablePath }
+    }
+    catch {
+        return $null
+    }
+}
+
+function Invoke-WintainiumReconciliation {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+    $operationId = [string]$Request.OperationId
+    $applicationId = [string]$Request.ApplicationId
+    $base = {
+        param([bool]$successful,[string]$status,[object]$evidence,[object[]]$errors,[object[]]$warnings)
+        [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$successful; Status=$status; Evidence=$evidence; Errors=@($errors); Warnings=@($warnings); LogEvents=@() }
+    }
+    try {
+        if ($null -eq $Request.Manifest) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $reconciliation = $Request.Manifest.Reconciliation
+        $settings = if ($reconciliation -is [System.Collections.IDictionary]) { $reconciliation['settings'] } elseif ($null -ne $reconciliation.PSObject.Properties['settings']) { $reconciliation.settings } else { $null }
+        if ($null -eq $settings) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $applicationName = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'name')
+        $applicationPublisher = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'publisher')
+        $applicationHomepage = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'homepage')
+        $observation = Get-WintainiumWindowsInstalledApplicationCandidates -Settings $settings -ApplicationName $applicationName -ApplicationPublisher $applicationPublisher -ApplicationHomepage $applicationHomepage
+        $warnings = @($observation.Errors | ForEach-Object {
+            [pscustomobject]@{
+                Code = [string]$_.Code
+                Message = [string]$_.Message
+                OperationId = $operationId
+                Scope = if ($_.PSObject.Properties['Scope']) { [string]$_.Scope } else { $null }
+                View = if ($_.PSObject.Properties['View']) { [string]$_.View } else { $null }
+            }
+        })
+        $candidateCount = @($observation.Candidates).Count
+        $registry = Get-WintainiumWindowsSettingValue -Object $settings -Name 'registry'
+        $matchMode = [string](Get-WintainiumWindowsSettingValue -Object $registry -Name 'matchMode')
+        if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
+        $locationCount = @(Get-WintainiumWindowsSettingValue -Object $registry -Name 'locations').Count
+        $readFailureCount = @($observation.Errors | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count
+        if ($candidateCount -eq 0) {
+            $installationState = if ($observation.IsSuccessful) { 'NotInstalled' } else { 'Unknown' }
+            $status = if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }
+            if (-not $observation.IsSuccessful) {
+                $warnings += [pscustomobject]@{
+                    Code = 'WindowsReconciliationEvidenceIncomplete'
+                    Message = 'No matching uninstall registration was found, and one or more registry observations failed. Wintainium cannot safely conclude that the application is not installed.'
+                    OperationId = $operationId
+                    CandidateCount = $candidateCount
+                    MatchMode = $matchMode
+                    RegistryLocationCount = $locationCount
+                    RegistryReadFailureCount = $readFailureCount
+                }
+            }
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=$installationState;EvidenceSource='WindowsUninstallRegistry'}
+            return & $base $true $status $evidence @() $warnings
+        }
+        $firstCandidate = if ($candidateCount -gt 0) { @($observation.Candidates)[0] } else { $null }
+        $candidateConfidence = if ($null -ne $firstCandidate) { [string](Get-WintainiumWindowsSettingValue -Object $firstCandidate -Name 'IdentityConfidence') } else { '' }
+        if ($candidateCount -eq 1 -and $candidateConfidence -eq 'ReviewOnly') {
+            $candidate = $firstCandidate
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityRequiresConfirmation'
+                Message = 'Registry identity evidence is suggestive but does not meet the confidence and separation thresholds required to confirm the installed application.'
+                OperationId = $operationId
+                CandidateCount = 1
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
+                ExecutableIdentityEvidence = $candidate.ExecutableIdentityEvidence
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+            return & $base $true 'Unknown' $evidence @() $warnings
+        }
+        if ($candidateCount -gt 1) {
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
+            $ambiguity=[pscustomobject]@{
+                Code = 'WindowsReconciliationAmbiguous'
+                Message = 'Multiple uninstall registrations matched the configured application identity; Wintainium did not choose one.'
+                OperationId = $operationId
+                CandidateCount = $candidateCount
+                MatchMode = $matchMode
+                RegistryLocationCount = $locationCount
+                RegistryReadFailureCount = $readFailureCount
+                CandidateEvidence = @($observation.Candidates | ForEach-Object {
+                    [pscustomobject]@{
+                        DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'DisplayName')
+                        RegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'SubKey')
+                        IdentityScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScore'
+                        IdentityConfidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityConfidence'
+                        IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreThreshold'
+                        IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityRunnerUpScore'
+                        IdentityScoreMargin = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreMargin'
+                        IdentitySeparationThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentitySeparationThreshold'
+                        IdentityScoreBreakdown = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreBreakdown')
+                        ExecutableIdentityEvidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'ExecutableIdentityEvidence'
+                        IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityEvidence')
+                    }
+                })
+            }
+            return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
+        }
+        $candidate=@($observation.Candidates)[0]
+        $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
+        $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
+        $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
+        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName) -RegistryVersion ([string]$candidate.DisplayVersion)
+        if ($null -ne $executableVersion -and -not [string]::IsNullOrWhiteSpace([string]$executableVersion.Version)) {
+            $version = [string]$executableVersion.Version
+            $versionSource = 'ExecutableFileVersion'
+        }
+        if ($null -ne $version) { $evidence.Version=$version; $evidence.VersionSource=$versionSource }
+        if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
+        if ($candidateConfidence -eq 'Strong' -and $null -ne (Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore')) {
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityResolved'
+                Message = 'Installed-state identity was resolved using layered registry evidence rather than an explicit exact-name predicate.'
+                OperationId = $operationId
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
+                ExecutableIdentityEvidence = $candidate.ExecutableIdentityEvidence
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+        }
+        $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
+        if (-not [string]::IsNullOrWhiteSpace([string]$installedArchitecture)) {
+            $evidence.Architecture = [string]$installedArchitecture
+        }
+        return & $base $true 'Reconciled' ([pscustomobject]$evidence) @() $warnings
+    } catch {
+        return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsInvalid';Message=$_.Exception.Message}) @()
+    }
+}
+
+function Get-WintainiumWindowsExecutableArchitecture {
+    [CmdletBinding()]
+    param(
+        [AllowNull()] [string]$InstallationLocation,
+        [AllowNull()] [string]$DisplayName
+    )
+
+    if ([string]::IsNullOrWhiteSpace($InstallationLocation) -or
+        -not [System.IO.Path]::IsPathFullyQualified($InstallationLocation) -or
+        -not (Test-Path -LiteralPath $InstallationLocation -PathType Container) -or
+        [string]::IsNullOrWhiteSpace($DisplayName)) {
+        return $null
+    }
+
+    # Only inspect an executable whose basename is an exact derivation of the
+    # registered display name. Registry view is not architecture evidence.
+    $baseName = [regex]::Replace($DisplayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?$', '').Trim()
+    if ([string]::IsNullOrWhiteSpace($baseName) -or $baseName -match '[\\/:*?"<>|]') {
+        return $null
+    }
+
+    $executablePath = Join-Path -Path ([System.IO.Path]::GetFullPath($InstallationLocation)) -ChildPath ($baseName + '.exe')
+    if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
+        return $null
+    }
+
+    $stream = $null
+    $reader = $null
+    try {
+        $stream = [System.IO.File]::Open($executablePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        $reader = [System.IO.BinaryReader]::new($stream)
+        if ($stream.Length -lt 64) { return $null }
+        if ($reader.ReadUInt16() -ne 0x5A4D) { return $null }
+        $stream.Position = 0x3C
+        $peOffset = $reader.ReadInt32()
+        if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 6)) { return $null }
+        $stream.Position = $peOffset
+        if ($reader.ReadUInt32() -ne 0x00004550) { return $null }
+        switch ($reader.ReadUInt16()) {
+            0x014c { return 'x86' }
+            0x8664 { return 'x64' }
+            0xAA64 { return 'arm64' }
+            default { return $null }
+        }
+    }
+    catch {
+        return $null
+    }
+    finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        elseif ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
+Export-ModuleMember -Function Invoke-WintainiumReconciliation
+, '').Trim().Trim('"')
+        if ([System.IO.Path]::IsPathFullyQualified($iconPath) -and [System.IO.Path]::GetExtension($iconPath) -ieq '.exe') {
+            $paths.Add($iconPath)
+        }
+    }
+
+    $displayName = [string](Get-WintainiumWindowsSettingValue -Object $Entry -Name 'DisplayName')
+    $baseName = [regex]::Replace($displayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] [ValidateNotNullOrEmpty()] [string]$Version,
+        [AllowNull()] [string]$RegistryVersion
+    )
+
+    # FileVersionInfo may expose numeric version-resource components using
+    # a culture-specific separator. Version identifiers are invariant, so
+    # normalize only strictly numeric, comma-delimited three/four-part values.
+    if ($Version -match '^\s*\d+(?:\s*,\s*\d+){2,3}\s*$') {
+        $Version = [regex]::Replace($Version.Trim(), '\s*,\s*', '.')
+    }
+    # Windows file resources sometimes append a fourth build/revision component
+    # while the publisher's release feed uses three components (for example,
+    # file 1.21.0.207 vs release 1.21.0). When the executable has exactly one
+    # more numeric component than the stale registry version, discard only that
+    # extra component so the values remain comparable.
+    if ($Version -match '^\d+(?:\.\d+){3}$' -and
+        $RegistryVersion -match '^\d+(?:\.\d+){2}$') {
+        return ($Version -split '\.')[0..2] -join '.'
+    }
+
+    return $Version
+}
+
+function Get-WintainiumWindowsExecutableVersion {
+    [CmdletBinding()]
+    param(
+        [AllowNull()] [string]$InstallationLocation,
+        [AllowNull()] [string]$DisplayName,
+        [AllowNull()] [string]$RegistryVersion
+    )
+
+    if ([string]::IsNullOrWhiteSpace($InstallationLocation) -or
+        -not [System.IO.Path]::IsPathFullyQualified($InstallationLocation) -or
+        -not (Test-Path -LiteralPath $InstallationLocation -PathType Container) -or
+        [string]::IsNullOrWhiteSpace($DisplayName)) {
+        return $null
+    }
+
+    # Portable ZIP updates often replace an application's executable without
+    # updating its uninstall-registry DisplayVersion. Use executable metadata
+    # only when its filename unambiguously matches the registered display name
+    # after removing a conventional trailing numeric version suffix.
+    $baseName = [regex]::Replace($DisplayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?$', '').Trim()
+    if ([string]::IsNullOrWhiteSpace($baseName) -or $baseName -match '[\\/:*?"<>|]') {
+        return $null
+    }
+
+    $executablePath = Join-Path -Path ([System.IO.Path]::GetFullPath($InstallationLocation)) -ChildPath ($baseName + '.exe')
+    if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
+        return $null
+    }
+
+    try {
+        $versionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($executablePath)
+        $version = [string]$versionInfo.ProductVersion
+        if ([string]::IsNullOrWhiteSpace($version)) { $version = [string]$versionInfo.FileVersion }
+        if ([string]::IsNullOrWhiteSpace($version)) { return $null }
+
+        $version = ConvertTo-WintainiumComparableExecutableVersion -Version $version -RegistryVersion $RegistryVersion
+        [pscustomobject][ordered]@{ Version=$version; Path=$executablePath }
+    }
+    catch {
+        return $null
+    }
+}
+
+function Invoke-WintainiumReconciliation {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Request)
+    $operationId = [string]$Request.OperationId
+    $applicationId = [string]$Request.ApplicationId
+    $base = {
+        param([bool]$successful,[string]$status,[object]$evidence,[object[]]$errors,[object[]]$warnings)
+        [pscustomobject][ordered]@{ OperationId=$operationId; IsSuccessful=$successful; Status=$status; Evidence=$evidence; Errors=@($errors); Warnings=@($warnings); LogEvents=@() }
+    }
+    try {
+        if ($null -eq $Request.Manifest) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $reconciliation = $Request.Manifest.Reconciliation
+        $settings = if ($reconciliation -is [System.Collections.IDictionary]) { $reconciliation['settings'] } elseif ($null -ne $reconciliation.PSObject.Properties['settings']) { $reconciliation.settings } else { $null }
+        if ($null -eq $settings) { return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsMissing';Message='The manifest must provide reconciliation.settings for the Windows installed-application reconciler.'}) @() }
+        $applicationName = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'name')
+        $applicationPublisher = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'publisher')
+        $applicationHomepage = [string](Get-WintainiumWindowsSettingValue -Object $Request.Manifest -Name 'homepage')
+        $observation = Get-WintainiumWindowsInstalledApplicationCandidates -Settings $settings -ApplicationName $applicationName -ApplicationPublisher $applicationPublisher -ApplicationHomepage $applicationHomepage
+        $warnings = @($observation.Errors | ForEach-Object {
+            [pscustomobject]@{
+                Code = [string]$_.Code
+                Message = [string]$_.Message
+                OperationId = $operationId
+                Scope = if ($_.PSObject.Properties['Scope']) { [string]$_.Scope } else { $null }
+                View = if ($_.PSObject.Properties['View']) { [string]$_.View } else { $null }
+            }
+        })
+        $candidateCount = @($observation.Candidates).Count
+        $registry = Get-WintainiumWindowsSettingValue -Object $settings -Name 'registry'
+        $matchMode = [string](Get-WintainiumWindowsSettingValue -Object $registry -Name 'matchMode')
+        if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
+        $locationCount = @(Get-WintainiumWindowsSettingValue -Object $registry -Name 'locations').Count
+        $readFailureCount = @($observation.Errors | Where-Object Code -eq 'WindowsRegistryLocationReadFailed').Count
+        if ($candidateCount -eq 0) {
+            $installationState = if ($observation.IsSuccessful) { 'NotInstalled' } else { 'Unknown' }
+            $status = if ($observation.IsSuccessful) { 'Reconciled' } else { 'Unknown' }
+            if (-not $observation.IsSuccessful) {
+                $warnings += [pscustomobject]@{
+                    Code = 'WindowsReconciliationEvidenceIncomplete'
+                    Message = 'No matching uninstall registration was found, and one or more registry observations failed. Wintainium cannot safely conclude that the application is not installed.'
+                    OperationId = $operationId
+                    CandidateCount = $candidateCount
+                    MatchMode = $matchMode
+                    RegistryLocationCount = $locationCount
+                    RegistryReadFailureCount = $readFailureCount
+                }
+            }
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState=$installationState;EvidenceSource='WindowsUninstallRegistry'}
+            return & $base $true $status $evidence @() $warnings
+        }
+        $firstCandidate = if ($candidateCount -gt 0) { @($observation.Candidates)[0] } else { $null }
+        $candidateConfidence = if ($null -ne $firstCandidate) { [string](Get-WintainiumWindowsSettingValue -Object $firstCandidate -Name 'IdentityConfidence') } else { '' }
+        if ($candidateCount -eq 1 -and $candidateConfidence -eq 'ReviewOnly') {
+            $candidate = $firstCandidate
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityRequiresConfirmation'
+                Message = 'Registry identity evidence is suggestive but does not meet the confidence and separation thresholds required to confirm the installed application.'
+                OperationId = $operationId
+                CandidateCount = 1
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+            return & $base $true 'Unknown' $evidence @() $warnings
+        }
+        if ($candidateCount -gt 1) {
+            $evidence=[pscustomobject][ordered]@{ApplicationId=$applicationId;InstallationState='Unknown';EvidenceSource='WindowsUninstallRegistry'}
+            $ambiguity=[pscustomobject]@{
+                Code = 'WindowsReconciliationAmbiguous'
+                Message = 'Multiple uninstall registrations matched the configured application identity; Wintainium did not choose one.'
+                OperationId = $operationId
+                CandidateCount = $candidateCount
+                MatchMode = $matchMode
+                RegistryLocationCount = $locationCount
+                RegistryReadFailureCount = $readFailureCount
+                CandidateEvidence = @($observation.Candidates | ForEach-Object {
+                    [pscustomobject]@{
+                        DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'DisplayName')
+                        RegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'SubKey')
+                        IdentityScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScore'
+                        IdentityConfidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityConfidence'
+                        IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreThreshold'
+                        IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityRunnerUpScore'
+                        IdentityScoreMargin = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreMargin'
+                        IdentitySeparationThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentitySeparationThreshold'
+                        IdentityScoreBreakdown = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreBreakdown')
+                        IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityEvidence')
+                    }
+                })
+            }
+            return & $base $true 'Unknown' $evidence @() (@($warnings)+$ambiguity)
+        }
+        $candidate=@($observation.Candidates)[0]
+        $evidence=[ordered]@{ApplicationId=$applicationId;InstallationState='Installed';EvidenceSource='WindowsUninstallRegistry'}
+        $version = if (-not [string]::IsNullOrWhiteSpace([string]$candidate.DisplayVersion)) { [string]$candidate.DisplayVersion } else { $null }
+        $versionSource = if ($null -ne $version) { 'Registry' } else { $null }
+        $executableVersion = Get-WintainiumWindowsExecutableVersion -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName) -RegistryVersion ([string]$candidate.DisplayVersion)
+        if ($null -ne $executableVersion -and -not [string]::IsNullOrWhiteSpace([string]$executableVersion.Version)) {
+            $version = [string]$executableVersion.Version
+            $versionSource = 'ExecutableFileVersion'
+        }
+        if ($null -ne $version) { $evidence.Version=$version; $evidence.VersionSource=$versionSource }
+        if($candidate.InstallLocation){$evidence.InstallationLocation=$candidate.InstallLocation}
+        if ($candidateConfidence -eq 'Strong' -and $null -ne (Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore')) {
+            $warnings += [pscustomobject]@{
+                Code = 'WindowsReconciliationIdentityResolved'
+                Message = 'Installed-state identity was resolved using layered registry evidence rather than an explicit exact-name predicate.'
+                OperationId = $operationId
+                CandidateDisplayName = [string]$candidate.DisplayName
+                CandidateRegistrySubKey = [string]$candidate.SubKey
+                IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
+                IdentityEvidence = @($candidate.IdentityEvidence)
+            }
+        }
+        $installedArchitecture = Get-WintainiumWindowsExecutableArchitecture -InstallationLocation ([string]$candidate.InstallLocation) -DisplayName ([string]$candidate.DisplayName)
+        if (-not [string]::IsNullOrWhiteSpace([string]$installedArchitecture)) {
+            $evidence.Architecture = [string]$installedArchitecture
+        }
+        return & $base $true 'Reconciled' ([pscustomobject]$evidence) @() $warnings
+    } catch {
+        return & $base $false 'InvalidSettings' $null @([pscustomobject]@{Code='WindowsReconciliationSettingsInvalid';Message=$_.Exception.Message}) @()
+    }
+}
+
+function Get-WintainiumWindowsExecutableArchitecture {
+    [CmdletBinding()]
+    param(
+        [AllowNull()] [string]$InstallationLocation,
+        [AllowNull()] [string]$DisplayName
+    )
+
+    if ([string]::IsNullOrWhiteSpace($InstallationLocation) -or
+        -not [System.IO.Path]::IsPathFullyQualified($InstallationLocation) -or
+        -not (Test-Path -LiteralPath $InstallationLocation -PathType Container) -or
+        [string]::IsNullOrWhiteSpace($DisplayName)) {
+        return $null
+    }
+
+    # Only inspect an executable whose basename is an exact derivation of the
+    # registered display name. Registry view is not architecture evidence.
+    $baseName = [regex]::Replace($DisplayName.Trim(), '\s+\d+(?:\.\d+)*(?:[a-z])?$', '').Trim()
+    if ([string]::IsNullOrWhiteSpace($baseName) -or $baseName -match '[\\/:*?"<>|]') {
+        return $null
+    }
+
+    $executablePath = Join-Path -Path ([System.IO.Path]::GetFullPath($InstallationLocation)) -ChildPath ($baseName + '.exe')
+    if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
+        return $null
+    }
+
+    $stream = $null
+    $reader = $null
+    try {
+        $stream = [System.IO.File]::Open($executablePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        $reader = [System.IO.BinaryReader]::new($stream)
+        if ($stream.Length -lt 64) { return $null }
+        if ($reader.ReadUInt16() -ne 0x5A4D) { return $null }
+        $stream.Position = 0x3C
+        $peOffset = $reader.ReadInt32()
+        if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 6)) { return $null }
+        $stream.Position = $peOffset
+        if ($reader.ReadUInt32() -ne 0x00004550) { return $null }
+        switch ($reader.ReadUInt16()) {
+            0x014c { return 'x86' }
+            0x8664 { return 'x64' }
+            0xAA64 { return 'arm64' }
+            default { return $null }
+        }
+    }
+    catch {
+        return $null
+    }
+    finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        elseif ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
+Export-ModuleMember -Function Invoke-WintainiumReconciliation
+, '').Trim()
+    if ($baseName -and $baseName -notmatch '[\\/:*?"<>|]') {
+        $paths.Add((Join-Path -Path $installRoot -ChildPath ($baseName + '.exe')))
+    }
+
+    foreach ($path in @($paths | Select-Object -Unique)) {
+        try {
+            $fullPath = [System.IO.Path]::GetFullPath($path)
+            if (-not $fullPath.StartsWith($installRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) -or
+                -not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+                continue
+            }
+
+            $versionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($fullPath)
+            $productName = [string]$versionInfo.ProductName
+            $companyName = [string]$versionInfo.CompanyName
+            $registeredName = ConvertTo-WintainiumIdentityName -Value $displayName
+            $productMatchesRegistration = $registeredName -and (ConvertTo-WintainiumIdentityName -Value $productName) -eq $registeredName
+            $publisherNormalized = ConvertTo-WintainiumIdentityName -Value $ApplicationPublisher
+            $companyMatchesPublisher = $publisherNormalized -and (ConvertTo-WintainiumIdentityName -Value $companyName) -eq $publisherNormalized
+
+            $signatureStatus = 'NotChecked'
+            $signerName = ''
+            $trustedPublisherSignature = $false
+            try {
+                $signature = Get-AuthenticodeSignature -FilePath $fullPath -ErrorAction Stop
+                $signatureStatus = [string]$signature.Status
+                if ($null -ne $signature.SignerCertificate) {
+                    $signerName = [string]$signature.SignerCertificate.GetNameInfo(
+                        [System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
+                }
+                $trustedPublisherSignature = $signatureStatus -eq 'Valid' -and
+                    $publisherNormalized -and
+                    (ConvertTo-WintainiumIdentityName -Value $signerName) -eq $publisherNormalized
+            }
+            catch {
+                $signatureStatus = 'Unavailable'
+            }
+
+            return [pscustomobject][ordered]@{
+                Path = $fullPath
+                ProductName = $productName
+                CompanyName = $companyName
+                OriginalFilename = [string]$versionInfo.OriginalFilename
+                SignatureStatus = $signatureStatus
+                SignerName = $signerName
+                ProductMatchesRegistration = [bool]$productMatchesRegistration
+                CompanyMatchesPublisher = [bool]$companyMatchesPublisher
+                TrustedPublisherSignature = [bool]$trustedPublisherSignature
+            }
+        }
+        catch {
+            continue
+        }
+    }
+
+    return $null
 }
 
 function ConvertTo-WintainiumComparableExecutableVersion {
