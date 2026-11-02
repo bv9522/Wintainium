@@ -711,16 +711,16 @@ function Invoke-WintainiumReconciliation {
                 Code = 'WindowsReconciliationIdentityResolved'
                 Message = 'Installed-state identity was resolved using layered registry evidence rather than an explicit exact-name predicate.'
                 OperationId = $operationId
-                CandidateDisplayName = [string]$candidate.DisplayName
-                CandidateRegistrySubKey = [string]$candidate.SubKey
-                IdentityScore = [int]$candidate.IdentityScore
-                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
-                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
-                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
-                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
-                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
-                ExecutableIdentityEvidence = $candidate.ExecutableIdentityEvidence
-                IdentityEvidence = @($candidate.IdentityEvidence)
+                CandidateDisplayName = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'DisplayName')
+                CandidateRegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $candidate -Name 'SubKey')
+                IdentityScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScore'
+                IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreThreshold'
+                IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityRunnerUpScore'
+                IdentityScoreMargin = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreMargin'
+                IdentitySeparationThreshold = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentitySeparationThreshold'
+                IdentityScoreBreakdown = @(Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityScoreBreakdown')
+                ExecutableIdentityEvidence = Get-WintainiumWindowsSettingValue -Object $candidate -Name 'ExecutableIdentityEvidence'
+                IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $candidate -Name 'IdentityEvidence')
             }
         }
         if ($candidateConfidence -eq 'Direct') {
