@@ -1064,7 +1064,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
                 }
             }
             [pscustomobject]@{
-                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe">Windows x64 installer</a></body></html>'
+                Content = '<html><body><h2>Example 1.2.3</h2><a href="https://downloads.example.test/player-1.2.3-x64.exe?token=do-not-log-this">Windows x64 installer</a></body></html>'
                 Headers = @{ 'Content-Type' = 'text/html' }
                 StatusCode = 200
                 BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]'https://example.test/downloads' }
@@ -1088,11 +1088,14 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         @($event.Context.ArtifactResults).Count | Should -Be 1
         $event.Context.ArtifactResults[0].ArtifactFileName | Should -Be 'player-1.2.3-x64.exe'
         $event.Context.ArtifactResults[0].Status | Should -Be 'Resolved'
+        $event.Context.ArtifactResults[0].HttpStatusCode | Should -Be 200
+        $event.Context.ArtifactResults[0].ContentType | Should -Be 'text/plain'
         $event.Context.ArtifactResults[0].SidecarUrl | Should -Be 'https://downloads.example.test/player-1.2.3-x64.exe.sha256'
         $event.Context.ArtifactResults[0].Digest | Should -Be $digest.ToUpperInvariant()
         $parseEvent = @($result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted')[-1]
         $parseEvent.Message | Should -Match 'player-1.2.3-x64.exe: Resolved'
         $parseEvent.Message | Should -Match ([regex]::Escape($digest.ToUpperInvariant()))
+        $parseEvent.Message | Should -Not -Match 'do-not-log-this'
     }
 
     It 'extracts a labelled digest from a publisher HTML checksum landing page' {
