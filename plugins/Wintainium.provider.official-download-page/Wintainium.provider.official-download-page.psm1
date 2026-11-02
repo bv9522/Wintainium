@@ -336,6 +336,7 @@ function Get-OfficialDownloadPageBoundedHtmlResponse {
     $response = $null
     $stream = $null
     $memory = $null
+    $cancellation = $null
 
     try {
         $handler = [System.Net.Http.HttpClientHandler]::new()
@@ -343,8 +344,10 @@ function Get-OfficialDownloadPageBoundedHtmlResponse {
         $handler.MaxAutomaticRedirections = 5
         $client = [System.Net.Http.HttpClient]::new($handler)
         $client.Timeout = [TimeSpan]::FromSeconds(20)
+        $cancellation = [System.Threading.CancellationTokenSource]::new()
+        $cancellation.CancelAfter([TimeSpan]::FromSeconds(20))
         $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $Uri)
-        $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+        $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead, $cancellation.Token).GetAwaiter().GetResult()
 
         $result.StatusCode = [int]$response.StatusCode
         if ($null -ne $response.RequestMessage -and $null -ne $response.RequestMessage.RequestUri) {
@@ -366,7 +369,7 @@ function Get-OfficialDownloadPageBoundedHtmlResponse {
             $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
             $memory = [System.IO.MemoryStream]::new()
             $buffer = [byte[]]::new(8192)
-            while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            while (($read = $stream.ReadAsync($buffer, 0, $buffer.Length, $cancellation.Token).GetAwaiter().GetResult()) -gt 0) {
                 if (($memory.Length + $read) -gt 262144) {
                     $result.IsContentTooLarge = $true
                     return $result
@@ -386,6 +389,7 @@ function Get-OfficialDownloadPageBoundedHtmlResponse {
         if ($null -ne $request) { $request.Dispose() }
         if ($null -ne $client) { $client.Dispose() }
         elseif ($null -ne $handler) { $handler.Dispose() }
+        if ($null -ne $cancellation) { $cancellation.Dispose() }
     }
 
     return $result
