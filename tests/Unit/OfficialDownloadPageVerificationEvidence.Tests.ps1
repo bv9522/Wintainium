@@ -386,4 +386,69 @@ Describe 'Official download page verification evidence discovery' {
         @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
     }
 
+
+    It 'keeps a valid adjacent sidecar as the preferred checksum evidence source' {
+        $digest = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                $digest + '  app-1.0.0.exe'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = if ($Uri -like '*.sha256') { 'text/plain' } else { 'text/html; charset=UTF-8' } }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            throw 'Artifact endpoint fallback must not run after a valid sidecar resolves.'
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        $artifact = $result.Releases[0].Artifacts[0]
+        $artifact.Hashes.Count | Should -Be 1
+        $artifact.Hashes[0].Value | Should -Be $digest
+        $artifact.Hashes[0].Source | Should -Be 'OfficialDownloadPageAdjacentChecksumSidecar'
+    }
+
+    It 'does not interpret a binary artifact response as an HTML checksum page' {
+        $digest = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'
+        Mock -ModuleName Wintainium.provider.official-download-page Invoke-WebRequest {
+            param($Method, $Uri)
+            $content = if ($Uri -like '*.sha256') {
+                '<html><body>SHA256: ' + $digest + '</body></html>'
+            }
+            else {
+                '<h2>Release 1.0.0</h2><a href="https://downloads.example.com/app-1.0.0.exe">Download</a>'
+            }
+            [pscustomobject]@{
+                Content = $content
+                StatusCode = 200
+                Headers = @{ 'Content-Type' = 'text/html; charset=UTF-8' }
+                BaseResponse = [pscustomobject]@{ ResponseUri = [Uri]$Uri }
+            }
+        }
+        Mock -ModuleName Wintainium.provider.official-download-page Get-OfficialDownloadPageBoundedHtmlResponse {
+            param($Uri)
+            [pscustomobject]@{ StatusCode=200; FinalUri=[Uri]$Uri; ContentType='application/octet-stream'; Content=$null; IsContentTooLarge=$false; ErrorType=$null }
+        }
+
+        $result = Invoke-WintainiumProvider -Request ([pscustomobject]@{
+            OperationId = [guid]::NewGuid().ToString()
+            Settings = [pscustomobject]@{ pageUri = 'https://example.com/download/' }
+        })
+
+        $result.IsSuccessful | Should -BeTrue
+        @($result.Releases[0].Artifacts[0].Hashes).Count | Should -Be 0
+    }
+
 }
