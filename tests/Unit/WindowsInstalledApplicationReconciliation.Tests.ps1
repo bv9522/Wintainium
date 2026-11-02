@@ -712,5 +712,80 @@ Describe 'Windows installed-application reconciliation plugin' {
         $candidate.IdentityScore | Should -BeLessThan 70
     }
 
+
+    It 'accepts an exact configured Windows Installer ProductCode as direct identity evidence' {
+        $productCode = '{90160000-0011-0000-0000-0000000FF1CE}'
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Unrelated Product Name' })
+            }
+            windowsInstaller = [pscustomobject]@{ productCodes=@($productCode) }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey=$productCode
+                DisplayName='Unrelated Product Name'; DisplayVersion='4.2'
+                Publisher='Example Publisher'; WindowsInstaller='1'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader
+        }
+
+        $result.Candidates.Count | Should -Be 1
+        $result.Candidates[0].IdentityConfidence | Should -Be 'Direct'
+        $result.Candidates[0].MsiProductCode | Should -Be $productCode
+        $result.Candidates[0].EvidenceSource | Should -Be 'WindowsInstallerProductRegistration'
+        @($result.Candidates[0].IdentityEvidence) | Should -Contain 'ConfiguredMsiProductCodeExact'
+    }
+
+    It 'does not treat a similar MSI registration or an unconfigured ProductCode as direct identity' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                matchMode = 'any'
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Definitely Different Product'; matchType='exact' })
+            }
+            windowsInstaller = [pscustomobject]@{ productCodes=@('{90160000-0011-0000-0000-0000000FF1CE}') }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{
+                Scope='machine'; View='64'; SubKey='{90160000-0011-0000-0000-0000000FF1CF}'
+                DisplayName='Another Product'; Publisher='Example Publisher'; WindowsInstaller='1'
+            }
+        }
+
+        $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
+            Settings=$settings; Reader=$reader; Name='Definitely Different Product'
+        } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $result.Candidates.Count | Should -Be 0
+    }
+
+    It 'rejects malformed configured Windows Installer product codes' {
+        $settings = [pscustomobject]@{
+            registry = [pscustomobject]@{
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='DisplayName'; equals='Example Application' })
+            }
+            windowsInstaller = [pscustomobject]@{ productCodes=@('not-a-guid') }
+        }
+
+        {
+            InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings } {
+                Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader { param($location) @() }
+            }
+        } | Should -Throw '*not a valid GUID*'
+    }
+
 }
 
