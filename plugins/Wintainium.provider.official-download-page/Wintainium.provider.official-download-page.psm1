@@ -162,6 +162,9 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
         Status = 'NotAttempted'
         Evidence = $null
         HttpStatusCode = $null
+        SidecarUrl = $null
+        FinalUrl = $null
+        ContentType = $null
     }
 
     # Sidecar discovery is deliberately HTTPS-only. The sidecar is derived from
@@ -181,6 +184,7 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
         $sidecarBuilder.Query = ''
         $sidecarBuilder.Fragment = ''
         $sidecarUri = $sidecarBuilder.Uri
+        $result.SidecarUrl = Get-OfficialDownloadPageSafeUri -Uri $sidecarUri
     }
     catch {
         $result.Status = 'RejectedSidecarUri'
@@ -244,6 +248,8 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
         }
     }
     catch {}
+    $result.ContentType = $contentType
+    $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $finalUri
 
     if ($contentType -match '(?i)text/html|application/xhtml') {
         $checksumText = ConvertFrom-OfficialDownloadPageHtmlText $body
@@ -1210,6 +1216,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
     $adjacentSidecarResolvedCount = 0
     $adjacentSidecarRejectedCount = 0
     $adjacentSidecarUnavailableCount = 0
+    $adjacentSidecarDiagnostics = [System.Collections.Generic.List[object]]::new()
 
     # Historical release sections can contain many old artifacts. Resolve sidecars
     # only for the highest numerically versioned release, which is the only release
@@ -1256,6 +1263,17 @@ function Invoke-WintainiumProviderReleaseDiscovery {
 
             $adjacentSidecarAttemptedCount++
             $sidecarResult = Get-OfficialDownloadPageAdjacentSha256Evidence -ArtifactUri $artifactUri -ArtifactFileName ([string]$parsedArtifact.FileName)
+            $adjacentSidecarDiagnostics.Add([pscustomobject][ordered]@{
+                ArtifactFileName = [string]$parsedArtifact.FileName
+                Status = [string]$sidecarResult.Status
+                SidecarUrl = [string]$sidecarResult.SidecarUrl
+                FinalUrl = [string]$sidecarResult.FinalUrl
+                HttpStatusCode = $sidecarResult.HttpStatusCode
+                ContentType = [string]$sidecarResult.ContentType
+                Algorithm = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Algorithm } else { $null }
+                Digest = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Value } else { $null }
+                EvidenceSource = if ($null -ne $sidecarResult.Evidence) { [string]$sidecarResult.Evidence.Source } else { $null }
+            })
             switch ($sidecarResult.Status) {
                 'Resolved' {
                     $parsedArtifact.Hashes = @($parsedArtifact.Hashes) + $sidecarResult.Evidence
@@ -1272,6 +1290,7 @@ function Invoke-WintainiumProviderReleaseDiscovery {
             ResolvedCount = $adjacentSidecarResolvedCount
             RejectedCount = $adjacentSidecarRejectedCount
             UnavailableCount = $adjacentSidecarUnavailableCount
+            ArtifactResults = @($adjacentSidecarDiagnostics.ToArray())
         }))
     }
 
