@@ -117,7 +117,7 @@ Describe 'Wintainium install diagnostic trace' {
             $trace[2].Message | Should -Match 'ArtifactEndpointStatus=RejectedDigest'
             $trace[2].Message | Should -Match 'ArtifactEndpointHttpStatusCode=200'
             $trace[2].Message | Should -Match 'ArtifactEndpointContentType=text/html'
-            $trace[2].Message | Should -Match 'ArtifactEndpointUrl=https://get.example.test/vlc/3.0.24-win64.exe'
+            $trace[2].Message | Should -Match 'ArtifactEndpointUrl=https://get.example.test/vlc-3.0.24-win64.exe'
             $trace[2].Message | Should -Not -Match 'DO-NOT-EXPOSE'
             $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
             $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
