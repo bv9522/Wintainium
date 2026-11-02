@@ -1082,7 +1082,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         $hash = @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]
         $hash.Value | Should -Be $digest.ToUpperInvariant()
         $hash.Source | Should -Be 'OfficialDownloadPageAdjacentChecksumSidecar'
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.AttemptedCount | Should -Be 1
         $event.Context.ResolvedCount | Should -Be 1
         @($event.Context.ArtifactResults).Count | Should -Be 1
@@ -1156,7 +1156,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
         $artifact = @($result.Releases[0].Artifacts)[0]
         @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.RejectedCount | Should -Be 1
         $event.Context.ArtifactResults[0].Status | Should -Be 'RejectedFilename'
     }
@@ -1187,7 +1187,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
         $artifact = @($result.Releases[0].Artifacts)[0]
         @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.RejectedCount | Should -Be 1
     }
 
@@ -1218,7 +1218,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
         $artifact = @($result.Releases[0].Artifacts)[0]
         @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.RejectedCount | Should -Be 1
     }
 
@@ -1249,7 +1249,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
 
         $artifact = @($result.Releases[0].Artifacts)[0]
         @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.RejectedCount | Should -Be 1
     }
 
@@ -1277,7 +1277,7 @@ Describe 'Official download page adjacent SHA-256 sidecar resolution' {
         $hash = @($artifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' })[0]
         $hash.Value | Should -Be $digest.ToUpperInvariant()
         $hash.Source | Should -Be 'OfficialDownloadPageChecksum'
-        @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted').Count | Should -Be 0
+        @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted').Count | Should -Be 0
     }
 }
 
@@ -1316,7 +1316,7 @@ Describe 'Current release sidecar lookup boundary' {
         $currentArtifact = @($result.Releases | Where-Object Version -eq '2.0.0')[0].Artifacts[0]
         @($oldArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 0
         @($currentArtifact.Hashes | Where-Object { $_.Algorithm -eq 'SHA256' }).Count | Should -Be 1
-        $event = @($result.LogEvents | Where-Object EventName -eq 'AdjacentSha256SidecarResolutionCompleted')[-1]
+        $event = @($result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted')[-1]
         $event.Context.AttemptedCount | Should -Be 1
         $event.Context.ResolvedCount | Should -Be 1
     }
