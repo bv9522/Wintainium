@@ -56,3 +56,12 @@ Network timeout, redirect, content-size, and trust controls remain part of the p
 ## Structured platform metadata fallback
 
 Some publishers expose current platform downloads in a JavaScript object (for example, a `PLATFORMS` map) rather than heading-delimited HTML sections. The provider has a final conditional text-parsing layer for this structure; it does not execute JavaScript. It accepts entries only when they declare a Windows platform name, a strictly formatted version, and an HTTP/HTTPS location resolving to a supported artifact filename. Artifacts are grouped by declared version and normalized through the existing release/artifact parser. Non-Windows entries, malformed metadata, unsafe schemes, unsupported filenames, and duplicate locations are ignored. Existing heading-based and page-level resolvers retain priority.
+
+
+## Adjacent SHA-256 sidecar resolution
+
+After the existing page-level checksum parsers and structured release evidence have had priority, the provider conditionally checks for an adjacent .sha256 resource for each artifact that still lacks SHA-256 evidence. The sidecar URI is derived from the exact artifact path; query strings and fragments are not copied. This supports both conventional text sidecars (a digest with an optional filename) and publisher checksum landing pages that render an explicitly labelled SHA-256 digest as HTML.
+
+The resolver accepts exactly one 64-character hexadecimal digest. When a text sidecar declares a filename, it must match the artifact filename. HTML responses must contain one explicitly labelled SHA-256 checksum. Ambiguous/multiple digests, malformed content, mismatched filenames, oversized responses, credentials, unsupported schemes, and HTTPS-to-HTTP redirects are rejected. HTTPS redirects to publisher-designated mirrors remain supported, provided the final resource still has a .sha256 path.
+
+Sidecar retrieval is additive and conditional: existing page or release-provider SHA-256 evidence takes precedence and prevents an unnecessary sidecar request. A missing or rejected sidecar does not make release discovery fail and does not relax the installer's verification requirements; the artifact remains without SHA-256 evidence and downstream verification continues to reject it when SHA-256 is required. Diagnostics expose aggregate attempt, resolution, rejection, and unavailable counts without logging digest values or full sidecar URLs.
