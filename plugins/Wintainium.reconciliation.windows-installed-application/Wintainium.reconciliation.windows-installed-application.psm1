@@ -224,6 +224,7 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             $subKeyTokens = @(Get-WintainiumIdentityTokens -Value $subKey)
             $score = 0
             $evidence = [System.Collections.Generic.List[string]]::new()
+            $scoreBreakdown = [System.Collections.Generic.List[object]]::new()
 
             if ($displayNormalized -eq $fullName -and $fullName) {
                 $score = 100; $evidence.Add('NormalizedDisplayNameExact')
@@ -260,22 +261,31 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                 }
             }
 
+            if ($score -gt 0) {
+                $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='NameIdentity'; Points=$score })
+            }
             if ($publisherNormalized -and (ConvertTo-WintainiumIdentityName -Value $entryPublisher) -eq $publisherNormalized) {
+                $previousScore = $score
                 $score = [Math]::Min(100, $score + 18)
                 $evidence.Add('PublisherCorroborated')
+                $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='PublisherCorroborated'; Points=($score - $previousScore) })
             }
             $installLocation = [string](Get-WintainiumWindowsSettingValue -Object $entry -Name 'InstallLocation')
             if (-not [string]::IsNullOrWhiteSpace($installLocation)) {
                 $folderName = [System.IO.Path]::GetFileName($installLocation.TrimEnd('\','/'))
                 $folderNormalized = ConvertTo-WintainiumIdentityName -Value $folderName
                 if ($folderNormalized -and ($folderNormalized -eq $displayNormalized -or $folderNormalized -eq $subKeyNormalized)) {
+                    $previousScore = $score
                     $score = [Math]::Min(100, $score + 8)
                     $evidence.Add('InstallLocationNameCorroborated')
+                    $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='InstallLocationNameCorroborated'; Points=($score - $previousScore) })
                 }
             }
             if ($displayNormalized -and $displayNormalized -eq $subKeyNormalized) {
+                $previousScore = $score
                 $score = [Math]::Min(100, $score + 5)
                 $evidence.Add('DisplayNameAndSubKeyConsistent')
+                $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='DisplayNameAndSubKeyConsistent'; Points=($score - $previousScore) })
             }
             if ($homepageHost) {
                 foreach ($urlField in @('URLInfoAbout','URLUpdateInfo','HelpLink')) {
@@ -284,8 +294,10 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     try {
                         $entryUri = [uri]$urlValue
                         if ($entryUri.IsAbsoluteUri -and $entryUri.Host -ieq $homepageHost) {
+                            $previousScore = $score
                             $score = [Math]::Min(100, $score + 12)
                             $evidence.Add('PublisherWebsiteHostCorroborated')
+                            $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='PublisherWebsiteHostCorroborated'; Points=($score - $previousScore) })
                             break
                         }
                     } catch { }
@@ -298,8 +310,10 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     $iconBase = [System.IO.Path]::GetFileNameWithoutExtension($iconPath)
                     $iconNormalized = ConvertTo-WintainiumIdentityName -Value $iconBase
                     if ($iconNormalized -and ($iconNormalized -eq $displayNormalized -or $iconNormalized -eq $subKeyNormalized)) {
+                        $previousScore = $score
                         $score = [Math]::Min(100, $score + 5)
                         $evidence.Add('DisplayIconNameCorroborated')
+                        $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='DisplayIconNameCorroborated'; Points=($score - $previousScore) })
                     }
                 }
             }
@@ -307,16 +321,20 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             if ($displayTokens.Count -gt 0 -and $uninstallString) {
                 $commandTokens = @(Get-WintainiumIdentityTokens -Value $uninstallString)
                 if (@($displayTokens | Where-Object { $_ -in $commandTokens }).Count -gt 0) {
+                    $previousScore = $score
                     $score = [Math]::Min(100, $score + 5)
                     $evidence.Add('UninstallCommandNameCorroborated')
+                    $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='UninstallCommandNameCorroborated'; Points=($score - $previousScore) })
                 }
             }
             # Apply the vendor-only penalty after all supporting metadata so a
             # publisher's own generic registration cannot win on accumulated fields.
             if ($primaryTokens.Count -gt 1 -and $displayTokens.Count -gt 0 -and
                 @($displayTokens | Where-Object { $_ -notin $publisherTokens }).Count -eq 0) {
+                $previousScore = $score
                 $score = [Math]::Max(0, $score - 35)
                 $evidence.Add('CandidateNameIsPublisherOnly')
+                $scoreBreakdown.Add([pscustomobject][ordered]@{ Factor='CandidateNameIsPublisherOnly'; Points=($score - $previousScore) })
             }
             if ($score -gt 0) {
                 [pscustomobject][ordered]@{
@@ -341,6 +359,11 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
                     IdentityScore = $score
                     IdentityConfidence = if ($score -ge 70) { 'Strong' } else { 'ReviewOnly' }
                     IdentityEvidence = @($evidence)
+                    IdentityScoreBreakdown = @($scoreBreakdown)
+                    IdentityScoreThreshold = 70
+                    IdentitySeparationThreshold = 15
+                    IdentityRunnerUpScore = 0
+                    IdentityScoreMargin = $score
                 }
             }
         }
@@ -348,6 +371,10 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
         if ($orderedScored.Count -gt 0) {
             $topScore = [int]$orderedScored[0].IdentityScore
             $secondScore = if ($orderedScored.Count -gt 1) { [int]$orderedScored[1].IdentityScore } else { 0 }
+            foreach ($scoredCandidate in $orderedScored) {
+                $scoredCandidate.IdentityRunnerUpScore = $secondScore
+                $scoredCandidate.IdentityScoreMargin = $topScore - $secondScore
+            }
             if ($topScore -ge 70 -and ($orderedScored.Count -eq 1 -or ($topScore - $secondScore) -ge 15)) {
                 $winner = $orderedScored[0]
                 $winner.IdentityConfidence = 'Strong'
@@ -497,6 +524,11 @@ function Invoke-WintainiumReconciliation {
                 CandidateDisplayName = [string]$candidate.DisplayName
                 CandidateRegistrySubKey = [string]$candidate.SubKey
                 IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
                 IdentityEvidence = @($candidate.IdentityEvidence)
             }
             return & $base $true 'Unknown' $evidence @() $warnings
@@ -517,6 +549,11 @@ function Invoke-WintainiumReconciliation {
                         RegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'SubKey')
                         IdentityScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScore'
                         IdentityConfidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityConfidence'
+                        IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreThreshold'
+                        IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityRunnerUpScore'
+                        IdentityScoreMargin = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreMargin'
+                        IdentitySeparationThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentitySeparationThreshold'
+                        IdentityScoreBreakdown = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreBreakdown')
                         IdentityEvidence = @(Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityEvidence')
                     }
                 })
@@ -542,6 +579,11 @@ function Invoke-WintainiumReconciliation {
                 CandidateDisplayName = [string]$candidate.DisplayName
                 CandidateRegistrySubKey = [string]$candidate.SubKey
                 IdentityScore = [int]$candidate.IdentityScore
+                IdentityScoreThreshold = [int]$candidate.IdentityScoreThreshold
+                IdentityRunnerUpScore = [int]$candidate.IdentityRunnerUpScore
+                IdentityScoreMargin = [int]$candidate.IdentityScoreMargin
+                IdentitySeparationThreshold = [int]$candidate.IdentitySeparationThreshold
+                IdentityScoreBreakdown = @($candidate.IdentityScoreBreakdown)
                 IdentityEvidence = @($candidate.IdentityEvidence)
             }
         }
