@@ -438,19 +438,24 @@ Describe 'Windows installed-application reconciliation plugin' {
         $reader = {
             param($location)
             @(
-                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; InstallLocation='C:\Program Files\Acme' },
+                [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Acme'; DisplayName='Acme'; Publisher='Acme Corp'; InstallLocation='C:\Program Files\Acme' },
                 [pscustomobject]@{ Scope='machine'; View='64'; SubKey='Equalizer'; DisplayName='Equalizer'; InstallLocation='C:\Program Files\Equalizer' }
             )
         }
 
         $result = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{
-            Settings=$settings; Reader=$reader; Name='Acme Equalizer'
+            Settings=$settings; Reader=$reader; Name='Acme Equalizer'; Publisher='Acme Corp'
         } {
-            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name -ApplicationPublisher $Publisher
         }
 
         $result.Candidates.Count | Should -Be 2
         @($result.Candidates | Where-Object IdentityConfidence -eq 'ReviewOnly').Count | Should -Be 2
+        $result.Candidates[0].IdentityScore | Should -Be 57
+        $result.Candidates[0].IdentityRunnerUpScore | Should -Be 39
+        $result.Candidates[0].IdentityScoreMargin | Should -Be 18
+        $result.Candidates[1].IdentityRunnerUpScore | Should -Be 57
+        $result.Candidates[1].IdentityScoreMargin | Should -Be -18
     }
 
     It 'does not promote a review-only identity result to Installed' {
