@@ -216,8 +216,11 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                     $parts = [System.Collections.Generic.List[string]]::new(); $parts.Add("status $status")
                     if (-not [string]::IsNullOrWhiteSpace($algorithm)) { $parts.Add("algorithm $algorithm") }
                     if (-not [string]::IsNullOrWhiteSpace($failureKind)) { $parts.Add("failure $failureKind") }
-                    $parts.Add("expected SHA256 $(if ([string]::IsNullOrWhiteSpace($expected)) { 'not available' } else { $expected })")
-                    $parts.Add("actual SHA256 $(if ([string]::IsNullOrWhiteSpace($actual)) { 'not available' } else { $actual })")
+                    $hashAlgorithm = if ([string]::IsNullOrWhiteSpace($algorithm)) { 'SHA256' } else { $algorithm.ToUpperInvariant() }
+                    $parts.Add("expected $hashAlgorithm $(if ([string]::IsNullOrWhiteSpace($expected)) { 'not available' } else { $expected })")
+                    $parts.Add("actual $hashAlgorithm $(if ([string]::IsNullOrWhiteSpace($actual)) { 'not available' } else { $actual })")
+                    $destinationPath = if ($result.PSObject.Properties['DestinationPath']) { [string]$result.DestinationPath } else { $null }
+                    if (-not [string]::IsNullOrWhiteSpace($destinationPath)) { $parts.Add("downloaded file '$destinationPath'") }
                     $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{ Code='InstallDiagnostic.Verification'; Message="Verification: $($parts -join '; ')." })
                     if ($result.PSObject.Properties['ArchitectureRiskDecision'] -and -not [string]::IsNullOrWhiteSpace([string]$result.ArchitectureRiskDecision)) {
                         $riskArtifact = if ($result.PSObject.Properties['ArchitectureRiskArtifact']) { [string]$result.ArchitectureRiskArtifact } else { 'selected artifact' }
