@@ -700,6 +700,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         OperationIdText.Text = "Operation ID: pending Core result.";
         OperationProgressRing.IsActive = true;
         DetailsErrorText.Visibility = Visibility.Collapsed;
+        TroubleshootingDiagnosticsItemsControl.ItemsSource = null;
+        TroubleshootingDiagnosticsCard.Visibility = Visibility.Collapsed;
         UpdateResultStatusText.Text = "Running the Core-owned update lifecycle…";
         InstalledStateRefreshStatusText.Text = "Waiting for the update result.";
 
@@ -778,6 +780,13 @@ public sealed partial class ApplicationDetailsWindow : Window
             OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
             ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
             WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
+            var showUpdateTroubleshooting = result.OperationState == WintainiumOperationState.Failed;
+            TroubleshootingDiagnosticsItemsControl.ItemsSource = showUpdateTroubleshooting
+                ? result.TroubleshootingDiagnostics.Select(FormatDiagnostic).ToArray()
+                : Array.Empty<string>();
+            TroubleshootingDiagnosticsCard.Visibility = showUpdateTroubleshooting && result.TroubleshootingDiagnostics.Count > 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
             var completedStages = result.Stages.Count(stage => stage.IsSuccessful);
             UpdateResultStatusText.Text = result.OperationState switch
