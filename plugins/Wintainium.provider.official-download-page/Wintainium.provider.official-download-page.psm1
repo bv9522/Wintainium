@@ -319,6 +319,78 @@ function Get-OfficialDownloadPageAdjacentSha256Evidence {
     return $result
 }
 
+function Get-OfficialDownloadPageBoundedHtmlResponse {
+    param([Parameter(Mandatory)][Uri]$Uri)
+
+    $result = [pscustomobject][ordered]@{
+        StatusCode = $null
+        FinalUri = $null
+        ContentType = $null
+        Content = $null
+        IsContentTooLarge = $false
+        ErrorType = $null
+    }
+    $handler = $null
+    $client = $null
+    $request = $null
+    $response = $null
+    $stream = $null
+    $memory = $null
+
+    try {
+        $handler = [System.Net.Http.HttpClientHandler]::new()
+        $handler.AllowAutoRedirect = $true
+        $handler.MaxAutomaticRedirections = 5
+        $client = [System.Net.Http.HttpClient]::new($handler)
+        $client.Timeout = [TimeSpan]::FromSeconds(20)
+        $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $Uri)
+        $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+
+        $result.StatusCode = [int]$response.StatusCode
+        if ($null -ne $response.RequestMessage -and $null -ne $response.RequestMessage.RequestUri) {
+            $result.FinalUri = [Uri]$response.RequestMessage.RequestUri
+        }
+        if ($null -ne $response.Content -and $null -ne $response.Content.Headers.ContentType) {
+            $result.ContentType = [string]$response.Content.Headers.ContentType.MediaType
+        }
+
+        # Do not consume a package response. Only HTML responses are read, and
+        # even those are capped so a mislabelled or unexpectedly large document
+        # cannot turn checksum discovery into a second artifact download.
+        if ($result.ContentType -match '(?i)text/html|application/xhtml\+xml') {
+            if ($null -ne $response.Content.Headers.ContentLength -and $response.Content.Headers.ContentLength -gt 262144) {
+                $result.IsContentTooLarge = $true
+                return $result
+            }
+
+            $stream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+            $memory = [System.IO.MemoryStream]::new()
+            $buffer = [byte[]]::new(8192)
+            while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                if (($memory.Length + $read) -gt 262144) {
+                    $result.IsContentTooLarge = $true
+                    return $result
+                }
+                $memory.Write($buffer, 0, $read)
+            }
+            $result.Content = [System.Text.Encoding]::UTF8.GetString($memory.ToArray())
+        }
+    }
+    catch {
+        $result.ErrorType = $_.Exception.GetType().Name
+    }
+    finally {
+        if ($null -ne $memory) { $memory.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+        if ($null -ne $response) { $response.Dispose() }
+        if ($null -ne $request) { $request.Dispose() }
+        if ($null -ne $client) { $client.Dispose() }
+        elseif ($null -ne $handler) { $handler.Dispose() }
+    }
+
+    return $result
+}
+
 function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
     param(
         [Parameter(Mandatory)][Uri]$ArtifactUri,
@@ -346,51 +418,22 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
         return $result
     }
 
-    try {
-        $response = Invoke-WebRequest -Method Get -Uri $ArtifactUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 20 -ErrorAction Stop
-    }
-    catch {
+    $response = Get-OfficialDownloadPageBoundedHtmlResponse -Uri $ArtifactUri
+    if ($null -eq $response) {
         $result.Status = 'Unavailable'
-        try {
-            $errorResponse = $_.Exception.Response
-            if ($null -ne $errorResponse.StatusCode) { $result.HttpStatusCode = [int]$errorResponse.StatusCode }
-            if ($null -ne $errorResponse.ResponseUri) { $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri ([Uri]$errorResponse.ResponseUri) }
-            if ($null -ne $errorResponse.Headers -and $null -ne $errorResponse.Headers['Content-Type']) {
-                $result.ContentType = [string]$errorResponse.Headers['Content-Type']
-            }
-        } catch {}
+        return $result
+    }
+    $result.HttpStatusCode = $response.StatusCode
+    $result.ContentType = [string]$response.ContentType
+    if ($null -eq $response.StatusCode -or $response.StatusCode -lt 200 -or $response.StatusCode -ge 300) {
+        $result.Status = 'Unavailable'
         return $result
     }
 
-    try {
-        if ($null -ne $response.StatusCode) {
-            $result.HttpStatusCode = [int]$response.StatusCode
-            if ($result.HttpStatusCode -lt 200 -or $result.HttpStatusCode -ge 300) {
-                $result.Status = 'Unavailable'
-                return $result
-            }
-        }
-    } catch {}
-
-    $finalUri = $ArtifactUri
-    try {
-        if ($null -ne $response.BaseResponse -and $null -ne $response.BaseResponse.ResponseUri) {
-            $finalUri = [Uri]$response.BaseResponse.ResponseUri
-        }
-        elseif ($null -ne $response.BaseResponse -and
-            $response.BaseResponse.RequestMessage -and
-            $response.BaseResponse.RequestMessage.RequestUri) {
-            $finalUri = [Uri]$response.BaseResponse.RequestMessage.RequestUri
-        }
-    } catch {}
-
-    $contentType = ''
-    try {
-        if ($response.Headers -and $response.Headers['Content-Type']) {
-            $contentType = [string]$response.Headers['Content-Type']
-        }
-    } catch {}
-    $result.ContentType = $contentType
+    $finalUri = $null
+    if ($null -ne $response.FinalUri) {
+        try { $finalUri = [Uri]$response.FinalUri } catch {}
+    }
     $result.FinalUrl = Get-OfficialDownloadPageSafeUri -Uri $finalUri
 
     # Do not bind evidence across a redirect to another host or path.
@@ -405,13 +448,11 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
         return $result
     }
 
-    if ($contentType -notmatch '(?i)text/html|application/xhtml\+xml') {
+    if ($result.ContentType -notmatch '(?i)text/html|application/xhtml\+xml') {
         $result.Status = 'RejectedContentType'
         return $result
     }
-
-    $html = [string]$response.Content
-    if ([string]::IsNullOrWhiteSpace($html) -or $html.Length -gt 262144) {
+    if ($response.IsContentTooLarge -or [string]::IsNullOrWhiteSpace([string]$response.Content)) {
         $result.Status = 'RejectedContent'
         return $result
     }
@@ -419,7 +460,7 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
     # Require an actual HTTPS download link naming this artifact. Mirror hosts
     # may differ, but page prose or metadata alone cannot establish association.
     $matchingArtifactLinks = [System.Collections.Generic.List[object]]::new()
-    $links = [regex]::Matches($html, '<a\b[^>]*\bhref\s*=\s*["'']([^"'']+)["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $links = [regex]::Matches([string]$response.Content, '<a\b[^>]*\bhref\s*=\s*["'']([^"'']+)["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
     foreach ($link in $links) {
         $href = [System.Net.WebUtility]::HtmlDecode($link.Groups[1].Value)
         try { $linkUri = [Uri]::new($finalUri, $href) } catch { continue }
@@ -436,7 +477,7 @@ function Get-OfficialDownloadPageArtifactEndpointSha256Evidence {
         return $result
     }
 
-    $visibleText = ConvertFrom-OfficialDownloadPageHtmlText $html
+    $visibleText = ConvertFrom-OfficialDownloadPageHtmlText ([string]$response.Content)
     $labelledDigests = [regex]::Matches(
         [string]$visibleText,
         '(?i)\bSHA\s*[- ]?\s*256\s*(?:(?:checksum|hash)\s*)?[:=]\s*["'']?([0-9a-f]{64})\b'
