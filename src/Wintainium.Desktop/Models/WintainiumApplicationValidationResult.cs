@@ -5,4 +5,4 @@ internal sealed record WintainiumApplicationValidationResult(
     bool IsValid,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
-    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
+    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted,\n    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null);
