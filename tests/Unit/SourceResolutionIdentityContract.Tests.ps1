@@ -62,6 +62,7 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
             ProviderId = 'Wintainium.provider.identity-fixture'
             ProviderContractVersion = '1'
             ProviderSettings = [ordered]@{ product = 'product' }
+            SourceContext = [ordered]@{ repository = 'example/product'; releaseTag = 'v2.4.0' }
             Aliases = @('Example Product Legacy', 'EXAMPLE PRODUCT LEGACY', 'Example Product', 'Alternate Product')
         }
         $policy = [pscustomobject][ordered]@{
@@ -76,6 +77,9 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         }
         $normalized.IsSuccessful | Should -BeTrue
         @($normalized.ApplicationDefinition.aliases) | Should -Be @('Example Product Legacy', 'Alternate Product')
+        $normalized.ApplicationDefinition.source.context.repository | Should -Be 'example/product'
+        $normalized.ApplicationDefinition.source.context.releaseTag | Should -Be 'v2.4.0'
+        $normalized.ApplicationDefinition | Add-Member -NotePropertyName userConfirmedAliases -NotePropertyValue @('Example Product (Legacy User Name)') -Force
 
         $manifestRoot = Join-Path $TestDrive 'identity-alias-manifests'
         $manifestPath = InModuleScope Wintainium.Core -Parameters @{ Definition = $normalized.ApplicationDefinition; Root = $manifestRoot } {
@@ -83,5 +87,33 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         }
         $persisted = Get-Content -LiteralPath $manifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
         @($persisted.aliases) | Should -Be @('Example Product Legacy', 'Alternate Product')
+        $persisted.source.context.repository | Should -Be 'example/product'
+        $persisted.source.context.releaseTag | Should -Be 'v2.4.0'
+        @($persisted.userConfirmedAliases) | Should -Be @('Example Product (Legacy User Name)')
     }
 }
+
+    It 'rejects a non-dictionary provider source context during normalization' {
+        $source = [pscustomobject][ordered]@{
+            ApplicationId = 'web.example.com.product'
+            Name = 'Example Product'
+            CanonicalUri = 'https://example.com/product'
+            ProviderId = 'Wintainium.provider.identity-fixture'
+            ProviderContractVersion = '1'
+            ProviderSettings = [ordered]@{ product = 'product' }
+            SourceContext = 'releaseTag=v2.4.0'
+        }
+        $policy = [pscustomobject][ordered]@{
+            Installer = [pscustomobject]@{ PluginId = 'Wintainium.installer.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Reconciliation = [pscustomobject]@{ PluginId = 'Wintainium.reconciliation.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Release = [pscustomobject]@{ Channel = 'stable' }
+            Artifact = [pscustomobject]@{ Formats = @('exe'); Architectures = @('x64'); AllowUnknownArchitecture = $false }
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Source = $source; Policy = $policy } {
+            New-WintainiumApplicationDefinitionFromSource -Source $Source -Policy $Policy -OperationId 'invalid-context-test'
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        @($result.Errors.Code) | Should -Contain 'ApplicationSourceContextInvalid'
+    }
