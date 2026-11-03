@@ -40,7 +40,7 @@ The process lifecycle has these terminal outcomes:
 - `Failed` with `FailureKind = ElevationDenied` — Windows elevation was required and the UAC request was cancelled or denied; or
 - `Failed` with `FailureKind = ProcessStart` — process creation failed for another reason.
 
-A process that times out or is cancelled is terminated through the process API, including its process tree where supported by the runtime. Wintainium does not leave a timed-out or cancelled installer process running in the background.
+A process that times out or is cancelled is terminated through the process API, including its process tree where supported by the runtime. The runner waits up to 5 seconds for process exit after requesting termination. A termination exception or failure to exit within that grace period is preserved in `TerminationError`; the original `Timeout` or `Cancelled` classification remains authoritative.
 
 When normal process completion and a timeout/cancellation signal become observable at the same lifecycle boundary, normal process completion wins. Once the process has completed, Wintainium does not reclassify that invocation as interrupted.
 
@@ -58,7 +58,7 @@ Every terminal result contains:
 - `DurationMilliseconds`; and
 - `ErrorMessage` when a Core-owned failure description is available.
 
-Standard output and standard error are captured independently on the normal non-elevated path. Elevated shell execution returns empty output streams because the shell launch cannot use the normal redirection mechanism.
+Standard output and standard error are drained independently on the normal non-elevated path. Each stream retains at most 65,536 characters; excess characters are discarded while the reader continues draining the pipe so a full retained buffer cannot block the child process. `StandardOutputTruncated` and `StandardErrorTruncated` report discarded output. `StandardOutputComplete` and `StandardErrorComplete` report whether each stream reached EOF; these are false when an inherited handle prevents EOF within the bounded post-exit drain window. The runner waits up to 2 seconds after process exit for both streams, closes any stream that remains open, and allows a further 250 milliseconds for the reader to finish. Elevated shell execution returns empty output streams because the shell launch cannot use the normal redirection mechanism.
 
 ## Security boundary
 
