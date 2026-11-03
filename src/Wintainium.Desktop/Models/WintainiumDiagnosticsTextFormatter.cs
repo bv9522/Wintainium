@@ -27,6 +27,49 @@ internal static class WintainiumDiagnosticsTextFormatter
 
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
+    public static IReadOnlyList<WintainiumOperationDiagnostic> DistinctDiagnostics(
+        IEnumerable<WintainiumOperationDiagnostic> diagnostics)
+    {
+        ArgumentNullException.ThrowIfNull(diagnostics);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var result = new List<WintainiumOperationDiagnostic>();
+        foreach (var diagnostic in diagnostics)
+        {
+            if (diagnostic is null)
+                continue;
+
+            var key = DiagnosticKey(diagnostic);
+            if (seen.Add(key))
+                result.Add(diagnostic);
+        }
+
+        return result;
+    }
+
+    public static bool ContainsDiagnostic(
+        IEnumerable<WintainiumOperationDiagnostic> diagnostics,
+        WintainiumOperationDiagnostic candidate)
+    {
+        ArgumentNullException.ThrowIfNull(diagnostics);
+        ArgumentNullException.ThrowIfNull(candidate);
+        var key = DiagnosticKey(candidate);
+        return diagnostics.Any(item => item is not null && string.Equals(DiagnosticKey(item), key, StringComparison.Ordinal));
+    }
+
+    private static string DiagnosticKey(WintainiumOperationDiagnostic diagnostic)
+    {
+        var builder = new System.Text.StringBuilder();
+        builder.Append(diagnostic.Code).Append('\0')
+            .Append(diagnostic.Path).Append('\0')
+            .Append(diagnostic.Message);
+        if (diagnostic.Details is not null)
+        {
+            foreach (var detail in diagnostic.Details.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+                builder.Append('\0').Append(detail.Key).Append('=').Append(detail.Value);
+        }
+        return builder.ToString();
+    }
+
     public static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic, string indent = "")
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
