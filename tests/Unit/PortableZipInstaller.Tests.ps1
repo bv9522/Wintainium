@@ -162,9 +162,12 @@ Describe 'Wintainium generic portable ZIP installer' {
 
         Write-Host "ZIP cleanup diagnostics:" -ForegroundColor Yellow
         Write-Host $processResult.StandardError
-        Get-ChildItem -LiteralPath $script:tempRoot -Directory -Force |
-            Where-Object Name -Like '.failed-overlay-destination.wintanium-*' |
-            Format-List FullName, Attributes
+        $leftoverDirectories = @(Get-ChildItem -LiteralPath $script:tempRoot -Directory -Force |
+            Where-Object Name -Like '.failed-overlay-destination.wintanium-*')
+        Write-Host ("Matching directory count: {0}" -f $leftoverDirectories.Count)
+        foreach ($leftoverDirectory in $leftoverDirectories) {
+            Write-Host ("Path: {0}; Attributes: {1}" -f $leftoverDirectory.FullName, $leftoverDirectory.Attributes)
+        }
 
         @(Get-ChildItem -LiteralPath $script:tempRoot -Directory -Force | Where-Object Name -Like '.failed-overlay-destination.wintanium-*').Count | Should -Be 0
     }
