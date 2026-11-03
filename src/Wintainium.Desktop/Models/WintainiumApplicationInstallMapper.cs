@@ -81,13 +81,10 @@ internal static class WintainiumApplicationInstallMapper
         WintainiumOperationState.Failed;
 
     private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
-        Collection(source, name).Select(MapDiagnostic).ToArray();
+        WintainiumOperationDiagnosticMapper.MapCollection(source, name);
 
     private static WintainiumOperationDiagnostic MapDiagnostic(PSObject source) =>
-        new(
-            Code: Nullable(source, "Code"),
-            Path: Nullable(source, "Path"),
-            Message: Nullable(source, "Message"));
+        WintainiumOperationDiagnosticMapper.Map(source);
 
     private static List<PSObject> Collection(PSObject source, string name)
     {
