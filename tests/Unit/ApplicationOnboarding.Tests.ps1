@@ -132,7 +132,7 @@ Describe 'Wintainium application onboarding' {
         @($migrated['userConfirmedAliases']) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
         @($second.LogEvents | Where-Object EventName -eq 'LegacyAliasesMigratedToUserConfirmed').Count | Should -Be 1
 
-        $third = Invoke-WintaniumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $third = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $third.IsSuccessful | Should -BeTrue
         $persisted = Get-Content -LiteralPath $third.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
         @($persisted['userConfirmedAliases']) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
