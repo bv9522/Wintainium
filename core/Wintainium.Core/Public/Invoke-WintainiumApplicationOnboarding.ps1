@@ -163,7 +163,7 @@ function Invoke-WintainiumApplicationOnboarding {
         & $addStage 3 'PolicyResolution' 'Skipped' $true 'CallerProvidedPolicy' 'The caller supplied an application policy; default policy resolution was not needed.'
     }
 
-    $normalization=New-WintainiumApplicationDefinitionFromSource -Source $sourceResolution.Source -Policy $Policy -OperationId $resolvedOperationId -AutomaticIconUri $automaticIconUri
+    $normalization=New-WintainiumApplicationDefinitionFromSource -Source $sourceResolution.Source -Policy $Policy -OperationId $resolvedOperationId -AutomaticIconUri $automaticIconUri -SubmittedUri $SourceUri
     foreach($warning in @($normalization.Warnings)){$warnings.Add($warning)}
     foreach($errorRecord in @($normalization.Errors)){$errors.Add($errorRecord)}
     foreach($event in @($normalization.LogEvents)){$logEvents.Add($event)}
