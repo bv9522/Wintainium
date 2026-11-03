@@ -228,7 +228,15 @@ function Invoke-WintainiumApplicationOnboarding {
 
             if ($confirmedAliases.Count -gt 0) {
                 $providerAliases = [System.Collections.Generic.List[string]]::new()
-                foreach ($providerAlias in @($normalization.ApplicationDefinition.aliases)) {
+                # The provider may omit aliases entirely. Under StrictMode, directly
+                # reading a missing PSCustomObject property throws instead of returning
+                # null, so inspect the property collection before enumerating it.
+                $providerAliasValues = @()
+                $providerAliasProperty = $normalization.ApplicationDefinition.PSObject.Properties['aliases']
+                if ($null -ne $providerAliasProperty) {
+                    $providerAliasValues = @($providerAliasProperty.Value)
+                }
+                foreach ($providerAlias in $providerAliasValues) {
                     if ($providerAlias -isnot [string] -or [string]::IsNullOrWhiteSpace($providerAlias)) { continue }
                     $normalizedProviderAlias = $providerAlias.Trim()
                     $isConfirmed = $false
