@@ -71,8 +71,6 @@ function Invoke-WintainiumApplicationOnboarding {
     foreach($provider in $capableProviders) {
         $request=[pscustomobject][ordered]@{OperationId=$resolvedOperationId;SourceUri=$SourceUri;ResolutionContext=$null}
         $resolution=Invoke-WintainiumCoreProviderSourceResolution -Provider $provider -Request $request
-        foreach($event in @($resolution.LogEvents)){$logEvents.Add($event)}
-        foreach($warning in @($resolution.Warnings)){$warnings.Add($warning)}
         if([bool]$resolution.IsSuccessful){$successful.Add([pscustomobject]@{Provider=$provider;Result=$resolution})}
         else {
             $failures.Add($resolution)
@@ -81,6 +79,11 @@ function Invoke-WintainiumApplicationOnboarding {
     }
 
     if($successful.Count -eq 0) {
+        foreach($failure in $failures) {
+            foreach($event in @($failure.LogEvents)){$logEvents.Add($event)}
+            foreach($warning in @($failure.Warnings)){$warnings.Add($warning)}
+        }
+
         $status='SourceUnsupported'
         foreach($candidate in @('SourceAmbiguous','SourceUnavailable','AuthenticationRequired','InteractiveResolutionRequired','SourceResponseInvalid','SourceResolutionResultInvalid','SourceResolverInternalError')) {
             if(@($failures | Where-Object Status -eq $candidate).Count -gt 0){$status=$candidate;break}
@@ -100,10 +103,27 @@ function Invoke-WintainiumApplicationOnboarding {
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=$status;SourceResolution=if($failures.Count -eq 1){$failures[0]}else{$null};ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
 
-    # Provider declines are expected during capability-based source resolution.
-    # Once a provider has successfully resolved the source, do not surface the
-    # other providers' expected refusals as onboarding errors or diagnostics.
+    # A successful resolution makes ordinary unsupported/invalid responses
+    # from other capable providers expected declines. Keep diagnostics from the
+    # successful resolver and retain non-decline failures as warnings so genuine
+    # provider faults are not hidden by another provider's success.
     $errors.Clear()
+    foreach($resolved in $successful) {
+        foreach($event in @($resolved.Result.LogEvents)){$logEvents.Add($event)}
+        foreach($warning in @($resolved.Result.Warnings)){$warnings.Add($warning)}
+    }
+    foreach($failure in $failures | Where-Object { [string]$_.Status -notin @('SourceUnsupported','SourceInvalid') }) {
+        foreach($event in @($failure.LogEvents)){$logEvents.Add($event)}
+        foreach($warning in @($failure.Warnings)){$warnings.Add($warning)}
+        foreach($failureError in @($failure.Errors)) {
+            $warnings.Add([pscustomobject][ordered]@{
+                Code='SourceResolverAttemptFailed'
+                Message='A source resolver failed while another provider successfully resolved the source.'
+                Status=[string]$failure.Status
+                Detail=$failureError
+            })
+        }
+    }
 
     if($successful.Count -gt 1) {
         $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionAmbiguous';Path='$.SourceUri';Message='Multiple source-resolution providers successfully resolved the supplied source URI.'})
