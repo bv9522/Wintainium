@@ -964,7 +964,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.IsSuccessful,
             stage.WasCancelled,
             stage.ElapsedMilliseconds,
-            stage.Error);
+            null);
     }
 
     private static string FormatStage(
