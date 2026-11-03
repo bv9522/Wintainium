@@ -546,13 +546,13 @@ Describe 'Wintainium shared lifecycle install execution' {
             $operationId = [guid]::NewGuid().ToString()
             $manifest = [pscustomobject]@{
                 Id='example.app'
-                Source=[pscustomobject]@{pluginId='provider';requiredContractVersion='1';settings=@{}}
+                Source=[pscustomobject]@{pluginId='Wintainium.provider.github-releases';requiredContractVersion='1';settings=@{}}
                 Installer=[pscustomobject]@{pluginId='installer';requiredContractVersion='1';settings=@{}}
                 Reconciliation=[pscustomobject]@{pluginId='reconciliation';requiredContractVersion='1';settings=@{}}
                 Release=[pscustomobject]@{channel='stable'}
                 Artifact=[pscustomobject]@{formats=@('exe');architectures=@('x64');allowUnknownArchitecture=$false}
             }
-            $provider = [pscustomobject]@{PluginId='provider';PluginType='Provider'}
+            $provider = [pscustomobject]@{PluginId='Wintainium.provider.github-releases';PluginType='Provider'}
             $installer = [pscustomobject]@{PluginId='installer';PluginType='Installer'}
             $reconciliationPlugin = [pscustomobject]@{PluginId='reconciliation';PluginType='Reconciliation'}
             $release = [pscustomobject]@{OperationId=$operationId;IsSuccessful=$true;Status='DiscoveryCompleted';Releases=@([pscustomobject]@{ReleaseId='r1';Version='1.0.0';Channel='stable';Deprecated=$false;Artifacts=@([pscustomobject]@{Uri='https://example.test/app.exe';Format='exe';Architecture='x64'})});Errors=@();Warnings=@();LogEvents=@()}
@@ -566,6 +566,7 @@ Describe 'Wintainium shared lifecycle install execution' {
             Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{IsValid=$true;Request=[pscustomobject]@{OperationId=$operationId;ManifestPath='C:example.json';MachineArchitecture='x64';DownloadRoot='C:downloads'};Errors=@()} }
             Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{OperationId=$operationId;IsValid=$true;Manifest=$manifest;ProviderPlugin=$provider;InstallerPlugin=$installer;ReconciliationPlugin=$reconciliationPlugin;Errors=@();Warnings=@();LogEvents=@()} }
             Mock Invoke-WintainiumProviderOperation { $release }
+            Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly -ParameterFilter { -not $Request.Settings.ContainsKey('maxPages') }
             Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ApplicationId='example.app';InstallationState='NotInstalled'} }
             Mock Get-WintainiumApplicationInstallDecision { $decision }
             Mock New-WintainiumDownloadRequest { [pscustomobject]@{OperationId=$operationId;SelectedRelease=$decision.SelectedRelease;SelectedArtifact=$decision.SelectedArtifact} }
