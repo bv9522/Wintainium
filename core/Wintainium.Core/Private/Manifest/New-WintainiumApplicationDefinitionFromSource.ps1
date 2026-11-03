@@ -12,6 +12,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
     $sourceAliases = [System.Collections.Generic.List[string]]::new()
+    $sourceContext = $null
 
     if ($null -eq $Source) {
         $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceMissing'; Path='$.Source'; Message='Resolved source facts are required.' })
@@ -19,6 +20,15 @@ function New-WintainiumApplicationDefinitionFromSource {
         foreach ($property in @('ApplicationId','Name','CanonicalUri','ProviderId','ProviderContractVersion','ProviderSettings')) {
             if (-not $Source.PSObject.Properties[$property] -or [string]::IsNullOrWhiteSpace([string]$Source.$property)) {
                 $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceIncomplete'; Path="$.Source.$property"; Message="Resolved source fact '$property' is required." })
+            }
+        }
+
+        if ($Source.PSObject.Properties['SourceContext'] -and $null -ne $Source.SourceContext) {
+            if ($Source.SourceContext -isnot [System.Collections.IDictionary]) {
+                $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceContextInvalid'; Path='$.Source.SourceContext'; Message='Resolved source context must be a JSON-compatible dictionary.' })
+            }
+            else {
+                $sourceContext = [ordered]@{} + $Source.SourceContext
             }
         }
 
@@ -131,6 +141,7 @@ function New-WintainiumApplicationDefinitionFromSource {
             pluginId=[string]$Source.ProviderId
             requiredContractVersion=[string]$Source.ProviderContractVersion
             settings=$sourceSettings
+            context=$sourceContext
         }
         installer=[ordered]@{
             pluginId=[string]$Policy.Installer.PluginId
@@ -162,6 +173,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     }
 
     if ($sourceAliases.Count -eq 0) { $application.Remove('aliases') }
+    if ($null -eq $sourceContext) { $application.source.Remove('context') }
     if ($application.source.submittedUri -eq $null) { $application.source.Remove('submittedUri') }
     if ($application.icon -eq $null) { $application.Remove('icon') }
     if ([string]::IsNullOrWhiteSpace([string]$application.description)) { $application.Remove('description') }
