@@ -54,7 +54,7 @@ The existing plugin descriptor is the provider identity contract. A provider des
 
 Provider IDs use the stable form `Wintainium.provider.<name>` and are independent of display names.
 
-The descriptor describes supported contracts and capabilities. `entryPoint` is a relative PowerShell module (`.psm1`) path within the provider plugin directory. It is a file reference, not an arbitrary command or PowerShell expression. Core invokes only the fixed provider operation exported by that module: `Invoke-WintainiumProvider`.
+The descriptor describes supported contracts and capabilities. `entryPoint` is a relative PowerShell module (`.psm1`) path within the provider plugin directory. It is a file reference, not an arbitrary command or PowerShell expression. Core invokes the fixed release-discovery operation exported by that module: `Invoke-WintainiumProvider`. A provider that advertises the optional `sourceResolution=true` capability must also export the fixed `Invoke-WintainiumProviderSourceResolution` operation defined by the [Source Resolution Contract](../../../docs/SourceResolutionContract.md).
 
 Provider descriptors must not contain arbitrary executable commands, command lines, script blocks, or PowerShell expressions.
 
@@ -81,15 +81,23 @@ Providers must not receive arbitrary executable manifest content, installer comm
 
 ## Provider Operation
 
-The Core-to-provider operation is intentionally private to Core in Phase 3. The provider implementation exports exactly one contract operation:
+The Core-to-provider release-discovery operation is intentionally private to Core in Phase 3. The provider implementation exports the fixed operation:
 
 `Invoke-WintainiumProvider -Request <ProviderRequest>`
 
-Core loads the provider module from the validated descriptor `entryPoint` and invokes only this fixed operation name. The descriptor cannot select an arbitrary command to execute.
+Core loads the provider module from the validated descriptor `entryPoint` and invokes only this fixed operation name for release discovery. The descriptor cannot select an arbitrary command to execute.
 
 The operation returns exactly one `ProviderResult` object. Core validates the result before allowing normalized release data to cross the provider boundary.
 
 The provider operation may use the network to communicate with its declared upstream source. Core itself does not perform provider-specific HTTP operations.
+
+### Optional source-resolution operation
+
+`sourceResolution` is an additive provider capability. Providers that advertise `sourceResolution=true` must also export the fixed operation:
+
+`Invoke-WintainiumProviderSourceResolution -Request <SourceResolutionRequest>`
+
+Core invokes this operation only during application onboarding. Its normalized identity model and result semantics are defined by the separate [Source Resolution Contract](../../../docs/SourceResolutionContract.md). Providers that do not advertise this capability remain valid and are not invoked for onboarding.
 
 ## Provider Result
 
