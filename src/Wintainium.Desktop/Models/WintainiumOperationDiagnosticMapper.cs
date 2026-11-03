@@ -89,7 +89,7 @@ internal static class WintainiumOperationDiagnosticMapper
     {
         if (value is null) return null;
         if (value is IDictionary || value is IEnumerable and not string)
-            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value));
+            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value), new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         return Convert.ToString(value);
     }
 
