@@ -30,6 +30,7 @@ Describe 'Wintainium normalized application model' {
         $result.Status | Should -Be 'Resolved'
         $result.OperationId | Should -Be 'model-test-1'
         $result.ApplicationDefinition.Id | Should -Be 'github.microsoft.powertoys'
+        $result.ApplicationDefinition.manifestVersion | Should -Be '1.2'
         $result.ApplicationDefinition.Name | Should -Be 'PowerToys'
         $result.ApplicationDefinition.Source.pluginId | Should -Be 'Wintainium.provider.github-releases'
         $result.ApplicationDefinition.Source.settings.repository | Should -Be 'microsoft/PowerToys'
