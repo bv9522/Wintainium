@@ -10,7 +10,8 @@ internal sealed record WintainiumOperationLogEvent(
     string? Component,
     string? EventName,
     string? Message,
-    IReadOnlyDictionary<string, string?> Context);
+    IReadOnlyDictionary<string, string?> Context,
+    DateTimeOffset? Timestamp = null);
 
 internal static class WintainiumOperationLogEventMapper
 {
@@ -38,7 +39,8 @@ internal static class WintainiumOperationLogEventMapper
             Nullable(source, "Component"),
             Nullable(source, "EventName"),
             Nullable(source, "Message"),
-            MapContext(source.Properties["Context"]?.Value));
+            MapContext(source.Properties["Context"]?.Value),
+            DateTimeOffset.TryParse(Nullable(source, "Timestamp"), out var timestamp) ? timestamp : null);
     }
 
     private static IReadOnlyDictionary<string, string?> MapContext(object? value)
@@ -67,7 +69,7 @@ internal static class WintainiumOperationLogEventMapper
     {
         if (value is null) return null;
         if (value is System.Collections.IDictionary || value is System.Collections.IEnumerable and not string)
-            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value));
+            return System.Text.Json.JsonSerializer.Serialize(ToJsonSafeValue(value), new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         return Convert.ToString(value);
     }
 
