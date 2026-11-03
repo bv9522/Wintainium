@@ -117,7 +117,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     $sourceSettings = if ($Source.ProviderSettings -is [System.Collections.IDictionary]) { @{} + $Source.ProviderSettings } else { $Source.ProviderSettings }
 
     $application = [ordered]@{
-        manifestVersion='1.1'
+        manifestVersion='1.2'
         id=[string]$Source.ApplicationId
         name=[string]$Source.Name
         aliases=$sourceAliases.ToArray()
