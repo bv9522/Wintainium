@@ -61,6 +61,16 @@ function New-WintainiumApplicationDefinitionFromSource {
         }
     }
 
+    if ($null -ne $sourceContext) {
+        foreach ($contextError in @(Test-WintainiumManifestSemantics -Manifest @{ source = @{ context = $sourceContext } })) {
+            $errors.Add([pscustomobject][ordered]@{
+                Code = [string]$contextError.Code
+                Path = [string]$contextError.Path
+                Message = [string]$contextError.Message
+            })
+        }
+    }
+
     if ($null -eq $Policy) {
         $errors.Add([pscustomobject][ordered]@{ Code='ApplicationPolicyMissing'; Path='$.Policy'; Message='Core-owned application policy is required.' })
     } else {
