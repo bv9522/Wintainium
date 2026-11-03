@@ -25,11 +25,50 @@ function New-WintainiumApplicationDefinitionFromSource {
         }
 
         if ($Source.PSObject.Properties['SourceContext'] -and $null -ne $Source.SourceContext) {
-            if ($Source.SourceContext -isnot [System.Collections.IDictionary]) {
-                $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceContextInvalid'; Path='$.Source.SourceContext'; Message='Resolved source context must be a JSON-compatible dictionary.' })
+            # Providers commonly return JSON objects as PSCustomObject instances.
+            # Normalize those objects (including nested objects in arrays) into
+            # dictionaries before applying the manifest's JSON-safety rules.
+            $convertSourceContextValue = $null
+            $convertSourceContextValue = {
+                param([AllowNull()][object]$Value, [int]$Depth = 0)
+
+                if ($Depth -gt 8) { return ,$Value }
+
+                if ($Value -is [System.Collections.IDictionary]) {
+                    $converted = [ordered]@{}
+                    foreach ($key in $Value.Keys) {
+                        $converted[[string]$key] = & $convertSourceContextValue $Value[$key] ($Depth + 1)
+                    }
+                    return ,$converted
+                }
+
+                if ($Value -is [System.Management.Automation.PSCustomObject]) {
+                    $converted = [ordered]@{}
+                    foreach ($property in $Value.PSObject.Properties) {
+                        if ($property.MemberType -in @('NoteProperty','Property')) {
+                            $converted[[string]$property.Name] = & $convertSourceContextValue $property.Value ($Depth + 1)
+                        }
+                    }
+                    return ,$converted
+                }
+
+                if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string]) {
+                    $items = [System.Collections.Generic.List[object]]::new()
+                    foreach ($item in $Value) {
+                        $items.Add((& $convertSourceContextValue $item ($Depth + 1)))
+                    }
+                    return ,$items.ToArray()
+                }
+
+                return ,$Value
+            }
+
+            if ($Source.SourceContext -is [System.Collections.IDictionary] -or
+                $Source.SourceContext -is [System.Management.Automation.PSCustomObject]) {
+                $sourceContext = & $convertSourceContextValue $Source.SourceContext
             }
             else {
-                $sourceContext = [ordered]@{} + $Source.SourceContext
+                $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceContextInvalid'; Path='$.Source.SourceContext'; Message='Resolved source context must be a JSON object (dictionary or PSCustomObject).' })
             }
         }
 
