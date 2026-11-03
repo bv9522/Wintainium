@@ -203,6 +203,56 @@ function Invoke-WintainiumApplicationOnboarding {
         try {
             $existingManifest = Get-Content -LiteralPath $existingManifestPath -Raw -Encoding utf8 -ErrorAction Stop |
                 ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop
+            # User-confirmed aliases are Core/user-owned identity facts. Preserve them
+            # independently from provider suggestions whenever the same application is
+            # re-onboarded. Legacy manifests did not record provenance, so their aliases
+            # are conservatively migrated as confirmed rather than discarded.
+            $hasConfirmedAliasField = $existingManifest.ContainsKey('userConfirmedAliases')
+            $preservedAliasValues = if ($hasConfirmedAliasField) {
+                @($existingManifest['userConfirmedAliases'])
+            }
+            else {
+                @($existingManifest['aliases'])
+            }
+            $confirmedAliases = [System.Collections.Generic.List[string]]::new()
+            foreach ($aliasValue in $preservedAliasValues) {
+                if ($aliasValue -isnot [string] -or [string]::IsNullOrWhiteSpace($aliasValue)) { continue }
+                $normalizedAlias = $aliasValue.Trim()
+                if ($normalizedAlias -ieq [string]$normalization.ApplicationDefinition.name) { continue }
+                $duplicate = $false
+                foreach ($existingAlias in $confirmedAliases) {
+                    if ($existingAlias -ieq $normalizedAlias) { $duplicate = $true; break }
+                }
+                if (-not $duplicate) { $confirmedAliases.Add($normalizedAlias) }
+            }
+
+            if ($confirmedAliases.Count -gt 0) {
+                $providerAliases = [System.Collections.Generic.List[string]]::new()
+                foreach ($providerAlias in @($normalization.ApplicationDefinition.aliases)) {
+                    $isConfirmed = $false
+                    foreach ($confirmedAlias in $confirmedAliases) {
+                        if ([string]$providerAlias -ieq $confirmedAlias) { $isConfirmed = $true; break }
+                    }
+                    if (-not $isConfirmed) { $providerAliases.Add([string]$providerAlias) }
+                }
+                if ($providerAliases.Count -gt 0) {
+                    $normalization.ApplicationDefinition.aliases = $providerAliases.ToArray()
+                }
+                else {
+                    $normalization.ApplicationDefinition.PSObject.Properties.Remove('aliases')
+                }
+                $normalization.ApplicationDefinition | Add-Member -NotePropertyName userConfirmedAliases -NotePropertyValue $confirmedAliases.ToArray() -Force
+
+                $eventName = if ($hasConfirmedAliasField) { 'ExistingUserConfirmedAliasesPreserved' } else { 'LegacyAliasesMigratedToUserConfirmed' }
+                $eventMessage = if ($hasConfirmedAliasField) {
+                    'Re-onboarding preserved user-confirmed identity aliases independently from provider-suggested aliases.'
+                }
+                else {
+                    'Re-onboarding conservatively migrated legacy aliases into the user-confirmed alias collection because their original provenance was not recorded.'
+                }
+                $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName $eventName -Message $eventMessage -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;AliasCount=$confirmedAliases.Count}))
+            }
+
             $existingReconciliation = $existingManifest['reconciliation']
             $newReconciliation = $normalization.ApplicationDefinition.reconciliation
             if ($existingReconciliation -is [System.Collections.IDictionary] -and
