@@ -1,0 +1,9 @@
+{
+  "pluginId": "Wintainium.provider.source-resolution-only",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.source-resolution-only.psm1",
+  "capabilities": {
+    "sourceResolution": true
+  }
+}
