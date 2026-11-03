@@ -1236,11 +1236,11 @@ public sealed partial class MainWindow : Window
                 false),
             "AuthenticationRequired" => (
                 "Authentication required",
-                "The source requires authentication before Wintainium can resolve it. You can open the source in your browser and then try again.",
+                "The source requires a browser sign-in that Wintainium cannot reuse. Open Source only opens the publisher website; it does not transfer your browser session or resume onboarding.",
                 true),
             "InteractiveResolutionRequired" => (
                 "Interactive resolution required",
-                "This source requires interactive browser resolution. You can open the source in your browser and then try again.",
+                "The publisher requires an interactive browser check that Wintainium cannot complete automatically. Open Source only opens the website; returning here will not resume this onboarding attempt. No application was added.",
                 true),
             "SourceResponseInvalid" => (
                 "Source response could not be resolved",
