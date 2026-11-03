@@ -19,6 +19,18 @@ Describe 'Wintainium installer process lifecycle' {
         $result.StandardOutput | Should -Match 'hello from wintainium'
         $result.StandardError | Should -Be ''
     }
+    It 'bounds retained output independently while continuing to drain both streams' {
+        $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
+            Invoke-WintainiumInstallerProcess -FilePath $FilePath -ArgumentList @('-NoProfile','-NonInteractive','-Command','for ($i = 0; $i -lt 100000; $i++) { [Console]::Out.Write(''o''); [Console]::Error.Write(''e'') }') -TimeoutMilliseconds 15000
+        }
+        $result.Status | Should -Be 'Completed'
+        $result.StandardOutput.Length | Should -Be 65536
+        $result.StandardError.Length | Should -Be 65536
+        $result.StandardOutputTruncated | Should -BeTrue
+        $result.StandardErrorTruncated | Should -BeTrue
+        $result.StandardOutputComplete | Should -BeTrue
+        $result.StandardErrorComplete | Should -BeTrue
+    }
     It 'preserves argument boundaries instead of constructing shell command text' {
         $argumentWithSpaces = 'value with spaces'
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath; Value = $argumentWithSpaces } {
