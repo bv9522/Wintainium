@@ -51,6 +51,8 @@ The normalized source model may contain:
 
 `SourceContext` is reserved for narrowly defined source identity required by the selected provider. It is not an unrestricted metadata bag.
 
+Core separately preserves the exact user-supplied URL as `Source.submittedUri`; this is not resolver-authored data. The resolver's `CanonicalUri` is persisted as `Source.canonicalUri`. Provider-specific upstream locators remain in `Source.ProviderSettings`. These fields must not be conflated: a release page, redirect destination, canonical product page, and upstream repository identity can be different values.
+
 ## Status semantics
 
 A resolver must distinguish at least:
