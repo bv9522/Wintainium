@@ -65,6 +65,7 @@ A resolver must distinguish at least:
 - `AuthenticationRequired`
 - `InteractiveResolutionRequired` — the source requires an interactive browser or authentication step that the provider's deterministic HTTP retrieval path cannot complete.
 - `SourceResponseInvalid`
+- `SourceResolutionResultInvalid` — Core rejected a resolver result that violated the normalized source contract.
 - `SourceResolverInternalError`
 
 A non-success result must not contain a partially constructed application definition that Core could accidentally treat as authoritative.
@@ -95,7 +96,7 @@ Invoke-WintainiumProviderSourceResolution -Request <SourceResolutionRequest>
 
 The operation name is fixed. Providers do not receive arbitrary command names from Core or the user.
 
-The same module/entry-point restrictions and correlation rules used by Provider Contract v1 apply.
+The same module/entry-point restrictions and correlation rules used by Provider Contract v1 apply. Core binds the invocation to the exact resolved provider module and validates that the returned provider identity and contract version match the selected descriptor.
 
 ## Architectural ownership
 
