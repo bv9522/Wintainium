@@ -98,29 +98,8 @@ internal sealed class WintainiumApplicationOnboardingService
         return source is null ? null : Nullable(PSObject.AsPSObject(source), "PluginId");
     }
 
-    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name)
-    {
-        var value = source.Properties[name]?.Value;
-        if (value is null)
-            return [];
-
-        if (value is IEnumerable enumerable and not string)
-        {
-            return enumerable.Cast<object>()
-                .Select(item => PSObject.AsPSObject(item))
-                .Select(item => new WintainiumOperationDiagnostic(
-                    Nullable(item, "Code"),
-                    Nullable(item, "Path"),
-                    Nullable(item, "Message")))
-                .ToArray();
-        }
-
-        var item = PSObject.AsPSObject(value);
-        return [new WintainiumOperationDiagnostic(
-            Nullable(item, "Code"),
-            Nullable(item, "Path"),
-            Nullable(item, "Message"))];
-    }
+    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
+        WintainiumOperationDiagnosticMapper.MapCollection(source, name);
 
     private static IReadOnlyList<WintainiumApplicationOnboardingStage> Stages(PSObject source)
     {
