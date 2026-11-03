@@ -1297,12 +1297,8 @@ public sealed partial class MainWindow : Window
         await dialog.ShowAsync();
     }
 
-    private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic)
-    {
-        var prefix = string.IsNullOrWhiteSpace(diagnostic.Code) ? "Error" : diagnostic.Code;
-        var path = string.IsNullOrWhiteSpace(diagnostic.Path) ? string.Empty : $" ({diagnostic.Path})";
-        return $"{prefix}{path}: {diagnostic.Message}";
-    }
+    private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
+        WintainiumDiagnosticsTextFormatter.FormatDiagnostic(diagnostic);
 
     private async void SortAndFilterButton_Click(object sender, RoutedEventArgs e)
     {
