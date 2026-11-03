@@ -23,7 +23,7 @@ Every manifest must contain:
 
 | Field | Purpose |
 |---|---|
-| `manifestVersion` | Manifest format version. The current schema requires `"1.1"`. |
+| `manifestVersion` | Manifest format version. The current schema emits `"1.2"` and continues to accept existing `"1.1"` manifests. |
 | `id` | Stable application identifier. Use lowercase identifiers matching the schema pattern. |
 | `name` | Human-readable application name. |
 | `source` | Provider plugin reference used to discover releases. |
