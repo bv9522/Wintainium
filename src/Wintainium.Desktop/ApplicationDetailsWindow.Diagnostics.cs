@@ -161,13 +161,16 @@ public sealed partial class ApplicationDetailsWindow
             builder.AppendLine(WintainiumApplicationRefreshReportFormatter.Format(refreshResult));
         }
 
-        var updateLogs = _lastUpdateResult?.LogEvents;
-        if (updateLogs is not null)
-            AppendDiagnostics(builder, "Update Log Events", updateLogs);
+        var updateResult = _lastUpdateResult is not null &&
+                           string.Equals(_lastUpdateResult.ApplicationId, _application.ApplicationId, StringComparison.OrdinalIgnoreCase)
+            ? _lastUpdateResult
+            : WintainiumDesktopDiagnosticsStore.GetUpdateResult(_application.ApplicationId);
+        if (updateResult is not null)
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Update Log Events", updateResult.LogEvents);
 
-        var installLogs = WintainiumDesktopDiagnosticsStore.LastInstallResult?.LogEvents;
-        if (installLogs is not null)
-            AppendDiagnostics(builder, "Install Log Events", installLogs);
+        var installResult = WintainiumDesktopDiagnosticsStore.GetInstallResult(_application.ApplicationId);
+        if (installResult is not null)
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Install Log Events", installResult.LogEvents);
 
         builder.AppendLine();
         builder.AppendLine($"Installed State: {InstalledStateRefreshStatusText.Text}");
@@ -195,7 +198,8 @@ public sealed partial class ApplicationDetailsWindow
         string title,
         IEnumerable<WintainiumOperationDiagnostic> diagnostics)
     {
-        var values = diagnostics.Select(FormatTroubleshootingDiagnostic)
+        var values = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(diagnostics)
+            .Select(FormatTroubleshootingDiagnostic)
             .Where(static value => !string.IsNullOrWhiteSpace(value))
             .ToArray();
 
@@ -208,34 +212,8 @@ public sealed partial class ApplicationDetailsWindow
             builder.AppendLine($"- {value}");
     }
 
-    private static string FormatTroubleshootingDiagnostic(WintainiumOperationDiagnostic diagnostic)
-    {
-        var message = diagnostic.Message?.Trim();
-        var code = diagnostic.Code?.Trim();
-        var path = diagnostic.Path?.Trim();
-
-        var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(code))
-            parts.Add(code);
-        if (!string.IsNullOrWhiteSpace(message))
-            parts.Add(message);
-        if (IsUsefulDiagnosticPath(path))
-            parts.Add($"Path: {path}");
-
-        if (diagnostic.Details is { Count: > 0 } details)
-        {
-            var context = details
-                .Where(static pair => !string.IsNullOrWhiteSpace(pair.Value))
-                .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(static pair => $"{pair.Key}={pair.Value}")
-                .ToArray();
-            if (context.Length > 0)
-                parts.Add("Context: " + string.Join("; ", context));
-        }
-
-        return parts.Count == 0 ? "Unspecified diagnostic." : string.Join(": ", parts.Take(2)) +
-            (parts.Count > 2 ? $" ({string.Join(" | ", parts.Skip(2))})" : string.Empty);
-    }
+    private static string FormatTroubleshootingDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
+        WintainiumDiagnosticsTextFormatter.FormatDiagnostic(diagnostic);
 
     private static bool IsUsefulDiagnosticPath(string? path)
     {
