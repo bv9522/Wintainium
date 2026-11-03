@@ -63,6 +63,8 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Source.submittedUri | Should -Be 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78'
         $result.ApplicationDefinition.Source.canonicalUri | Should -Be 'https://github.com/PCSX2/pcsx2'
         @($result.Errors).Count | Should -Be 0
+        @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed').Count | Should -Be 0
+        @($result.Warnings).Count | Should -Be 0
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
         $persistedManifest = Get-Content -LiteralPath $result.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
