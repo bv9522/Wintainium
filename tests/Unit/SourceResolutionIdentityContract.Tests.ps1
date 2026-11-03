@@ -91,7 +91,6 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         $persisted.source.context.releaseTag | Should -Be 'v2.4.0'
         @($persisted.userConfirmedAliases) | Should -Be @('Example Product (Legacy User Name)')
     }
-}
 
     It 'rejects a non-dictionary provider source context during normalization' {
         $source = [pscustomobject][ordered]@{
@@ -117,3 +116,17 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         $result.IsSuccessful | Should -BeFalse
         @($result.Errors.Code) | Should -Contain 'ApplicationSourceContextInvalid'
     }
+    It 'rejects source context that exceeds the supported nesting limit' {
+        $context = @{ value = 'leaf' }
+        for ($index = 0; $index -lt 10; $index++) {
+            $context = @{ nested = $context }
+        }
+        $manifest = @{ source = @{ context = $context } }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Manifest = $manifest } {
+            Test-WintainiumManifestSemantics -Manifest $Manifest
+        }
+
+        @($result.Code) | Should -Contain 'ManifestSourceContextInvalid'
+    }
+
+}
