@@ -38,14 +38,15 @@ A successful `Source` contains normalized facts only. Provider-specific upstream
 
 The normalized source model may contain:
 
-- `ApplicationId`
-- `Name`
+- `ApplicationId` — stable Wintainium identity for the resolved application; it is not the display name.
+- `Name` — primary display name.
+- optional `Aliases` — alternate application/display names established by the resolver. These are not package identifiers, executable paths, or publisher identities.
 - `Publisher`
 - `Homepage`
-- `CanonicalUri`
+- `CanonicalUri` — resolver-established canonical source identity URI.
 - `ProviderId`
 - `ProviderContractVersion`
-- `ProviderSettings`
+- `ProviderSettings` — provider-owned upstream locator/configuration.
 - `SourceContext`
 
 `SourceContext` is reserved for narrowly defined source identity required by the selected provider. It is not an unrestricted metadata bag.
