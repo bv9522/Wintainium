@@ -44,6 +44,7 @@ Describe 'Wintainium generic EXE installer' {
         $result = & $script:installerCommand -Invocation $script:invocation
 
         $result.ExecutablePath | Should -Be ([System.IO.Path]::GetFullPath($script:artifactPath))
+        $result.WorkingDirectory | Should -Be ([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetFullPath($script:artifactPath)))
         @($result.Arguments) | Should -Be @('/S', '/D=C:Program FilesTest')
     }
 

@@ -45,6 +45,7 @@ Describe 'Wintainium generic MSI installer' {
 
         $expectedMsiexec = [System.IO.Path]::GetFullPath((Join-Path $env:WINDIR 'System32/msiexec.exe'))
         $result.ExecutablePath | Should -Be $expectedMsiexec
+        $result.WorkingDirectory | Should -Be ([System.IO.Path]::GetDirectoryName([System.IO.Path]::GetFullPath($script:artifactPath)))
         @($result.Arguments) | Should -Be @('/i', [System.IO.Path]::GetFullPath($script:artifactPath), '/qn', '/norestart')
     }
 

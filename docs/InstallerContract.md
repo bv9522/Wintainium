@@ -70,6 +70,7 @@ arbitrary shell command selected by the manifest.
 
 EXE and MSI installers produce structured process specifications with executable
 path, argument array, working directory, and environment data as applicable.
+For both formats, the default working directory is the directory containing the verified artifact. This gives installers a predictable location for publisher-supplied companion files without relying on the desktop process working directory.
 Process arguments remain separate values rather than being joined into a shell
 command string.
 

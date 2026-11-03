@@ -72,6 +72,7 @@ function Invoke-WintainiumInstaller {
     [pscustomobject][ordered]@{
         ExecutablePath = [System.IO.Path]::GetFullPath($artifactPath)
         Arguments = [string[]]$arguments
+        WorkingDirectory = [System.IO.Path]::GetDirectoryName([System.IO.Path]::GetFullPath($artifactPath))
     }
 }
 
