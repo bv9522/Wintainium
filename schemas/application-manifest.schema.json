@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://Wintainium.dev/schemas/application-manifest-1.1.json",
+  "$id": "https://Wintainium.dev/schemas/application-manifest-1.2.json",
   "title": "Wintainium Application Manifest",
   "description": "A portable declaration of application management intent.",
   "type": "object",
@@ -17,7 +17,7 @@
   ],
   "properties": {
     "manifestVersion": {
-      "const": "1.1"
+      "enum": ["1.1", "1.2"]
     },
     "id": {
       "type": "string",
