@@ -203,6 +203,6 @@ internal static class WintainiumDiagnosticsTextFormatter
             // Scalar context values are already safe, normalized strings.
         }
 
-        builder.Append(indent).AppendLine(value);
+        AppendWrappedText(builder, value, indent);
     }
 }
