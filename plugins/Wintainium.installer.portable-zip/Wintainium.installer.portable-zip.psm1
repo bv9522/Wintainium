@@ -102,12 +102,13 @@ if ([string]::IsNullOrWhiteSpace(`$parentDirectory) -or [string]::Equals(`$paren
 `$destinationName = [System.IO.Path]::GetFileName(`$destinationRoot)
 `$stagePath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-stage-' + `$operationToken)
 `$backupPath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-backup-' + `$operationToken)
-`$backupCreated = `false
-`$stageCreated = `false
+`$backupCreated = `$false
+`$stageCreated = `$false
 try {
     [System.IO.Directory]::CreateDirectory(`$stagePath) | Out-Null
     `$stageCreated = `$true
     `$stagePrefix = `$stagePath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+    `$destinationPrefix = `$destinationRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
     # Preserve overlay semantics, but never follow links in the old installation.
     if ([System.IO.Directory]::Exists(`$destinationRoot)) {
         `$destinationInfo = [System.IO.DirectoryInfo]::new(`$destinationRoot)
@@ -116,8 +117,8 @@ try {
         `$pendingDirectories.Push(`$destinationRoot)
         while (`$pendingDirectories.Count -gt 0) {
             `$sourceDirectory = `$pendingDirectories.Pop()
-            `$relativeDirectory = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$sourceDirectory)
-            `$targetDirectory = if (`$relativeDirectory -eq '.') { `$stagePath } else { Join-Path `$stagePath `$relativeDirectory }
+            `$relativeDirectory = if ([string]::Equals(`$sourceDirectory, `$destinationRoot, [System.StringComparison]::OrdinalIgnoreCase)) { '' } else { `$sourceDirectory.Substring(`$destinationPrefix.Length) }
+            `$targetDirectory = if ([string]::IsNullOrEmpty(`$relativeDirectory)) { `$stagePath } else { Join-Path `$stagePath `$relativeDirectory }
             [System.IO.Directory]::CreateDirectory(`$targetDirectory) | Out-Null
             foreach (`$directory in [System.IO.Directory]::EnumerateDirectories(`$sourceDirectory)) {
                 `$directoryInfo = [System.IO.DirectoryInfo]::new(`$directory)
@@ -127,7 +128,7 @@ try {
             foreach (`$file in [System.IO.Directory]::EnumerateFiles(`$sourceDirectory)) {
                 `$fileInfo = [System.IO.FileInfo]::new(`$file)
                 if ((`$fileInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Existing installation contains a reparse point: `$file" }
-                `$relativeFile = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$file)
+                `$relativeFile = `$file.Substring(`$destinationPrefix.Length)
                 `$targetFile = Join-Path `$stagePath `$relativeFile
                 [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName(`$targetFile)) | Out-Null
                 [System.IO.File]::Copy(`$file, `$targetFile, `$true)
@@ -156,11 +157,11 @@ try {
     if ([System.IO.Directory]::Exists(`$destinationRoot)) { [System.IO.Directory]::Move(`$destinationRoot, `$backupPath); `$backupCreated = `$true }
     try {
         [System.IO.Directory]::Move(`$stagePath, `$destinationRoot)
-        `$stageCreated = `false
+        `$stageCreated = `$false
     } catch {
         `$activationError = [string]`$_.Exception.Message
         if (`$backupCreated -and -not [System.IO.Directory]::Exists(`$destinationRoot)) {
-            try { [System.IO.Directory]::Move(`$backupPath, `$destinationRoot); `$backupCreated = `false }
+            try { [System.IO.Directory]::Move(`$backupPath, `$destinationRoot); `$backupCreated = `$false }
             catch {
                 `$rollbackError = [string]`$_.Exception.Message
                 throw "Activation failed and rollback failed. Original installation remains at '`$backupPath'. Activation error: `$activationError. Rollback error: `$rollbackError"
@@ -169,7 +170,7 @@ try {
         throw
     }
     if (`$backupCreated) {
-        try { [System.IO.Directory]::Delete(`$backupPath, `$true); `$backupCreated = `false }
+        try { [System.IO.Directory]::Delete(`$backupPath, `$true); `$backupCreated = `$false }
         catch { [Console]::Error.WriteLine("Installation succeeded, but previous installation backup remains at: `$backupPath") }
     }
     exit 0
