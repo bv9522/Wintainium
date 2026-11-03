@@ -49,6 +49,16 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
     if ([string]::IsNullOrWhiteSpace($matchMode)) { $matchMode = 'all' }
     if ($matchMode -notin @('all','any')) { throw [System.ArgumentException]::new("Unsupported Windows registry match mode '$matchMode'.") }
     $match = Get-WintainiumWindowsSettingValue -Object $registry -Name 'match'
+    $allowIdentityFallbackSetting = Get-WintainiumWindowsSettingValue -Object $registry -Name 'allowIdentityFallback'
+    if ($null -eq $allowIdentityFallbackSetting) {
+        $allowIdentityFallback = $true
+    }
+    elseif ($allowIdentityFallbackSetting -is [bool]) {
+        $allowIdentityFallback = $allowIdentityFallbackSetting
+    }
+    else {
+        throw [System.ArgumentException]::new("Windows registry setting 'allowIdentityFallback' must be a Boolean when specified.")
+    }
     if (@($match).Count -eq 0) { throw [System.ArgumentException]::new("Windows reconciliation settings must contain at least one registry match predicate.") }
 
     $matchableValues = @('subkey', 'DisplayName', 'Publisher')
@@ -212,10 +222,10 @@ function Get-WintainiumWindowsInstalledApplicationCandidates {
             }
         }
     }
-    # Explicit manifest predicates remain authoritative. Only when they find no
-    # candidate do we evaluate the canonical manifest name against the registry
-    # inventory. Weak/ambiguous results remain non-authoritative.
-    if ($candidates.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($ApplicationName)) {
+    # Explicit manifest predicates are always evaluated first. Identity fallback
+    # can be disabled for manifests whose registry predicates are the complete
+    # identity contract (for example, an exact product subkey).
+    if ($candidates.Count -eq 0 -and $allowIdentityFallback -and -not [string]::IsNullOrWhiteSpace($ApplicationName)) {
         $fullName = ConvertTo-WintainiumIdentityName -Value $ApplicationName
         $primaryName = ([regex]::Split($ApplicationName.Trim(), '[,;|:]', 2)[0]).Trim()
         $primaryNormalized = ConvertTo-WintainiumIdentityName -Value $primaryName

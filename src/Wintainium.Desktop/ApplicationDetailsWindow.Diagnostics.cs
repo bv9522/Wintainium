@@ -148,7 +148,6 @@ public sealed partial class ApplicationDetailsWindow
             builder.AppendLine($"Operation ID: {operationId}");
 
         AppendItems(builder, "Stages", StageItemsControl.Items);
-        AppendItems(builder, "Stage Reasons", StageReasonItemsControl.Items);
         AppendItems(builder, "Errors", ErrorItemsControl.Items);
         AppendItems(builder, "Warnings", WarningItemsControl.Items);
         AppendItems(builder, "Troubleshooting", TroubleshootingDiagnosticsItemsControl.Items);

@@ -24,6 +24,7 @@
         "locations": [
           {"scope": "machine", "view": "64"}
         ],
+        "allowIdentityFallback": false,
         "match": [
           {"value": "subkey", "equals": "Wintainium.Phase13D.DefinitelyNotInstalled"}
         ]

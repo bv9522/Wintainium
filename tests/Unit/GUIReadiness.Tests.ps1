@@ -186,7 +186,7 @@ Describe 'Wintainium GUI-facing public boundary' {
 
         $detailsXaml | Should -Match 'x:Name="StageReasonItemsControl"'
         $detailsXaml | Should -Match 'x:Name="StageReasonHeaderText"'
-        $details | Should -Match 'FormatStageReason\(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason\)'
+        $details | Should -Match 'FormatStageReason\(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason, stage.Error\)'
         $details | Should -Match 'Reason code: \{reasonCode\}'
         $details | Should -Match 'Reason: \{reason\}'
 

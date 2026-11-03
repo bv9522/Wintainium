@@ -228,6 +228,28 @@ Describe 'Windows installed-application reconciliation plugin' {
         $observation.Candidates[0].SubKey | Should -Be '7-Zip'
     }
 
+    It 'honors an explicit opt-out from name-based identity fallback' {
+        $settings = [pscustomobject][ordered]@{
+            registry = [pscustomobject][ordered]@{
+                matchMode = 'any'
+                allowIdentityFallback = $false
+                locations = @([pscustomobject]@{ scope='machine'; view='64' })
+                match = @([pscustomobject]@{ value='subkey'; equals='DefinitelyNotThisSubkey'; matchType='exact' })
+            }
+        }
+        $reader = {
+            param($location)
+            [pscustomobject]@{ Scope='machine'; View='64'; SubKey='OtherProduct'; DisplayName='Example Application'; DisplayVersion='1.0' }
+        }
+
+        $observation = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Settings=$settings; Reader=$reader; Name='Example Application' } {
+            Get-WintainiumWindowsInstalledApplicationCandidates -Settings $Settings -RegistryReader $Reader -ApplicationName $Name
+        }
+
+        $observation.IsSuccessful | Should -BeTrue
+        $observation.Candidates.Count | Should -Be 0
+    }
+
     It 'matches a complete numeric version suffix without enabling substring matching' {
         $settings = [pscustomobject][ordered]@{
             registry = [pscustomobject][ordered]@{
