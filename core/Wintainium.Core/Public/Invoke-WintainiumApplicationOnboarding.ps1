@@ -82,7 +82,7 @@ function Invoke-WintainiumApplicationOnboarding {
 
     if($successful.Count -eq 0) {
         $status='SourceUnsupported'
-        foreach($candidate in @('SourceAmbiguous','SourceUnavailable','AuthenticationRequired','InteractiveResolutionRequired','SourceResponseInvalid')) {
+        foreach($candidate in @('SourceAmbiguous','SourceUnavailable','AuthenticationRequired','InteractiveResolutionRequired','SourceResponseInvalid','SourceResolutionResultInvalid','SourceResolverInternalError')) {
             if(@($failures | Where-Object Status -eq $candidate).Count -gt 0){$status=$candidate;break}
         }
         # The stage explanation must describe the resolver outcome that determined
