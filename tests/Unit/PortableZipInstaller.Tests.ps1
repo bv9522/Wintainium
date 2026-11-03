@@ -38,6 +38,11 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand | Should -Match '\$ErrorActionPreference = ''Stop'''
         $decodedCommand | Should -Match '\[System\.IO\.Compression\.ZipFile\]::OpenRead'
         $decodedCommand | Should -Match '\[System\.IO\.FileMode\]::Create'
+        $decodedCommand | Should -Match 'wintanium-stage-'
+        $decodedCommand | Should -Match 'wintanium-backup-'
+        $decodedCommand | Should -Match '\[System\.IO\.Directory\]::Move'
+        $decodedCommand | Should -Match 'rollback'
+        $decodedCommand | Should -Match '\[System\.IO\.File\]::Copy'
         $decodedCommand | Should -Match 'ZIP entry attempts to write outside destination'
         $decodedCommand | Should -Not -Match 'Expand-Archive'
         $decodedCommand | Should -Match 'catch'
@@ -80,6 +85,7 @@ Describe 'Wintainium generic portable ZIP installer' {
         $overwriteDestination = Join-Path $script:tempRoot 'overwrite-destination'
         New-Item -ItemType Directory -Path $overwriteDestination -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Value 'old version' -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $overwriteDestination 'user-data.txt') -Value 'preserve me' -Encoding utf8
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$overwriteDestination}}
         $spec=&$script:installerCommand -Invocation $inv
         $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
@@ -89,6 +95,7 @@ Describe 'Wintainium generic portable ZIP installer' {
         $processResult.Status | Should -Be 'Completed' -Because $processResult.StandardError
         Get-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Raw | Should -Match 'portable test'
         Get-Content -LiteralPath (Join-Path $overwriteDestination 'payload.txt') -Raw | Should -Not -Match 'old version'
+        Get-Content -LiteralPath (Join-Path $overwriteDestination 'user-data.txt') -Raw | Should -Match 'preserve me'
     }
 
     It 'returns a failed process result when archive extraction fails' {
@@ -138,6 +145,35 @@ Describe 'Wintainium generic portable ZIP installer' {
         $processResult.ExitCode | Should -Not -Be 0
         $processResult.StandardError | Should -Match 'Expected portable ZIP entry point was not extracted'
     }
+    It 'leaves the live installation untouched when archive extraction fails' {
+        $protectedDestination = Join-Path $script:tempRoot 'failed-overlay-destination'
+        New-Item -ItemType Directory -Path $protectedDestination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $protectedDestination 'sentinel.txt') -Value 'original installation' -Encoding utf8
+        $invalidArtifactPath = Join-Path $script:tempRoot 'invalid-overlay.zip'
+        Set-Content -LiteralPath $invalidArtifactPath -Value 'not a zip archive' -Encoding utf8
+        $inv=[pscustomobject]@{ArtifactPath=$invalidArtifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$protectedDestination}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+        $processResult.Status | Should -Be 'Failed'
+        Get-Content -LiteralPath (Join-Path $protectedDestination 'sentinel.txt') -Raw | Should -Match 'original installation'
+        @(Get-ChildItem -LiteralPath $script:tempRoot -Directory -Force | Where-Object Name -Like '.failed-overlay-destination.wintanium-*').Count | Should -Be 0
+    }
+
+    It 'leaves the live installation untouched when the staged entry point is missing' {
+        $protectedDestination = Join-Path $script:tempRoot 'missing-entrypoint-existing-destination'
+        New-Item -ItemType Directory -Path $protectedDestination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $protectedDestination 'sentinel.txt') -Value 'original installation' -Encoding utf8
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$protectedDestination;entryPoint='missing.exe'}}
+        $spec=&$script:installerCommand -Invocation $inv
+        $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
+            Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
+        }
+        $processResult.Status | Should -Be 'Failed'
+        Get-Content -LiteralPath (Join-Path $protectedDestination 'sentinel.txt') -Raw | Should -Match 'original installation'
+    }
+
     It 'accepts an optional entryPoint setting' {
         $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint='bin/app.exe'}}
         { &$script:installerCommand -Invocation $inv } | Should -Not -Throw

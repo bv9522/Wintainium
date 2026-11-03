@@ -75,9 +75,7 @@ The MSI result mapper treats Windows Installer exit codes `3010` (success, reboo
 Process arguments remain separate values rather than being joined into a shell
 command string.
 
-The portable ZIP installer requires an absolute destination path. Its optional
-archive entry point must be a relative path, must not be rooted, and must not
-contain parent traversal. Nested relative paths are allowed.
+The portable ZIP installer requires an absolute destination path below a filesystem root. It stages the replacement in a unique sibling directory on the same volume, first copying the existing installation so files omitted by the new archive remain intact. Existing reparse points are rejected during that copy rather than followed. Archive paths are validated and extracted into staging, and the configured relative entry point is checked there before activation. Activation moves the old destination to a sibling backup and then moves staging into place; if activation fails, the installer attempts to restore the original directory. A backup that cannot be safely removed after successful activation, or cannot be restored after a failed activation, is retained for recovery and its path is reported. Failed staging never modifies the live destination. The optional archive entry point must be relative, not rooted, and contain no parent traversal; nested relative paths are allowed.
 
 The MSIX installer uses the system Windows PowerShell executable and passes
 installer settings as JSON data through process arguments. The command used to
@@ -104,7 +102,7 @@ The implementation does establish several concrete boundaries:
 - artifact-format compatibility checks;
 - structured installer settings rather than arbitrary command construction;
 - process argument boundaries for EXE/MSI installation;
-- portable archive path traversal rejection;
+- portable archive path traversal rejection, same-volume staging, reparse-point refusal, and rollback-aware destination activation;
 - fixed MSIX command construction with JSON settings arguments;
 - structured installer results and operation correlation.
 

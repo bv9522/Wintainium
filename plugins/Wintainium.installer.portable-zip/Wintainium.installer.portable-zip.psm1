@@ -90,30 +90,70 @@ function Invoke-WintainiumInstaller {
     # Microsoft.PowerShell.Archive module but fail to load it on some hosts.
     # Extract through .NET compression APIs, reject ZIP path traversal, and
     # use FileMode.Create to replace existing files during updates.
+    $entryPointCheck = ''
+    if ($null -ne $entryPoint) {
+        $escapedEntryPoint = $entryPoint.Replace("'", "''")
+        $entryPointCheck = @"
+    `$entryPointPath = [System.IO.Path]::GetFullPath((Join-Path -Path `$stagePath -ChildPath '$escapedEntryPoint'))
+    if (-not `$entryPointPath.StartsWith(`$stagePrefix, [System.StringComparison]::OrdinalIgnoreCase) -or -not [System.IO.File]::Exists(`$entryPointPath)) {
+        throw 'Expected portable ZIP entry point was not extracted into staging.'
+    }
+"@
+    }
+
     $script = @"
 `$ErrorActionPreference = 'Stop'
+`$destinationRoot = [System.IO.Path]::GetFullPath('$escapedDestination').TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+`$parentDirectory = [System.IO.Path]::GetDirectoryName(`$destinationRoot)
+if ([string]::IsNullOrWhiteSpace(`$parentDirectory) -or [string]::Equals(`$parentDirectory, `$destinationRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Portable ZIP destination must be a directory below a filesystem root.'
+}
+[System.IO.Directory]::CreateDirectory(`$parentDirectory) | Out-Null
+`$operationToken = [guid]::NewGuid().ToString('N')
+`$destinationName = [System.IO.Path]::GetFileName(`$destinationRoot)
+`$stagePath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-stage-' + `$operationToken)
+`$backupPath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-backup-' + `$operationToken)
+`$backupCreated = `false
+`$stageCreated = `false
 try {
+    [System.IO.Directory]::CreateDirectory(`$stagePath) | Out-Null
+    `$stageCreated = `true
+    # Preserve overlay semantics, but never follow links in the old installation.
+    if ([System.IO.Directory]::Exists(`$destinationRoot)) {
+        `$pendingDirectories = [System.Collections.Generic.Stack[string]]::new()
+        `$pendingDirectories.Push(`$destinationRoot)
+        while (`$pendingDirectories.Count -gt 0) {
+            `$sourceDirectory = `$pendingDirectories.Pop()
+            `$relativeDirectory = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$sourceDirectory)
+            `$targetDirectory = if (`$relativeDirectory -eq '.') { `$stagePath } else { Join-Path `$stagePath `$relativeDirectory }
+            [System.IO.Directory]::CreateDirectory(`$targetDirectory) | Out-Null
+            foreach (`$directory in [System.IO.Directory]::EnumerateDirectories(`$sourceDirectory)) {
+                `$directoryInfo = [System.IO.DirectoryInfo]::new(`$directory)
+                if ((`$directoryInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Existing installation contains a reparse point: `$directory" }
+                `$pendingDirectories.Push(`$directory)
+            }
+            foreach (`$file in [System.IO.Directory]::EnumerateFiles(`$sourceDirectory)) {
+                `$fileInfo = [System.IO.FileInfo]::new(`$file)
+                if ((`$fileInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Existing installation contains a reparse point: `$file" }
+                `$relativeFile = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$file)
+                `$targetFile = Join-Path `$stagePath `$relativeFile
+                [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName(`$targetFile)) | Out-Null
+                [System.IO.File]::Copy(`$file, `$targetFile, `true)
+            }
+        }
+    }
     Add-Type -AssemblyName System.IO.Compression
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    `$archivePath = '$escapedArtifactPath'
-    `$destinationRoot = [System.IO.Path]::GetFullPath('$escapedDestination').TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-    [System.IO.Directory]::CreateDirectory(`$destinationRoot) | Out-Null
-    `$destinationPrefix = `$destinationRoot + [System.IO.Path]::DirectorySeparatorChar
-    `$archive = [System.IO.Compression.ZipFile]::OpenRead(`$archivePath)
+    `$archive = [System.IO.Compression.ZipFile]::OpenRead('$escapedArtifactPath')
     try {
         foreach (`$entry in `$archive.Entries) {
             `$relativePath = `$entry.FullName.Replace('/', [System.IO.Path]::DirectorySeparatorChar).Replace([char]92, [System.IO.Path]::DirectorySeparatorChar)
             if ([string]::IsNullOrWhiteSpace(`$relativePath)) { continue }
-            `$targetPath = [System.IO.Path]::GetFullPath((Join-Path -Path `$destinationRoot -ChildPath `$relativePath))
-            if (-not `$targetPath.StartsWith(`$destinationPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-                throw "ZIP entry attempts to write outside destination: `$(`$entry.FullName)"
-            }
-            if (`$entry.FullName.EndsWith('/') -or `$entry.FullName.EndsWith([string][char]92)) {
-                [System.IO.Directory]::CreateDirectory(`$targetPath) | Out-Null
-                continue
-            }
-            `$parentPath = [System.IO.Path]::GetDirectoryName(`$targetPath)
-            [System.IO.Directory]::CreateDirectory(`$parentPath) | Out-Null
+            if (`$relativePath.Contains(':') -or `$relativePath.Contains([char]0)) { throw "ZIP entry contains an invalid path: `$((`$entry).FullName)" }
+            `$targetPath = [System.IO.Path]::GetFullPath((Join-Path -Path `$stagePath -ChildPath `$relativePath))
+            `$stagePrefix = `$stagePath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+            if (-not `$targetPath.StartsWith(`$stagePrefix, [System.StringComparison]::OrdinalIgnoreCase)) { throw "ZIP entry attempts to write outside destination: `$((`$entry).FullName)" }
+            if (`$entry.FullName.EndsWith('/') -or `$entry.FullName.EndsWith([string][char]92)) { [System.IO.Directory]::CreateDirectory(`$targetPath) | Out-Null; continue }
+            [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName(`$targetPath)) | Out-Null
             `$inputStream = `$entry.Open()
             try {
                 `$outputStream = [System.IO.File]::Open(`$targetPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
@@ -121,12 +161,32 @@ try {
             } finally { `$inputStream.Dispose() }
         }
     } finally { `$archive.Dispose() }
-$entryPointCheck
+`$entryPointCheck
+    if ([System.IO.Directory]::Exists(`$destinationRoot)) { [System.IO.Directory]::Move(`$destinationRoot, `$backupPath); `$backupCreated = `true }
+    try {
+        [System.IO.Directory]::Move(`$stagePath, `$destinationRoot)
+        `$stageCreated = `false
+    } catch {
+        if (`$backupCreated -and -not [System.IO.Directory]::Exists(`$destinationRoot)) {
+            try { [System.IO.Directory]::Move(`$backupPath, `$destinationRoot); `$backupCreated = `false }
+            catch { throw "Activation failed and rollback failed. Original installation remains at '`$backupPath'. Activation: `($_.Exception.Message). Rollback: `($_.Exception.Message)" }
+        }
+        throw
+    }
+    if (`$backupCreated) {
+        try { [System.IO.Directory]::Delete(`$backupPath, `true); `$backupCreated = `false }
+        catch { [Console]::Error.WriteLine("Installation succeeded, but previous installation backup remains at: `$backupPath") }
+    }
     exit 0
-}
-catch {
-    [Console]::Error.WriteLine([string]`$_.Exception.Message)
+} catch {
+    `$message = [string]`$_.Exception.Message
+    if (`$backupCreated -and [System.IO.Directory]::Exists(`$backupPath) -and -not [System.IO.Directory]::Exists(`$destinationRoot)) { `$message += " Original installation remains recoverable at: `$backupPath" }
+    [Console]::Error.WriteLine(`$message)
     exit 1
+} finally {
+    if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
+        try { [System.IO.Directory]::Delete(`$stagePath, `true) } catch { [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath") }
+    }
 }
 "@
     # Portable applications may be installed under protected locations such as
