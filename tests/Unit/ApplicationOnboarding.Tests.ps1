@@ -35,6 +35,12 @@ Describe 'Wintainium application onboarding' {
         Copy-Item -LiteralPath (Join-Path $sourceFailureFixture 'plugin.json') -Destination $sourceFailureTarget -Force
         Copy-Item -LiteralPath (Join-Path $sourceFailureFixture 'Wintainium.provider.source-resolution-failure.psm1') -Destination $sourceFailureTarget -Force
 
+        $identityFixture = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/Plugins/SourceResolutionIdentity'
+        $identityTarget = Join-Path -Path $script:pluginRoot -ChildPath 'Wintainium.provider.source-resolution-identity'
+        New-Item -ItemType Directory -Path $identityTarget -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $identityFixture 'plugin.json') -Destination $identityTarget -Force
+        Copy-Item -LiteralPath (Join-Path $identityFixture 'Wintainium.provider.source-resolution-identity.psm1') -Destination $identityTarget -Force
+
         $script:policy = [pscustomobject][ordered]@{
             Installer = [pscustomobject][ordered]@{PluginId='Wintainium.installer.test';RequiredContractVersion='1';Settings=@{}}
             Reconciliation = [pscustomobject][ordered]@{PluginId='Wintainium.reconciliation.test';RequiredContractVersion='1';Settings=@{}}
@@ -182,6 +188,24 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'ApplicationPolicyConfigurationRequired'
         $result.Errors[0].Code | Should -Be 'ApplicationPolicyConfigurationRequired'
         $result.Errors[0].Path | Should -Be '$.Policy.Reconciliation.Settings'
+    }
+
+    It 'rejects a resolver that claims another provider identity' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://identity.example/provider-mismatch' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'SourceResolutionResultInvalid'
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionProviderIdentityMismatch'
+        $result.ManifestPath | Should -BeNullOrEmpty
+    }
+
+    It 'rejects a resolver contract version that its descriptor does not advertise' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://identity.example/contract-mismatch' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'SourceResolutionResultInvalid'
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionProviderContractMismatch'
+        $result.ManifestPath | Should -BeNullOrEmpty
     }
 
     It 'does not mutate persistence when source resolution fails' {
