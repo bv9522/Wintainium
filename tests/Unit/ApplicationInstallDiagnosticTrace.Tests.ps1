@@ -100,25 +100,28 @@ Describe 'Wintainium install diagnostic trace' {
             }
 
             $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
-            $trace = @($result.TroubleshootingDiagnostics | Where-Object Code -eq 'InstallDiagnostic.ReleaseDiscoveryTrace')
+            $trace = @($result.TroubleshootingDiagnostics | Where-Object Code -eq 'InstallDiagnostic.ArtifactChecksumEvidence')
+            $result.LogEvents.Count | Should -Be 2
 
-            $trace.Count | Should -Be 3
-            $trace[0].Message | Should -Match 'NoReleaseSectionCandidates'
-            $trace[0].Message | Should -Match 'SectionCandidateCount=0'
-            $trace[1].Message | Should -Match 'ArtifactSha256EvidenceResolutionCompleted'
-            $trace[1].Message | Should -Match 'AttemptedCount=3'
-            $trace[1].Message | Should -Match 'ResolvedCount=3'
-            $trace[1].Message | Should -Match 'ArtifactEndpointAttemptedCount=3'
-            $trace[1].Message | Should -Match 'ArtifactEndpointResolvedCount=2'
-            $trace[1].Message | Should -Match 'ArtifactEndpointRejectedCount=1'
-            $trace[2].Message | Should -Match 'Artifact checksum evidence:'
-            $trace[2].Message | Should -Match 'ArtifactFileName=vlc-3.0.24-win64.exe'
-            $trace[2].Message | Should -Match 'Status=RejectedFilename'
-            $trace[2].Message | Should -Match 'ArtifactEndpointStatus=RejectedDigest'
-            $trace[2].Message | Should -Match 'ArtifactEndpointHttpStatusCode=200'
-            $trace[2].Message | Should -Match 'ArtifactEndpointContentType=text/html'
-            $trace[2].Message | Should -Match 'ArtifactEndpointUrl=https://get.example.test/vlc-3.0.24-win64.exe'
-            $trace[2].Message | Should -Not -Match 'DO-NOT-EXPOSE'
+            $discoveryEvent = $result.LogEvents | Where-Object EventName -eq 'ReleaseDiscoveryParsingCompleted'
+            $sidecarEvent = $result.LogEvents | Where-Object EventName -eq 'ArtifactSha256EvidenceResolutionCompleted'
+            $discoveryEvent.Context.Outcome | Should -Be 'NoReleaseSectionCandidates'
+            $discoveryEvent.Context.SectionCandidateCount | Should -Be 0
+            $sidecarEvent.Context.AttemptedCount | Should -Be 3
+            $sidecarEvent.Context.ResolvedCount | Should -Be 3
+            $sidecarEvent.Context.ArtifactEndpointAttemptedCount | Should -Be 3
+            $sidecarEvent.Context.ArtifactEndpointResolvedCount | Should -Be 2
+            $sidecarEvent.Context.ArtifactEndpointRejectedCount | Should -Be 1
+
+            $trace.Count | Should -Be 1
+            $trace[0].Message | Should -Match 'Artifact checksum evidence:'
+            $trace[0].Message | Should -Match 'ArtifactFileName=vlc-3.0.24-win64.exe'
+            $trace[0].Message | Should -Match 'Status=RejectedFilename'
+            $trace[0].Message | Should -Match 'ArtifactEndpointStatus=RejectedDigest'
+            $trace[0].Message | Should -Match 'ArtifactEndpointHttpStatusCode=200'
+            $trace[0].Message | Should -Match 'ArtifactEndpointContentType=text/html'
+            $trace[0].Message | Should -Match 'ArtifactEndpointUrl=https://get.example.test/vlc-3.0.24-win64.exe'
+            $trace[0].Message | Should -Not -Match 'DO-NOT-EXPOSE'
             $result.Stages[1].Status | Should -Be 'NoInstallableRelease'
             $result.Stages[1].ReasonCode | Should -Be 'NoSelectableArtifact'
             $result.Stages[1].Reason | Should -Be 'No discovered release has a selectable artifact for this machine.'
