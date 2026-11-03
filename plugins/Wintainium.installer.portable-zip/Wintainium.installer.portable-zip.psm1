@@ -187,8 +187,10 @@ try {
     [Console]::Error.WriteLine(`$message)
     `$exitCode = 1
 } finally {
-    [Console]::Error.WriteLine(("ZIP cleanup trace: stageCreated={0}; stageExists={1}; stagePath={2}" -f `$stageCreated, [System.IO.Directory]::Exists(`$stagePath), `$stagePath))
-    if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
+    # The operation-specific staging path is a fresh GUID-qualified sibling.
+    # Its existence is the authoritative cleanup condition; do not let a
+    # separate state flag suppress cleanup after an earlier extraction error.
+    if ([System.IO.Directory]::Exists(`$stagePath)) {
         try {
             `$stagedItems = [System.Collections.Generic.Stack[string]]::new()
             `$stagedItems.Push(`$stagePath)
