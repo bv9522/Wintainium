@@ -193,6 +193,7 @@ public sealed class WintainiumInstallerStreamCapture {
         }
         $timedOut = $false
         $cancelled = $false
+        $terminationError = $null
         $timeoutTask = [System.Threading.Tasks.Task]::Delay($TimeoutMilliseconds)
         $processExitTask = $process.WaitForExitAsync()
         try {
@@ -217,8 +218,13 @@ public sealed class WintainiumInstallerStreamCapture {
                 $cancelled = $false
             }
         } finally {
-            if (($timedOut -or $cancelled) -and -not $process.HasExited) {
-                try { $process.Kill($true) } catch { }
+            if ($timedOut -or $cancelled) {
+                try { if (-not $process.HasExited) { $process.Kill($true) } }
+                catch { $terminationError = $_.Exception.GetType().Name + ': ' + $_.Exception.Message }
+                $terminationWait = [System.Threading.Tasks.Task]::WhenAny($processExitTask, [System.Threading.Tasks.Task]::Delay(5000)).GetAwaiter().GetResult()
+                if ($terminationWait -ne $processExitTask -and [string]::IsNullOrWhiteSpace($terminationError)) {
+                    $terminationError = 'The process did not exit within the 5000 millisecond termination grace period.'
+                }
             }
         }
 
@@ -239,18 +245,21 @@ public sealed class WintainiumInstallerStreamCapture {
         $duration = [int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
 
         if ($cancelled) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage='The installer process was cancelled.' }
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage='The installer process was cancelled.' }
         }
         if ($timedOut) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Timeout'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage="The installer process exceeded the $TimeoutMilliseconds millisecond timeout." }
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Timeout'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage="The installer process exceeded the $TimeoutMilliseconds millisecond timeout." }
         }
-        if ($process.ExitCode -eq 1223) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ElevationDenied'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage='The Windows elevation prompt was cancelled or denied.' }
+        if ($processExitTask.IsCompleted -and $process.ExitCode -eq 1223) {
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ElevationDenied'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage='The Windows elevation prompt was cancelled or denied.' }
+        }
+        if (-not $processExitTask.IsCompleted) {
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='TerminationFailed'; ExitCode=$null; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage=if ($terminationError) { $terminationError } else { 'The installer process did not terminate within the allowed grace period.' } }
         }
         if ($process.ExitCode -ne 0) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage="The installer process exited with code $($process.ExitCode)." }
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage="The installer process exited with code $($process.ExitCode)." }
         }
-        return [pscustomobject][ordered]@{ Status='Completed'; FailureKind=$null; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; ErrorMessage=$null }
+        return [pscustomobject][ordered]@{ Status='Completed'; FailureKind=$null; ExitCode=$process.ExitCode; StandardOutput=$stdout; StandardError=$stderr; DurationMilliseconds=$duration; StandardOutputTruncated=$stdoutTruncated; StandardErrorTruncated=$stderrTruncated; StandardOutputComplete=$stdoutComplete; StandardErrorComplete=$stderrComplete; TerminationError=$terminationError; ErrorMessage=$null }
     }
     finally {
         $process.Dispose()
