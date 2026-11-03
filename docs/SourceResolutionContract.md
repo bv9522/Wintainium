@@ -38,7 +38,7 @@ A successful `Source` contains normalized facts only. Provider-specific upstream
 
 The normalized source model may contain:
 
-- `ApplicationId` — stable Wintainium identity for the resolved application; it is not the display name.
+- `ApplicationId` — provider-assigned stable Wintainium identifier for the application record. It must derive from stable upstream/source identity rather than the display name. Cross-provider deduplication is not implied.
 - `Name` — primary display name.
 - optional `Aliases` — alternate application/display names established by the resolver. These are not package identifiers, executable paths, or publisher identities.
 - `Publisher`
