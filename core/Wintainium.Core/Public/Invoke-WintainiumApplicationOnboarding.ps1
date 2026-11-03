@@ -243,11 +243,17 @@ function Invoke-WintainiumApplicationOnboarding {
                 else {
                     $normalization.ApplicationDefinition.PSObject.Properties.Remove('aliases')
                 }
-                # Add-Member's value binding can be ambiguous for collection-valued
-                # properties. Assign an explicit string array so JSON persistence cannot
-                # collapse the migrated aliases to a null scalar.
-                $confirmedAliasArray = [string[]]$confirmedAliases.ToArray()
-                $normalization.ApplicationDefinition | Add-Member -MemberType NoteProperty -Name 'userConfirmedAliases' -Value $confirmedAliasArray -Force
+                # Rebuild the definition with an explicit property entry. This avoids
+                # relying on Add-Member's mutation/binding behavior for collection values
+                # and ensures the persistence layer receives the exact string array.
+                $definitionProperties = [ordered]@{}
+                foreach ($property in $normalization.ApplicationDefinition.PSObject.Properties) {
+                    if ($property.MemberType -in @('NoteProperty','Property')) {
+                        $definitionProperties[[string]$property.Name] = $property.Value
+                    }
+                }
+                $definitionProperties['userConfirmedAliases'] = [string[]]$confirmedAliases.ToArray()
+                $normalization.ApplicationDefinition = [pscustomobject]$definitionProperties
 
                 $eventName = if ($hasConfirmedAliasField) { 'ExistingUserConfirmedAliasesPreserved' } else { 'LegacyAliasesMigratedToUserConfirmed' }
                 $eventMessage = if ($hasConfirmedAliasField) {
