@@ -127,9 +127,9 @@ public sealed partial class ApplicationDetailsWindow
                WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId) is not null ||
                WintainiumDesktopDiagnosticsStore.GetSourceResolutionReport(_application.ApplicationId) is not null ||
                StageItemsControl.Items.Count > 0 ||
-               (_lastReleaseResult?.LogEvents.Count ?? 0) > 0 ||
-               (_lastUpdateDecisionResult?.LogEvents.Count ?? 0) > 0 ||
-               (_lastIconOverrideResult?.LogEvents.Count ?? 0) > 0 ||
+               (_lastReleaseResult?.LogEvents?.Count ?? 0) > 0 ||
+               (_lastUpdateDecisionResult?.LogEvents?.Count ?? 0) > 0 ||
+               (_lastIconOverrideResult?.LogEvents?.Count ?? 0) > 0 ||
                (WintainiumDesktopDiagnosticsStore.GetUpdateResult(_application.ApplicationId)?.LogEvents.Count ?? 0) > 0 ||
                (WintainiumDesktopDiagnosticsStore.GetInstallResult(_application.ApplicationId)?.LogEvents.Count ?? 0) > 0;
     }
