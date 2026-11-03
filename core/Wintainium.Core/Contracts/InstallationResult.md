@@ -14,9 +14,9 @@ A process result is a completed installation operation only when its status is `
 
 ## Result fields
 
-Every structured installation result contains `Status`, `FailureKind`, `OperationId`, `DownloadOperationId`, `PluginId`, `ExitCode`, `StandardOutput`, `StandardError`, `DurationMilliseconds`, and `ErrorMessage`.
+Every structured installation result contains `Status`, `FailureKind`, `OperationId`, `DownloadOperationId`, `PluginId`, `ExitCode`, `StandardOutput`, `StandardError`, `DurationMilliseconds`, `StandardOutputTruncated`, `StandardErrorTruncated`, `StandardOutputComplete`, `StandardErrorComplete`, `TerminationError`, and `ErrorMessage`.
 
-Identifiers are propagated from the invocation context. Execution diagnostics are propagated from the controlled process result. An exit code is null when the process did not produce a usable exit code, such as cancellation, timeout, or process-start failure.
+Identifiers are propagated from the invocation context. Execution diagnostics are propagated from the controlled process result. Output truncation and stream-completion metadata are preserved independently for stdout and stderr. `TerminationError` records a failure to confirm process termination after timeout or cancellation; it does not replace the original lifecycle failure classification. An exit code is null when the process did not produce a usable exit code, such as cancellation, timeout, or process-start failure.
 
 ## Trust and installation boundary
 
