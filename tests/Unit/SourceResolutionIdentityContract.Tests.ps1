@@ -92,6 +92,37 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         @($persisted.userConfirmedAliases) | Should -Be @('Example Product (Legacy User Name)')
     }
 
+    It 'normalizes PSCustomObject source context, including nested objects and arrays' {
+        $source = [pscustomobject][ordered]@{
+            ApplicationId = 'web.example.com.product'
+            Name = 'Example Product'
+            CanonicalUri = 'https://example.com/product'
+            ProviderId = 'Wintainium.provider.identity-fixture'
+            ProviderContractVersion = '1'
+            ProviderSettings = [ordered]@{ product = 'product' }
+            SourceContext = [pscustomobject][ordered]@{
+                repository = 'example/product'
+                release = [pscustomobject][ordered]@{ tag = 'v2.4.0' }
+                channels = @('stable', 'preview')
+            }
+        }
+        $policy = [pscustomobject][ordered]@{
+            Installer = [pscustomobject]@{ PluginId = 'Wintainium.installer.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Reconciliation = [pscustomobject]@{ PluginId = 'Wintainium.reconciliation.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Release = [pscustomobject]@{ Channel = 'stable' }
+            Artifact = [pscustomobject]@{ Formats = @('exe'); Architectures = @('x64'); AllowUnknownArchitecture = $false }
+        }
+
+        $normalized = InModuleScope Wintainium.Core -Parameters @{ Source = $source; Policy = $policy } {
+            New-WintainiumApplicationDefinitionFromSource -Source $Source -Policy $Policy -OperationId 'pscustomobject-context-test'
+        }
+
+        $normalized.IsSuccessful | Should -BeTrue
+        $normalized.ApplicationDefinition.source.context.repository | Should -Be 'example/product'
+        $normalized.ApplicationDefinition.source.context.release.tag | Should -Be 'v2.4.0'
+        @($normalized.ApplicationDefinition.source.context.channels) | Should -Be @('stable', 'preview')
+    }
+
     It 'rejects a non-dictionary provider source context during normalization' {
         $source = [pscustomobject][ordered]@{
             ApplicationId = 'web.example.com.product'
