@@ -197,7 +197,10 @@ try {
                 if ((`$itemAttributes -band [System.IO.FileAttributes]::Directory) -ne 0) {
                     foreach (`$childPath in [System.IO.Directory]::EnumerateFileSystemEntries(`$itemPath)) { `$stagedItems.Push(`$childPath) }
                 }
-                if ((`$itemAttributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) { [System.IO.File]::SetAttributes(`$itemPath, (`$itemAttributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)) }
+                if ((`$itemAttributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) {
+                    `$writableAttributes = `$itemAttributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+                    [System.IO.File]::SetAttributes(`$itemPath, `$writableAttributes)
+                }
             }
             [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True)
         } catch {
