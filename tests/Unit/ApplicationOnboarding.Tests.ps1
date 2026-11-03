@@ -59,6 +59,9 @@ Describe 'Wintainium application onboarding' {
         @($result.Errors).Count | Should -Be 0
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
+        $persistedManifest = Get-Content -LiteralPath $result.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        $persistedManifest['source']['submittedUri'] | Should -Be 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78'
+        $persistedManifest['source']['canonicalUri'] | Should -Be 'https://github.com/PCSX2/pcsx2'
         @($result.Stages.Name) | Should -Be @('InputValidation','SourceResolution','PolicyResolution','DefinitionNormalization','Persistence')
         @($result.Stages | Where-Object { $_.Status -eq 'Failed' }).Count | Should -Be 0
         $result.Stages[2].Status | Should -Be 'Skipped'
