@@ -172,6 +172,13 @@ public sealed partial class ApplicationDetailsWindow
         if (installResult is not null)
             WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Install Log Events", installResult.LogEvents);
 
+        if (_lastReleaseResult is not null)
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Release Discovery Log Events", _lastReleaseResult.LogEvents);
+        if (_lastUpdateDecisionResult is not null)
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Update Decision Log Events", _lastUpdateDecisionResult.LogEvents);
+        if (_lastIconOverrideResult is not null)
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Icon Override Log Events", _lastIconOverrideResult.LogEvents);
+
         builder.AppendLine();
         builder.AppendLine($"Installed State: {InstalledStateRefreshStatusText.Text}");
         return builder.ToString().TrimEnd();
