@@ -60,7 +60,7 @@ A resolver must distinguish at least:
 - `SourceAmbiguous`
 - `SourceUnavailable`
 - `AuthenticationRequired`
-- `InteractiveResolutionRequired`
+- `InteractiveResolutionRequired` — the source requires an interactive browser or authentication step that the provider's deterministic HTTP retrieval path cannot complete.
 - `SourceResponseInvalid`
 - `SourceResolverInternalError`
 
