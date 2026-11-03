@@ -271,6 +271,11 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'InteractiveResolutionRequired'
         $result.ApplicationDefinition | Should -BeNullOrEmpty
         $result.ManifestPath | Should -BeNullOrEmpty
+        $sourceStage = $result.Stages | Where-Object Name -eq 'SourceResolution'
+        $sourceStage.ReasonCode | Should -Be 'SourceResolutionFixtureFailure'
+        $sourceStage.Reason | Should -Be 'The source requires interactive browser resolution.'
+        @($result.Errors.Code) | Should -Contain 'GitHubSourceHostUnsupported'
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionFixtureFailure'
     }
 
     It 'propagates SourceResponseInvalid without creating application state' {
