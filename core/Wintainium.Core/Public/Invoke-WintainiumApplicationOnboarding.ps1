@@ -85,8 +85,17 @@ function Invoke-WintainiumApplicationOnboarding {
         foreach($candidate in @('SourceAmbiguous','SourceUnavailable','AuthenticationRequired','InteractiveResolutionRequired','SourceResponseInvalid')) {
             if(@($failures | Where-Object Status -eq $candidate).Count -gt 0){$status=$candidate;break}
         }
-        $failureCode = if ($errors.Count -gt 0) { [string]$errors[0].Code } else { $status }
-        $failureReason = if ($errors.Count -gt 0) { [string]$errors[0].Message } else { 'No capable provider resolved the source URI.' }
+        # The stage explanation must describe the resolver outcome that determined
+        # the operation's terminal status, not the first provider that declined.
+        # Earlier capability refusals remain available in Errors and LogEvents.
+        $primaryFailure = $failures | Where-Object { [string]$_.Status -eq $status } | Select-Object -First 1
+        $primaryFailureError = if ($null -ne $primaryFailure -and @($primaryFailure.Errors).Count -gt 0) {
+            @($primaryFailure.Errors)[0]
+        } else {
+            $null
+        }
+        $failureCode = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Code } elseif ($errors.Count -gt 0) { [string]$errors[0].Code } else { $status }
+        $failureReason = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Message } elseif ($errors.Count -gt 0) { [string]$errors[0].Message } else { 'No capable provider resolved the source URI.' }
         & $addStage 2 'SourceResolution' 'Failed' $false $failureCode $failureReason
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=$status;SourceResolution=if($failures.Count -eq 1){$failures[0]}else{$null};ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
