@@ -25,7 +25,8 @@ internal static class WintainiumApplicationModelMapper
             Applications: applications,
             Errors: GetDiagnostics(result, "Errors"),
             Warnings: GetDiagnostics(result, "Warnings"),
-            OperationState: WintainiumOperationStateMapper.Map(result).State);
+            OperationState: WintainiumOperationStateMapper.Map(result).State,
+            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result));
     }
 
     private static WintainiumApplicationModel MapManifest(PSObject manifest, string? manifestPath)
@@ -233,12 +234,7 @@ internal static class WintainiumApplicationModelMapper
     }
 
     public static IReadOnlyList<WintainiumOperationDiagnostic> GetDiagnostics(PSObject source, string propertyName) =>
-        GetCollection(source, propertyName)
-            .Select(item => new WintainiumOperationDiagnostic(
-                Code: GetNullableString(item, "Code"),
-                Path: GetNullableString(item, "Path"),
-                Message: GetNullableString(item, "Message")))
-            .ToArray();
+        WintainiumOperationDiagnosticMapper.MapCollection(source, propertyName);
 
     private static List<PSObject> GetCollection(PSObject source, string propertyName)
     {
