@@ -72,9 +72,33 @@ function Invoke-WintainiumCoreProviderSourceResolution {
     }
 
     try {
-        $module=Import-Module -Name $resolvedModulePath -Force -PassThru -ErrorAction Stop
-        $commandName="$($module.Name)\Invoke-WintainiumProviderSourceResolution"
-        $command=Get-Command -Name $commandName -CommandType Function -ErrorAction SilentlyContinue
+        # Bind invocation to the exact validated module path. Module-name lookup can
+        # select a different provider copy when two plugins use the same module name.
+        $module=Get-Module | Where-Object {
+            $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath)
+        } | Select-Object -First 1
+
+        if ($null -ne $module -and
+            -not $module.ExportedFunctions.ContainsKey('Invoke-WintainiumProviderSourceResolution')) {
+            Remove-Module -ModuleInfo $module -Force -ErrorAction Stop
+            $module=$null
+        }
+
+        if ($null -eq $module) {
+            $moduleName=[IO.Path]::GetFileNameWithoutExtension($resolvedModulePath)
+            foreach ($loadedModule in @(Get-Module | Where-Object { $_.Name -eq $moduleName })) {
+                Remove-Module -ModuleInfo $loadedModule -Force -ErrorAction Stop
+            }
+
+            $module=Import-Module -Name $resolvedModulePath -PassThru -Force -ErrorAction Stop |
+                Where-Object { $_.Path -and ((Resolve-Path -LiteralPath $_.Path -ErrorAction SilentlyContinue).Path -eq $resolvedModulePath) } |
+                Select-Object -First 1
+        }
+
+        $command=$null
+        if ($null -ne $module) {
+            $command=$module.ExportedFunctions['Invoke-WintainiumProviderSourceResolution']
+        }
         if ($null -eq $command) {
             $error=[pscustomobject]@{Code='SourceResolverOperationNotFound';Message="Provider '$($Provider.PluginId)' does not export Invoke-WintainiumProviderSourceResolution."}
             return & $baseResult $false 'SourceResolverInternalError' $null @($error) @()
@@ -126,16 +150,42 @@ function Invoke-WintainiumCoreProviderSourceResolution {
     }
 
     if ([bool]$resolverResult.IsSuccessful) {
+        if ([string]$resolverResult.Status -ne 'Resolved') {
+            $error=[pscustomobject]@{Code='SourceResolutionStatusInvalid';Message="A successful source-resolution result must use status 'Resolved'."}
+            return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+        }
         if ($null -eq $resolverResult.Source) {
             $error=[pscustomobject]@{Code='SourceResolutionSourceMissing';Message='A successful source-resolution result must contain normalized Source facts.'}
             return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
         }
         foreach ($requiredSourceProperty in @('ApplicationId','Name','CanonicalUri','ProviderId','ProviderContractVersion','ProviderSettings')) {
-            if (-not $resolverResult.Source.PSObject.Properties[$requiredSourceProperty]) {
-                $error=[pscustomobject]@{Code='SourceResolutionSourceInvalid';Message="Resolved Source is missing required property '$requiredSourceProperty'."}
+            if (-not $resolverResult.Source.PSObject.Properties[$requiredSourceProperty] -or
+                $null -eq $resolverResult.Source.$requiredSourceProperty -or
+                [string]::IsNullOrWhiteSpace([string]$resolverResult.Source.$requiredSourceProperty)) {
+                $error=[pscustomobject]@{Code='SourceResolutionSourceInvalid';Message="Resolved Source is missing or has an empty required property '$requiredSourceProperty'."}
                 return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
             }
         }
+
+        if ([string]$resolverResult.Source.ProviderId -ine [string]$Provider.PluginId) {
+            $error=[pscustomobject]@{Code='SourceResolutionProviderIdentityMismatch';Message='Resolved Source ProviderId must match the provider selected by Core.'}
+            return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+        }
+        if ([string]$resolverResult.Source.ProviderContractVersion -notin @($Provider.ContractVersions)) {
+            $error=[pscustomobject]@{Code='SourceResolutionProviderContractMismatch';Message='Resolved Source ProviderContractVersion must be advertised by the selected provider descriptor.'}
+            return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+        }
+
+        $canonicalUri=$null
+        if (-not [Uri]::TryCreate([string]$resolverResult.Source.CanonicalUri,[UriKind]::Absolute,[ref]$canonicalUri) -or
+            $canonicalUri.Scheme -notin @('http','https')) {
+            $error=[pscustomobject]@{Code='SourceResolutionCanonicalUriInvalid';Message='Resolved Source CanonicalUri must be an absolute HTTP or HTTPS URI.'}
+            return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+        }
+    }
+    elseif ([string]$resolverResult.Status -eq 'Resolved' -or $null -ne $resolverResult.Source) {
+        $error=[pscustomobject]@{Code='SourceResolutionFailureContainsSource';Message='A failed source-resolution result must not contain a resolved Source or use status Resolved.'}
+        return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
     }
 
     if ([bool]$resolverResult.IsSuccessful) {
