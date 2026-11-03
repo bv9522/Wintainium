@@ -111,6 +111,65 @@ Describe 'Windows installed-application reconciliation plugin' {
         $summary[0].Message | Should -Match 'cannot safely conclude'
     }
 
+    It 'keeps a matching candidate Unknown when another required registry location cannot be read' {
+        $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-00000000020B'; ApplicationId='example.application'; Manifest=$script:baseManifest }
+        $candidate=[pscustomobject]@{
+            Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'
+            DisplayVersion='2.4.1'; InstallLocation='C:\\Program Files\\Example'
+            IdentityConfidence='Explicit'
+        }
+        $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidate=$candidate } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{
+                    IsSuccessful=$false
+                    Candidates=@($Candidate)
+                    Errors=@([pscustomobject]@{ Code='WindowsRegistryLocationReadFailed'; Message='access denied'; Scope='machine'; View='32' })
+                }
+            }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $r.IsSuccessful | Should -BeTrue
+        $r.Status | Should -Be 'Unknown'
+        $r.Evidence.InstallationState | Should -Be 'Unknown'
+        $r.Evidence.PSObject.Properties.Name | Should -Not -Contain 'Version'
+        $summary=@($r.Warnings | Where-Object Code -eq 'WindowsReconciliationEvidenceIncomplete')
+        $summary.Count | Should -Be 1
+        $summary[0].CandidateCount | Should -Be 1
+        $summary[0].RegistryErrorCount | Should -Be 1
+        $summary[0].RegistryReadFailureCount | Should -Be 1
+        $summary[0].RegistryErrorCodes | Should -Contain 'WindowsRegistryLocationReadFailed'
+        $summary[0].Message | Should -Match 'cannot safely establish'
+    }
+
+    It 'keeps a matching candidate Unknown when malformed registry data prevents complete evaluation' {
+        $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-00000000020C'; ApplicationId='example.application'; Manifest=$script:baseManifest }
+        $candidate=[pscustomobject]@{
+            Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'
+            DisplayVersion='2.4.1'; InstallLocation='C:\\Program Files\\Example'
+            IdentityConfidence='Explicit'
+        }
+        $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidate=$candidate } {
+            Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
+                [pscustomobject]@{
+                    IsSuccessful=$false
+                    Candidates=@($Candidate)
+                    Errors=@([pscustomobject]@{ Code='WindowsRegistryValueMalformed'; Message='malformed DisplayName'; Scope='machine'; View='32'; SubKey='Unrelated' })
+                }
+            }
+            Invoke-WintainiumReconciliation -Request $Request
+        }
+
+        $r.Status | Should -Be 'Unknown'
+        $r.Evidence.InstallationState | Should -Be 'Unknown'
+        $summary=@($r.Warnings | Where-Object Code -eq 'WindowsReconciliationEvidenceIncomplete')
+        $summary.Count | Should -Be 1
+        $summary[0].CandidateCount | Should -Be 1
+        $summary[0].RegistryErrorCount | Should -Be 1
+        $summary[0].RegistryReadFailureCount | Should -Be 0
+        $summary[0].RegistryErrorCodes | Should -Contain 'WindowsRegistryValueMalformed'
+    }
+
     It 'rejects missing settings as a structured configuration failure' {
         $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-000000000205'; ApplicationId='example.application'; Manifest=[pscustomobject]@{ reconciliation=[pscustomobject]@{} } }
         $r=Invoke-WintainiumReconciliation -Request $request
