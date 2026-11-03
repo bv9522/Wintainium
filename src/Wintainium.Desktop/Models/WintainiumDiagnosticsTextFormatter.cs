@@ -76,8 +76,8 @@ internal static class WintainiumDiagnosticsTextFormatter
         var parts = new List<string>();
         if (!string.IsNullOrWhiteSpace(diagnostic.Code))
             parts.Add(diagnostic.Code.Trim());
-        if (!string.IsNullOrWhiteSpace(diagnostic.Path))
-            parts.Add($"Path: {diagnostic.Path.Trim()}");
+        if (IsUsefulDiagnosticPath(diagnostic.Path))
+            parts.Add($"Path: {diagnostic.Path!.Trim()}");
         if (!string.IsNullOrWhiteSpace(diagnostic.Message))
             parts.Add(diagnostic.Message.Trim());
 
@@ -135,6 +135,21 @@ internal static class WintainiumDiagnosticsTextFormatter
                 AppendFormattedValue(builder, context.Value!, indent + "        ");
             }
         }
+    }
+
+    private static bool IsUsefulDiagnosticPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        return path.StartsWith("$.", StringComparison.Ordinal) ||
+               path.Contains("\\Downloads\\", StringComparison.OrdinalIgnoreCase) ||
+               path.Contains("\\Applications\\", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+               path.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AppendFormattedValue(System.Text.StringBuilder builder, string value, string indent)
