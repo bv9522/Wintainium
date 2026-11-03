@@ -46,7 +46,8 @@ internal sealed class WintainiumApplicationValidationService
             isValid,
             Diagnostics(result, "Errors"),
             Diagnostics(result, "Warnings"),
-            isValid ? WintainiumOperationState.Completed : WintainiumOperationState.Failed);
+            isValid ? WintainiumOperationState.Completed : WintainiumOperationState.Failed,
+            WintainiumOperationLogEventMapper.MapCollection(result));
     }
 
     private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
