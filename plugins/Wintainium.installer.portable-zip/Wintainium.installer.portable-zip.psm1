@@ -113,11 +113,11 @@ if ([string]::IsNullOrWhiteSpace(`$parentDirectory) -or [string]::Equals(`$paren
 `$destinationName = [System.IO.Path]::GetFileName(`$destinationRoot)
 `$stagePath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-stage-' + `$operationToken)
 `$backupPath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-backup-' + `$operationToken)
-`$backupCreated = `false
-`$stageCreated = `false
+`$backupCreated = [System.Boolean]::False
+`$stageCreated = [System.Boolean]::False
 try {
     [System.IO.Directory]::CreateDirectory(`$stagePath) | Out-Null
-    `$stageCreated = `true
+    `$stageCreated = [System.Boolean]::True
     # Preserve overlay semantics, but never follow links in the old installation.
     if ([System.IO.Directory]::Exists(`$destinationRoot)) {
         `$pendingDirectories = [System.Collections.Generic.Stack[string]]::new()
@@ -138,7 +138,7 @@ try {
                 `$relativeFile = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$file)
                 `$targetFile = Join-Path `$stagePath `$relativeFile
                 [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName(`$targetFile)) | Out-Null
-                [System.IO.File]::Copy(`$file, `$targetFile, `true)
+                [System.IO.File]::Copy(`$file, `$targetFile, [System.Boolean]::True)
             }
         }
     }
@@ -162,19 +162,20 @@ try {
         }
     } finally { `$archive.Dispose() }
 `$entryPointCheck
-    if ([System.IO.Directory]::Exists(`$destinationRoot)) { [System.IO.Directory]::Move(`$destinationRoot, `$backupPath); `$backupCreated = `true }
+    if ([System.IO.Directory]::Exists(`$destinationRoot)) { [System.IO.Directory]::Move(`$destinationRoot, `$backupPath); `$backupCreated = [System.Boolean]::True }
     try {
         [System.IO.Directory]::Move(`$stagePath, `$destinationRoot)
-        `$stageCreated = `false
+        `$stageCreated = [System.Boolean]::False
     } catch {
+        `$activationError = `$_.Exception.Message
         if (`$backupCreated -and -not [System.IO.Directory]::Exists(`$destinationRoot)) {
-            try { [System.IO.Directory]::Move(`$backupPath, `$destinationRoot); `$backupCreated = `false }
-            catch { throw "Activation failed and rollback failed. Original installation remains at '`$backupPath'. Activation: `($_.Exception.Message). Rollback: `($_.Exception.Message)" }
+            try { [System.IO.Directory]::Move(`$backupPath, `$destinationRoot); `$backupCreated = [System.Boolean]::False }
+            catch { throw ('Activation failed and rollback failed. Original installation remains at ''{0}''. Activation: {1}. Rollback: {2}' -f `$backupPath, `$activationError, `$_.Exception.Message) }
         }
         throw
     }
     if (`$backupCreated) {
-        try { [System.IO.Directory]::Delete(`$backupPath, `true); `$backupCreated = `false }
+        try { [System.IO.Directory]::Delete(`$backupPath, [System.Boolean]::True); `$backupCreated = [System.Boolean]::False }
         catch { [Console]::Error.WriteLine("Installation succeeded, but previous installation backup remains at: `$backupPath") }
     }
     exit 0
@@ -185,7 +186,7 @@ try {
     exit 1
 } finally {
     if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
-        try { [System.IO.Directory]::Delete(`$stagePath, `true) } catch { [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath") }
+        try { [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True) } catch { [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath") }
     }
 }
 "@
@@ -222,8 +223,8 @@ try {
         $diagnosticPath = Join-Path ([System.IO.Path]::GetTempPath()) ('wintanium-zip-' + [guid]::NewGuid().ToString('N') + '.stderr')
         $escapedDiagnosticPath = $diagnosticPath.Replace("'", "''")
         $script = $script.Replace(
-            "[Console]::Error.WriteLine([string]`$_.Exception.Message)",
-            "[System.IO.File]::WriteAllText('$escapedDiagnosticPath', [string]`$_.Exception.Message)"
+            "[Console]::Error.WriteLine(`$message)",
+            "[System.IO.File]::WriteAllText('$escapedDiagnosticPath', `$message)"
         )
         $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($script))
         $escapedPowerShellPath = $powershellPath.Replace("'", "''")
