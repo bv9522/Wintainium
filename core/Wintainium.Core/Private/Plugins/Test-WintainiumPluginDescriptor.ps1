@@ -56,7 +56,6 @@ function Test-WintainiumPluginDescriptor {
             }
 
             if ($null -ne $capabilities) {
-                $sourceResolution = $capabilities.ContainsKey('sourceResolution') -and $capabilities.sourceResolution -eq $true
                 $releaseDiscovery = $capabilities.ContainsKey('releaseDiscovery') -and $capabilities.releaseDiscovery -eq $true
                 $artifactDiscovery = $capabilities.ContainsKey('artifactDiscovery') -and $capabilities.artifactDiscovery -eq $true
 
