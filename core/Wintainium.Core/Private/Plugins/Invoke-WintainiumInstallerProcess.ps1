@@ -46,6 +46,24 @@ function Invoke-WintainiumInstallerProcess {
         }
     }
 
+
+    if (-not ('WintainiumInstallerStreamCapture' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+public sealed class WintainiumInstallerStreamCapture {
+ private readonly object gate = new object(); private readonly StringBuilder retained = new StringBuilder(); private bool truncated, completed;
+ public Task Worker { get; private set; }
+ public void Start(StreamReader reader, int limit) { Worker = Task.Run(async () => { var b = new char[4096]; try { while (true) { int n = await reader.ReadAsync(b,0,b.Length).ConfigureAwait(false); if(n==0) break; lock(gate) { int remaining=limit-retained.Length; if(remaining>0) retained.Append(b,0,Math.Min(remaining,n)); if(n>remaining) truncated=true; } } } catch {} finally { lock(gate) completed=true; } }); }
+ public string Text { get { lock(gate) return retained.ToString(); } }
+ public bool Truncated { get { lock(gate) return truncated; } }
+ public bool Completed { get { lock(gate) return completed; } }
+}
+'@ -ErrorAction Stop | Out-Null
+    }
+
     $startTime = [System.Diagnostics.Stopwatch]::GetTimestamp()
 
     if ($CancellationToken.IsCancellationRequested) {
@@ -165,8 +183,14 @@ function Invoke-WintainiumInstallerProcess {
             }
         }
 
-        $stdoutTask = if ($process.StartInfo.UseShellExecute) { $null } else { $process.StandardOutput.ReadToEndAsync() }
-        $stderrTask = if ($process.StartInfo.UseShellExecute) { $null } else { $process.StandardError.ReadToEndAsync() }
+        $stdoutCapture = $null
+        $stderrCapture = $null
+        if (-not $process.StartInfo.UseShellExecute) {
+            $stdoutCapture = [WintainiumInstallerStreamCapture]::new()
+            $stderrCapture = [WintainiumInstallerStreamCapture]::new()
+            $stdoutCapture.Start($process.StandardOutput, 65536)
+            $stderrCapture.Start($process.StandardError, 65536)
+        }
         $timedOut = $false
         $cancelled = $false
         $timeoutTask = [System.Threading.Tasks.Task]::Delay($TimeoutMilliseconds)
@@ -198,9 +222,20 @@ function Invoke-WintainiumInstallerProcess {
             }
         }
 
-        $process.WaitForExit()
-        $stdout = if ($null -ne $stdoutTask) { $stdoutTask.GetAwaiter().GetResult() } else { '' }
-        $stderr = if ($null -ne $stderrTask) { $stderrTask.GetAwaiter().GetResult() } else { '' }
+        if ($processExitTask.IsCompleted -and $null -ne $stdoutCapture) {
+            $drainTask = [System.Threading.Tasks.Task]::WhenAll([System.Threading.Tasks.Task[]]@($stdoutCapture.Worker, $stderrCapture.Worker))
+            [void][System.Threading.Tasks.Task]::WhenAny($drainTask, [System.Threading.Tasks.Task]::Delay(2000)).GetAwaiter().GetResult()
+        }
+        if ($null -ne $stdoutCapture -and -not $stdoutCapture.Completed) { try { $process.StandardOutput.Dispose() } catch { } }
+        if ($null -ne $stderrCapture -and -not $stderrCapture.Completed) { try { $process.StandardError.Dispose() } catch { } }
+        if ($null -ne $stdoutCapture -and -not $stdoutCapture.Completed) { [void][System.Threading.Tasks.Task]::WhenAny($stdoutCapture.Worker, [System.Threading.Tasks.Task]::Delay(250)).GetAwaiter().GetResult() }
+        if ($null -ne $stderrCapture -and -not $stderrCapture.Completed) { [void][System.Threading.Tasks.Task]::WhenAny($stderrCapture.Worker, [System.Threading.Tasks.Task]::Delay(250)).GetAwaiter().GetResult() }
+        $stdout = if ($null -ne $stdoutCapture) { $stdoutCapture.Text } else { '' }
+        $stderr = if ($null -ne $stderrCapture) { $stderrCapture.Text } else { '' }
+        $stdoutTruncated = $null -ne $stdoutCapture -and $stdoutCapture.Truncated
+        $stderrTruncated = $null -ne $stderrCapture -and $stderrCapture.Truncated
+        $stdoutComplete = $null -eq $stdoutCapture -or $stdoutCapture.Completed
+        $stderrComplete = $null -eq $stderrCapture -or $stderrCapture.Completed
         $duration = [int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
 
         if ($cancelled) {
