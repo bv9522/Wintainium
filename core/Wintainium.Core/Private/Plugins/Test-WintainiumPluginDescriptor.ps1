@@ -60,7 +60,7 @@ function Test-WintainiumPluginDescriptor {
                 $releaseDiscovery = $capabilities.ContainsKey('releaseDiscovery') -and $capabilities.releaseDiscovery -eq $true
                 $artifactDiscovery = $capabilities.ContainsKey('artifactDiscovery') -and $capabilities.artifactDiscovery -eq $true
 
-                if (-not $sourceResolution -and (-not $releaseDiscovery -or -not $artifactDiscovery)) {
+                if (-not $releaseDiscovery -or -not $artifactDiscovery) {
                     $errors.Add([pscustomobject]@{ Code = 'DescriptorProviderDiscoveryCapabilitiesMissing'; Message = 'Provider descriptors must advertise sourceResolution=true or both releaseDiscovery=true and artifactDiscovery=true.' })
                 }
 
