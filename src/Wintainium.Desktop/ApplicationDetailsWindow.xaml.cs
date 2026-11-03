@@ -568,8 +568,8 @@ public sealed partial class ApplicationDetailsWindow : Window
 
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId}";
-            ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
-            WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
+            ErrorItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Errors).Select(FormatDiagnostic).ToArray();
+            WarningItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Warnings).Select(FormatDiagnostic).ToArray();
 
             if (!result.IsSuccessful)
             {
@@ -611,12 +611,12 @@ public sealed partial class ApplicationDetailsWindow : Window
                 OperationStateText.Text = decisionResult.OperationState.ToString();
                 OperationIdText.Text = $"Operation ID: {decisionResult.OperationId}";
 
-                ErrorItemsControl.ItemsSource = result.Errors
-                    .Concat(decisionResult.Errors)
+                ErrorItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter
+                    .DistinctDiagnostics(result.Errors.Concat(decisionResult.Errors))
                     .Select(FormatDiagnostic)
                     .ToArray();
-                WarningItemsControl.ItemsSource = result.Warnings
-                    .Concat(decisionResult.Warnings)
+                WarningItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter
+                    .DistinctDiagnostics(result.Warnings.Concat(decisionResult.Warnings))
                     .Select(FormatDiagnostic)
                     .ToArray();
 
