@@ -177,6 +177,8 @@ The following conditions must not be converted to `NotInstalled`:
 - multiple matching candidates;
 - any other condition in which the reconciler cannot establish either installed or not-installed state reliably.
 
+A partial registry scan must also not be promoted to `Installed` merely because one matching candidate was found in a readable location. An unread declared location could contain another matching registration, and malformed data could prevent a reliable uniqueness check. If any required registry observation fails or reports malformed data, the result remains `Unknown` regardless of the number of candidates found; diagnostics retain the candidate count and observation error details.
+
 Such conditions produce `Unknown` evidence when the reconciliation operation can return a valid observation, together with structured diagnostics describing the reason. Configuration errors that prevent the plugin from executing its contract produce a structured reconciliation failure according to the existing reconciliation result contract.
 
 ## Evidence Mapping
