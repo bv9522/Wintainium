@@ -1182,7 +1182,7 @@ public sealed partial class MainWindow : Window
                 string.Equals(stage.Status, "Failed", StringComparison.OrdinalIgnoreCase))?.ReasonCode;
             var orderedErrors = result.Errors
                 .OrderBy(diagnostic => string.Equals(diagnostic.Code, primaryReasonCode, StringComparison.OrdinalIgnoreCase) ? 0 : 1);
-            foreach (var diagnostic in orderedErrors)
+            foreach (var diagnostic in WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(orderedErrors))
                 builder.AppendLine(FormatDiagnostic(diagnostic));
         }
 
@@ -1190,7 +1190,7 @@ public sealed partial class MainWindow : Window
         {
             builder.AppendLine();
             builder.AppendLine("Warnings:");
-            foreach (var diagnostic in result.Warnings)
+            foreach (var diagnostic in WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Warnings))
                 builder.AppendLine(FormatDiagnostic(diagnostic));
         }
 
