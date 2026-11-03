@@ -8,13 +8,22 @@ internal static class WintainiumDesktopDiagnosticsStore
         new(StringComparer.OrdinalIgnoreCase);
     private static readonly ConcurrentDictionary<string, string> SourceResolutionReports =
         new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, WintainiumApplicationUpdateResult> UpdateResults =
+        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, WintainiumApplicationInstallResult> InstallResults =
+        new(StringComparer.OrdinalIgnoreCase);
 
-    public static WintainiumApplicationUpdateResult? LastUpdateResult { get; private set; }
-    public static WintainiumApplicationInstallResult? LastInstallResult { get; private set; }
+    public static void SetUpdateResult(WintainiumApplicationUpdateResult result) =>
+        SetOperationResult(UpdateResults, result.ApplicationId, result);
 
-    public static void SetUpdateResult(WintainiumApplicationUpdateResult result) => LastUpdateResult = result;
+    public static WintainiumApplicationUpdateResult? GetUpdateResult(string applicationId) =>
+        GetOperationResult(UpdateResults, applicationId);
 
-    public static void SetInstallResult(WintainiumApplicationInstallResult result) => LastInstallResult = result;
+    public static void SetInstallResult(WintainiumApplicationInstallResult result) =>
+        SetOperationResult(InstallResults, result.ApplicationId, result);
+
+    public static WintainiumApplicationInstallResult? GetInstallResult(string applicationId) =>
+        GetOperationResult(InstallResults, applicationId);
 
     public static void SetRefreshResult(string applicationId, WintainiumApplicationRefreshResult result)
     {
@@ -37,4 +46,21 @@ internal static class WintainiumDesktopDiagnosticsStore
     public static string? GetSourceResolutionReport(string applicationId) =>
         string.IsNullOrWhiteSpace(applicationId) ? null :
             SourceResolutionReports.TryGetValue(applicationId, out var report) ? report : null;
+
+    private static void SetOperationResult<T>(
+        ConcurrentDictionary<string, T> store,
+        string? applicationId,
+        T result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        if (!string.IsNullOrWhiteSpace(applicationId))
+            store[applicationId] = result;
+    }
+
+    private static T? GetOperationResult<T>(
+        ConcurrentDictionary<string, T> store,
+        string applicationId)
+        where T : class =>
+        string.IsNullOrWhiteSpace(applicationId) ? null :
+            store.TryGetValue(applicationId, out var result) ? result : null;
 }
