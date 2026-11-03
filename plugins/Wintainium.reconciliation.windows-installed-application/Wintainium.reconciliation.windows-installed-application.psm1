@@ -633,9 +633,15 @@ function Invoke-WintainiumReconciliation {
         $observationErrorCount = @($observation.Errors).Count
         if (-not [bool]$observation.IsSuccessful -or $observationErrorCount -gt 0) {
             $errorCodes = @($observation.Errors | ForEach-Object { [string]$_.Code } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+            $incompleteEvidenceMessage = if ($candidateCount -eq 0) {
+                'No matching uninstall registration was found, but one or more required registry observations were incomplete. Wintainium cannot safely conclude that the application is not installed.'
+            }
+            else {
+                'One or more required registry observations were incomplete. Wintainium cannot safely establish that the observed candidate is unique across all declared locations.'
+            }
             $warnings += [pscustomobject]@{
                 Code = 'WindowsReconciliationEvidenceIncomplete'
-                Message = 'One or more required registry observations were incomplete. Even if a matching registration was found, Wintainium cannot safely establish that the observed candidate is unique across all declared locations.'
+                Message = $incompleteEvidenceMessage
                 OperationId = $operationId
                 CandidateCount = $candidateCount
                 MatchMode = $matchMode
