@@ -566,7 +566,6 @@ Describe 'Wintainium shared lifecycle install execution' {
             Mock New-WintainiumOrchestrationRequest { [pscustomobject]@{IsValid=$true;Request=[pscustomobject]@{OperationId=$operationId;ManifestPath='C:example.json';MachineArchitecture='x64';DownloadRoot='C:downloads'};Errors=@()} }
             Mock Test-WintainiumApplicationDefinition { [pscustomobject]@{OperationId=$operationId;IsValid=$true;Manifest=$manifest;ProviderPlugin=$provider;InstallerPlugin=$installer;ReconciliationPlugin=$reconciliationPlugin;Errors=@();Warnings=@();LogEvents=@()} }
             Mock Invoke-WintainiumProviderOperation { $release }
-            Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly -ParameterFilter { -not $Request.Settings.ContainsKey('maxPages') }
             Mock Get-WintainiumInstalledApplicationState { [pscustomobject]@{ApplicationId='example.app';InstallationState='NotInstalled'} }
             Mock Get-WintainiumApplicationInstallDecision { $decision }
             Mock New-WintainiumDownloadRequest { [pscustomobject]@{OperationId=$operationId;SelectedRelease=$decision.SelectedRelease;SelectedArtifact=$decision.SelectedArtifact} }
@@ -580,6 +579,7 @@ Describe 'Wintainium shared lifecycle install execution' {
             Mock Invoke-WintainiumDownloadArtifactCleanup { [pscustomobject]@{IsSuccessful=$true;Status='Cleaned'} }
 
             $result = Invoke-WintainiumApplicationLifecycle -ManifestPath 'C:example.json' -StateRoot 'C:state' -MachineArchitecture x64 -DownloadRoot 'C:downloads' -OperationKind Install
+            Should -Invoke Invoke-WintainiumProviderOperation -Times 1 -Exactly -ParameterFilter { -not $Request.Settings.ContainsKey('maxPages') }
 
             $result.IsSuccessful | Should -BeTrue
             $result.State.Status | Should -Be 'Completed'
