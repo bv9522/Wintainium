@@ -168,7 +168,7 @@ Capabilities describe provider operations or meaningful provider features, not u
 - `releaseDiscovery`
 - `artifactDiscovery`
 
-Additional capabilities may be added only when they represent a stable Wintainium contract need.
+Additional capabilities may be added only when they represent a stable Wintainium contract need. `sourceResolution` is optional and is defined by the separate Source Resolution Contract; it does not replace or alter the release-discovery operation.
 
 ## Artifact Selection Boundary
 
