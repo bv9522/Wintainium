@@ -159,4 +159,81 @@ Describe 'Wintainium official download page source resolution' {
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceUnsupported'
     }
+
+    It 'classifies Cloudflare managed challenges as interactive resolution requirements' {
+        $failureResponse = [pscustomobject]@{
+            StatusCode = 403
+            Headers = @{
+                'Content-Type' = 'text/html; charset=UTF-8'
+                'Server' = 'cloudflare'
+                'Cf-Mitigated' = 'challenge'
+                'CF-RAY' = 'test-ray-id-IAD'
+            }
+            Content = '<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>'
+            RequestMessage = [pscustomobject]@{ RequestUri = [uri]'https://www.example.test/download/' }
+        }
+        $script:sourceFailureException = [System.Exception]::new('The remote server returned an error: (403) Forbidden.')
+        $script:sourceFailureException | Add-Member -NotePropertyName Response -NotePropertyValue $failureResponse
+        Mock Invoke-WebRequest { throw $script:sourceFailureException } -ModuleName Wintainium.provider.official-download-page
+
+        $result = & (Get-Module Wintainium.provider.official-download-page) {
+            Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                OperationId='page-test-cloudflare';SourceUri='https://www.example.test/download/'
+            })
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'InteractiveResolutionRequired'
+        @($result.Errors.Code) | Should -Contain 'SourceAccessChallengeRequired'
+        $event = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionAccessChallengeDetected')[0]
+        $event.Context.ChallengeProvider | Should -Be 'Cloudflare'
+        $event.Context.HttpStatusCode | Should -Be 403
+        $event.Context.RequestId | Should -Be 'test-ray-id-IAD'
+        $event.Context.ContainsKey('ResponseBody') | Should -BeFalse
+        $event.Context.ContainsKey('SourceUri') | Should -BeFalse
+    }
+
+    It 'recognizes Cloudflare challenge documents when the mitigation header is absent' {
+        $failureResponse = [pscustomobject]@{
+            StatusCode = 403
+            Headers = @{ 'Content-Type' = 'text/html'; 'Server' = 'cloudflare' }
+            Content = '<html><head><title>Just a moment...</title></head><body><script>window._cf_chl_opt = {};</script><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>'
+            RequestMessage = [pscustomobject]@{ RequestUri = [uri]'https://www.example.test/download/' }
+        }
+        $script:sourceFailureException = [System.Exception]::new('Forbidden')
+        $script:sourceFailureException | Add-Member -NotePropertyName Response -NotePropertyValue $failureResponse
+        Mock Invoke-WebRequest { throw $script:sourceFailureException } -ModuleName Wintainium.provider.official-download-page
+
+        $result = & (Get-Module Wintainium.provider.official-download-page) {
+            Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                OperationId='page-test-cloudflare-body';SourceUri='https://www.example.test/download/'
+            })
+        }
+
+        $result.Status | Should -Be 'InteractiveResolutionRequired'
+        @($result.Errors.Code) | Should -Contain 'SourceAccessChallengeRequired'
+    }
+
+    It 'keeps ordinary HTTP failures classified as source unavailable' {
+        $failureResponse = [pscustomobject]@{
+            StatusCode = 404
+            Headers = @{ 'Content-Type' = 'text/html'; 'Server' = 'nginx' }
+            Content = '<html><body>Not found</body></html>'
+            RequestMessage = [pscustomobject]@{ RequestUri = [uri]'https://www.example.test/missing/' }
+        }
+        $script:sourceFailureException = [System.Exception]::new('Not found')
+        $script:sourceFailureException | Add-Member -NotePropertyName Response -NotePropertyValue $failureResponse
+        Mock Invoke-WebRequest { throw $script:sourceFailureException } -ModuleName Wintainium.provider.official-download-page
+
+        $result = & (Get-Module Wintainium.provider.official-download-page) {
+            Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                OperationId='page-test-http-404';SourceUri='https://www.example.test/missing/'
+            })
+        }
+
+        $result.Status | Should -Be 'SourceUnavailable'
+        @($result.Errors.Code) | Should -Contain 'OfficialDownloadPageRequestFailed'
+        $event = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionRetrievalFailed')[0]
+        $event.Context.HttpStatusCode | Should -Be 404
+    }
 }
