@@ -192,20 +192,40 @@ try {
     # separate state flag suppress cleanup after an earlier extraction error.
     if ([System.IO.Directory]::Exists(`$stagePath)) {
         try {
-            `$stagedItems = [System.Collections.Generic.Stack[string]]::new()
-            `$stagedItems.Push(`$stagePath)
-            while (`$stagedItems.Count -gt 0) {
-                `$itemPath = `$stagedItems.Pop()
-                `$itemAttributes = [System.IO.File]::GetAttributes(`$itemPath)
-                if ((`$itemAttributes -band [System.IO.FileAttributes]::Directory) -ne 0) {
-                    foreach (`$childPath in [System.IO.Directory]::EnumerateFileSystemEntries(`$itemPath)) { `$stagedItems.Push(`$childPath) }
-                }
-                if ((`$itemAttributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) {
-                    `$writableAttributes = `$itemAttributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
-                    [System.IO.File]::SetAttributes(`$itemPath, `$writableAttributes)
+            # Remove staged files explicitly, then directories deepest-first.
+            # Directory.Delete(path, true) can leave the stage behind on Windows
+            # when copied files or nested directory attributes interfere with
+            # recursive deletion.
+            `$stagedDirectories = [System.Collections.Generic.List[string]]::new()
+            `$pendingDirectories = [System.Collections.Generic.Stack[string]]::new()
+            `$pendingDirectories.Push(`$stagePath)
+            while (`$pendingDirectories.Count -gt 0) {
+                `$directoryPath = `$pendingDirectories.Pop()
+                `$stagedDirectories.Add(`$directoryPath)
+                foreach (`$childPath in [System.IO.Directory]::EnumerateFileSystemEntries(`$directoryPath)) {
+                    `$childAttributes = [System.IO.File]::GetAttributes(`$childPath)
+                    if ((`$childAttributes -band [System.IO.FileAttributes]::Directory) -ne 0) {
+                        `$pendingDirectories.Push(`$childPath)
+                    }
+                    else {
+                        if ((`$childAttributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) {
+                            `$writableAttributes = `$childAttributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+                            [System.IO.File]::SetAttributes(`$childPath, `$writableAttributes)
+                        }
+                        [System.IO.File]::Delete(`$childPath)
+                    }
                 }
             }
-            [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True)
+            `$stagedDirectories.Sort([System.StringComparer]::OrdinalIgnoreCase)
+            `$stagedDirectories.Sort([System.Comparison[string]]{ param(`$left, `$right) `$right.Length.CompareTo(`$left.Length) })
+            foreach (`$directoryPath in `$stagedDirectories) {
+                `$directoryAttributes = [System.IO.File]::GetAttributes(`$directoryPath)
+                if ((`$directoryAttributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) {
+                    `$writableAttributes = `$directoryAttributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+                    [System.IO.File]::SetAttributes(`$directoryPath, `$writableAttributes)
+                }
+                [System.IO.Directory]::Delete(`$directoryPath, [System.Boolean]::False)
+            }
         } catch {
             [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath. Cleanup error: `$(`$_.Exception.Message)")
         }
