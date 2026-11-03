@@ -115,6 +115,7 @@ if ([string]::IsNullOrWhiteSpace(`$parentDirectory) -or [string]::Equals(`$paren
 `$backupPath = Join-Path `$parentDirectory ('.' + `$destinationName + '.wintanium-backup-' + `$operationToken)
 `$backupCreated = [System.Boolean]::False
 `$stageCreated = [System.Boolean]::False
+`$exitCode = 1
 try {
     [System.IO.Directory]::CreateDirectory(`$stagePath) | Out-Null
     `$stageCreated = [System.Boolean]::True
@@ -179,17 +180,18 @@ try {
         try { [System.IO.Directory]::Delete(`$backupPath, [System.Boolean]::True); `$backupCreated = [System.Boolean]::False }
         catch { [Console]::Error.WriteLine("Installation succeeded, but previous installation backup remains at: `$backupPath") }
     }
-    exit 0
+    `$exitCode = 0
 } catch {
     `$message = [string]`$_.Exception.Message
     if (`$backupCreated -and [System.IO.Directory]::Exists(`$backupPath) -and -not [System.IO.Directory]::Exists(`$destinationRoot)) { `$message += " Original installation remains recoverable at: `$backupPath" }
     [Console]::Error.WriteLine(`$message)
-    exit 1
+    `$exitCode = 1
 } finally {
     if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
         try { [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True) } catch { [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath") }
     }
 }
+exit `$exitCode
 "@
     # Portable applications may be installed under protected locations such as
     # Program Files. Run those extractions through a tracked elevated child
