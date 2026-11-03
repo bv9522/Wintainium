@@ -164,21 +164,6 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                         $null -ne $_ -and $_.PSObject.Properties['EventName'] -and
                             $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted','ArtifactSha256EvidenceResolutionCompleted')
                     })) {
-                        $traceParts = [System.Collections.Generic.List[string]]::new()
-                        $traceParts.Add([string]$traceEvent.EventName)
-                        if (-not [string]::IsNullOrWhiteSpace([string]$traceEvent.Message)) { $traceParts.Add(([string]$traceEvent.Message).Trim().TrimEnd('.', ';', ' ')) }
-                        $context = $traceEvent.Context
-                        if ($null -ne $context) {
-                            foreach ($key in @('RequestedUrl','FinalUrl','HttpStatusCode','ContentType','FailureStage','Outcome','SectionCandidateCount','DownloadArtifactCandidateCount','ParsedArtifactCount','ParsedReleaseCount','AttemptedCount','ResolvedCount','RejectedCount','UnavailableCount','ArtifactEndpointAttemptedCount','ArtifactEndpointResolvedCount','ArtifactEndpointRejectedCount','ArtifactEndpointUnavailableCount','ArtifactEndpointErrorType','DurationMilliseconds','ExceptionType')) {
-                                $value = if ($context -is [System.Collections.IDictionary] -and $context.Contains($key)) { [string]$context[$key] } elseif ($null -ne $context.PSObject.Properties[$key]) { [string]$context.$key } else { $null }
-                                if (-not [string]::IsNullOrWhiteSpace($value)) { $traceParts.Add($key + '=' + $value) }
-                            }
-                        }
-                        $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
-                            Code = 'InstallDiagnostic.ReleaseDiscoveryTrace'
-                            Message = ('Discovery trace: ' + ($traceParts -join '; ') + '.')
-                        })
-
                         # Artifact-level checksum resolution details are carried as
                         # structured provider context. Surface only bounded metadata:
                         # never expose response bodies, digest values, or exception text.
@@ -195,7 +180,7 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                             }
                             if ($artifactTraceParts.Count -gt 0) {
                                 $troubleshootingDiagnostics.Add([pscustomobject][ordered]@{
-                                    Code = 'InstallDiagnostic.ReleaseDiscoveryTrace'
+                                    Code = 'InstallDiagnostic.ArtifactChecksumEvidence'
                                     Message = ('Artifact checksum evidence: ' + ($artifactTraceParts -join '; ') + '.')
                                 })
                             }
