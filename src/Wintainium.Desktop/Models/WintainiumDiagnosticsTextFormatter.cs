@@ -73,17 +73,20 @@ internal static class WintainiumDiagnosticsTextFormatter
     public static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic, string indent = "")
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
-        var parts = new List<string>();
+        var identity = new List<string>();
         if (!string.IsNullOrWhiteSpace(diagnostic.Code))
-            parts.Add(diagnostic.Code.Trim());
+            identity.Add(diagnostic.Code.Trim());
         if (IsUsefulDiagnosticPath(diagnostic.Path))
-            parts.Add($"Path: {diagnostic.Path!.Trim()}");
-        if (!string.IsNullOrWhiteSpace(diagnostic.Message))
-            parts.Add(diagnostic.Message.Trim());
+            identity.Add($"Path: {diagnostic.Path!.Trim()}");
 
         var builder = new System.Text.StringBuilder();
-        builder.Append(indent);
-        builder.AppendLine(parts.Count == 0 ? "Unspecified diagnostic." : string.Join(": ", parts));
+        builder.Append(indent).AppendLine(identity.Count == 0 ? "Diagnostic" : string.Join(" — ", identity));
+
+        if (!string.IsNullOrWhiteSpace(diagnostic.Message))
+        {
+            builder.Append(indent).AppendLine("  Message:");
+            AppendWrappedText(builder, diagnostic.Message.Trim(), indent + "    ");
+        }
 
         if (diagnostic.Details is not { Count: > 0 } details)
             return builder.ToString().TrimEnd();
@@ -113,13 +116,15 @@ internal static class WintainiumDiagnosticsTextFormatter
         builder.Append(indent).AppendLine(title + ":");
         foreach (var item in items)
         {
-            var heading = string.Join(" — ", new[] { item.EventName, item.Message }
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Select(value => value!.Trim()));
             builder.Append(indent).Append("  - [")
                 .Append(string.IsNullOrWhiteSpace(item.Severity) ? "Unspecified" : item.Severity)
-                .Append("] ").AppendLine(string.IsNullOrWhiteSpace(heading) ? "Log event" : heading);
+                .Append("] ").AppendLine(string.IsNullOrWhiteSpace(item.EventName) ? "Log event" : item.EventName);
 
+            if (!string.IsNullOrWhiteSpace(item.Message))
+            {
+                builder.Append(indent).AppendLine("      Message:");
+                AppendWrappedText(builder, item.Message.Trim(), indent + "        ");
+            }
             if (!string.IsNullOrWhiteSpace(item.Component))
                 builder.Append(indent).Append("      Component: ").AppendLine(item.Component);
             if (!string.IsNullOrWhiteSpace(item.OperationId))
@@ -150,6 +155,37 @@ internal static class WintainiumDiagnosticsTextFormatter
                path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
                path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
                path.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AppendWrappedText(System.Text.StringBuilder builder, string value, string indent)
+    {
+        const int maximumLineLength = 108;
+        foreach (var sourceLine in value.Replace("\\r\\n", "\\n", StringComparison.Ordinal).Split('\\n'))
+        {
+            var words = sourceLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0)
+            {
+                builder.AppendLine(indent);
+                continue;
+            }
+
+            var line = new System.Text.StringBuilder();
+            foreach (var word in words)
+            {
+                if (line.Length > 0 && line.Length + word.Length + 1 > maximumLineLength)
+                {
+                    builder.Append(indent).AppendLine(line.ToString());
+                    line.Clear();
+                }
+
+                if (line.Length > 0)
+                    line.Append(' ');
+                line.Append(word);
+            }
+
+            if (line.Length > 0)
+                builder.Append(indent).AppendLine(line.ToString());
+        }
     }
 
     private static void AppendFormattedValue(System.Text.StringBuilder builder, string value, string indent)
