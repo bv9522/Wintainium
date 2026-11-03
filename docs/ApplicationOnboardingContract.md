@@ -47,7 +47,7 @@ Core owns:
 6. persistence through `Set-WintainiumApplicationDefinition`;
 7. operation correlation and structured diagnostics.
 
-Providers own source-specific interpretation only.
+Providers own source-specific interpretation only. A successful resolver supplies a stable `ApplicationId`, primary display `Name`, optional evidence-backed name aliases, publisher/homepage metadata, and a canonical source URI. Core preserves the user-submitted URI separately from the resolver's canonical URI; provider-specific upstream locators remain in `Source.settings`.
 
 The desktop adapter exposes the command without reproducing Core behavior.
 
@@ -84,7 +84,7 @@ Only a successfully normalized application definition is passed to the existing 
 
 A failed source resolution, failed default-policy resolution, or failed normalization does not create a manifest.
 
-Installed application observations remain owned by `installed-state.json`; onboarding never mutates installed state.
+Installed application observations remain owned by `installed-state.json`; onboarding never mutates installed state. Onboarding identity metadata is descriptive input for downstream reconciliation, not proof that an application is installed.
 
 ## Desktop adapter
 
