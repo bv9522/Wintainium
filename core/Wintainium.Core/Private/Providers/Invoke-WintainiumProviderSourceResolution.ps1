@@ -144,6 +144,11 @@ function Invoke-WintainiumCoreProviderSourceResolution {
         }
     }
 
+    if ($resolverResult.IsSuccessful -isnot [bool]) {
+        $error=[pscustomobject]@{Code='SourceResolutionResultInvalid';Message='Source resolver result IsSuccessful must be a Boolean value.'}
+        return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+    }
+
     if ([string]::IsNullOrWhiteSpace([string]$resolverResult.Status)) {
         $error=[pscustomobject]@{Code='SourceResolutionResultInvalid';Message='Source resolver result Status cannot be empty.'}
         return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
