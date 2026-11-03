@@ -11,6 +11,7 @@ function New-WintainiumApplicationDefinitionFromSource {
     $operationId = if ([string]::IsNullOrWhiteSpace($OperationId)) { [guid]::NewGuid().ToString() } else { $OperationId }
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
+    $logEvents = [System.Collections.Generic.List[object]]::new()
     $sourceAliases = [System.Collections.Generic.List[string]]::new()
     $sourceContext = $null
 
@@ -173,6 +174,9 @@ function New-WintainiumApplicationDefinitionFromSource {
     }
 
     if ($sourceAliases.Count -eq 0) { $application.Remove('aliases') }
+    if ($null -ne $sourceContext) {
+        $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $operationId -Component 'Core' -EventName 'SourceContextPreserved' -Message 'Core validated and preserved provider-established source context in the application definition.' -Context @{ProviderId=[string]$Source.ProviderId;PropertyCount=$sourceContext.Count}))
+    }
     if ($null -eq $sourceContext) { $application.source.Remove('context') }
     if ($application.source.submittedUri -eq $null) { $application.source.Remove('submittedUri') }
     if ($application.icon -eq $null) { $application.Remove('icon') }
@@ -183,6 +187,6 @@ function New-WintainiumApplicationDefinitionFromSource {
     [pscustomobject][ordered]@{
         OperationId=$operationId; IsSuccessful=$true; Status='Resolved'
         ApplicationDefinition=[pscustomobject]$application
-        Errors=@(); Warnings=$warnings.ToArray(); LogEvents=@()
+        Errors=@(); Warnings=$warnings.ToArray(); LogEvents=$logEvents.ToArray()
     }
 }
