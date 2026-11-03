@@ -46,7 +46,7 @@ Describe 'Wintainium generic portable ZIP installer' {
         $decodedCommand | Should -Match 'ZIP entry attempts to write outside destination'
         $decodedCommand | Should -Not -Match 'Expand-Archive'
         $decodedCommand | Should -Match 'catch'
-        $decodedCommand | Should -Match 'exit 1'
+        $decodedCommand | Should -Match 'exit \$exitCode'
     }
     It 'requests and tracks elevation for protected installation destinations' {
         $protectedDestination = Join-Path $env:ProgramFiles 'Wintanium-PortableZip-Elevation-Test'
