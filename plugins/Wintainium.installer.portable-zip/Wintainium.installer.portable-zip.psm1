@@ -163,7 +163,7 @@ try {
             } finally { `$inputStream.Dispose() }
         }
     } finally { `$archive.Dispose() }
-`$entryPointCheck
+`$ENTRY_POINT_CHECK_PLACEHOLDER
     if ([System.IO.Directory]::Exists(`$destinationRoot)) { [System.IO.Directory]::Move(`$destinationRoot, `$backupPath); `$backupCreated = [System.Boolean]::True }
     try {
         [System.IO.Directory]::Move(`$stagePath, `$destinationRoot)
@@ -188,11 +188,21 @@ try {
     `$exitCode = 1
 } finally {
     if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
-        try { [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True) } catch { [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath") }
+        try {
+            [System.IO.Directory]::Delete(`$stagePath, [System.Boolean]::True)
+        } catch {
+            try {
+                Get-ChildItem -LiteralPath `$stagePath -Force -Recurse -ErrorAction SilentlyContinue | ForEach-Object { if (`$_.Attributes -band [System.IO.FileAttributes]::ReadOnly) { `$_.Attributes = `$_.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly) } }
+                Remove-Item -LiteralPath `$stagePath -Recurse -Force -ErrorAction Stop
+            } catch {
+                [Console]::Error.WriteLine("Temporary staging directory could not be removed: `$stagePath. Cleanup error: `$(`$_.Exception.Message)")
+            }
+        }
     }
 }
 exit `$exitCode
 "@
+    $script = $script.Replace('`$ENTRY_POINT_CHECK_PLACEHOLDER', $entryPointCheck)
     # Portable applications may be installed under protected locations such as
     # Program Files. Run those extractions through a tracked elevated child
     # process; the parent waits for its exit code and relays extraction errors
