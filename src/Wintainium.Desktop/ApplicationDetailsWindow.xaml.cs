@@ -924,13 +924,23 @@ public sealed partial class ApplicationDetailsWindow : Window
     // Keep FormatStage unchanged: StageItemsControl is also part of the established
     // Copy Diagnostics clipboard report contract.
     private static string? FormatStageReason(WintainiumApplicationUpdateStageModel stage) =>
-        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason);
+        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason, stage.Error);
 
     private static string? FormatStageReason(WintainiumApplicationInstallStageModel stage) =>
-        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason);
+        FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason, stage.Error);
 
-    private static string? FormatStageReason(int sequence, string? name, string? reasonCode, string? reason)
+    private static string? FormatStageReason(
+        int sequence,
+        string? name,
+        string? reasonCode,
+        string? reason,
+        WintainiumOperationDiagnostic? stageError)
     {
+        if (stageError is not null &&
+            string.Equals(stageError.Code, reasonCode, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(stageError.Message, reason, StringComparison.Ordinal))
+            return null;
+
         if (string.IsNullOrWhiteSpace(reasonCode) && string.IsNullOrWhiteSpace(reason))
             return null;
 
@@ -951,8 +961,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.Status,
             stage.IsSuccessful,
             stage.WasCancelled,
-            stage.ElapsedMilliseconds,
-            null);
+            stage.ElapsedMilliseconds);
     }
 
     private static string FormatStage(WintainiumApplicationInstallStageModel stage)
@@ -973,8 +982,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         string? status,
         bool isSuccessful,
         bool wasCancelled,
-        long? elapsedMilliseconds,
-        WintainiumOperationDiagnostic? error)
+        long? elapsedMilliseconds)
     {
         var isSkipped = string.Equals(status, "Skipped", StringComparison.OrdinalIgnoreCase);
         var isUnresolvedDecision = status is not null &&
@@ -994,8 +1002,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         var elapsedText = elapsedMilliseconds is long elapsed
             ? elapsed >= 1000 ? $" — {(elapsed / 1000d):0.0} s" : $" — {elapsed} ms"
             : string.Empty;
-        var errorText = error is null ? string.Empty : $" — {FormatDiagnostic(error)}";
-        return $"{sequence}. {name ?? "Unnamed stage"}: {outcome}{statusText}{elapsedText}{errorText}";
+        return $"{sequence}. {name ?? "Unnamed stage"}: {outcome}{statusText}{elapsedText}";
     }
 
     private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
