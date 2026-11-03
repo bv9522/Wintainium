@@ -115,7 +115,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-00000000020B'; ApplicationId='example.application'; Manifest=$script:baseManifest }
         $candidate=[pscustomobject]@{
             Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'
-            DisplayVersion='2.4.1'; InstallLocation='C:\\Program Files\\Example'
+            DisplayVersion='2.4.1'; InstallLocation='C:\Program Files\Example'
             IdentityConfidence='Explicit'
         }
         $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidate=$candidate } {
@@ -146,7 +146,7 @@ Describe 'Windows installed-application reconciliation plugin' {
         $request=[pscustomobject]@{ OperationId='00000000-0000-0000-0000-00000000020C'; ApplicationId='example.application'; Manifest=$script:baseManifest }
         $candidate=[pscustomobject]@{
             Scope='machine'; View='64'; SubKey='Example'; DisplayName='Example Application'
-            DisplayVersion='2.4.1'; InstallLocation='C:\\Program Files\\Example'
+            DisplayVersion='2.4.1'; InstallLocation='C:\Program Files\Example'
             IdentityConfidence='Explicit'
         }
         $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidate=$candidate } {
