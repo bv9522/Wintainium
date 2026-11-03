@@ -920,9 +920,8 @@ public sealed partial class ApplicationDetailsWindow : Window
         NotesStatusText.Text = "Unsaved note changes discarded.";
     }
 
-    // Stage reasons are shown in the GUI-only section below the lifecycle list.
-    // Keep FormatStage unchanged: StageItemsControl is also part of the established
-    // Copy Diagnostics clipboard report contract.
+    // Stage reasons are shown separately from the lifecycle summary. Exact repeats
+    // of the stage error are omitted because the Errors section already carries them.
     private static string? FormatStageReason(WintainiumApplicationUpdateStageModel stage) =>
         FormatStageReason(stage.Sequence, stage.Name, stage.ReasonCode, stage.Reason, stage.Error);
 
@@ -972,8 +971,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.Status,
             stage.IsSuccessful,
             stage.WasCancelled,
-            stage.ElapsedMilliseconds,
-            null);
+            stage.ElapsedMilliseconds);
     }
 
     private static string FormatStage(
