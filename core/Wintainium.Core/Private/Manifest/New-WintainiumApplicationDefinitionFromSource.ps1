@@ -35,7 +35,14 @@ function New-WintainiumApplicationDefinitionFromSource {
 
                     $normalizedAlias = $alias.Trim()
                     if ($normalizedAlias -ieq [string]$Source.Name) { continue }
-                    if (-not @($sourceAliases | Where-Object { $_ -ieq $normalizedAlias }).Count) {
+                    $isDuplicateAlias = $false
+                    foreach ($existingAlias in $sourceAliases) {
+                        if ($existingAlias -ieq $normalizedAlias) {
+                            $isDuplicateAlias = $true
+                            break
+                        }
+                    }
+                    if (-not $isDuplicateAlias) {
                         $sourceAliases.Add($normalizedAlias)
                     }
                 }
