@@ -129,4 +129,29 @@ Export-ModuleMember -Function Invoke-WintainiumProviderSourceResolution
         @($result.Code) | Should -Contain 'ManifestSourceContextInvalid'
     }
 
+    It 'rejects credential-like keys in provider source context before persistence' {
+        $source = [pscustomobject][ordered]@{
+            ApplicationId = 'web.example.com.product'
+            Name = 'Example Product'
+            CanonicalUri = 'https://example.com/product'
+            ProviderId = 'Wintainium.provider.identity-fixture'
+            ProviderContractVersion = '1'
+            ProviderSettings = [ordered]@{ product = 'product' }
+            SourceContext = [ordered]@{ nested = [ordered]@{ accessToken = 'must-not-persist' } }
+        }
+        $policy = [pscustomobject][ordered]@{
+            Installer = [pscustomobject]@{ PluginId = 'Wintainium.installer.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Reconciliation = [pscustomobject]@{ PluginId = 'Wintainium.reconciliation.fixture'; RequiredContractVersion = '1'; Settings = @{} }
+            Release = [pscustomobject]@{ Channel = 'stable' }
+            Artifact = [pscustomobject]@{ Formats = @('exe'); Architectures = @('x64'); AllowUnknownArchitecture = $false }
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{ Source = $source; Policy = $policy } {
+            New-WintainiumApplicationDefinitionFromSource -Source $Source -Policy $Policy -OperationId 'credential-context-test'
+        }
+
+        $result.IsSuccessful | Should -BeFalse
+        @($result.Errors.Code) | Should -Contain 'ManifestContainsProhibitedInformation'
+    }
+
 }
