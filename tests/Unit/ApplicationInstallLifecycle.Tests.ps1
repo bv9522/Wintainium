@@ -724,3 +724,41 @@ Describe 'Wintainium first-install orchestration boundaries' {
     }
 }
 
+Describe 'Wintainium installer reboot outcome projection' {
+    It 'surfaces successful MSI reboot outcomes as lifecycle warnings' {
+        InModuleScope Wintainium.Core {
+            foreach ($case in @(
+                [pscustomobject]@{ ExitCode=3010; RebootInitiated=$false; WarningCode='InstallerRebootRequired'; MessagePattern='system restart is required' },
+                [pscustomobject]@{ ExitCode=1641; RebootInitiated=$true; WarningCode='InstallerRebootInitiated'; MessagePattern='initiated a system restart' }
+            )) {
+                $lifecycle = [pscustomobject]@{
+                    OperationId='msi-reboot-projection'
+                    IsSuccessful=$true
+                    WasCancelled=$false
+                    StageResults=@(
+                        [pscustomobject]@{
+                            Stage=[pscustomobject]@{ Sequence=7; Name='Installation' }
+                            Execution=[pscustomobject]@{
+                                Result=[pscustomobject]@{
+                                    Status='Completed'
+                                    IsSuccessful=$true
+                                    ExitCode=$case.ExitCode
+                                    RebootRequired=$true
+                                    RebootInitiated=$case.RebootInitiated
+                                }
+                            }
+                        }
+                    )
+                    Error=$null
+                }
+
+                $result = ConvertTo-WintainiumPublicApplicationLifecycleResult -LifecycleResult $lifecycle
+
+                $result.IsSuccessful | Should -BeTrue
+                $warning = @($result.Warnings | Where-Object Code -eq $case.WarningCode)
+                $warning.Count | Should -Be 1
+                $warning[0].Message | Should -Match $case.MessagePattern
+            }
+        }
+    }
+}

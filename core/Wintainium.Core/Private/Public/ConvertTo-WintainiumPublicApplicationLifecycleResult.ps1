@@ -93,6 +93,20 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
             Error = $stageError
         })
 
+        if ($null -ne $result -and $name -eq 'Installation' -and
+            $result.PSObject.Properties['RebootRequired'] -and [bool]$result.RebootRequired) {
+            $rebootInitiated = $result.PSObject.Properties['RebootInitiated'] -and [bool]$result.RebootInitiated
+            $exitCode = if ($result.PSObject.Properties['ExitCode']) { [string]$result.ExitCode } else { 'unknown' }
+            $warnings.Add([pscustomobject][ordered]@{
+                Code = if ($rebootInitiated) { 'InstallerRebootInitiated' } else { 'InstallerRebootRequired' }
+                Message = if ($rebootInitiated) {
+                    "The installer completed and initiated a system restart (exit code $exitCode)."
+                } else {
+                    "The installer completed successfully; a system restart is required to finish installation (exit code $exitCode)."
+                }
+            })
+        }
+
         if ($null -ne $result) {
             foreach ($collectionName in @('Errors','Warnings','LogEvents')) {
                 if ($result.PSObject.Properties[$collectionName]) {
