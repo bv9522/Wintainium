@@ -7,4 +7,4 @@ internal sealed record WintainiumApplicationReleaseResult(
     IReadOnlyList<WintainiumApplicationReleaseModel> Releases,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
-    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
+    WintainiumOperationState OperationState = WintainiumOperationState.NotStarted,\n    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null);
