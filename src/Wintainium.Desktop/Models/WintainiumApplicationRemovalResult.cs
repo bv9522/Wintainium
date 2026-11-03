@@ -5,4 +5,4 @@ internal sealed record WintainiumApplicationRemovalResult(
     bool IsSuccessful,
     string? Status,
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
-    IReadOnlyList<WintainiumOperationDiagnostic> Warnings);
+    IReadOnlyList<WintainiumOperationDiagnostic> Warnings,\n    IReadOnlyList<WintainiumOperationLogEvent>? LogEvents = null);
