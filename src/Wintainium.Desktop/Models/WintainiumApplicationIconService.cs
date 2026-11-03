@@ -34,7 +34,8 @@ internal sealed class WintainiumApplicationIconService
             IsSuccessful: Boolean(result, "IsSuccessful"),
             Status: Nullable(result, "Status"),
             Errors: Diagnostics(result, "Errors"),
-            Warnings: Diagnostics(result, "Warnings"));
+            Warnings: Diagnostics(result, "Warnings"),
+            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result));
     }
 
     private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
