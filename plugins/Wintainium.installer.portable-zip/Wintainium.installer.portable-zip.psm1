@@ -124,8 +124,8 @@ try {
         `$pendingDirectories.Push(`$destinationRoot)
         while (`$pendingDirectories.Count -gt 0) {
             `$sourceDirectory = `$pendingDirectories.Pop()
-            `$relativeDirectory = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$sourceDirectory)
-            `$targetDirectory = if (`$relativeDirectory -eq '.') { `$stagePath } else { Join-Path `$stagePath `$relativeDirectory }
+            `$relativeDirectory = `$sourceDirectory.Substring(`$destinationRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar).Length).TrimStart([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+            `$targetDirectory = if ([string]::IsNullOrEmpty(`$relativeDirectory)) { `$stagePath } else { Join-Path `$stagePath `$relativeDirectory }
             [System.IO.Directory]::CreateDirectory(`$targetDirectory) | Out-Null
             foreach (`$directory in [System.IO.Directory]::EnumerateDirectories(`$sourceDirectory)) {
                 `$directoryInfo = [System.IO.DirectoryInfo]::new(`$directory)
@@ -135,7 +135,7 @@ try {
             foreach (`$file in [System.IO.Directory]::EnumerateFiles(`$sourceDirectory)) {
                 `$fileInfo = [System.IO.FileInfo]::new(`$file)
                 if ((`$fileInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Existing installation contains a reparse point: `$file" }
-                `$relativeFile = [System.IO.Path]::GetRelativePath(`$destinationRoot, `$file)
+                `$relativeFile = `$file.Substring(`$destinationRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar).Length).TrimStart([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
                 `$targetFile = Join-Path `$stagePath `$relativeFile
                 [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName(`$targetFile)) | Out-Null
                 [System.IO.File]::Copy(`$file, `$targetFile, [System.Boolean]::True)
@@ -143,6 +143,7 @@ try {
         }
     }
     Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
     `$archive = [System.IO.Compression.ZipFile]::OpenRead('$escapedArtifactPath')
     try {
         foreach (`$entry in `$archive.Entries) {
