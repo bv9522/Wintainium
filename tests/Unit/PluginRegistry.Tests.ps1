@@ -13,7 +13,8 @@ Describe 'Wintainium plugin registry' {
             Get-WintainiumPluginRegistry -PluginRoot $Path
         }
 
-        $registry.Plugins.Count | Should -Be 7
+        $registry.Plugins.Count | Should -Be 8
+        @($registry.Plugins | Where-Object PluginId -eq 'Wintainium.provider.source-resolution-identity').Count | Should -Be 1
         $registry.DescriptorErrors.Count | Should -Be 1
     }
 
