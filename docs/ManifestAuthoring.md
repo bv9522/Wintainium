@@ -41,11 +41,17 @@ The `source` object identifies the provider capability rather than embedding pro
 "source": {
   "pluginId": "Wintainium.provider.example",
   "requiredContractVersion": "1",
+  "submittedUri": "https://example.com/downloads",
+  "canonicalUri": "https://example.com/product",
   "settings": {}
 }
 ```
 
 `pluginId` must use the `Wintainium.provider.*` naming convention. `requiredContractVersion` declares the minimum provider contract version required by the manifest. `settings` is provider-specific configuration and must be understood by that provider.
+
+The optional `submittedUri` preserves the URL supplied by the user. The optional `canonicalUri` preserves the source resolver's canonical identity URI. They are distinct: the submitted URL may be a release page, redirect, or product-specific download page, while the canonical URI identifies the resolved source. Neither replaces the stable top-level `id`.
+
+Top-level `aliases` are alternate application/display names, not package identifiers or proof of installation. Only add aliases that are explicitly established by a trusted source or confirmed by the user.
 
 A manifest describes the desired source; the provider performs discovery. Do not put HTTP logic, scraping code, executable commands, or provider implementation details into a manifest.
 
