@@ -71,7 +71,7 @@ Describe 'Wintainium generic portable ZIP installer' {
     }
 
     It 'extracts the archive using the returned encoded PowerShell command' {
-        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination}}
+        $inv=[pscustomobject]@{ArtifactPath=$script:artifactPath;ArtifactFormat='zip';Settings=[ordered]@{destinationPath=$script:destination;entryPoint='payload.txt'}}
         $spec=&$script:installerCommand -Invocation $inv
         $processResult = InModuleScope Wintainium.Core -Parameters @{ ExecutablePath=$spec.ExecutablePath; Arguments=$spec.Arguments } {
             Invoke-WintainiumInstallerProcess -FilePath $ExecutablePath -ArgumentList $Arguments -TimeoutMilliseconds 30000
@@ -79,6 +79,7 @@ Describe 'Wintainium generic portable ZIP installer' {
 
         $processResult.Status | Should -Be 'Completed' -Because $processResult.StandardError
         Test-Path -LiteralPath (Join-Path $script:destination 'payload.txt') -PathType Leaf | Should -BeTrue
+        @(Get-ChildItem -LiteralPath $script:tempRoot -Directory -Force | Where-Object Name -Like '.installed.wintanium-*').Count | Should -Be 0
         Get-Content -LiteralPath (Join-Path $script:destination 'payload.txt') -Raw | Should -Match 'portable test'
     }
     It 'overwrites an existing portable application file when extraction succeeds' {
