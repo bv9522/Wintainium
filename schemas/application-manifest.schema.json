@@ -50,6 +50,14 @@
       },
       "uniqueItems": true
     },
+    "userConfirmedAliases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
     "documentation": {
       "type": "string",
       "format": "uri"
@@ -152,6 +160,10 @@
         },
         "settings": {
           "type": "object"
+        },
+        "context": {
+          "type": "object",
+          "maxProperties": 64
         }
       }
     },
