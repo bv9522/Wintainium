@@ -25,6 +25,9 @@ public sealed partial class ApplicationDetailsWindow : Window
     private readonly Func<string, Task>? _onApplicationOperationStarted;
     private readonly Func<string, Task>? _onApplicationOperationCompleted;
     private WintainiumApplicationUpdateResult? _lastUpdateResult;
+    private WintainiumApplicationReleaseResult? _lastReleaseResult;
+    private WintainiumApplicationUpdateDecisionResult? _lastUpdateDecisionResult;
+    private WintainiumApplicationIconOverrideResult? _lastIconOverrideResult;
     private string _savedNotes = string.Empty;
     private CancellationTokenSource? _operationCancellation;
     private bool _applicationOperationRegistered;
@@ -209,6 +212,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                 _application.ManifestPath,
                 iconUri,
                 CancellationToken.None);
+            _lastIconOverrideResult = result;
 
             if (!result.IsSuccessful)
             {
@@ -560,6 +564,7 @@ public sealed partial class ApplicationDetailsWindow : Window
         try
         {
             var result = await _releaseService.DiscoverAsync(_application.ManifestPath, _operationCancellation.Token);
+            _lastReleaseResult = result;
 
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId}";
@@ -601,6 +606,7 @@ public sealed partial class ApplicationDetailsWindow : Window
                     _application.ManifestPath,
                     GetMachineArchitecture(),
                     _operationCancellation.Token);
+                _lastUpdateDecisionResult = decisionResult;
 
                 OperationStateText.Text = decisionResult.OperationState.ToString();
                 OperationIdText.Text = $"Operation ID: {decisionResult.OperationId}";
