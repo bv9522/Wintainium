@@ -1861,7 +1861,8 @@ function Invoke-WintainiumProviderSourceResolution {
     try {$response=Invoke-WebRequest -Method Get -Uri $sourceUri.AbsoluteUri -MaximumRedirection 5 -TimeoutSec 30 -ErrorAction Stop} catch {
         $stopwatch.Stop()
         $exceptionType=$_.Exception.GetType().Name
-        $failureResponse=$_.Exception.Response
+        $failureResponse=$null
+        if ($_.Exception.PSObject.Properties['Response']) { $failureResponse=$_.Exception.Response }
         $httpStatus=$null
         $finalUri=$null
         $contentType=$null
@@ -1872,14 +1873,16 @@ function Invoke-WintainiumProviderSourceResolution {
         if ($null -ne $failureResponse) {
             try { if ($null -ne $failureResponse.StatusCode) { $httpStatus=[int]$failureResponse.StatusCode } } catch {}
             try {
-                if ($null -ne $failureResponse.RequestMessage -and $null -ne $failureResponse.RequestMessage.RequestUri) {
+                if ($failureResponse.PSObject.Properties['RequestMessage'] -and $null -ne $failureResponse.RequestMessage -and $failureResponse.RequestMessage.PSObject.Properties['RequestUri']) {
                     $finalUri=[Uri]$failureResponse.RequestMessage.RequestUri
                 }
-                elseif ($null -ne $failureResponse.ResponseUri) { $finalUri=[Uri]$failureResponse.ResponseUri }
+                elseif ($failureResponse.PSObject.Properties['ResponseUri'] -and $null -ne $failureResponse.ResponseUri) { $finalUri=[Uri]$failureResponse.ResponseUri }
             } catch {}
+            $failureContent=$null
+            if ($failureResponse.PSObject.Properties['Content']) { $failureContent=$failureResponse.Content }
             $headerSources=[System.Collections.Generic.List[object]]::new()
-            if ($null -ne $failureResponse.Headers) { $headerSources.Add($failureResponse.Headers) }
-            if ($failureResponse.Content -is [System.Net.Http.HttpContent]) { $headerSources.Add($failureResponse.Content.Headers) }
+            if ($failureResponse.PSObject.Properties['Headers'] -and $null -ne $failureResponse.Headers) { $headerSources.Add($failureResponse.Headers) }
+            if ($failureContent -is [System.Net.Http.HttpContent]) { $headerSources.Add($failureContent.Headers) }
             foreach ($headerSource in $headerSources) {
                 foreach ($headerName in @('Content-Type','Server','Cf-Mitigated','CF-RAY')) {
                     try {
@@ -1901,11 +1904,11 @@ function Invoke-WintainiumProviderSourceResolution {
                 }
             }
             try {
-                if ($null -ne $failureResponse.Content -and $failureResponse.Content -is [string]) {
-                    $responseBody=[string]$failureResponse.Content
+                if ($failureContent -is [string]) {
+                    $responseBody=[string]$failureContent
                 }
-                elseif ($null -ne $failureResponse.Content -and $failureResponse.Content -is [System.Net.Http.HttpContent]) {
-                    $responseBody=[string]$failureResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                elseif ($failureContent -is [System.Net.Http.HttpContent]) {
+                    $responseBody=[string]$failureContent.ReadAsStringAsync().GetAwaiter().GetResult()
                 }
             } catch {}
         }
