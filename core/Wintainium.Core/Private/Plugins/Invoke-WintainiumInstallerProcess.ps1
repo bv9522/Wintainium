@@ -56,7 +56,7 @@ using System.Threading.Tasks;
 public sealed class WintainiumInstallerStreamCapture {
  private readonly object gate = new object(); private readonly StringBuilder retained = new StringBuilder(); private bool truncated, completed;
  public Task Worker { get; private set; }
- public void Start(StreamReader reader, int limit) { Worker = Task.Run(async () => { var b = new char[4096]; try { while (true) { int n = await reader.ReadAsync(b,0,b.Length).ConfigureAwait(false); if(n==0) break; lock(gate) { int remaining=limit-retained.Length; if(remaining>0) retained.Append(b,0,Math.Min(remaining,n)); if(n>remaining) truncated=true; } } } catch {} finally { lock(gate) completed=true; } }); }
+ public void Start(StreamReader reader, int limit) { Worker = Task.Run(async () => { var b = new char[4096]; try { while (true) { int n = await reader.ReadAsync(b,0,b.Length).ConfigureAwait(false); if(n==0) { lock(gate) completed=true; break; } lock(gate) { int remaining=limit-retained.Length; if(remaining>0) retained.Append(b,0,Math.Min(remaining,n)); if(n>remaining) truncated=true; } } } catch {} }); }
  public string Text { get { lock(gate) return retained.ToString(); } }
  public bool Truncated { get { lock(gate) return truncated; } }
  public bool Completed { get { lock(gate) return completed; } }
