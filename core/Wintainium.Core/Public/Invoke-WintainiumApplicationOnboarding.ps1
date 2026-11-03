@@ -229,11 +229,13 @@ function Invoke-WintainiumApplicationOnboarding {
             if ($confirmedAliases.Count -gt 0) {
                 $providerAliases = [System.Collections.Generic.List[string]]::new()
                 foreach ($providerAlias in @($normalization.ApplicationDefinition.aliases)) {
+                    if ($providerAlias -isnot [string] -or [string]::IsNullOrWhiteSpace($providerAlias)) { continue }
+                    $normalizedProviderAlias = $providerAlias.Trim()
                     $isConfirmed = $false
                     foreach ($confirmedAlias in $confirmedAliases) {
-                        if ([string]$providerAlias -ieq $confirmedAlias) { $isConfirmed = $true; break }
+                        if ($normalizedProviderAlias -ieq $confirmedAlias) { $isConfirmed = $true; break }
                     }
-                    if (-not $isConfirmed) { $providerAliases.Add([string]$providerAlias) }
+                    if (-not $isConfirmed) { $providerAliases.Add($normalizedProviderAlias) }
                 }
                 if ($providerAliases.Count -gt 0) {
                     $normalization.ApplicationDefinition.aliases = $providerAliases.ToArray()
@@ -241,7 +243,11 @@ function Invoke-WintainiumApplicationOnboarding {
                 else {
                     $normalization.ApplicationDefinition.PSObject.Properties.Remove('aliases')
                 }
-                $normalization.ApplicationDefinition | Add-Member -NotePropertyName userConfirmedAliases -NotePropertyValue $confirmedAliases.ToArray() -Force
+                # Add-Member's value binding can be ambiguous for collection-valued
+                # properties. Assign an explicit string array so JSON persistence cannot
+                # collapse the migrated aliases to a null scalar.
+                $confirmedAliasArray = [string[]]$confirmedAliases.ToArray()
+                $normalization.ApplicationDefinition | Add-Member -MemberType NoteProperty -Name 'userConfirmedAliases' -Value $confirmedAliasArray -Force
 
                 $eventName = if ($hasConfirmedAliasField) { 'ExistingUserConfirmedAliasesPreserved' } else { 'LegacyAliasesMigratedToUserConfirmed' }
                 $eventMessage = if ($hasConfirmedAliasField) {
