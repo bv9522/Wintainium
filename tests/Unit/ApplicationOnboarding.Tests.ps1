@@ -62,6 +62,8 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Source.settings.repository | Should -Be 'PCSX2/pcsx2'
         $result.ApplicationDefinition.Source.submittedUri | Should -Be 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78'
         $result.ApplicationDefinition.Source.canonicalUri | Should -Be 'https://github.com/PCSX2/pcsx2'
+        $result.ApplicationDefinition.Source.context.repository | Should -Be 'PCSX2/pcsx2'
+        $result.ApplicationDefinition.Source.context.releaseTag | Should -Be 'v2.9.78'
         @($result.Errors).Count | Should -Be 0
         @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed').Count | Should -Be 0
         @($result.Warnings).Count | Should -Be 0
@@ -110,6 +112,28 @@ Describe 'Wintainium application onboarding' {
         $manifest['reconciliation']['settings']['registry']['matchMode'] | Should -Be 'any'
         $manifest['reconciliation']['settings']['registry']['match'][0]['equals'] | Should -Be 'Peace'
         @($second.LogEvents | Where-Object EventName -eq 'ExistingReconciliationSettingsPreserved').Count | Should -Be 1
+    }
+
+    It 'migrates legacy aliases and preserves user-confirmed aliases across re-onboarding' {
+        $first = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $first.IsSuccessful | Should -BeTrue
+
+        $legacyManifest = Get-Content -LiteralPath $first.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        $legacyManifest['aliases'] = @('Legacy User Alias', 'PCSX2 Legacy Name')
+        $legacyManifest.Remove('userConfirmedAliases')
+        $legacyManifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $first.ManifestPath -Encoding utf8
+
+        $second = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $second.IsSuccessful | Should -BeTrue
+        $migrated = Get-Content -LiteralPath $second.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        @($migrated['userConfirmedAliases']) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
+        @($second.LogEvents | Where-Object EventName -eq 'LegacyAliasesMigratedToUserConfirmed').Count | Should -Be 1
+
+        $third = Invoke-WintaniumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $third.IsSuccessful | Should -BeTrue
+        $persisted = Get-Content -LiteralPath $third.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        @($persisted['userConfirmedAliases']) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
+        @($third.LogEvents | Where-Object EventName -eq 'ExistingUserConfirmedAliasesPreserved').Count | Should -Be 1
     }
 
     It 'preserves a resolved source description in the persisted application definition model' {
