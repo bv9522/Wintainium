@@ -55,7 +55,10 @@ Every terminal result contains:
 - `ExitCode` when a process exit code is known;
 - `StandardOutput`;
 - `StandardError`;
-- `DurationMilliseconds`; and
+- `StandardOutputTruncated` and `StandardErrorTruncated`;
+- `StandardOutputComplete` and `StandardErrorComplete`;
+- `TerminationError`; and
+- `DurationMilliseconds`;
 - `ErrorMessage` when a Core-owned failure description is available.
 
 Standard output and standard error are drained independently on the normal non-elevated path. Each stream retains at most 65,536 characters; excess characters are discarded while the reader continues draining the pipe so a full retained buffer cannot block the child process. `StandardOutputTruncated` and `StandardErrorTruncated` report discarded output. `StandardOutputComplete` and `StandardErrorComplete` report whether each stream reached EOF; these are false when an inherited handle prevents EOF within the bounded post-exit drain window. The runner waits up to 2 seconds after process exit for both streams, closes any stream that remains open, and allows a further 250 milliseconds for the reader to finish. Elevated shell execution returns empty output streams because the shell launch cannot use the normal redirection mechanism.
