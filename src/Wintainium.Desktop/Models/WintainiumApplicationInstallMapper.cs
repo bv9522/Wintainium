@@ -18,7 +18,7 @@ internal static class WintainiumApplicationInstallMapper
             Stages: Collection(result, "Stages").Select(MapStage).ToArray(),
             Errors: Diagnostics(result, "Errors"),
             Warnings: Diagnostics(result, "Warnings"),
-            LogEvents: Diagnostics(result, "LogEvents"),
+            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result),
             TroubleshootingDiagnostics: Diagnostics(result, "TroubleshootingDiagnostics"),
             Error: Diagnostic(result, "Error"),
             OperationState: DetermineState(Boolean(result, "IsSuccessful"), Boolean(result, "WasCancelled")));
