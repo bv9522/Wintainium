@@ -9,7 +9,7 @@ internal sealed record WintainiumApplicationOnboardingResult(
     IReadOnlyList<WintainiumOperationDiagnostic> Errors,
     IReadOnlyList<WintainiumOperationDiagnostic> Warnings,
     string? SourceResolutionStatus,
-    IReadOnlyList<WintainiumOperationDiagnostic> LogEvents,
+    IReadOnlyList<WintainiumOperationLogEvent> LogEvents,
     IReadOnlyList<WintainiumApplicationOnboardingStage> Stages,
     WintainiumOperationState OperationState = WintainiumOperationState.NotStarted);
 
