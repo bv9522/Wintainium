@@ -70,6 +70,7 @@ function New-WintainiumInstallationResult {
         try { $Invocation.Settings | ConvertTo-Json -Compress -Depth 10 } catch { [string]$Invocation.Settings }
     } else { $null }
 
+    $resolvedFailureKind = if ([string]::IsNullOrWhiteSpace([string]$failureKind)) { 'ProcessFailed' } else { [string]$failureKind }
     $isMsi = [string]::Equals($artifactFormat, 'msi', [System.StringComparison]::OrdinalIgnoreCase)
     $msiRebootSuccess = $isMsi -and $exitCode -is [int] -and $exitCode -in @(3010, 1641) -and $resolvedFailureKind -eq 'NonZeroExit'
 
@@ -93,7 +94,6 @@ function New-WintainiumInstallationResult {
         }
     }
 
-    $resolvedFailureKind = if ([string]::IsNullOrWhiteSpace([string]$failureKind)) { 'ProcessFailed' } else { [string]$failureKind }
     if ([string]::Equals($artifactFormat, 'msi', [System.StringComparison]::OrdinalIgnoreCase) -and
         $exitCode -is [int] -and $exitCode -eq 1602 -and $resolvedFailureKind -eq 'NonZeroExit') {
         $resolvedFailureKind = 'Cancelled'
