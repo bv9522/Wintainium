@@ -50,6 +50,16 @@ Describe 'Wintainium provider contract' {
         @($result.Errors.Code) | Should -Contain 'DescriptorProviderDiscoveryCapabilitiesMissing'
     }
 
+    It 'does not allow source resolution to replace release and artifact discovery' {
+        $descriptorPath = Join-Path -Path $script:providerContractFixtureRoot -ChildPath 'SourceResolutionOnly/plugin.json'
+        $result = InModuleScope Wintainium.Core -Parameters @{ Path = $descriptorPath } {
+            Test-WintainiumPluginDescriptor -DescriptorPath $Path
+        }
+
+        $result.IsValid | Should -BeFalse
+        @($result.Errors.Code) | Should -Contain 'DescriptorProviderDiscoveryCapabilitiesMissing'
+    }
+
     It 'distinguishes an unregistered provider from a contract-incompatible provider' {
         $registry = InModuleScope Wintainium.Core -Parameters @{ Path = $script:pluginRoot } {
             Get-WintainiumPluginRegistry -PluginRoot $Path
