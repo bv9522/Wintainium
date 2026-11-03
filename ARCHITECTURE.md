@@ -217,12 +217,14 @@ schema validation succeeds.
 The current internal manifest model contains:
 
 `ManifestVersion`, `Id`, `Name`, `Description`, `Homepage`, `Publisher`,
-`Aliases`, `Documentation`, `Notes`, `Deprecated`, `Source`, `Installer`,
-`Release`, and `Artifact`.
+`Aliases`, `UserConfirmedAliases`, `Documentation`, `Notes`, `Deprecated`,
+`Source`, `Installer`, `Release`, and `Artifact`.
 
 The model remains declarative. Provider and installer references identify
 capabilities but do not cause plugin execution during manifest import or
-collection.
+collection. Provider `SourceContext` is persisted under `Source.context` as
+bounded JSON-compatible evidence, while provider-suggested `Aliases` remain
+separate from Core-preserved `UserConfirmedAliases`.
 
 ### Error and logging conventions
 
