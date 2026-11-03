@@ -216,7 +216,6 @@ try {
                     }
                 }
             }
-            `$stagedDirectories.Sort([System.StringComparer]::OrdinalIgnoreCase)
             `$stagedDirectories.Sort([System.Comparison[string]]{ param(`$left, `$right) `$right.Length.CompareTo(`$left.Length) })
             foreach (`$directoryPath in `$stagedDirectories) {
                 `$directoryAttributes = [System.IO.File]::GetAttributes(`$directoryPath)
