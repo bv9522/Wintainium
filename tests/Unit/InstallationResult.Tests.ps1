@@ -11,6 +11,27 @@ Describe 'New-WintainiumInstallationResult' {
         $result.Status | Should -Be 'Completed'; $result.FailureKind | Should -Be $null; $result.OperationId | Should -Be 'op-1'; $result.DownloadOperationId | Should -Be 'dl-1'; $result.PluginId | Should -Be 'installer.test'; $result.ExitCode | Should -Be 0; $result.StandardOutput | Should -Be 'installed'; $result.DurationMilliseconds | Should -Be 42; $result.ErrorMessage | Should -Be $null; $result.Error | Should -Be $null
     }
 
+    It 'propagates bounded stream capture metadata from the process result' {
+        $invocation = [pscustomobject]@{ OperationId='op-capture'; DownloadOperationId='dl-capture'; PluginId='installer.test' }
+        $process = [pscustomobject]@{
+            Status='Failed'; FailureKind='Timeout'; ExitCode=$null
+            StandardOutput='partial'; StandardError='diagnostic'
+            DurationMilliseconds=100; ErrorMessage='timed out'
+            StandardOutputTruncated=$true; StandardErrorTruncated=$false
+            StandardOutputComplete=$false; StandardErrorComplete=$true
+            TerminationError='termination detail'
+        }
+        $result = InModuleScope Wintainium.Core -Parameters @{ Invocation=$invocation; ProcessResult=$process } {
+            New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult
+        }
+        $result.StandardOutputTruncated | Should -BeTrue
+        $result.StandardErrorTruncated | Should -BeFalse
+        $result.StandardOutputComplete | Should -BeFalse
+        $result.StandardErrorComplete | Should -BeTrue
+        $result.TerminationError | Should -Be 'termination detail'
+        $result.Error.TerminationError | Should -Be 'termination detail'
+    }
+
     It 'preserves a non-zero exit failure from controlled process execution' {
         $invocation = [pscustomobject]@{ OperationId='op-2'; DownloadOperationId='dl-2'; PluginId='installer.test' }
         $process = [pscustomobject]@{ Status='Failed'; FailureKind='NonZeroExit'; ExitCode=17; StandardOutput=''; StandardError='bad'; DurationMilliseconds=8; ErrorMessage='The installer process exited with code 17.' }
