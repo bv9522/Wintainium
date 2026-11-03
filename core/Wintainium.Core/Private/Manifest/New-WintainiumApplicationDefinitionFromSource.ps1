@@ -4,12 +4,14 @@ function New-WintainiumApplicationDefinitionFromSource {
         [Parameter(Mandatory)][object]$Source,
         [Parameter(Mandatory)][AllowNull()][object]$Policy,
         [string]$OperationId,
-        [string]$AutomaticIconUri
+        [string]$AutomaticIconUri,
+        [string]$SubmittedUri
     )
 
     $operationId = if ([string]::IsNullOrWhiteSpace($OperationId)) { [guid]::NewGuid().ToString() } else { $OperationId }
     $errors = [System.Collections.Generic.List[object]]::new()
     $warnings = [System.Collections.Generic.List[object]]::new()
+    $sourceAliases = [System.Collections.Generic.List[string]]::new()
 
     if ($null -eq $Source) {
         $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceMissing'; Path='$.Source'; Message='Resolved source facts are required.' })
@@ -17,6 +19,26 @@ function New-WintainiumApplicationDefinitionFromSource {
         foreach ($property in @('ApplicationId','Name','CanonicalUri','ProviderId','ProviderContractVersion','ProviderSettings')) {
             if (-not $Source.PSObject.Properties[$property] -or [string]::IsNullOrWhiteSpace([string]$Source.$property)) {
                 $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceIncomplete'; Path="$.Source.$property"; Message="Resolved source fact '$property' is required." })
+            }
+        }
+
+        if ($Source.PSObject.Properties['Aliases'] -and $null -ne $Source.Aliases) {
+            if ($Source.Aliases -is [string] -or $Source.Aliases -isnot [System.Collections.IEnumerable]) {
+                $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceAliasesInvalid'; Path='$.Source.Aliases'; Message='Resolved source aliases must be a collection of non-empty strings.' })
+            }
+            else {
+                foreach ($alias in @($Source.Aliases)) {
+                    if ($alias -isnot [string] -or [string]::IsNullOrWhiteSpace($alias)) {
+                        $errors.Add([pscustomobject][ordered]@{ Code='ApplicationSourceAliasesInvalid'; Path='$.Source.Aliases'; Message='Each resolved source alias must be a non-empty string.' })
+                        continue
+                    }
+
+                    $normalizedAlias = $alias.Trim()
+                    if ($normalizedAlias -ieq [string]$Source.Name) { continue }
+                    if (-not @($sourceAliases | Where-Object { $_ -ieq $normalizedAlias }).Count) {
+                        $sourceAliases.Add($normalizedAlias)
+                    }
+                }
             }
         }
     }
@@ -91,11 +113,14 @@ function New-WintainiumApplicationDefinitionFromSource {
         manifestVersion='1.1'
         id=[string]$Source.ApplicationId
         name=[string]$Source.Name
+        aliases=$sourceAliases.ToArray()
         description=if ($Source.PSObject.Properties['Description'] -and -not [string]::IsNullOrWhiteSpace([string]$Source.Description)) {[string]$Source.Description} else {$null}
         icon=if (-not [string]::IsNullOrWhiteSpace($AutomaticIconUri)) { [ordered]@{ automaticUri=[string]$AutomaticIconUri } } else { $null }
         homepage=if ($Source.PSObject.Properties['Homepage']) {[string]$Source.Homepage} else {$null}
         publisher=if ($Source.PSObject.Properties['Publisher']) {[string]$Source.Publisher} else {$null}
         source=[ordered]@{
+            submittedUri=if (-not [string]::IsNullOrWhiteSpace($SubmittedUri)) { $SubmittedUri } else { $null }
+            canonicalUri=[string]$Source.CanonicalUri
             pluginId=[string]$Source.ProviderId
             requiredContractVersion=[string]$Source.ProviderContractVersion
             settings=$sourceSettings
@@ -129,6 +154,8 @@ function New-WintainiumApplicationDefinitionFromSource {
         }
     }
 
+    if ($sourceAliases.Count -eq 0) { $application.Remove('aliases') }
+    if ($application.source.submittedUri -eq $null) { $application.source.Remove('submittedUri') }
     if ($application.icon -eq $null) { $application.Remove('icon') }
     if ([string]::IsNullOrWhiteSpace([string]$application.description)) { $application.Remove('description') }
     if ([string]::IsNullOrWhiteSpace([string]$application.homepage)) { $application.Remove('homepage') }
