@@ -128,6 +128,19 @@ The default artifact-verification policy requires publisher-declared SHA-256 evi
 
 The desktop's existing **Copy Diagnostics** control remains a presentation/clipboard affordance. Core diagnostic contracts and result mapping may improve, but changes to the control itself must not be used as a shortcut for correcting diagnostic data.
 
+## Diagnostic aggregation and presentation
+
+Structured operation results remain authoritative. Human-readable reports should organize that evidence, not create a second diagnostic data model or discard information to make a report shorter.
+
+- Keep each stage's errors, warnings, reason, and log events associated with that stage.
+- Aggregate `Errors` and `Warnings` collections are convenient operation-level views. When the same diagnostic is already shown under a stage, a presentation layer should not print it again as an aggregate item. Exact deduplication should compare the diagnostic code, path, message, and structured details; do not deduplicate on message text alone.
+- Preserve `LogEvents` as structured events, including severity, component, event name, operation ID, timestamp, and context. Do not convert them into generic error objects or append every context value to one long message.
+- `TroubleshootingDiagnostics` contains derived explanations and supporting evidence. It should add interpretation or evidence that is not already available elsewhere, rather than flattening a copy of an existing log event.
+- Render nested observations and context as indented, readable data. Keep the safe-context allowlist: raw response bodies, exception text containing secrets, signed query strings, and unrelated registry entries must not enter copied reports.
+- Keep a concise operation summary separate from stage details and full event evidence. A shorter view is a presentation choice; the full structured result remains available for investigation.
+
+For onboarding, the overall `Status` is the terminal outcome of the onboarding operation. `SourceResolution.Status` may be absent when multiple providers declined and no single resolver result was selected. In that case, use the provider-specific `ProviderSourceResolutionFailed` events and structured errors to explain the attempts; do not treat the missing nested status as a missing overall outcome.
+
 ## Warnings and partial information
 
 Warnings do not automatically mean that an operation failed. Check the operation's success/validity field and inspect the warning collection separately.
