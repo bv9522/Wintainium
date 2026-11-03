@@ -325,7 +325,22 @@ Describe 'Wintainium application onboarding' {
         $githubDescriptor = Get-Content -LiteralPath (Join-Path $githubPluginSource 'plugin.json') -Raw | ConvertFrom-Json
         $githubDescriptor.pluginId = 'Wintainium.provider.test-github-source-resolution'
         $githubDescriptor | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $ambiguousPluginTarget 'plugin.json') -Encoding utf8
-        Copy-Item -LiteralPath (Join-Path $githubPluginSource 'Wintainium.provider.github-releases.psm1') -Destination (Join-Path $ambiguousPluginTarget 'Wintainium.provider.github-releases.psm1') -Force
+        $duplicatePluginId = 'Wintainium.provider.test-github-source-resolution'
+        $duplicateModulePath = Join-Path $ambiguousPluginTarget 'Wintainium.provider.github-releases.psm1'
+        Copy-Item -LiteralPath (Join-Path $githubPluginSource 'Wintainium.provider.github-releases.psm1') -Destination $duplicateModulePath -Force
+
+        # The copied provider must identify itself using its own descriptor identity.
+        # Otherwise Core correctly rejects it as a provider-identity mismatch and the
+        # test never exercises the multiple-success ambiguity rule.
+        $duplicateModuleContent = Get-Content -LiteralPath $duplicateModulePath -Raw
+        $originalProviderIdentity = "ProviderId = 'Wintainium.provider.github-releases'"
+        $duplicateProviderIdentity = "ProviderId = '$duplicatePluginId'"
+        if ([regex]::Matches($duplicateModuleContent, [regex]::Escape($originalProviderIdentity)).Count -ne 1) {
+            throw 'The GitHub provider fixture no longer exposes exactly one stable source-resolution provider identity.'
+        }
+        $duplicateModuleContent = $duplicateModuleContent.Replace($originalProviderIdentity, $duplicateProviderIdentity)
+        Set-Content -LiteralPath $duplicateModulePath -Value $duplicateModuleContent -Encoding utf8
+
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $false
         $result.Status | Should -Be 'SourceAmbiguous'
