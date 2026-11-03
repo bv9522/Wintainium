@@ -187,6 +187,7 @@ try {
     [Console]::Error.WriteLine(`$message)
     `$exitCode = 1
 } finally {
+    [Console]::Error.WriteLine(("ZIP cleanup trace: stageCreated={0}; stageExists={1}; stagePath={2}" -f `$stageCreated, [System.IO.Directory]::Exists(`$stagePath), `$stagePath))
     if (`$stageCreated -and [System.IO.Directory]::Exists(`$stagePath)) {
         try {
             `$stagedItems = [System.Collections.Generic.Stack[string]]::new()
