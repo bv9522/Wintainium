@@ -172,6 +172,12 @@ function Invoke-WintainiumCoreProviderSourceResolution {
             }
         }
 
+        if ($resolverResult.Source.PSObject.Properties['SourceContext'] -and $null -ne $resolverResult.Source.SourceContext -and
+            $resolverResult.Source.SourceContext -isnot [System.Collections.IDictionary]) {
+            $error=[pscustomobject]@{Code='SourceResolutionSourceContextInvalid';Message='Resolved SourceContext must be a JSON-compatible dictionary when supplied.'}
+            return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+        }
+
         if ([string]$resolverResult.Source.ProviderId -ine [string]$Provider.PluginId) {
             $error=[pscustomobject]@{Code='SourceResolutionProviderIdentityMismatch';Message='Resolved Source ProviderId must match the provider selected by Core.'}
             return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
