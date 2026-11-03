@@ -17,31 +17,61 @@ function Invoke-WintainiumInstallerProcess {
     )
 
     if ([string]::IsNullOrWhiteSpace($FilePath)) {
-        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The process path is required.' }
+        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The process path is required.' }
     }
     if (-not [System.IO.Path]::IsPathFullyQualified($FilePath)) {
-        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathNotAbsolute'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The process path must be absolute.' }
+        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathNotAbsolute'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The process path must be absolute.' }
     }
     $resolvedFilePath = [System.IO.Path]::GetFullPath($FilePath)
     if (-not (Test-Path -LiteralPath $resolvedFilePath -PathType Leaf)) {
-        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathMissing'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The process executable was not found.' }
+        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='ProcessPathMissing'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The process executable was not found.' }
     }
 
     $resolvedWorkingDirectory = $null
     if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
         if (-not [System.IO.Path]::IsPathFullyQualified($WorkingDirectory)) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='WorkingDirectoryInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The working directory must be an absolute path when supplied.' }
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='WorkingDirectoryInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The working directory must be an absolute path when supplied.' }
         }
         $resolvedWorkingDirectory = [System.IO.Path]::GetFullPath($WorkingDirectory)
         if (-not (Test-Path -LiteralPath $resolvedWorkingDirectory -PathType Container)) {
-            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='WorkingDirectoryMissing'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The working directory was not found.' }
+            return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='WorkingDirectoryMissing'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The working directory was not found.' }
         }
     }
 
     if ($null -ne $EnvironmentVariables) {
         foreach ($key in $EnvironmentVariables.Keys) {
             if ([string]::IsNullOrWhiteSpace([string]$key)) {
-                return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='EnvironmentInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='Environment variable names must be non-empty.' }
+                return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='EnvironmentInvalid'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='Environment variable names must be non-empty.' }
             }
         }
     }
@@ -67,7 +97,12 @@ public sealed class WintainiumInstallerStreamCapture {
     $startTime = [System.Diagnostics.Stopwatch]::GetTimestamp()
 
     if ($CancellationToken.IsCancellationRequested) {
-        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; ExitCode=$null; StandardOutput=''; StandardError=''; DurationMilliseconds=0; ErrorMessage='The installer process was cancelled before it started.' }
+        return [pscustomobject][ordered]@{ Status='Failed'; FailureKind='Cancelled'; ExitCode=$null; StandardOutput=''; StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null; DurationMilliseconds=0; ErrorMessage='The installer process was cancelled before it started.' }
     }
 
     $process = [System.Diagnostics.Process]::new()
@@ -108,6 +143,11 @@ public sealed class WintainiumInstallerStreamCapture {
                         ExitCode=$null
                         StandardOutput=''
                         StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null
                         DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
                         ErrorMessage='The installer requires elevation, but elevated shell execution cannot preserve custom environment variables.'
                     }
@@ -142,6 +182,11 @@ public sealed class WintainiumInstallerStreamCapture {
                             ExitCode=$null
                             StandardOutput=''
                             StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null
                             DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
                             ErrorMessage='The installer requires elevation, and the Windows elevation prompt was cancelled or denied.'
                         }
@@ -153,6 +198,11 @@ public sealed class WintainiumInstallerStreamCapture {
                         ExitCode=$null
                         StandardOutput=''
                         StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null
                         DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
                         ErrorMessage=$elevatedException.Message
                     }
@@ -165,6 +215,11 @@ public sealed class WintainiumInstallerStreamCapture {
                     ExitCode=$null
                     StandardOutput=''
                     StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null
                     DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
                     ErrorMessage=$win32Exception.Message
                 }
@@ -178,6 +233,11 @@ public sealed class WintainiumInstallerStreamCapture {
                 ExitCode=$null
                 StandardOutput=''
                 StandardError=''
+                        StandardOutputTruncated=$false
+                        StandardErrorTruncated=$false
+                        StandardOutputComplete=$true
+                        StandardErrorComplete=$true
+                        TerminationError=$null
                 DurationMilliseconds=[int][math]::Round(([System.Diagnostics.Stopwatch]::GetTimestamp() - $startTime) * 1000 / [System.Diagnostics.Stopwatch]::Frequency)
                 ErrorMessage='The installer process did not start.'
             }
