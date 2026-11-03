@@ -131,3 +131,33 @@ Invoke-Pester .\tests\Unit\WindowsInstalledApplicationReconciliation.Tests.ps1 -
 Invoke-Pester .\tests -Output Detailed
 dotnet build .\src\Wintainium.Desktop\Wintainium.Desktop.csproj -c Release
 ```
+
+## D7 — Cross-operation diagnostic presentation cleanup
+
+### Goal
+Make diagnostics readable and non-repetitive across onboarding, refresh/reconciliation, installation, and updates without reducing the underlying evidence available to developers or users.
+
+### Guardrails
+- Core structured results remain authoritative; do not change operation decisions to improve presentation.
+- Keep stage-scoped evidence and operation-level aggregate collections intact unless an exact duplicate is being removed from a derived presentation.
+- Deduplicate only exact diagnostic matches using code, path, message, and structured details. Similar wording alone is not sufficient.
+- Preserve structured log-event identity, timestamps, and context. Do not flatten event context into generic diagnostic messages.
+- Continue filtering unsafe context such as raw response bodies, signed URL query strings, hashes that must not be disclosed, and unrelated registry entries.
+- Ensure reports remain scoped to the application and operation being inspected.
+
+### Implementation notes
+- Added a shared desktop diagnostics text formatter with exact diagnostic deduplication, safe context formatting, and multiline nested evidence.
+- Onboarding, install, and update desktop models now retain structured log events rather than converting them into generic diagnostic records.
+- Install/update diagnostic storage is keyed by ApplicationId so a Details window cannot include another application's last operation.
+- Refresh reports suppress aggregate errors and warnings already represented under their stages.
+- Stage summaries no longer repeat the same stage error that appears in the Errors section.
+- Onboarding stage explanations now use the provider failure matching the final onboarding status rather than the first provider refusal; the desktop avoids printing the same reason again in the Errors section.
+- Provider release-discovery log events remain structured in `LogEvents`; artifact-level checksum evidence remains a separate bounded troubleshooting item.
+
+### Remaining audit and validation
+- Audit all desktop result mappers for context or log-event loss, including validation, icon, release, installed-state, and collection operations.
+- Review all Core-generated troubleshooting items for duplication against stage results and structured log events.
+- Add focused tests for exact duplicate suppression, stage/aggregate separation, and safe nested context rendering where a testable seam exists.
+- Run focused Pester tests and the full Pester suite; Brian must run the local Release desktop build and verify copied reports for onboarding, successful update, failed verification, refresh with duplicate aggregate diagnostics, and multi-application operation history.
+- Verify HWiNFO's failed onboarding report now identifies `SourceAccessChallengeRequired` as the decisive SourceResolution reason while retaining the GitHub provider's unsupported-host event as secondary evidence.
+
