@@ -71,6 +71,7 @@ arbitrary shell command selected by the manifest.
 EXE and MSI installers produce structured process specifications with executable
 path, argument array, working directory, and environment data as applicable.
 For both formats, the default working directory is the directory containing the verified artifact. This gives installers a predictable location for publisher-supplied companion files without relying on the desktop process working directory.
+The MSI result mapper treats Windows Installer exit codes `3010` (success, reboot required) and `1641` (success, reboot initiated) as successful installation outcomes. The public lifecycle result preserves the reboot outcome as a warning rather than misreporting the installation as failed. MSI exit code `1602` remains a user-cancelled installation.
 Process arguments remain separate values rather than being joined into a shell
 command string.
 
