@@ -65,3 +65,12 @@ After the existing page-level checksum parsers and structured release evidence h
 The resolver accepts exactly one 64-character hexadecimal digest. When a text sidecar declares a filename, it must match the artifact filename. HTML responses must contain one explicitly labelled SHA-256 checksum. Ambiguous/multiple digests, malformed content, mismatched filenames, oversized responses, credentials, unsupported schemes, and HTTPS-to-HTTP redirects are rejected. HTTPS redirects to publisher-designated mirrors remain supported, provided the final resource still has a .sha256 path.
 
 Sidecar retrieval is additive and conditional: existing page or release-provider SHA-256 evidence takes precedence and prevents an unnecessary sidecar request. A missing or rejected sidecar does not make release discovery fail and does not relax the installer's verification requirements; the artifact remains without SHA-256 evidence and downstream verification continues to reject it when SHA-256 is required. Diagnostics expose aggregate attempt, resolution, rejection, and unavailable counts without logging digest values or full sidecar URLs.
+
+
+## Interactive source access challenges
+
+Official-page retrieval distinguishes a publisher page that is unsupported from a supported HTTP/HTTPS page that cannot be retrieved by the provider's non-browser HTTP client. When an HTTP failure exposes a recognized anti-bot challenge response, the provider returns the contract status `InteractiveResolutionRequired` and error code `SourceAccessChallengeRequired` rather than the generic `SourceUnavailable` result.
+
+The current implementation recognizes Cloudflare challenge responses through the `Cf-Mitigated: challenge` response header, with a conservative fallback for a 403 Cloudflare response containing the known challenge-document markers. Diagnostics retain the HTTP status, safe final URL, content type, server, Cloudflare request identifier when supplied, challenge classification, and request duration. Response bodies, challenge tokens, cookies, and signed query strings are not copied into diagnostics.
+
+Wintainium does not execute challenge scripts, replay browser fingerprints, extract challenge tokens, or automate challenge solving. The classification tells the user that an interactive browser route or another official publisher endpoint is required. This is a retrieval/access limitation, not evidence that the publisher page or software is invalid.
