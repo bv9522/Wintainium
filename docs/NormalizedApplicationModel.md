@@ -55,7 +55,7 @@ A missing or incomplete policy is a structured failure rather than an inferred i
 
 ## Relationship to the existing manifest
 
-The resulting ApplicationDefinition uses the existing manifest 1.1 shape, with additive optional source identity fields:
+The resulting ApplicationDefinition uses manifest 1.2, with additive optional source identity fields. The schema continues to accept existing 1.1 manifests:
 
 - `Id` and `Name` remain the stable application identifier and primary display name;
 - optional `Aliases`, `Homepage`, and `Publisher`;
