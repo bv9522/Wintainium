@@ -38,6 +38,42 @@ Describe 'Wintainium normalized application model' {
         @($result.ApplicationDefinition.Artifact.formats) | Should -Be @('exe','msi','zip')
     }
 
+    It 'preserves generic source identity and deduplicates only resolver-supplied aliases' {
+        $sourceWithAliases = $script:source | ConvertTo-Json -Depth 20 | ConvertFrom-Json -Depth 20
+        $sourceWithAliases | Add-Member -NotePropertyName Aliases -NotePropertyValue @(
+            ' PowerToys Preview ',
+            'Microsoft PowerToys',
+            'powertoys preview',
+            'PowerToys'
+        )
+
+        $result = & (Get-Module Wintainium.Core) {
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'identity-model-test' -SubmittedUri 'https://github.com/microsoft/PowerToys/releases/tag/v1.0'
+        } $sourceWithAliases $script:policy
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.ApplicationDefinition.Id | Should -Be 'github.microsoft.powertoys'
+        $result.ApplicationDefinition.Name | Should -Be 'PowerToys'
+        @($result.ApplicationDefinition.Aliases) | Should -Be @('PowerToys Preview','Microsoft PowerToys')
+        $result.ApplicationDefinition.Source.submittedUri | Should -Be 'https://github.com/microsoft/PowerToys/releases/tag/v1.0'
+        $result.ApplicationDefinition.Source.canonicalUri | Should -Be 'https://github.com/microsoft/PowerToys'
+    }
+
+    It 'rejects malformed resolver-supplied aliases instead of silently persisting them' {
+        $sourceWithInvalidAliases = $script:source | ConvertTo-Json -Depth 20 | ConvertFrom-Json -Depth 20
+        $sourceWithInvalidAliases | Add-Member -NotePropertyName Aliases -NotePropertyValue 'PowerToys Preview'
+
+        $result = & (Get-Module Wintainium.Core) {
+            param($source, $policy)
+            New-WintainiumApplicationDefinitionFromSource -Source $source -Policy $policy -OperationId 'identity-model-invalid-test'
+        } $sourceWithInvalidAliases $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        @($result.Errors.Code) | Should -Contain 'ApplicationSourceAliasesInvalid'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+    }
+
     It 'does not invent installer or lifecycle policy when Core-owned policy is absent' {
         $result = & (Get-Module Wintainium.Core) {
             param($source)
