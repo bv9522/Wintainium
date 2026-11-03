@@ -161,17 +161,15 @@ Describe 'Wintainium official download page source resolution' {
     }
 
     It 'classifies Cloudflare managed challenges as interactive resolution requirements' {
-        $failureResponse = [pscustomobject]@{
-            StatusCode = 403
-            Headers = @{
-                'Content-Type' = 'text/html; charset=UTF-8'
-                'Server' = 'cloudflare'
-                'Cf-Mitigated' = 'challenge'
-                'CF-RAY' = 'test-ray-id-IAD'
-            }
-            Content = '<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>'
-            RequestMessage = [pscustomobject]@{ RequestUri = [uri]'https://www.example.test/download/' }
-        }
+        $failureResponse = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::Forbidden)
+        $failureResponse.Headers.TryAddWithoutValidation('Server', 'cloudflare') | Out-Null
+        $failureResponse.Headers.TryAddWithoutValidation('Cf-Mitigated', 'challenge') | Out-Null
+        $failureResponse.Headers.TryAddWithoutValidation('CF-RAY', 'test-ray-id-IAD') | Out-Null
+        $failureResponse.Content = [System.Net.Http.StringContent]::new('<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js"></script></body></html>')
+        $failureResponse.RequestMessage = [System.Net.Http.HttpRequestMessage]::new(
+            [System.Net.Http.HttpMethod]::Get,
+            [uri]'https://www.example.test/download/'
+        )
         $script:sourceFailureException = [System.Exception]::new('The remote server returned an error: (403) Forbidden.')
         $script:sourceFailureException | Add-Member -NotePropertyName Response -NotePropertyValue $failureResponse
         Mock Invoke-WebRequest { throw $script:sourceFailureException } -ModuleName Wintainium.provider.official-download-page
