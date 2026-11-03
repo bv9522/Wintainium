@@ -160,7 +160,7 @@ internal static class WintainiumDiagnosticsTextFormatter
     private static void AppendWrappedText(System.Text.StringBuilder builder, string value, string indent)
     {
         const int maximumLineLength = 108;
-        foreach (var sourceLine in value.Replace("\\r\\n", "\\n", StringComparison.Ordinal).Split('\\n'))
+        foreach (var sourceLine in value.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n'))
         {
             var words = sourceLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (words.Length == 0)
