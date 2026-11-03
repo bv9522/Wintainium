@@ -67,8 +67,8 @@ Describe 'Windows installed-application reconciliation plugin' {
             ApplicationId='example.application'
             Manifest=$script:baseManifest
         }
-        $candidate=[pscustomobject]@{ Scope='machine'; View='64'; SubKey='A'; DisplayName='Example Application'; DisplayVersion='1.0'; InstallLocation='C:\A' }
-        $candidate2=[pscustomobject]@{ Scope='machine'; View='32'; SubKey='B'; DisplayName='Example Application'; DisplayVersion='2.0'; InstallLocation='C:\B' }
+        $candidate=[pscustomobject]@{ Scope='machine'; View='64'; SubKey='A'; DisplayName='Example Application'; DisplayVersion='1.0'; Publisher='Example Publisher'; InstallLocation='C:\A'; WindowsInstaller='0'; EvidenceSource='WindowsUninstallRegistry' }
+        $candidate2=[pscustomobject]@{ Scope='user'; View='native'; SubKey='B'; DisplayName='Example Application'; DisplayVersion='2.0'; Publisher='Example Publisher'; InstallLocation='C:\B'; WindowsInstaller='1'; MsiProductCode='{90160000-0011-0000-0000-0000000FF1CE}'; EvidenceSource='WindowsInstallerProductRegistration' }
         $r = InModuleScope Wintainium.reconciliation.windows-installed-application -Parameters @{ Request=$request; Candidates=@($candidate,$candidate2) } {
             Mock -CommandName Get-WintainiumWindowsInstalledApplicationCandidates -MockWith {
                 [pscustomobject]@{ IsSuccessful=$true; Candidates=$Candidates; Errors=@() }
@@ -84,6 +84,17 @@ Describe 'Windows installed-application reconciliation plugin' {
         $ambiguity.CandidateCount | Should -Be 2
         $ambiguity.MatchMode | Should -Be 'all'
         $ambiguity.RegistryLocationCount | Should -Be 1
+        $ambiguity.CandidateEvidence.Count | Should -Be 2
+        $ambiguity.CandidateEvidence[0].RegistryScope | Should -Be 'machine'
+        $ambiguity.CandidateEvidence[0].RegistryView | Should -Be '64'
+        $ambiguity.CandidateEvidence[0].DisplayVersion | Should -Be '1.0'
+        $ambiguity.CandidateEvidence[0].Publisher | Should -Be 'Example Publisher'
+        $ambiguity.CandidateEvidence[0].InstallLocation | Should -Be 'C:\A'
+        $ambiguity.CandidateEvidence[0].EvidenceSource | Should -Be 'WindowsUninstallRegistry'
+        $ambiguity.CandidateEvidence[1].RegistryScope | Should -Be 'user'
+        $ambiguity.CandidateEvidence[1].RegistryView | Should -Be 'native'
+        $ambiguity.CandidateEvidence[1].MsiProductCode | Should -Be '{90160000-0011-0000-0000-0000000FF1CE}'
+        $ambiguity.CandidateEvidence[1].EvidenceSource | Should -Be 'WindowsInstallerProductRegistration'
         $r.Evidence.PSObject.Properties.Name | Should -Not -Contain 'Version'
     }
 
