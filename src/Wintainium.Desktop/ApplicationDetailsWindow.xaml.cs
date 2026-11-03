@@ -378,11 +378,11 @@ public sealed partial class ApplicationDetailsWindow : Window
 
             OperationStateText.Text = result.OperationState.ToString();
             OperationIdText.Text = $"Operation ID: {result.OperationId ?? "unavailable"}";
-            ErrorItemsControl.ItemsSource = result.Errors.Select(FormatDiagnostic).ToArray();
-            WarningItemsControl.ItemsSource = result.Warnings.Select(FormatDiagnostic).ToArray();
+            ErrorItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Errors).Select(FormatDiagnostic).ToArray();
+            WarningItemsControl.ItemsSource = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Warnings).Select(FormatDiagnostic).ToArray();
             var showInstallTroubleshooting = result.OperationState == WintainiumOperationState.Failed;
             TroubleshootingDiagnosticsItemsControl.ItemsSource = showInstallTroubleshooting
-                ? result.TroubleshootingDiagnostics.Select(FormatDiagnostic).ToArray()
+                ? WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.TroubleshootingDiagnostics).Select(FormatDiagnostic).ToArray()
                 : Array.Empty<string>();
             TroubleshootingDiagnosticsCard.Visibility = showInstallTroubleshooting && result.TroubleshootingDiagnostics.Count > 0
                 ? Visibility.Visible
@@ -952,7 +952,7 @@ public sealed partial class ApplicationDetailsWindow : Window
             stage.IsSuccessful,
             stage.WasCancelled,
             stage.ElapsedMilliseconds,
-            stage.Error);
+            null);
     }
 
     private static string FormatStage(WintainiumApplicationInstallStageModel stage)
@@ -999,11 +999,7 @@ public sealed partial class ApplicationDetailsWindow : Window
     }
 
     private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
-        string.IsNullOrWhiteSpace(diagnostic.Message)
-            ? diagnostic.Code ?? "Unspecified diagnostic."
-            : string.IsNullOrWhiteSpace(diagnostic.Code)
-                ? diagnostic.Message
-                : $"{diagnostic.Code}: {diagnostic.Message}";
+        WintainiumDiagnosticsTextFormatter.FormatDiagnostic(diagnostic);
 
     private void ShowDetailsError(string message)
     {
