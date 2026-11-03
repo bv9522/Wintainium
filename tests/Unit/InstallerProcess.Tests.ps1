@@ -18,6 +18,10 @@ Describe 'Wintainium installer process lifecycle' {
         $result.ExitCode | Should -Be 0
         $result.StandardOutput | Should -Match 'hello from wintainium'
         $result.StandardError | Should -Be ''
+        $result.StandardOutputComplete | Should -BeTrue
+        $result.StandardErrorComplete | Should -BeTrue
+        $result.StandardOutputTruncated | Should -BeFalse
+        $result.StandardErrorTruncated | Should -BeFalse
     }
     It 'bounds retained output independently while continuing to drain both streams' {
         $result = InModuleScope Wintainium.Core -Parameters @{ FilePath = $script:pwshPath } {
