@@ -1,0 +1,11 @@
+{
+  "pluginId": "Wintainium.provider.source-resolution-identity",
+  "pluginType": "Provider",
+  "contractVersions": ["1"],
+  "entryPoint": "Wintainium.provider.source-resolution-identity.psm1",
+  "capabilities": {
+    "releaseDiscovery": true,
+    "artifactDiscovery": true,
+    "sourceResolution": true
+  }
+}
