@@ -164,6 +164,8 @@ function ConvertTo-WintainiumPublicApplicationLifecycleResult {
                         $null -ne $_ -and $_.PSObject.Properties['EventName'] -and
                             $_.EventName -in @('ReleaseDiscoveryRequestStarted','ReleaseDiscoveryResponseReceived','ReleaseDiscoveryRetrievalFailed','ReleaseDiscoveryParsingFailed','ReleaseDiscoveryParsingCompleted','ReleaseDiscoveryConfigurationRejected','AdjacentSha256SidecarResolutionCompleted','ArtifactSha256EvidenceResolutionCompleted')
                     })) {
+                        $context = if ($traceEvent.PSObject.Properties['Context']) { $traceEvent.Context } else { $null }
+
                         # Artifact-level checksum resolution details are carried as
                         # structured provider context. Surface only bounded metadata:
                         # never expose response bodies, digest values, or exception text.
