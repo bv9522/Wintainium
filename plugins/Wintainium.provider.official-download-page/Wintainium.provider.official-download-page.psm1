@@ -1888,8 +1888,7 @@ function Invoke-WintainiumProviderSourceResolution {
                     try {
                         $headerValue=$null
                         if ($headerSource -is [System.Net.Http.Headers.HttpHeaders]) {
-                            $headerValues=$null
-                            if ($headerSource.TryGetValues($headerName,[ref]$headerValues)) { $headerValue=@($headerValues) -join ', ' }
+                            $headerValue=@($headerSource.GetValues($headerName)) -join ', '
                         }
                         else { $headerValue=$headerSource[$headerName] }
                         if ($null -eq $headerValue) { continue }
@@ -1907,7 +1906,9 @@ function Invoke-WintainiumProviderSourceResolution {
                 if ($failureContent -is [string]) {
                     $responseBody=[string]$failureContent
                 }
-                elseif ($failureContent -is [System.Net.Http.HttpContent]) {
+                elseif ($failureContent -is [System.Net.Http.HttpContent] -and
+                    $null -ne $failureContent.Headers.ContentLength -and
+                    $failureContent.Headers.ContentLength -le 65536) {
                     $responseBody=[string]$failureContent.ReadAsStringAsync().GetAwaiter().GetResult()
                 }
             } catch {}
