@@ -10,7 +10,7 @@ The model is deliberately not a second manifest schema. It produces the existing
 
 Source resolution supplies identity facts:
 
-- `ApplicationId` — stable Wintainium application identity, distinct from a display name;
+- `ApplicationId` — provider-assigned stable Wintainium application identifier, distinct from a display name and derived from stable upstream/source identity;
 - `Name` — primary display name;
 - optional `Aliases` — alternate names explicitly established by the resolver;
 - publisher and homepage when available;
