@@ -1161,9 +1161,12 @@ public sealed partial class MainWindow : Window
             {
                 var outcome = string.IsNullOrWhiteSpace(stage.Status) ? "Unknown" : stage.Status;
                 builder.AppendLine($"  {stage.Sequence}. {stage.Name}: {outcome}");
-                if (!string.IsNullOrWhiteSpace(stage.ReasonCode))
+                var reasonAlreadyAppearsInErrors = result.Errors.Any(error =>
+                    string.Equals(error.Code, stage.ReasonCode, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(error.Message, stage.Reason, StringComparison.Ordinal));
+                if (!reasonAlreadyAppearsInErrors && !string.IsNullOrWhiteSpace(stage.ReasonCode))
                     builder.AppendLine($"     Reason code: {stage.ReasonCode}");
-                if (!string.IsNullOrWhiteSpace(stage.Reason))
+                if (!reasonAlreadyAppearsInErrors && !string.IsNullOrWhiteSpace(stage.Reason))
                     builder.AppendLine($"     Reason: {stage.Reason}");
             }
         }
@@ -1175,7 +1178,11 @@ public sealed partial class MainWindow : Window
         {
             builder.AppendLine();
             builder.AppendLine("Errors:");
-            foreach (var diagnostic in result.Errors)
+            var primaryReasonCode = result.Stages.FirstOrDefault(stage =>
+                string.Equals(stage.Status, "Failed", StringComparison.OrdinalIgnoreCase))?.ReasonCode;
+            var orderedErrors = result.Errors
+                .OrderBy(diagnostic => string.Equals(diagnostic.Code, primaryReasonCode, StringComparison.OrdinalIgnoreCase) ? 0 : 1);
+            foreach (var diagnostic in orderedErrors)
                 builder.AppendLine(FormatDiagnostic(diagnostic));
         }
 
