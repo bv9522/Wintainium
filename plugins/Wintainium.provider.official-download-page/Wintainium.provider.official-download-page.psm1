@@ -1877,19 +1877,62 @@ function Invoke-WintainiumProviderSourceResolution {
                 }
                 elseif ($null -ne $failureResponse.ResponseUri) { $finalUri=[Uri]$failureResponse.ResponseUri }
             } catch {}
-            foreach ($headerSource in @($failureResponse.Headers, $(if ($null -ne $failureResponse.Content) { $failureResponse.Content.Headers }))) {
-                if ($null -eq $headerSource) { continue }
+            $headerSources=[System.Collections.Generic.List[object]]::new()
+            if ($null -ne $failureResponse.Headers) { $headerSources.Add($failureResponse.Headers) }
+            if ($null -ne $failureResponse.Content -and $null -ne $failureResponse.Content.Headers) { $headerSources.Add($failureResponse.Content.Headers) }
+            foreach ($headerSource in $headerSources) {
                 foreach ($headerName in @('Content-Type','Server','Cf-Mitigated','CF-RAY')) {
                     try {
-                        $headerValue=$headerSource[$headerName]
-                        if ($null -eq $headerValue -and $headerSource -is [System.Net.Http.Headers.HttpHeaders]) {
+                        $headerValue=$null
+                        if ($headerSource -is [System.Net.Http.Headers.HttpHeaders]) {
                             $headerValues=@()
                             if ($headerSource.TryGetValues($headerName,[ref]$headerValues)) { $headerValue=$headerValues -join ', ' }
                         }
+                        else { $headerValue=$headerSource[$headerName] }
                         if ($null -eq $headerValue) { continue }
                         $headerValue=[string](@($headerValue) -join ', ')
-                        switch -Regex ($headerName) {
-                            '^Content-Type
+                        switch ($headerName.ToLowerInvariant()) {
+                            'content-type' { if (-not $contentType) { $contentType=$headerValue }; break }
+                            'server' { if (-not $serverHeader) { $serverHeader=$headerValue }; break }
+                            'cf-mitigated' { $challengeHeader=$headerValue; break }
+                            'cf-ray' { $requestId=$headerValue; break }
+                        }
+                    } catch {}
+                }
+            }
+            try {
+                if ($null -ne $failureResponse.Content -and $failureResponse.Content -is [string]) {
+                    $responseBody=[string]$failureResponse.Content
+                }
+                elseif ($null -ne $failureResponse.Content -and $failureResponse.Content -is [System.Net.Http.HttpContent]) {
+                    $responseBody=[string]$failureResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                }
+            } catch {}
+        }
+        $safeFailureUri=Get-OfficialDownloadPageSafeUri -Uri $finalUri
+        $isCloudflareChallenge=($challengeHeader -match '(?i)challenge') -or (
+            $httpStatus -eq 403 -and
+            $serverHeader -match '(?i)cloudflare' -and
+            $responseBody -match '(?is)(/cdn-cgi/challenge-platform/|window\._cf_chl_opt|<title>\s*Just a moment)'
+        )
+        if ($isCloudflareChallenge) {
+            $stopwatch.Stop()
+            $challengeContext=@{
+                RequestedUrl=$safeSourceUri;FinalUrl=$(if ($safeFailureUri) {$safeFailureUri} else {$safeSourceUri})
+                Host=$sourceUri.Host;HttpStatusCode=$httpStatus;ContentType=$contentType
+                ChallengeProvider='Cloudflare';ChallengeType='ManagedOrBrowserChallenge'
+                ChallengeSignal=$(if ($challengeHeader -match '(?i)challenge') {'Cf-Mitigated'} else {'CloudflareChallengeDocument'})
+                Server=$serverHeader;RequestId=$requestId;FailureStage='Retrieval'
+                DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
+            }
+            $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionAccessChallengeDetected' -Message 'The source host requires an interactive browser challenge that the HTTP page retriever cannot complete.' -Context $challengeContext -Severity Warning))
+            return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'InteractiveResolutionRequired' $null @(
+                (New-OfficialDownloadPageError 'SourceAccessChallengeRequired' 'The official source returned a Cloudflare challenge. Resolve the source through a supported interactive route or another official publisher endpoint; automated challenge solving is not supported.')
+            ) @() $logEvents.ToArray()
+        }
+        $logEvents.Add((New-OfficialDownloadPageDiagnosticEvent -OperationId $operationId -EventName 'SourceResolutionRetrievalFailed' -Message 'The source page request failed before identity metadata could be parsed.' -Context @{RequestedUrl=$safeSourceUri;FinalUrl=$safeFailureUri;Host=$sourceUri.Host;HttpStatusCode=$httpStatus;ContentType=$contentType;Server=$serverHeader;RequestId=$requestId;FailureStage='Retrieval';ExceptionType=$exceptionType;DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds} -Severity Warning))
+        return New-OfficialDownloadPageSourceResolutionResult $operationId $false 'SourceUnavailable' $null @(New-OfficialDownloadPageError 'OfficialDownloadPageRequestFailed' "The source page request failed ($exceptionType). See source-resolution diagnostics for request context.") @() $logEvents.ToArray()
+    }
     $contentType=''
     if ($response.Headers -and $response.Headers['Content-Type']) {$contentType=[string]$response.Headers['Content-Type']}
     $httpStatus=$null
