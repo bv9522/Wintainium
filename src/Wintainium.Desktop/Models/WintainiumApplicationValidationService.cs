@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Management.Automation;
 using Wintainium.Desktop.Engine;
 
@@ -50,28 +49,8 @@ internal sealed class WintainiumApplicationValidationService
             isValid ? WintainiumOperationState.Completed : WintainiumOperationState.Failed);
     }
 
-    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name)
-    {
-        var value = source.Properties[name]?.Value;
-        if (value is null)
-            return [];
-
-        if (value is IEnumerable enumerable and not string)
-        {
-            return enumerable.Cast<object>()
-                .Select(PSObject.AsPSObject)
-                .Select(MapDiagnostic)
-                .ToArray();
-        }
-
-        return [MapDiagnostic(PSObject.AsPSObject(value))];
-    }
-
-    private static WintainiumOperationDiagnostic MapDiagnostic(PSObject value) =>
-        new(
-            Code: Nullable(value, "Code"),
-            Path: Nullable(value, "Path"),
-            Message: Nullable(value, "Message"));
+    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
+        WintainiumOperationDiagnosticMapper.MapCollection(source, name);
 
     private static string Required(PSObject source, string name)
     {
