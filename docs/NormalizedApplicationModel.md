@@ -10,11 +10,17 @@ The model is deliberately not a second manifest schema. It produces the existing
 
 Source resolution supplies identity facts:
 
-- application identity and name;
-- publisher/homepage when available;
-- canonical source URI;
+- `ApplicationId` — stable Wintainium application identity, distinct from a display name;
+- `Name` — primary display name;
+- optional `Aliases` — alternate names explicitly established by the resolver;
+- publisher and homepage when available;
+- `SubmittedUri` — the URL the user supplied to onboarding;
+- `CanonicalUri` — the resolver's canonical source identity URI;
 - provider identity and contract version;
-- provider settings and narrowly defined source context.
+- provider settings, which retain the provider's upstream locator;
+- narrowly defined, provider-owned source context.
+
+Aliases are name-level hints only. They must not be used as substitutes for package family names, product codes, executable paths, or other installation identifiers. Core preserves aliases supplied by the resolver; it does not invent them from arbitrary page text.
 
 Core-owned application policy supplies:
 
@@ -49,14 +55,14 @@ A missing or incomplete policy is a structured failure rather than an inferred i
 
 ## Relationship to the existing manifest
 
-The resulting ApplicationDefinition uses the existing manifest 1.1 shape:
+The resulting ApplicationDefinition uses the existing manifest 1.1 shape, with additive optional source identity fields:
 
-- ManifestVersion
-- Id
-- Name
-- optional Homepage
-- optional Publisher
-- Source
+- `Id` and `Name` remain the stable application identifier and primary display name;
+- optional `Aliases`, `Homepage`, and `Publisher`;
+- `Source.submittedUri` preserves the user's supplied URL;
+- `Source.canonicalUri` preserves the resolver's canonical source identity;
+- `Source.settings` retains provider-specific upstream identity/configuration;
+- `Source.pluginId` and `requiredContractVersion` identify the resolver contract.
 - Installer
 - Reconciliation
 - Release
