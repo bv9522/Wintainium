@@ -126,6 +126,22 @@ Describe 'Wintainium application onboarding' {
 
         $second = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $second.IsSuccessful | Should -BeTrue
+
+        Write-Host "`n=== SECOND ONBOARDING WARNINGS ===" -ForegroundColor Yellow
+        $second.Warnings | Format-List * | Out-String | Write-Host
+
+        Write-Host "`n=== SECOND ONBOARDING ALIAS / RECONCILIATION EVENTS ===" -ForegroundColor Yellow
+        $second.LogEvents |
+            Where-Object { $_.EventName -match 'Alias|Reconciliation' } |
+            Format-List * | Out-String | Write-Host
+
+        Write-Host "`n=== SECOND ONBOARDING RETURNED DEFINITION ===" -ForegroundColor Yellow
+        $second.ApplicationDefinition |
+            Format-List * | Out-String | Write-Host
+
+        Write-Host "`n=== SECOND ONBOARDING MANIFEST PATH ===" -ForegroundColor Yellow
+        Write-Host $second.ManifestPath
+
         @($second.ApplicationDefinition.userConfirmedAliases) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
         $migrated = Get-Content -LiteralPath $second.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
         @($migrated['userConfirmedAliases']) | Should -Be @('Legacy User Alias', 'PCSX2 Legacy Name')
