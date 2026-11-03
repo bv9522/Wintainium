@@ -70,7 +70,11 @@ function New-WintainiumInstallationResult {
         try { $Invocation.Settings | ConvertTo-Json -Compress -Depth 10 } catch { [string]$Invocation.Settings }
     } else { $null }
 
-    if ($status -eq 'Completed' -and $exitCode -is [int] -and $exitCode -eq 0) {
+    $isMsi = [string]::Equals($artifactFormat, 'msi', [System.StringComparison]::OrdinalIgnoreCase)
+    $msiRebootSuccess = $isMsi -and $exitCode -is [int] -and $exitCode -in @(3010, 1641) -and $resolvedFailureKind -eq 'NonZeroExit'
+
+    if (($status -eq 'Completed' -and $exitCode -is [int] -and $exitCode -eq 0) -or $msiRebootSuccess) {
+        $rebootInitiated = $msiRebootSuccess -and $exitCode -eq 1641
         return [pscustomobject][ordered]@{
             Status='Completed'
             FailureKind=$null
@@ -83,6 +87,9 @@ function New-WintainiumInstallationResult {
             DurationMilliseconds=$duration
             ErrorMessage=$null
             Error=$null
+            CompletionKind=if ($rebootInitiated) { 'RebootInitiated' } elseif ($msiRebootSuccess) { 'RebootRequired' } else { 'Completed' }
+            RebootRequired=$msiRebootSuccess
+            RebootInitiated=$rebootInitiated
         }
     }
 

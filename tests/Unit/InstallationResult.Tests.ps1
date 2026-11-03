@@ -132,3 +132,73 @@ Describe 'New-WintainiumInstallationResult' {
         $result.Error.InstallerSettings | Should -Match 'quiet'
     }
 }
+
+Describe 'Wintainium MSI reboot completion semantics' {
+    It 'treats Windows Installer reboot success codes as completed installations' {
+        $invocation = [pscustomobject]@{
+            OperationId='op-msi-reboot'
+            DownloadOperationId='dl-msi-reboot'
+            PluginId='Wintainium.installer.msi'
+            ArtifactFormat='msi'
+        }
+
+        foreach ($case in @(
+            [pscustomobject]@{ ExitCode=3010; CompletionKind='RebootRequired'; RebootInitiated=$false },
+            [pscustomobject]@{ ExitCode=1641; CompletionKind='RebootInitiated'; RebootInitiated=$true }
+        )) {
+            $process = [pscustomobject]@{
+                Status='Failed'
+                FailureKind='NonZeroExit'
+                ExitCode=$case.ExitCode
+                StandardOutput='MSI completed'
+                StandardError=''
+                DurationMilliseconds=1200
+                ErrorMessage="The installer process exited with code $($case.ExitCode)."
+            }
+
+            $result = InModuleScope Wintainium.Core -Parameters @{
+                Invocation=$invocation
+                ProcessResult=$process
+            } {
+                New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult
+            }
+
+            $result.Status | Should -Be 'Completed'
+            $result.FailureKind | Should -BeNullOrEmpty
+            $result.ExitCode | Should -Be $case.ExitCode
+            $result.CompletionKind | Should -Be $case.CompletionKind
+            $result.RebootRequired | Should -BeTrue
+            $result.RebootInitiated | Should -Be $case.RebootInitiated
+            $result.Error | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'does not interpret MSI reboot codes as success for non-MSI installers' {
+        $invocation = [pscustomobject]@{
+            OperationId='op-exe-reboot-code'
+            DownloadOperationId='dl-exe-reboot-code'
+            PluginId='Wintainium.installer.exe'
+            ArtifactFormat='exe'
+        }
+        $process = [pscustomobject]@{
+            Status='Failed'
+            FailureKind='NonZeroExit'
+            ExitCode=3010
+            StandardOutput=''
+            StandardError=''
+            DurationMilliseconds=10
+            ErrorMessage='The installer process exited with code 3010.'
+        }
+
+        $result = InModuleScope Wintainium.Core -Parameters @{
+            Invocation=$invocation
+            ProcessResult=$process
+        } {
+            New-WintainiumInstallationResult -Invocation $Invocation -ProcessResult $ProcessResult
+        }
+
+        $result.Status | Should -Be 'Failed'
+        $result.FailureKind | Should -Be 'NonZeroExit'
+        $result.RebootRequired | Should -BeNullOrEmpty
+    }
+}
