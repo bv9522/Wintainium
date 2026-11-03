@@ -64,6 +64,7 @@ Describe 'Wintainium application onboarding' {
         $result.ApplicationDefinition.Source.canonicalUri | Should -Be 'https://github.com/PCSX2/pcsx2'
         $result.ApplicationDefinition.Source.context.repository | Should -Be 'PCSX2/pcsx2'
         $result.ApplicationDefinition.Source.context.releaseTag | Should -Be 'v2.9.78'
+        @($result.LogEvents | Where-Object EventName -eq 'SourceContextPreserved').Count | Should -Be 1
         @($result.Errors).Count | Should -Be 0
         @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed').Count | Should -Be 0
         @($result.Warnings).Count | Should -Be 0
