@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Management.Automation;
 using Wintainium.Desktop.Engine;
 
@@ -36,24 +35,12 @@ internal sealed class WintainiumApplicationRemovalService
             IsSuccessful: Boolean(result, "IsSuccessful"),
             Status: Nullable(result, "Status"),
             Errors: Diagnostics(result, "Errors"),
-            Warnings: Diagnostics(result, "Warnings"));
+            Warnings: Diagnostics(result, "Warnings"),
+            LogEvents: WintainiumOperationLogEventMapper.MapCollection(result));
     }
 
-    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name)
-    {
-        var value = source.Properties[name]?.Value;
-        if (value is null)
-            return [];
-
-        var values = value is IEnumerable enumerable and not string
-            ? enumerable.Cast<object>().Select(PSObject.AsPSObject)
-            : [PSObject.AsPSObject(value)];
-
-        return values.Select(item => new WintainiumOperationDiagnostic(
-            Nullable(item, "Code"),
-            Nullable(item, "Path"),
-            Nullable(item, "Message"))).ToArray();
-    }
+    private static IReadOnlyList<WintainiumOperationDiagnostic> Diagnostics(PSObject source, string name) =>
+        WintainiumOperationDiagnosticMapper.MapCollection(source, name);
 
     private static string? Nullable(PSObject source, string name) =>
         source.Properties[name]?.Value is null
