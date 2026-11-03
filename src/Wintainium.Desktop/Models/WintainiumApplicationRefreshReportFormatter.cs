@@ -5,22 +5,11 @@ namespace Wintainium.Desktop.Models;
 
 /// <summary>
 /// Produces a deterministic, single-application plain-text refresh report.
-/// Context is allowlisted to avoid leaking raw registry subkeys or unrelated entries.
+/// Stage results are the primary diagnostic location; aggregate collections contribute
+/// only diagnostics not already represented by a stage.
 /// </summary>
 internal static class WintainiumApplicationRefreshReportFormatter
 {
-    private static readonly HashSet<string> SafeContextNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "ApplicationId", "Capability", "CandidateCount", "Component", "ContentType", "DownloadArtifactCandidateCount",
-        "DurationMilliseconds", "ErrorCode", "EventName", "ExceptionType", "EvidenceSource", "FailureStage",
-        "FinalUrl", "Host", "HtmlLength", "HttpStatusCode", "InstallationState", "MatchMode",
-        "ObservedInstallationState", "OperationId", "Outcome", "ParsedArtifactCount", "ParsedReleaseCount",
-        "Persisted", "PriorInstallationState", "ProviderId", "ReasonCode", "RegistryLocationCount",
-        "RegistryReadFailureCount", "RequestedUrl", "Scope", "SectionCandidateCount", "Severity", "Stage", "Status", "View",
-        "DecisionReasonCode", "DecisionStatus", "InstalledVersion", "InstalledVersionSource",
-        "ManifestChannelPolicy", "ReleaseObservations", "TargetObservations"
-    };
-
     public static string Format(WintainiumApplicationRefreshResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -52,9 +41,9 @@ internal static class WintainiumApplicationRefreshReportFormatter
                 builder.AppendLine($"  Operation ID: {Value(stage.OperationId)}");
                 builder.AppendLine($"  Reason Code: {Value(stage.ReasonCode)}");
                 builder.AppendLine($"  Installation State: {Value(stage.StateBefore?.ToString())} -> {Value(stage.StateAfter?.ToString())}");
-                AppendStageDiagnostics(builder, "Errors", stage.Errors, "  ");
-                AppendStageDiagnostics(builder, "Warnings", stage.Warnings, "  ");
-                AppendLogEvents(builder, stage.LogEvents, "  ");
+                AppendStageDiagnostics(builder, "Errors", WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(stage.Errors), "  ");
+                AppendStageDiagnostics(builder, "Warnings", WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(stage.Warnings), "  ");
+                WintainiumDiagnosticsTextFormatter.AppendLogEvents(builder, "Log Events", stage.LogEvents, "  ");
             }
         }
 
@@ -65,8 +54,17 @@ internal static class WintainiumApplicationRefreshReportFormatter
             ? "- No failed stage or Unknown post-stage state was recorded."
             : $"- {FirstAttentionLabel(firstAttention)} (status: {firstAttention.Status}, reason: {Value(FirstAttentionReason(firstAttention))}, state after: {Value(firstAttention.StateAfter?.ToString())})");
 
-        AppendStageDiagnostics(builder, "Aggregate Errors", result.Errors, string.Empty);
-        AppendStageDiagnostics(builder, "Aggregate Warnings", result.Warnings, string.Empty);
+        var stageErrors = stages.SelectMany(stage => stage.Errors).ToArray();
+        var stageWarnings = stages.SelectMany(stage => stage.Warnings).ToArray();
+        var additionalErrors = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Errors)
+            .Where(item => !WintainiumDiagnosticsTextFormatter.ContainsDiagnostic(stageErrors, item))
+            .ToArray();
+        var additionalWarnings = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(result.Warnings)
+            .Where(item => !WintainiumDiagnosticsTextFormatter.ContainsDiagnostic(stageWarnings, item))
+            .ToArray();
+
+        AppendStageDiagnostics(builder, "Additional Errors", additionalErrors, string.Empty);
+        AppendStageDiagnostics(builder, "Additional Warnings", additionalWarnings, string.Empty);
         return builder.ToString().TrimEnd();
     }
 
@@ -83,8 +81,10 @@ internal static class WintainiumApplicationRefreshReportFormatter
         foreach (var stage in result.Stages ?? [])
         {
             lines.Add($"{stage.Name}: {stage.Status}; state {Value(stage.StateBefore?.ToString())} -> {Value(stage.StateAfter?.ToString())}; reason {Value(stage.ReasonCode)}");
-            lines.AddRange(stage.Errors.Select(item => $"  ERROR: {FormatDiagnostic(item)}"));
-            lines.AddRange(stage.Warnings.Select(item => $"  WARNING: {FormatDiagnostic(item)}"));
+            lines.AddRange(WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(stage.Errors)
+                .Select(item => "  ERROR: " + WintainiumDiagnosticsTextFormatter.FormatDiagnostic(item)));
+            lines.AddRange(WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(stage.Warnings)
+                .Select(item => "  WARNING: " + WintainiumDiagnosticsTextFormatter.FormatDiagnostic(item)));
         }
 
         return lines;
@@ -145,38 +145,7 @@ internal static class WintainiumApplicationRefreshReportFormatter
         if (diagnostics.Count == 0) return;
         builder.AppendLine($"{indent}{title}:");
         foreach (var diagnostic in diagnostics)
-        {
-            builder.AppendLine($"{indent}- {FormatDiagnostic(diagnostic)}");
-            if (diagnostic.Details is null) continue;
-            foreach (var detail in diagnostic.Details
-                .Where(item => SafeContextNames.Contains(item.Key))
-                .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
-                builder.AppendLine($"{indent}  {detail.Key}: {Value(detail.Value)}");
-        }
-    }
-
-    private static void AppendLogEvents(StringBuilder builder, IReadOnlyList<WintainiumOperationLogEvent> events, string indent)
-    {
-        if (events.Count == 0) return;
-        builder.AppendLine($"{indent}Log Events:");
-        foreach (var item in events)
-        {
-            builder.AppendLine($"{indent}- [{Value(item.Severity)}] {Value(item.EventName)}: {Value(item.Message)}");
-            builder.AppendLine($"{indent}  Operation ID: {Value(item.OperationId)}; Component: {Value(item.Component)}");
-            foreach (var context in item.Context
-                .Where(entry => SafeContextNames.Contains(entry.Key))
-                .OrderBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase))
-                builder.AppendLine($"{indent}  {context.Key}: {Value(context.Value)}");
-        }
-    }
-
-    private static string FormatDiagnostic(WintainiumOperationDiagnostic diagnostic)
-    {
-        var parts = new[] { diagnostic.Code, diagnostic.Message }
-            .Where(part => !string.IsNullOrWhiteSpace(part))
-            .Select(part => part!.Trim());
-        var text = string.Join(": ", parts);
-        return string.IsNullOrWhiteSpace(text) ? "Unspecified diagnostic." : text;
+            builder.AppendLine(WintainiumDiagnosticsTextFormatter.FormatDiagnostic(diagnostic, indent + "- "));
     }
 
     private static string FormatTimestamp(DateTimeOffset? value) =>
