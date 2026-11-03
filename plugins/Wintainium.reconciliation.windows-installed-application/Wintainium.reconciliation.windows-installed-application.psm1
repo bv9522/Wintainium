@@ -692,9 +692,17 @@ function Invoke-WintainiumReconciliation {
                 RegistryReadFailureCount = $readFailureCount
                 CandidateEvidence = @($observation.Candidates | ForEach-Object {
                     [pscustomobject]@{
-                        DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'DisplayName')
+                        RegistryScope = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'Scope')
+                        RegistryView = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'View')
                         RegistrySubKey = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'SubKey')
-                        IdentityScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScore'
+                        DisplayName = [string](Get-WintainiumWindowsSettingValue -Object $_ -Name 'DisplayName')
+                        DisplayVersion = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'DisplayVersion')
+                        Publisher = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'Publisher')
+                        InstallLocation = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'InstallLocation')
+                        WindowsInstaller = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'WindowsInstaller')
+                        MsiProductCode = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'MsiProductCode')
+                        EvidenceSource = [string](Get-WintaniumWindowsSettingValue -Object $_ -Name 'EvidenceSource')
+                        IdentityScore = Get-WintaniumWindowsSettingValue -Object $_ -Name 'IdentityScore'
                         IdentityConfidence = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityConfidence'
                         IdentityScoreThreshold = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityScoreThreshold'
                         IdentityRunnerUpScore = Get-WintainiumWindowsSettingValue -Object $_ -Name 'IdentityRunnerUpScore'
