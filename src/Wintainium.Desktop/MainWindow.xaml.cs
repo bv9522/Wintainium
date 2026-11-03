@@ -1142,7 +1142,16 @@ public sealed partial class MainWindow : Window
         builder.AppendLine("Wintainium Source Resolution Diagnostics");
         builder.AppendLine($"Operation ID: {result.OperationId}");
         builder.AppendLine($"Overall Status: {result.Status ?? "Unknown"}");
-        builder.AppendLine($"Source Resolution Status: {result.SourceResolutionStatus ?? "Not provided"}");
+        var sourceResolutionStatus = result.SourceResolutionStatus;
+        if (string.IsNullOrWhiteSpace(sourceResolutionStatus))
+        {
+            var declinedProviders = result.LogEvents.Count(item =>
+                string.Equals(item.EventName, "ProviderSourceResolutionFailed", StringComparison.OrdinalIgnoreCase));
+            sourceResolutionStatus = declinedProviders > 1
+                ? "No single resolver result was selected; multiple provider attempts are detailed below."
+                : "Not provided by the onboarding result.";
+        }
+        builder.AppendLine($"Source Resolution Status: {sourceResolutionStatus}");
 
         if (result.Stages.Count > 0)
         {
@@ -1181,15 +1190,17 @@ public sealed partial class MainWindow : Window
         if (result.LogEvents.Count > 0)
         {
             builder.AppendLine();
-            builder.AppendLine("Provider / Resolver Events:");
-            foreach (var diagnostic in result.LogEvents)
-                builder.AppendLine(FormatDiagnostic(diagnostic));
+            WintainiumDiagnosticsTextFormatter.AppendLogEvents(
+                builder,
+                "Provider / Resolver Events",
+                result.LogEvents,
+                "  ");
         }
         else
         {
             builder.AppendLine();
             builder.AppendLine("Provider / Resolver Events:");
-            builder.AppendLine("No provider/resolver log events were returned for this attempt.");
+            builder.AppendLine("  No provider/resolver log events were returned for this attempt.");
         }
 
         builder.AppendLine();
