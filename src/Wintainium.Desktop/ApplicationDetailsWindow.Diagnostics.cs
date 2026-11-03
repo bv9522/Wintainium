@@ -94,7 +94,7 @@ public sealed partial class ApplicationDetailsWindow
             return;
 
         TroubleshootingDiagnosticsItemsControl.ItemsSource =
-            _lastUpdateResult.TroubleshootingDiagnostics
+            WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(_lastUpdateResult.TroubleshootingDiagnostics)
                 .Select(FormatTroubleshootingDiagnostic)
                 .ToArray();
 
@@ -126,7 +126,12 @@ public sealed partial class ApplicationDetailsWindow
                RefreshDiagnosticsItemsControl.Items.Count > 0 ||
                WintainiumDesktopDiagnosticsStore.GetRefreshResult(_application.ApplicationId) is not null ||
                WintainiumDesktopDiagnosticsStore.GetSourceResolutionReport(_application.ApplicationId) is not null ||
-               StageItemsControl.Items.Count > 0;
+               StageItemsControl.Items.Count > 0 ||
+               (_lastReleaseResult?.LogEvents.Count ?? 0) > 0 ||
+               (_lastUpdateDecisionResult?.LogEvents.Count ?? 0) > 0 ||
+               (_lastIconOverrideResult?.LogEvents.Count ?? 0) > 0 ||
+               (WintainiumDesktopDiagnosticsStore.GetUpdateResult(_application.ApplicationId)?.LogEvents.Count ?? 0) > 0 ||
+               (WintainiumDesktopDiagnosticsStore.GetInstallResult(_application.ApplicationId)?.LogEvents.Count ?? 0) > 0;
     }
 
     private string BuildDiagnosticsClipboardText()
@@ -142,7 +147,8 @@ public sealed partial class ApplicationDetailsWindow
         if (!string.IsNullOrWhiteSpace(operationId) && !operationId.Equals("pending Core result.", StringComparison.OrdinalIgnoreCase))
             builder.AppendLine($"Operation ID: {operationId}");
 
-        AppendItems(builder, "Lifecycle", StageItemsControl.Items);
+        AppendItems(builder, "Stages", StageItemsControl.Items);
+        AppendItems(builder, "Stage Reasons", StageReasonItemsControl.Items);
         AppendItems(builder, "Errors", ErrorItemsControl.Items);
         AppendItems(builder, "Warnings", WarningItemsControl.Items);
         AppendItems(builder, "Troubleshooting", TroubleshootingDiagnosticsItemsControl.Items);
@@ -189,25 +195,7 @@ public sealed partial class ApplicationDetailsWindow
         var values = items.Cast<object?>()
             .Select(static item => item?.ToString())
             .Where(static value => !string.IsNullOrWhiteSpace(value))
-            .ToArray();
-
-        if (values.Length == 0)
-            return;
-
-        builder.AppendLine();
-        builder.AppendLine(title + ":");
-        foreach (var value in values)
-            builder.AppendLine($"- {value}");
-    }
-
-    private static void AppendDiagnostics(
-        StringBuilder builder,
-        string title,
-        IEnumerable<WintainiumOperationDiagnostic> diagnostics)
-    {
-        var values = WintainiumDiagnosticsTextFormatter.DistinctDiagnostics(diagnostics)
-            .Select(FormatTroubleshootingDiagnostic)
-            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
         if (values.Length == 0)
@@ -222,17 +210,4 @@ public sealed partial class ApplicationDetailsWindow
     private static string FormatTroubleshootingDiagnostic(WintainiumOperationDiagnostic diagnostic) =>
         WintainiumDiagnosticsTextFormatter.FormatDiagnostic(diagnostic);
 
-    private static bool IsUsefulDiagnosticPath(string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-            return false;
-
-        return path.Contains("\\Downloads\\", StringComparison.OrdinalIgnoreCase) ||
-               path.Contains("\\Applications\\", StringComparison.OrdinalIgnoreCase) ||
-               path.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
-               path.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ||
-               path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-               path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-               path.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase);
-    }
 }
