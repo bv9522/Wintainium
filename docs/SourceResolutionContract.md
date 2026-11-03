@@ -47,7 +47,11 @@ The normalized source model may contain:
 - `ProviderId`
 - `ProviderContractVersion`
 - `ProviderSettings` — provider-owned upstream locator/configuration.
-- `SourceContext`
+- `SourceContext` — optional provider-established facts about the submitted source, distinct from the upstream locator.
+
+`SourceContext` is persisted as `source.context`. It must be a dictionary containing JSON-compatible values, with Core enforcing bounded depth, item count, string length, and serialized size. Credential-like keys remain prohibited by manifest semantic validation. Core preserves the structure without interpreting provider-specific fields; providers own their meaning. Context is refreshed from the newly resolved source during re-onboarding rather than blindly carrying forward potentially stale provider facts.
+
+Identity aliases have separate provenance. `aliases` contains provider-suggested alternate display names. `userConfirmedAliases` contains aliases explicitly confirmed by the user and is preserved by Core during re-onboarding. Existing manifests predating `userConfirmedAliases` do not record alias provenance; their existing `aliases` are conservatively migrated into the confirmed collection so they are not silently lost. Duplicate aliases are normalized case-insensitively, and the primary display name is never stored as an alias.
 
 `SourceContext` is reserved for narrowly defined source identity required by the selected provider. It is not an unrestricted metadata bag.
 
