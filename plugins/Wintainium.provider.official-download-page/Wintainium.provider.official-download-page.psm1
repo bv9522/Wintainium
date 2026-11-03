@@ -1879,7 +1879,7 @@ function Invoke-WintainiumProviderSourceResolution {
             } catch {}
             $headerSources=[System.Collections.Generic.List[object]]::new()
             if ($null -ne $failureResponse.Headers) { $headerSources.Add($failureResponse.Headers) }
-            if ($null -ne $failureResponse.Content -and $null -ne $failureResponse.Content.Headers) { $headerSources.Add($failureResponse.Content.Headers) }
+            if ($failureResponse.Content -is [System.Net.Http.HttpContent]) { $headerSources.Add($failureResponse.Content.Headers) }
             foreach ($headerSource in $headerSources) {
                 foreach ($headerName in @('Content-Type','Server','Cf-Mitigated','CF-RAY')) {
                     try {
@@ -1920,7 +1920,7 @@ function Invoke-WintainiumProviderSourceResolution {
             $challengeContext=@{
                 RequestedUrl=$safeSourceUri;FinalUrl=$(if ($safeFailureUri) {$safeFailureUri} else {$safeSourceUri})
                 Host=$sourceUri.Host;HttpStatusCode=$httpStatus;ContentType=$contentType
-                ChallengeProvider='Cloudflare';ChallengeType='ManagedOrBrowserChallenge'
+                ChallengeProvider='Cloudflare';ChallengeType='CloudflareChallenge'
                 ChallengeSignal=$(if ($challengeHeader -match '(?i)challenge') {'Cf-Mitigated'} else {'CloudflareChallengeDocument'})
                 Server=$serverHeader;RequestId=$requestId;FailureStage='Retrieval'
                 DurationMilliseconds=[long]$stopwatch.ElapsedMilliseconds
