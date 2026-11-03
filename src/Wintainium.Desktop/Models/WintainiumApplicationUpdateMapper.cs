@@ -70,6 +70,9 @@ internal static class WintainiumApplicationUpdateMapper
         return IsNullLike(value) ? null : MapDiagnostic(PSObject.AsPSObject(value));
     }
 
+    private static WintainiumOperationDiagnostic MapDiagnostic(PSObject source) =>
+        WintainiumOperationDiagnosticMapper.Map(source);
+
     private static bool IsNullLike(object? value) =>
         value is null ||
         value is PSObject { BaseObject: null } ||
