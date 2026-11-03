@@ -223,14 +223,14 @@ This preserves the exact reason a SHA-256 comparison passed or failed. It also a
 
 ## 9. Audit constraints to carry forward (not implementation scope here)
 
-These findings are guardrails for later work, not permission to fix those areas during 2A:
+These findings are guardrails for later work, not permission to jump ahead or fix unrelated areas during 2A:
 
-- **3.4 — provider specialization:** reusable platform-specific behavior may live in a shared provider capability, but product-specific identity exceptions must not spread through generic Core/provider logic.
-- **5.2 — evidence provenance:** the current verification boundary reduces hash claims to algorithm/value and loses the source/association needed to diagnose a mismatch. The proposed evidence model must preserve this chain end to end.
-- **6.2 — diagnostics visibility:** structured evidence can exist internally yet be absent from the desktop's selected diagnostic fields. The contract must make provenance available in structured results; the later diagnostics workstream decides how to present it safely.
-- **8.1 — boundary alignment:** the C# adapter/host allowlist and Core public surface must remain aligned. This is a separate integration correction; 2A must not turn internal contract types into new public desktop commands.
+- **3.4 — possible duplication in uninstall-registry discovery:** three implementations overlap. This is only a potential consolidation opportunity pending caller/test tracing. The 2A identity vocabulary must not be used as a pretext to merge or remove those implementations.
+- **5.2 — application-specific behavior in the generic official-page provider:** Equalizer APO, AMD Software, and HandBrake identity overrides have entered a generic provider. The contract must support reusable source/platform capabilities without requiring product-specific Core/provider exceptions. Correcting those overrides belongs to its scheduled workstream, not this one.
+- **6.2 — verification-boundary provenance loss:** the verifier currently retains hash algorithm/value but discards the evidence source provenance. Preserving the source, subject association, and claim identity through verification is a central requirement of this design.
+- **8.1 — possible duplication between Core and reconciliation-plugin registry helpers:** both independently discover uninstall candidates, but legacy status and caller paths are not yet established. Do not remove or consolidate either helper during 2A; that requires its own reference and regression trace.
 
-The exact audit finding labels above are retained as traceability references. Their implementation is deferred to their scheduled roadmap workstreams.
+The audit also identified a separate diagnostics-presentation gap: some structured SHA/evidence details are retained by Core but omitted from the desktop formatter's allowlist. This design makes provenance available in structured results; the later diagnostics workstream determines safe presentation. None of these findings authorizes unrelated implementation changes in 2A.
 
 ## 10. Known contract drift to reconcile before implementation
 
