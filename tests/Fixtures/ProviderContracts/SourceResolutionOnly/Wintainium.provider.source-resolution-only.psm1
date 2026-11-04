@@ -4,7 +4,8 @@ function Invoke-WintainiumProviderSourceResolution {
 
     $source = $null
     $errors = @()
-    if ([Uri]$Request.SourceUri | ForEach-Object { $_.AbsolutePath.Trim('/').ToLowerInvariant() } -eq 'success-with-errors') {
+    $sourcePath = ([Uri]$Request.SourceUri).AbsolutePath.Trim('/').ToLowerInvariant()
+    if ($sourcePath -eq 'success-with-errors') {
         $source = [pscustomobject][ordered]@{
             ApplicationId = 'fixture.source-resolution-only'
             Name = 'Fixture Source'
