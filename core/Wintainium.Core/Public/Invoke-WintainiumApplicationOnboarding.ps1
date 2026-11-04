@@ -73,7 +73,9 @@ function Invoke-WintainiumApplicationOnboarding {
             'NoResolution' { 'No capable provider successfully resolved the supplied source URI.' }
             'Ambiguous' {
                 if ($AmbiguityReason -eq 'ProviderReportedAmbiguity') {
-                    'A provider reported ambiguous identity candidates; Core rejected automatic selection.'
+                    'A provider reported ambiguous identity candidates while another provider returned a successful result; Core rejected automatic selection.'
+                } elseif ($AmbiguityReason -eq 'MultipleSuccessfulProvidersAndProviderReportedAmbiguity') {
+                    'Multiple providers resolved the supplied source URI and at least one also reported ambiguous identity candidates; Core rejected automatic selection.'
                 } else {
                     'Multiple providers successfully resolved the supplied source URI; Core rejected automatic selection.'
                 }
