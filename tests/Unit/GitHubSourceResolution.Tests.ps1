@@ -135,7 +135,7 @@ Describe 'Wintainium GitHub source resolution' {
 
         $caseIndex = 0
         foreach ($application in $applications) {
-            $parts = ([string]$application.repository).Split('/', 2)
+            $parts = ([string]$application.repository).Split([char]'/')
             $owner = $parts[0]
             $repository = $parts[1]
             $variant = $caseIndex % 8
