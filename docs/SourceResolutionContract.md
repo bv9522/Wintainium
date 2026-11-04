@@ -34,7 +34,7 @@ The resolver returns exactly one structured result:
 | `Warnings` | Structured warnings. |
 | `LogEvents` | Correlated diagnostic events. |
 
-A successful `Source` contains normalized facts only. Provider-specific upstream response objects do not cross the boundary. Core verifies that `Source.ProviderId` matches the selected provider descriptor, that `Source.ProviderContractVersion` is advertised by that descriptor, and that `CanonicalUri` is an absolute HTTP/HTTPS URI before accepting the result. A failed result must not contain a partial `Source` object.
+A successful `Source` contains normalized facts only. Provider-specific upstream response objects do not cross the boundary. Core verifies that `Source.ProviderId` matches the selected provider descriptor, that `Source.ProviderContractVersion` is advertised by that descriptor, and that `CanonicalUri` is an absolute HTTP/HTTPS URI before accepting the result. A successful result must have an empty `Errors` collection; non-fatal information belongs in `Warnings`. A failed result must not contain a partial `Source` object.
 
 The normalized source model may contain:
 
