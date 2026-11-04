@@ -94,7 +94,7 @@ function Invoke-WintainiumApplicationOnboarding {
         & $addResolutionDecisionEvent 'NoCapableProvider' 0 @() 0
         $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionCapabilityUnavailable';Path='$.SourceUri';Message='No registered provider advertises source resolution capability.'})
         & $addStage 2 'SourceResolution' 'Failed' $false 'SourceResolutionCapabilityUnavailable' 'No registered provider advertises source resolution capability.'
-        return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceUnsupported';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=@();Stages=$stages.ToArray()}
+        return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceUnsupported';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
 
     $successful=[System.Collections.Generic.List[object]]::new()
