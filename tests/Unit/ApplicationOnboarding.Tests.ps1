@@ -88,6 +88,8 @@ Describe 'Wintainium application onboarding' {
         $decision[0].Context.ProviderCount | Should -Be 3
         $decision[0].Context.SuccessfulProviderCount | Should -Be 1
         $decision[0].Context.FailedProviderCount | Should -Be 2
+        @($decision[0].Context.FailedProviderIds) | Should -Contain 'Wintainium.provider.source-resolution-failure'
+        @($decision[0].Context.FailedProviderIds) | Should -Contain 'Wintainium.provider.source-resolution-identity'
         $decision[0].Context.SelectedProviderId | Should -Be 'Wintainium.provider.github-releases'
         $decision[0].Context.ContainsKey('SourceUri') | Should -BeFalse
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
