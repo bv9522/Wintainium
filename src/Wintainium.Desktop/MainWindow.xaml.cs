@@ -1158,12 +1158,13 @@ public sealed partial class MainWindow : Window
                 ? parsedSuccessfulCount
                 : 0;
             decisionEvent.Context.TryGetValue("SelectedProviderId", out var selectedProviderId);
+            decisionEvent.Context.TryGetValue("TerminalStatus", out var terminalStatus);
 
             sourceResolutionStatus = decisionOutcome switch
             {
                 "Resolved" => $"Resolved by '{selectedProviderId ?? "unknown provider"}' ({successfulProviderCount} of {providerCount} capable providers succeeded).",
                 "Ambiguous" => $"{successfulProviderCount} of {providerCount} capable providers resolved the URL; Core rejected automatic selection.",
-                "NoResolution" => $"No provider resolved the URL ({providerCount} capable providers attempted).",
+                "NoResolution" => $"No provider returned a successful resolution ({providerCount} capable providers attempted; terminal status: {terminalStatus ?? result.Status ?? "Unknown"}).",
                 "NoCapableProvider" => "No registered provider advertises source resolution capability.",
                 _ => sourceResolutionStatus
             };
