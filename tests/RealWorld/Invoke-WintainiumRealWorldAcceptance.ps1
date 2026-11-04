@@ -1,7 +1,7 @@
 #requires -Version 7.4
 [CmdletBinding()]
 param(
-    [string]$RepositoryRoot = (Split-Path -Path $PSScriptRoot -Parent | Split-Path -Parent),
+    [string]$RepositoryRoot = (Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent),
     [string]$CatalogPath = (Join-Path $PSScriptRoot 'real-world-applications.json'),
     [string]$ReportDirectory = (Join-Path ([IO.Path]::GetTempPath()) 'Wintainium-RealWorldAcceptance'),
     [string]$WorkspaceRoot = (Join-Path ([IO.Path]::GetTempPath()) ('Wintainium-RealWorld-' + [guid]::NewGuid().ToString('N')))
