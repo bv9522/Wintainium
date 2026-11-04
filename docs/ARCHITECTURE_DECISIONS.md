@@ -305,3 +305,39 @@ Phase 5 owns secure acquisition; Phase 6 owns installation.
 **Constraints:** Source resolution returns normalized source facts only. It does not select the final release or artifact, execute updates, or authorize arbitrary web scraping. Providers that do not advertise `sourceResolution` remain valid Provider Contract v1 providers. Interactive or otherwise non-deterministic sources may return structured unsupported or interactive-resolution outcomes.
 
 **Status:** Accepted
+
+## Decision #024: Registry Identity Suggestions Are Separate From Authoritative Reconciliation
+
+**Decision:** Windows registry identity discovery and installed-state reconciliation
+remain separate workflows with different trust contracts. Registry identity
+discovery produces review-only suggestions that require explicit user
+confirmation. The Windows reconciliation plugin owns authoritative candidate
+evaluation against manifest settings and may use only evidence that satisfies
+its reconciliation contract. Neither workflow may silently promote a
+suggestion into an installed-state match.
+
+**Reason:** Onboarding may not yet know the exact uninstall registration for an
+application. A review-only discovery step can help a user identify it without
+changing management behavior. Reconciliation, by contrast, must determine
+whether the application is installed and whether its observed state is
+sufficiently reliable to persist. Combining these workflows would let fuzzy
+discovery influence authoritative state without a clear consent boundary.
+
+**Constraints:**
+- Get-WintainiumApplicationRegistryIdentityCandidates remains non-authoritative;
+  every suggestion requires user confirmation.
+- The desktop applies a confirmed selection through
+  Set-WintainiumApplicationReconciliationSettings, which persists explicit
+  registry predicates. Declining or failing discovery must leave existing
+  settings unchanged.
+- Get-WintainiumWindowsInstalledApplicationCandidates remains inside the
+  Windows reconciliation plugin. It evaluates configured predicates first,
+  then its separately governed fallback evidence, and returns ambiguity or
+  incomplete-evidence outcomes rather than guessing.
+- Registry enumeration code may exist at both Core and plugin boundaries
+  because the workflows are separately owned. Shared matching policy must not
+  be introduced by bypassing the plugin contract or weakening either trust
+  boundary.
+- Unused legacy helpers must not remain as a second apparent production path.
+
+**Status:** Accepted
