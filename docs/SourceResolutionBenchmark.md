@@ -6,6 +6,8 @@ The source-resolution benchmark protects the identity contract against regressio
 
 The corpus is stored in `tests/Fixtures/SourceResolutionBenchmark/real-world-github-applications.json`. Each record names a software project and its GitHub repository in `owner/repository` form.
 
+All 100 repository paths were individually checked against GitHub repository search when the corpus was assembled on 2026-11-03. The check establishes that the exact public repository identifier was discoverable at that time; it does not establish publisher ownership or that the repository is the preferred official release channel.
+
 ## What the benchmark verifies
 
 For each of the 100 repository records, the test exercises one of eight URL shapes:
