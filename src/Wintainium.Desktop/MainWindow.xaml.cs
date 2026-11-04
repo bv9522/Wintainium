@@ -1166,7 +1166,7 @@ public sealed partial class MainWindow : Window
                 "Resolved" => $"Resolved by '{selectedProviderId ?? "unknown provider"}' ({successfulProviderCount} of {providerCount} capable providers succeeded).",
                 "Ambiguous" => ambiguityReason switch
                 {
-                    "ProviderReportedAmbiguity" => $"A provider reported ambiguous identity candidates; {successfulProviderCount} other provider(s) returned a successful result. Core rejected automatic selection.",
+                    "ProviderReportedAmbiguity" => "A provider reported ambiguous identity candidates while another provider returned a successful result. Core rejected automatic selection.",
                     "MultipleSuccessfulProvidersAndProviderReportedAmbiguity" => $"Multiple providers resolved the URL and at least one provider reported ambiguous identity candidates. Core rejected automatic selection.",
                     _ => $"{successfulProviderCount} of {providerCount} capable providers resolved the URL; Core rejected automatic selection."
                 },
