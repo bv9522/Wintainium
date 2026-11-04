@@ -39,7 +39,8 @@ function Invoke-WintainiumApplicationOnboarding {
             [Parameter(Mandatory)][string]$Outcome,
             [Parameter(Mandatory)][int]$ProviderCount,
             [object[]]$SuccessfulProviders = @(),
-            [int]$FailedProviderCount = 0
+            [int]$FailedProviderCount = 0,
+            [string]$TerminalStatus
         )
         $successfulProviderIds = @($SuccessfulProviders | ForEach-Object { [string]$_.Provider.PluginId })
         $context = @{
@@ -48,6 +49,9 @@ function Invoke-WintainiumApplicationOnboarding {
             ProviderCount = $ProviderCount
             SuccessfulProviderCount = $successfulProviderIds.Count
             FailedProviderCount = $FailedProviderCount
+        }
+        if (-not [string]::IsNullOrWhiteSpace($TerminalStatus)) {
+            $context.TerminalStatus = $TerminalStatus
         }
         if ($successfulProviderIds.Count -gt 0) {
             $context.SuccessfulProviderIds = $successfulProviderIds
@@ -130,7 +134,7 @@ function Invoke-WintainiumApplicationOnboarding {
         }
         $failureCode = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Code } elseif ($errors.Count -gt 0) { [string]$errors[0].Code } else { $status }
         $failureReason = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Message } elseif ($errors.Count -gt 0) { [string]$errors[0].Message } else { 'No capable provider resolved the source URI.' }
-        & $addResolutionDecisionEvent 'NoResolution' $capableProviders.Count @() $failures.Count
+        & $addResolutionDecisionEvent 'NoResolution' $capableProviders.Count @() $failures.Count $status
         & $addStage 2 'SourceResolution' 'Failed' $false $failureCode $failureReason
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=$status;SourceResolution=if($failures.Count -eq 1){$failures[0]}else{$null};ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
