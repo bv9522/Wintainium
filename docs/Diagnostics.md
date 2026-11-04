@@ -250,6 +250,34 @@ successful NotInstalled result. Inspect the structured reconciliation evidence
 and diagnostics. Multiple matching installed records are intentionally
 ambiguous rather than silently resolved.
 
+Registry identity discovery and installed-state reconciliation are separate
+operations:
+
+- The onboarding identity-discovery helper returns ranked registry suggestions.
+  These are non-authoritative, always require explicit user confirmation, and
+  do not change a manifest or installed state by themselves. The desktop may
+  offer a selected candidate after Add Software succeeds. Choosing Keep Default,
+  cancelling, or encountering a discovery failure preserves the existing
+  reconciliation settings.
+- A confirmed candidate is converted into explicit registry predicates and
+  saved through Set-WintainiumApplicationReconciliationSettings. Inspect the
+  manifest's reconciliation settings to see what will be evaluated later.
+- The Windows reconciliation plugin evaluates those configured predicates
+  against the machine 64-bit, machine 32-bit, and/or current-user uninstall
+  registry locations declared by the manifest. It can then use its separate,
+  evidence-scored identity fallback when enabled. Explicit predicates take
+  precedence over fallback matching.
+- One accepted candidate can establish Installed; no candidates establish
+  NotInstalled only when the requested registry scan completed reliably.
+  Multiple candidates, registry read failures, malformed registry data, or
+  insufficient fallback identity evidence must remain Unknown rather than
+  being treated as NotInstalled or resolved by candidate order.
+
+Do not interpret a review-only discovery score as an authoritative match score.
+The two operations answer different questions: discovery asks which registry
+entry a person may mean; reconciliation asks whether the configured application
+identity is reliably present on this machine.
+
 Plugin descriptor validation is an integrity boundary, not a sandbox. A valid
 descriptor does not mean that the plugin's PowerShell code is untrusted or
 isolated. Plugin distribution and installation are therefore trusted
