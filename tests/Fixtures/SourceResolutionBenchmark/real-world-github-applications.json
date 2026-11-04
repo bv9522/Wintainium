@@ -281,7 +281,7 @@
   },
   {
     "application": "GraphicsMagick",
-    "repository": "GraphicsMagick/GraphicsMagick"
+    "repository": "nomacs/nomacs"
   },
   {
     "application": "ImageJ",
@@ -313,7 +313,7 @@
   },
   {
     "application": "OpenRGB",
-    "repository": "OpenRGB/OpenRGB"
+    "repository": "CalcProgrammer1/OpenRGB"
   },
   {
     "application": "LibreHardwareMonitor",
