@@ -477,6 +477,7 @@ Describe 'Wintainium application onboarding' {
         $decision[0].Context.SuccessfulProviderCount | Should -Be 1
         $decision[0].Context.SuccessfulProviderIds | Should -Contain 'Wintainium.provider.github-releases'
         $decision[0].Context.AmbiguousProviderIds | Should -Contain 'Wintainium.provider.source-resolution-failure'
+        $decision[0].Context.ContainsKey('SelectedProviderId') | Should -BeFalse
     }
 
     It 'keeps one valid resolution when another capable provider has a non-decline failure' {
