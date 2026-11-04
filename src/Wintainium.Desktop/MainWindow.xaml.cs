@@ -1159,11 +1159,17 @@ public sealed partial class MainWindow : Window
                 : 0;
             decisionEvent.Context.TryGetValue("SelectedProviderId", out var selectedProviderId);
             decisionEvent.Context.TryGetValue("TerminalStatus", out var terminalStatus);
+            decisionEvent.Context.TryGetValue("AmbiguityReason", out var ambiguityReason);
 
             sourceResolutionStatus = decisionOutcome switch
             {
                 "Resolved" => $"Resolved by '{selectedProviderId ?? "unknown provider"}' ({successfulProviderCount} of {providerCount} capable providers succeeded).",
-                "Ambiguous" => $"{successfulProviderCount} of {providerCount} capable providers resolved the URL; Core rejected automatic selection.",
+                "Ambiguous" => ambiguityReason switch
+                {
+                    "ProviderReportedAmbiguity" => $"A provider reported ambiguous identity candidates; {successfulProviderCount} other provider(s) returned a successful result. Core rejected automatic selection.",
+                    "MultipleSuccessfulProvidersAndProviderReportedAmbiguity" => $"Multiple providers resolved the URL and at least one provider reported ambiguous identity candidates. Core rejected automatic selection.",
+                    _ => $"{successfulProviderCount} of {providerCount} capable providers resolved the URL; Core rejected automatic selection."
+                },
                 "NoResolution" => $"No provider returned a successful resolution ({providerCount} capable providers attempted; terminal status: {terminalStatus ?? result.Status ?? "Unknown"}).",
                 "NoCapableProvider" => "No registered provider advertises source resolution capability.",
                 _ => sourceResolutionStatus
