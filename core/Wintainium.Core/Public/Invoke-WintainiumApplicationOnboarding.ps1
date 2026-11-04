@@ -64,7 +64,7 @@ function Invoke-WintainiumApplicationOnboarding {
         if ($successfulProviderIds.Count -gt 0) {
             $context.SuccessfulProviderIds = $successfulProviderIds
         }
-        if ($successfulProviderIds.Count -eq 1) {
+        if ($Outcome -eq 'Resolved' -and $successfulProviderIds.Count -eq 1) {
             $context.SelectedProviderId = $successfulProviderIds[0]
         }
         $severity = if ($Outcome -in @('Ambiguous','NoResolution','NoCapableProvider')) { 'Warning' } else { 'Information' }
