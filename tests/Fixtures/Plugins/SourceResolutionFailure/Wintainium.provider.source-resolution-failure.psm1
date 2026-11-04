@@ -4,6 +4,21 @@ function Invoke-WintainiumProviderSourceResolution {
 
     $status = [Uri]$Request.SourceUri | ForEach-Object { $_.AbsolutePath.Trim('/').ToLowerInvariant() }
 
+    if ($Request.SourceUri -match '^https://github\.com/owner/fault(?:/|$)') {
+        return [pscustomobject][ordered]@{
+            OperationId = $Request.OperationId
+            IsSuccessful = $false
+            Status = 'SourceUnavailable'
+            Source = $null
+            Errors = @([pscustomobject][ordered]@{
+                Code = 'SourceResolutionFixtureTransientFailure'
+                Message = 'The fixture simulates a transient failure from a competing source resolver.'
+            })
+            Warnings = @()
+            LogEvents = @()
+        }
+    }
+
     $messages = @{
         unsupported = 'The source family is not supported by this provider.'
         ambiguous = 'The source could not be mapped to one unique application.'
