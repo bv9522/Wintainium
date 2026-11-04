@@ -280,7 +280,7 @@
     "repository": "ImageMagick/ImageMagick"
   },
   {
-    "application": "GraphicsMagick",
+    "application": "nomacs",
     "repository": "nomacs/nomacs"
   },
   {
@@ -345,11 +345,11 @@
   },
   {
     "application": "Bulk Crap Uninstaller",
-    "repository": "Klocman/Bulk-Crap-Uninstaller"
+    "repository": "BCUninstaller/Bulk-Crap-Uninstaller"
   },
   {
     "application": "System Informer",
-    "repository": "SystemInformer/SystemInformer"
+    "repository": "winsiderss/systeminformer"
   },
   {
     "application": "Open-Shell",
@@ -357,7 +357,7 @@
   },
   {
     "application": "Thunderbird",
-    "repository": "thunderbird/thunderbird"
+    "repository": "mozilla/releases-comm-central"
   },
   {
     "application": "Firefox",
