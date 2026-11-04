@@ -427,10 +427,34 @@ Describe 'Wintainium application onboarding' {
         $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
         $decision.Count | Should -Be 1
         $decision[0].Context.Outcome | Should -Be 'Ambiguous'
+        $decision[0].Context.AmbiguityReason | Should -Be 'MultipleSuccessfulProviders'
+        $decision[0].Context.TerminalStatus | Should -Be 'SourceAmbiguous'
         $decision[0].Context.ProviderCount | Should -Be 4
         $decision[0].Context.SuccessfulProviderCount | Should -Be 2
         @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.github-releases'
         @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.test-github-source-resolution'
+    }
+
+    It 'rejects a sole successful result when another provider explicitly reports ambiguous identity' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/owner/ambiguous' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'SourceAmbiguous'
+        $result.ApplicationDefinition | Should -BeNullOrEmpty
+        $result.ManifestPath | Should -BeNullOrEmpty
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionAmbiguous'
+
+        $attemptWarning = @($result.Warnings | Where-Object { $_.Code -eq 'SourceResolverAttemptFailed' -and $_.Status -eq 'SourceAmbiguous' })
+        $attemptWarning.Count | Should -Be 1
+        $attemptWarning[0].Detail.Code | Should -Be 'SourceResolutionFixtureAmbiguous'
+
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'Ambiguous'
+        $decision[0].Context.AmbiguityReason | Should -Be 'ProviderReportedAmbiguity'
+        $decision[0].Context.SuccessfulProviderCount | Should -Be 1
+        $decision[0].Context.SuccessfulProviderIds | Should -Contain 'Wintainium.provider.github-releases'
+        $decision[0].Context.AmbiguousProviderIds | Should -Contain 'Wintainium.provider.source-resolution-failure'
     }
 
     It 'keeps one valid resolution when another capable provider has a non-decline failure' {
