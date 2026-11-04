@@ -116,7 +116,7 @@ function Invoke-WintainiumApplicationOnboarding {
     } | Sort-Object DescriptorPath)
 
     if($capableProviders.Count -eq 0) {
-        & $addResolutionDecisionEvent 'NoCapableProvider' 0 @() 0
+        & $addResolutionDecisionEvent -Outcome 'NoCapableProvider' -ProviderCount 0
         $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionCapabilityUnavailable';Path='$.SourceUri';Message='No registered provider advertises source resolution capability.'})
         & $addStage 2 'SourceResolution' 'Failed' $false 'SourceResolutionCapabilityUnavailable' 'No registered provider advertises source resolution capability.'
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceUnsupported';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
@@ -155,7 +155,7 @@ function Invoke-WintainiumApplicationOnboarding {
         }
         $failureCode = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Code } elseif ($errors.Count -gt 0) { [string]$errors[0].Code } else { $status }
         $failureReason = if ($null -ne $primaryFailureError) { [string]$primaryFailureError.Message } elseif ($errors.Count -gt 0) { [string]$errors[0].Message } else { 'No capable provider resolved the source URI.' }
-        & $addResolutionDecisionEvent 'NoResolution' $capableProviders.Count @() $failures.Count $status $null @() $failures.ToArray()
+        & $addResolutionDecisionEvent -Outcome 'NoResolution' -ProviderCount $capableProviders.Count -SuccessfulProviders ([object[]]@()) -FailedProviderCount $failures.Count -TerminalStatus $status -FailedProviders $failures.ToArray()
         & $addStage 2 'SourceResolution' 'Failed' $false $failureCode $failureReason
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status=$status;SourceResolution=if($failures.Count -eq 1){$failures[0]}else{$null};ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
@@ -201,13 +201,13 @@ function Invoke-WintainiumApplicationOnboarding {
         } else {
             'Multiple providers successfully resolved the source URI and at least one provider also reported ambiguous identity candidates.'
         }
-        & $addResolutionDecisionEvent 'Ambiguous' $capableProviders.Count $successful.ToArray() $failures.Count 'SourceAmbiguous' $ambiguityReason $ambiguousProviderIds $failures.ToArray()
+        & $addResolutionDecisionEvent -Outcome 'Ambiguous' -ProviderCount $capableProviders.Count -SuccessfulProviders $successful.ToArray() -FailedProviderCount $failures.Count -TerminalStatus 'SourceAmbiguous' -AmbiguityReason $ambiguityReason -AmbiguousProviderIds $ambiguousProviderIds -FailedProviders $failures.ToArray()
         $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionAmbiguous';Path='$.SourceUri';Message=$ambiguityMessage})
         & $addStage 2 'SourceResolution' 'Failed' $false 'SourceResolutionAmbiguous' $ambiguityMessage
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceAmbiguous';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
 
-    & $addResolutionDecisionEvent 'Resolved' $capableProviders.Count $successful.ToArray() $failures.Count $null $null @() $failures.ToArray()
+    & $addResolutionDecisionEvent -Outcome 'Resolved' -ProviderCount $capableProviders.Count -SuccessfulProviders $successful.ToArray() -FailedProviderCount $failures.Count -FailedProviders $failures.ToArray()
     & $addStage 2 'SourceResolution' 'Completed' $true $null 'Exactly one provider resolved the source URI.'
     $sourceResolution=$successful[0].Result
     $sourceProvider=$successful[0].Provider
