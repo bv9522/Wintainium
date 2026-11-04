@@ -32,6 +32,8 @@ foreach($app in $apps){
         $def=$on.ApplicationDefinition
         $row.ApplicationId=[string]$def.Id
         $row.ProviderPluginId=[string]$def.Source.pluginId
+        $expectedProvider=if($app.sourceFamily -eq 'GitHubReleases'){'Wintainium.provider.github-releases'}else{'Wintainium.provider.official-download-page'}
+        if($row.ProviderPluginId -ne $expectedProvider){$row.Status='Failed';$row.FailureCategory='UnexpectedProviderSelection';$row.Errors+="Expected provider $expectedProvider but Core selected $($row.ProviderPluginId).";$results.Add([pscustomobject]$row);continue}
         $row.InstallerPluginId=[string]$def.Installer.pluginId
         $row.ReconciliationPluginId=[string]$def.Reconciliation.pluginId
         $release=Get-WintainiumApplicationRelease -ManifestPath $row.ManifestPath -PluginRoot $plugins -SchemaPath $schema
@@ -57,7 +59,7 @@ foreach($app in $apps){
     $results.Add([pscustomobject]$row)
 }
 $inventory=foreach($f in Get-ChildItem $plugins -Filter plugin.json -Recurse -File){
-    try{$d=Get-Content $f.FullName -Raw|ConvertFrom-Json;[pscustomobject]@{PluginId=$d.pluginId;PluginType=$d.pluginType;Capabilities=$d.capabilities;Valid=($d.contractVersions.Count -gt 0 -and !!$d.entryPoint)}}
+    try{$d=Get-Content $f.FullName -Raw|ConvertFrom-Json;[pscustomobject]@{PluginId=$d.pluginId;PluginType=$d.pluginType;Capabilities=$d.capabilities;Valid=($d.contractVersions.Count -gt 0 -and [bool]$d.entryPoint)}}
     catch{[pscustomobject]@{PluginId=$null;PluginType=$null;Capabilities=$null;Valid=$false}}
 }
 $report=[ordered]@{GeneratedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');ApplicationCount=$results.Count;Passed=@($results|? Status -eq Passed).Count;Incomplete=@($results|? Status -eq Incomplete).Count;Failed=@($results|? Status -eq Failed).Count;PluginCount=@($inventory).Count;ValidPluginDescriptors=@($inventory|? Valid).Count;ExecutionBoundary='Live onboarding, release/artifact parsing, actual Windows registry reconciliation, and update-decision evaluation. No artifact downloads or installer execution.';Applications=@($results);Plugins=@($inventory)}
