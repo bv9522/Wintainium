@@ -102,6 +102,18 @@ The operation name is fixed. Providers do not receive arbitrary command names fr
 
 The same module/entry-point restrictions and correlation rules used by Provider Contract v1 apply. Core binds the invocation to the exact resolved provider module and validates that the returned provider identity and contract version match the selected descriptor.
 
+## Resolver competition policy
+
+Core invokes every registered provider that advertises `sourceResolution`; descriptor order is deterministic for repeatable diagnostics, not a provider-precedence rule. Core does not select a provider by registration order, confidence score, or vendor-specific priority.
+
+- Exactly one successful resolver: accept that normalized result.
+- More than one successful resolver: reject the operation as `SourceAmbiguous`; do not silently choose between competing identities.
+- No successful resolver: fail without constructing or persisting an application definition. Preserve the provider-specific outcomes and select the operation status using the documented terminal-status precedence in the onboarding implementation.
+- If one resolver succeeds while others return ordinary `SourceUnsupported` or `SourceInvalid` declines, accept the sole successful result. Those expected declines do not veto a provider that established a complete identity.
+- If one resolver succeeds while another reports a non-decline failure (for example, `SourceUnavailable`, `AuthenticationRequired`, `InteractiveResolutionRequired`, `SourceResponseInvalid`, or an internal/contract failure), retain the successful result but surface the competing failure as a warning. The failure must not be silently discarded.
+
+Core emits one `SourceResolutionDecisionEvaluated` log event for the aggregate decision. Its structured context records the outcome, provider-attempt counts, successful provider IDs, and selected provider ID when exactly one provider succeeded. It contains no submitted URL or query string. Individual provider events and diagnostics remain the evidence for each attempt.
+
 ## Architectural ownership
 
 - Core owns URI validation, operation correlation, result validation, capability selection, and lifecycle composition.
