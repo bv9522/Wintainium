@@ -19,6 +19,21 @@ function Invoke-WintainiumProviderSourceResolution {
         }
     }
 
+    if ($Request.SourceUri -match '^https://github\.com/owner/ambiguous(?:/|$)') {
+        return [pscustomobject][ordered]@{
+            OperationId = $Request.OperationId
+            IsSuccessful = $false
+            Status = 'SourceAmbiguous'
+            Source = $null
+            Errors = @([pscustomobject][ordered]@{
+                Code = 'SourceResolutionFixtureAmbiguous'
+                Message = 'The fixture reports multiple possible identities for this source.'
+            })
+            Warnings = @()
+            LogEvents = @()
+        }
+    }
+
     $messages = @{
         unsupported = 'The source family is not supported by this provider.'
         ambiguous = 'The source could not be mapped to one unique application.'
