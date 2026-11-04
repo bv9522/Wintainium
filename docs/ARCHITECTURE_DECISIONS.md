@@ -341,3 +341,28 @@ discovery influence authoritative state without a clear consent boundary.
 - Unused legacy helpers must not remain as a second apparent production path.
 
 **Status:** Accepted
+
+## Decision #025: Windows Registry Enumeration Respects Module Boundaries
+
+**Decision:** Keep Core's review-only registry identity reader and the Windows
+reconciliation plugin's authoritative registry reader separate under the
+current packaging architecture. Do not introduce a shared reader until a
+first-class shared-module dependency and its loading, packaging, and
+compatibility contracts are established.
+
+**Reason:** The two readers traverse overlapping uninstall-registry locations,
+but they belong to independently owned workflows and separately packaged
+modules. The current release package does not define a shared runtime module
+or dependency contract. A source-tree helper alone would not guarantee that
+both modules can load it in installed layouts.
+
+**Constraints:** Preserve the distinction between suggestion-only discovery
+and authoritative reconciliation, including their matching logic, diagnostics,
+and test seams. Keep duplicated registry traversal narrow. Revisit extraction
+only with explicit shared-module packaging and installed-layout tests. The
+previously inventoried `Get-WintainiumWindowsUninstallCandidates.ps1` is
+absent from the current branch and is not treated as a live implementation.
+
+**Supporting decision:** [Windows Registry Enumeration Boundary](ArchitectureDecision-RegistryEnumerationBoundary.md)
+
+**Status:** Accepted
