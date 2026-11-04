@@ -274,6 +274,15 @@ operations:
   being treated as NotInstalled or resolved by candidate order.
 
 Do not interpret a review-only discovery score as an authoritative match score.
+The two scoring systems are independent and their numeric values are not
+comparable. Onboarding discovery uses lightweight name, registry-subkey,
+version-suffix, and publisher similarity to rank suggestions. The reconciliation
+plugin has a separate fallback model that can also consider install-location
+names, publisher website metadata, display-icon and uninstall-command names,
+executable product/company metadata, and a valid publisher signature. Even a
+strong discovery suggestion remains untrusted until the user confirms it and
+the selected identity is persisted as explicit manifest predicates.
+
 The two operations answer different questions: discovery asks which registry
 entry a person may mean; reconciliation asks whether the configured application
 identity is reliably present on this machine.
