@@ -340,6 +340,11 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'SourceUnsupported'
         $result.ApplicationDefinition | Should -BeNullOrEmpty
         $result.ManifestPath | Should -BeNullOrEmpty
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'NoResolution'
+        $decision[0].Context.SuccessfulProviderCount | Should -Be 0
+        $decision[0].Context.ProviderCount | Should -Be 2
     }
 
     It 'propagates SourceAmbiguous without creating application state' {
@@ -415,6 +420,13 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'SourceAmbiguous'
         @($result.Errors.Code) | Should -Contain 'SourceResolutionAmbiguous'
         $result.ManifestPath | Should -BeNullOrEmpty
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'Ambiguous'
+        $decision[0].Context.ProviderCount | Should -Be 2
+        $decision[0].Context.SuccessfulProviderCount | Should -Be 2
+        @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.github-releases'
+        @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.test-github-source-resolution'
     }
 
     It 'keeps one valid resolution when another capable provider has a non-decline failure' {
@@ -432,6 +444,12 @@ Describe 'Wintainium application onboarding' {
 
         @($result.Errors | Where-Object Code -eq 'SourceResolutionFixtureTransientFailure').Count | Should -Be 0
         $result.ManifestPath | Should -Not -BeNullOrEmpty
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'Resolved'
+        $decision[0].Context.ProviderCount | Should -Be 2
+        $decision[0].Context.SuccessfulProviderCount | Should -Be 1
+        $decision[0].Context.SelectedProviderId | Should -Be 'Wintainium.provider.github-releases'
     }
 
     It 'preserves the caller operation correlation identifier' {
