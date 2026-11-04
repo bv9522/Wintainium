@@ -108,7 +108,7 @@ Core invokes every registered provider that advertises `sourceResolution`; descr
 
 - Exactly one successful resolver: accept that normalized result.
 - More than one successful resolver: reject the operation as `SourceAmbiguous`; do not silently choose between competing identities.
-- No successful resolver: fail without constructing or persisting an application definition. Preserve the provider-specific outcomes and select the operation status using the documented terminal-status precedence in the onboarding implementation.
+- No successful resolver: fail without constructing or persisting an application definition. Preserve the provider-specific outcomes and select the operation status using this deterministic precedence: `SourceAmbiguous`, `SourceUnavailable`, `AuthenticationRequired`, `InteractiveResolutionRequired`, `SourceResponseInvalid`, `SourceResolutionResultInvalid`, `SourceResolverInternalError`, then `SourceUnsupported` when none of the preceding statuses was reported. This is terminal-status selection only; it is not provider precedence and never selects a source identity.
 - If one resolver succeeds while others return ordinary `SourceUnsupported` or `SourceInvalid` declines, accept the sole successful result. Those expected declines do not veto a provider that established a complete identity.
 - If one resolver succeeds while another reports a non-decline failure (for example, `SourceUnavailable`, `AuthenticationRequired`, `InteractiveResolutionRequired`, `SourceResponseInvalid`, or an internal/contract failure), retain the successful result but surface the competing failure as a warning. The failure must not be silently discarded.
 
