@@ -53,6 +53,20 @@ Describe 'Wintainium application onboarding' {
         (Get-Command Invoke-WintainiumApplicationOnboarding -Module Wintainium.Core).CommandType | Should -Be 'Function'
     }
 
+    It 'reports when no registered provider advertises source resolution' {
+        $emptyPluginRoot = Join-Path -Path $TestDrive -ChildPath ("empty-plugins-" + [guid]::NewGuid().Guid)
+        New-Item -ItemType Directory -Path $emptyPluginRoot -Force | Out-Null
+
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://example.invalid/software' -ManifestRoot $script:manifestRoot -PluginRoot $emptyPluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeFalse
+        $result.Status | Should -Be 'SourceUnsupported'
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'NoCapableProvider'
+        $decision[0].Context.ProviderCount | Should -Be 0
+    }
+
     It 'resolves, normalizes, and persists a GitHub source' {
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
         $result.IsSuccessful | Should -Be $true
@@ -68,6 +82,14 @@ Describe 'Wintainium application onboarding' {
         @($result.Errors).Count | Should -Be 0
         @($result.LogEvents | Where-Object EventName -eq 'ProviderSourceResolutionFailed').Count | Should -Be 0
         @($result.Warnings).Count | Should -Be 0
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'Resolved'
+        $decision[0].Context.ProviderCount | Should -Be 3
+        $decision[0].Context.SuccessfulProviderCount | Should -Be 1
+        $decision[0].Context.FailedProviderCount | Should -Be 2
+        $decision[0].Context.SelectedProviderId | Should -Be 'Wintainium.provider.github-releases'
+        $decision[0].Context.ContainsKey('SourceUri') | Should -BeFalse
         $result.ManifestPath | Should -Be (Join-Path $script:manifestRoot 'github.pcsx2.pcsx2.wintainium.json')
         Test-Path -LiteralPath $result.ManifestPath | Should -Be $true
         $persistedManifest = Get-Content -LiteralPath $result.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
