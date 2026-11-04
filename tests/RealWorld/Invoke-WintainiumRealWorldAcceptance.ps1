@@ -23,7 +23,7 @@ $i=0
 foreach($app in $apps){
     $i++
     Write-Host "[$i/$($apps.Count)] $($app.name)"
-    $row=[ordered]@{Id=$app.id;Name=$app.name;SourceFamily=$app.sourceFamily;SourceUri=$app.sourceUri;Status='Started';FailureCategory=$null;ApplicationId=$null;ProviderPluginId=$null;InstallerPluginId=$null;ReconciliationPluginId=$null;ManifestPath=$null;OnboardingStatus=$null;ReleaseStatus=$null;ReleaseCount=0;ArtifactCount=0;LatestVersion=$null;ReconciliationStatus=$null;InstallationState='Unknown';InstalledVersion=$null;UpdateStatus=$null;IsUpdateAvailable=$null;Errors=@();Warnings=@()}
+    $row=[ordered]@{Id=$app.id;Name=$app.name;SourceFamily=$app.sourceFamily;SourceUri=$app.sourceUri;Status='Started';FailureCategory=$null;ApplicationId=$null;ProviderPluginId=$null;InstallerPluginId=$null;InstallerCandidatePluginIds=@();ReconciliationPluginId=$null;ManifestPath=$null;OnboardingStatus=$null;ReleaseStatus=$null;ReleaseCount=0;ArtifactCount=0;LatestVersion=$null;ReconciliationStatus=$null;InstallationState='Unknown';InstalledVersion=$null;UpdateStatus=$null;IsUpdateAvailable=$null;Errors=@();Warnings=@()}
     try{
         $on=Invoke-WintainiumApplicationOnboarding -SourceUri $app.sourceUri -ManifestRoot $manifestRoot -PluginRoot $plugins -SchemaPath $schema
         $row.OnboardingStatus=[string]$on.Status
@@ -35,6 +35,7 @@ foreach($app in $apps){
         $expectedProvider=if($app.sourceFamily -eq 'GitHubReleases'){'Wintainium.provider.github-releases'}else{'Wintainium.provider.official-download-page'}
         if($row.ProviderPluginId -ne $expectedProvider){$row.Status='Failed';$row.FailureCategory='UnexpectedProviderSelection';$row.Errors+="Expected provider $expectedProvider but Core selected $($row.ProviderPluginId).";$results.Add([pscustomobject]$row);continue}
         $row.InstallerPluginId=[string]$def.Installer.pluginId
+        $row.InstallerCandidatePluginIds=@(@($def.Installer.pluginId)+@($def.Installer.fallbacks|ForEach-Object{[string]$_.pluginId}))
         $row.ReconciliationPluginId=[string]$def.Reconciliation.pluginId
         $release=Get-WintainiumApplicationRelease -ManifestPath $row.ManifestPath -PluginRoot $plugins -SchemaPath $schema
         $row.ReleaseStatus=[string]$release.Status
@@ -62,7 +63,7 @@ $inventory=foreach($f in Get-ChildItem $plugins -Filter plugin.json -Recurse -Fi
     try{$d=Get-Content $f.FullName -Raw|ConvertFrom-Json;[pscustomobject]@{PluginId=$d.pluginId;PluginType=$d.pluginType;Capabilities=$d.capabilities;Valid=($d.contractVersions.Count -gt 0 -and [bool]$d.entryPoint)}}
     catch{[pscustomobject]@{PluginId=$null;PluginType=$null;Capabilities=$null;Valid=$false}}
 }
-$report=[ordered]@{GeneratedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');ApplicationCount=$results.Count;Passed=@($results|? Status -eq Passed).Count;Incomplete=@($results|? Status -eq Incomplete).Count;Failed=@($results|? Status -eq Failed).Count;PluginCount=@($inventory).Count;ValidPluginDescriptors=@($inventory|? Valid).Count;ExecutionBoundary='Live onboarding, release/artifact parsing, actual Windows registry reconciliation, and update-decision evaluation. No artifact downloads or installer execution.';Applications=@($results);Plugins=@($inventory)}
+$report=[ordered]@{GeneratedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');ApplicationCount=$results.Count;Passed=@($results|? Status -eq Passed).Count;Incomplete=@($results|? Status -eq Incomplete).Count;Failed=@($results|? Status -eq Failed).Count;PluginCount=@($inventory).Count;ValidPluginDescriptors=@($inventory|? Valid).Count;ObservedInstallerCandidates=@($results|ForEach-Object{$_.InstallerCandidatePluginIds}|Sort-Object -Unique);ExecutionBoundary='Live onboarding, release/artifact parsing, actual Windows registry reconciliation, and update-decision evaluation. No artifact downloads or installer execution.';Applications=@($results);Plugins=@($inventory)}
 $stamp=Get-Date -Format yyyyMMdd-HHmmss
 $json=Join-Path $ReportDirectory "acceptance-$stamp.json"
 $csv=Join-Path $ReportDirectory "acceptance-$stamp.csv"
