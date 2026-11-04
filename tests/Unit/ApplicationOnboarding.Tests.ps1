@@ -353,6 +353,10 @@ Describe 'Wintainium application onboarding' {
         $result.Status | Should -Be 'SourceAmbiguous'
         $result.ApplicationDefinition | Should -BeNullOrEmpty
         $result.ManifestPath | Should -BeNullOrEmpty
+        $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
+        $decision.Count | Should -Be 1
+        $decision[0].Context.Outcome | Should -Be 'NoResolution'
+        $decision[0].Context.TerminalStatus | Should -Be 'SourceAmbiguous'
     }
 
     It 'propagates SourceUnavailable without creating application state' {
