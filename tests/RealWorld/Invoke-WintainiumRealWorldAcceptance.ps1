@@ -36,6 +36,9 @@ foreach($app in $apps){
         if($row.ProviderPluginId -ne $expectedProvider){$row.Status='Failed';$row.FailureCategory='UnexpectedProviderSelection';$row.Errors+="Expected provider $expectedProvider but Core selected $($row.ProviderPluginId).";$results.Add([pscustomobject]$row);continue}
         $row.InstallerPluginId=[string]$def.Installer.pluginId
         $row.InstallerCandidatePluginIds=@(@($def.Installer.pluginId)+@($def.Installer.fallbacks|ForEach-Object{[string]$_.pluginId}))
+        $requiredInstallers=@('Wintainium.installer.exe','Wintainium.installer.msi','Wintainium.installer.msix','Wintainium.installer.portable-zip')
+        $missingInstallers=@($requiredInstallers|Where-Object{$_ -notin $row.InstallerCandidatePluginIds})
+        if($missingInstallers.Count){$row.Status='Failed';$row.FailureCategory='InstallerPluginCoverageMissing';$row.Errors+=('Default policy omitted installer plugins: '+($missingInstallers -join ', '));$results.Add([pscustomobject]$row);continue}
         $row.ReconciliationPluginId=[string]$def.Reconciliation.pluginId
         $release=Get-WintainiumApplicationRelease -ManifestPath $row.ManifestPath -PluginRoot $plugins -SchemaPath $schema
         $row.ReleaseStatus=[string]$release.Status
@@ -63,7 +66,10 @@ $inventory=foreach($f in Get-ChildItem $plugins -Filter plugin.json -Recurse -Fi
     try{$d=Get-Content $f.FullName -Raw|ConvertFrom-Json;[pscustomobject]@{PluginId=$d.pluginId;PluginType=$d.pluginType;Capabilities=$d.capabilities;Valid=($d.contractVersions.Count -gt 0 -and [bool]$d.entryPoint)}}
     catch{[pscustomobject]@{PluginId=$null;PluginType=$null;Capabilities=$null;Valid=$false}}
 }
-$report=[ordered]@{GeneratedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');ApplicationCount=$results.Count;Passed=@($results|? Status -eq Passed).Count;Incomplete=@($results|? Status -eq Incomplete).Count;Failed=@($results|? Status -eq Failed).Count;PluginCount=@($inventory).Count;ValidPluginDescriptors=@($inventory|? Valid).Count;ObservedInstallerCandidates=@($results|ForEach-Object{$_.InstallerCandidatePluginIds}|Sort-Object -Unique);ExecutionBoundary='Live onboarding, release/artifact parsing, actual Windows registry reconciliation, and update-decision evaluation. No artifact downloads or installer execution.';Applications=@($results);Plugins=@($inventory)}
+$requiredPluginIds=@('Wintainium.provider.github-releases','Wintainium.provider.official-download-page','Wintainium.reconciliation.windows-installed-application','Wintainium.installer.exe','Wintainium.installer.msi','Wintainium.installer.msix','Wintainium.installer.portable-zip')
+$registeredPluginIds=@($inventory|ForEach-Object{$_.PluginId})
+$missingPluginIds=@($requiredPluginIds|Where-Object{$_ -notin $registeredPluginIds})
+$report=[ordered]@{MissingRequiredPluginIds=$missingPluginIds;GeneratedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');ApplicationCount=$results.Count;Passed=@($results|? Status -eq Passed).Count;Incomplete=@($results|? Status -eq Incomplete).Count;Failed=@($results|? Status -eq Failed).Count;PluginCount=@($inventory).Count;ValidPluginDescriptors=@($inventory|? Valid).Count;ObservedInstallerCandidates=@($results|ForEach-Object{$_.InstallerCandidatePluginIds}|Sort-Object -Unique);ExecutionBoundary='Live onboarding, release/artifact parsing, actual Windows registry reconciliation, and update-decision evaluation. No artifact downloads or installer execution.';Applications=@($results);Plugins=@($inventory)}
 $stamp=Get-Date -Format yyyyMMdd-HHmmss
 $json=Join-Path $ReportDirectory "acceptance-$stamp.json"
 $csv=Join-Path $ReportDirectory "acceptance-$stamp.csv"
@@ -75,4 +81,4 @@ foreach($r in $results){$lines+="| $($r.Name) | $($r.SourceFamily) | $($r.Status
 $lines|Set-Content $md -Encoding utf8
 Write-Host "Passed=$($report.Passed); Incomplete=$($report.Incomplete); Failed=$($report.Failed)"
 Write-Host "JSON: $json";Write-Host "CSV: $csv";Write-Host "Markdown: $md";Write-Host "Workspace retained at: $WorkspaceRoot"
-if($report.Failed -or $report.Incomplete){exit 1}
+if($report.Failed -or $report.Incomplete -or $report.MissingRequiredPluginIds.Count){exit 1}
