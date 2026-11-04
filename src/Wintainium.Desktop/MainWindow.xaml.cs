@@ -1143,13 +1143,34 @@ public sealed partial class MainWindow : Window
         builder.AppendLine($"Operation ID: {result.OperationId}");
         builder.AppendLine($"Overall Status: {result.Status ?? "Unknown"}");
         var sourceResolutionStatus = result.SourceResolutionStatus;
-        if (string.IsNullOrWhiteSpace(sourceResolutionStatus))
+        var decisionEvent = result.LogEvents.LastOrDefault(item =>
+            string.Equals(item.EventName, "SourceResolutionDecisionEvaluated", StringComparison.OrdinalIgnoreCase));
+        if (decisionEvent is not null &&
+            decisionEvent.Context.TryGetValue("Outcome", out var decisionOutcome) &&
+            !string.IsNullOrWhiteSpace(decisionOutcome))
         {
-            var declinedProviders = result.LogEvents.Count(item =>
-                string.Equals(item.EventName, "ProviderSourceResolutionFailed", StringComparison.OrdinalIgnoreCase));
-            sourceResolutionStatus = declinedProviders > 1
-                ? "No single resolver result was selected; multiple provider attempts are detailed below."
-                : "Not provided by the onboarding result.";
+            var providerCount = decisionEvent.Context.TryGetValue("ProviderCount", out var providerCountText) &&
+                                int.TryParse(providerCountText, out var parsedProviderCount)
+                ? parsedProviderCount
+                : 0;
+            var successfulProviderCount = decisionEvent.Context.TryGetValue("SuccessfulProviderCount", out var successfulCountText) &&
+                                          int.TryParse(successfulCountText, out var parsedSuccessfulCount)
+                ? parsedSuccessfulCount
+                : 0;
+            decisionEvent.Context.TryGetValue("SelectedProviderId", out var selectedProviderId);
+
+            sourceResolutionStatus = decisionOutcome switch
+            {
+                "Resolved" => $"Resolved by '{selectedProviderId ?? "unknown provider"}' ({successfulProviderCount} of {providerCount} capable providers succeeded).",
+                "Ambiguous" => $"{successfulProviderCount} of {providerCount} capable providers resolved the URL; Core rejected automatic selection.",
+                "NoResolution" => $"No provider resolved the URL ({providerCount} capable providers attempted).",
+                "NoCapableProvider" => "No registered provider advertises source resolution capability.",
+                _ => sourceResolutionStatus
+            };
+        }
+        else if (string.IsNullOrWhiteSpace(sourceResolutionStatus))
+        {
+            sourceResolutionStatus = "No source-resolution decision event was returned by Core.";
         }
         builder.AppendLine($"Source Resolution Status: {sourceResolutionStatus}");
 
