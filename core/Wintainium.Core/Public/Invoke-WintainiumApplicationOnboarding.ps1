@@ -40,7 +40,9 @@ function Invoke-WintainiumApplicationOnboarding {
             [Parameter(Mandatory)][int]$ProviderCount,
             [object[]]$SuccessfulProviders = @(),
             [int]$FailedProviderCount = 0,
-            [string]$TerminalStatus
+            [string]$TerminalStatus,
+            [string]$AmbiguityReason,
+            [string[]]$AmbiguousProviderIds = @()
         )
         $successfulProviderIds = @($SuccessfulProviders | ForEach-Object { [string]$_.Provider.PluginId })
         $context = @{
@@ -53,6 +55,12 @@ function Invoke-WintainiumApplicationOnboarding {
         if (-not [string]::IsNullOrWhiteSpace($TerminalStatus)) {
             $context.TerminalStatus = $TerminalStatus
         }
+        if (-not [string]::IsNullOrWhiteSpace($AmbiguityReason)) {
+            $context.AmbiguityReason = $AmbiguityReason
+        }
+        if (@($AmbiguousProviderIds).Count -gt 0) {
+            $context.AmbiguousProviderIds = @($AmbiguousProviderIds)
+        }
         if ($successfulProviderIds.Count -gt 0) {
             $context.SuccessfulProviderIds = $successfulProviderIds
         }
@@ -63,7 +71,13 @@ function Invoke-WintainiumApplicationOnboarding {
         $message = switch ($Outcome) {
             'NoCapableProvider' { 'No registered provider advertises source resolution capability.' }
             'NoResolution' { 'No capable provider successfully resolved the supplied source URI.' }
-            'Ambiguous' { 'Multiple providers successfully resolved the supplied source URI; Core rejected automatic selection.' }
+            'Ambiguous' {
+                if ($AmbiguityReason -eq 'ProviderReportedAmbiguity') {
+                    'A provider reported ambiguous identity candidates; Core rejected automatic selection.'
+                } else {
+                    'Multiple providers successfully resolved the supplied source URI; Core rejected automatic selection.'
+                }
+            }
             default { 'Core selected the sole successful source-resolution provider.' }
         }
         $logEvents.Add((New-WintainiumLogEvent -Severity $severity -OperationId $resolvedOperationId -Component 'SourceIdentification' -EventName 'SourceResolutionDecisionEvaluated' -Message $message -Context $context))
@@ -161,10 +175,26 @@ function Invoke-WintainiumApplicationOnboarding {
         }
     }
 
-    if($successful.Count -gt 1) {
-        & $addResolutionDecisionEvent 'Ambiguous' $capableProviders.Count $successful.ToArray() $failures.Count
-        $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionAmbiguous';Path='$.SourceUri';Message='Multiple source-resolution providers successfully resolved the supplied source URI.'})
-        & $addStage 2 'SourceResolution' 'Failed' $false 'SourceResolutionAmbiguous' 'Multiple source-resolution providers resolved the supplied source URI.'
+    $ambiguousFailures = @($failures | Where-Object { [string]$_.Status -eq 'SourceAmbiguous' })
+    if($successful.Count -gt 1 -or $ambiguousFailures.Count -gt 0) {
+        $ambiguityReason = if ($successful.Count -gt 1 -and $ambiguousFailures.Count -gt 0) {
+            'MultipleSuccessfulProvidersAndProviderReportedAmbiguity'
+        } elseif ($successful.Count -gt 1) {
+            'MultipleSuccessfulProviders'
+        } else {
+            'ProviderReportedAmbiguity'
+        }
+        $ambiguousProviderIds = @($ambiguousFailures | ForEach-Object { [string]$_.ProviderId })
+        $ambiguityMessage = if ($ambiguityReason -eq 'ProviderReportedAmbiguity') {
+            'A source-resolution provider reported ambiguous identity candidates while another provider returned a successful result.'
+        } elseif ($ambiguityReason -eq 'MultipleSuccessfulProviders') {
+            'Multiple source-resolution providers successfully resolved the supplied source URI.'
+        } else {
+            'Multiple providers successfully resolved the source URI and at least one provider also reported ambiguous identity candidates.'
+        }
+        & $addResolutionDecisionEvent 'Ambiguous' $capableProviders.Count $successful.ToArray() $failures.Count 'SourceAmbiguous' $ambiguityReason $ambiguousProviderIds
+        $errors.Add([pscustomobject][ordered]@{Code='SourceResolutionAmbiguous';Path='$.SourceUri';Message=$ambiguityMessage})
+        & $addStage 2 'SourceResolution' 'Failed' $false 'SourceResolutionAmbiguous' $ambiguityMessage
         return [pscustomobject][ordered]@{OperationId=$resolvedOperationId;IsSuccessful=$false;Status='SourceAmbiguous';SourceResolution=$null;ApplicationDefinition=$null;ManifestPath=$null;Errors=$errors.ToArray();Warnings=$warnings.ToArray();LogEvents=$logEvents.ToArray();Stages=$stages.ToArray()}
     }
 
