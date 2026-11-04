@@ -28,6 +28,9 @@ Positive:
 - GitHub can provide a deterministic first vertical slice.
 - Structured vendor download pages can later be handled by generalized resolution machinery.
 - Unsupported or interactive sources can fail explicitly without corrupting application state.
+- Competing source resolvers cannot silently select an identity: Core accepts exactly one success and rejects multiple successes as ambiguous.
+- A sole successful resolver is not vetoed by ordinary unsupported/invalid declines from other providers; non-decline competing failures remain visible as warnings.
+- Aggregate resolver decisions are recorded as structured, correlated diagnostic events.
 - The GUI remains unaware of provider-specific configuration.
 - Core continues to own lifecycle policy and artifact selection.
 
