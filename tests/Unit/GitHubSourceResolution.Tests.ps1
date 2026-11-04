@@ -190,6 +190,48 @@ Describe 'Wintainium GitHub source resolution' {
         @($result.Errors.Code) | Should -Contain 'GitHubSourceHostUnsupported'
     }
 
+    It 'rejects GitHub URLs with non-default ports or embedded user information' {
+        $portResult = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+            OperationId = 'github-source-nondefault-port'
+            SourceUri = 'https://github.com:8443/owner/repository'
+        })
+        $userInfoResult = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+            OperationId = 'github-source-user-info'
+            SourceUri = 'https://user@github.com/owner/repository'
+        })
+
+        $portResult.IsSuccessful | Should -BeFalse
+        $portResult.Status | Should -Be 'SourceUnsupported'
+        @($portResult.Errors.Code) | Should -Contain 'GitHubSourceAuthorityUnsupported'
+
+        $userInfoResult.IsSuccessful | Should -BeFalse
+        $userInfoResult.Status | Should -Be 'SourceUnsupported'
+        @($userInfoResult.Errors.Code) | Should -Contain 'GitHubSourceAuthorityUnsupported'
+    }
+
+    It 'declines real-world non-GitHub software sources without manufacturing repository identity' {
+        $sources = @(
+            'https://www.7-zip.org/'
+            'https://www.videolan.org/vlc/'
+            'https://www.gimp.org/downloads/'
+            'https://www.audacityteam.org/download/'
+            'https://sourceforge.net/projects/equalizerapo/'
+            'https://gitlab.com/gitlab-org/gitlab'
+        )
+
+        foreach ($sourceUri in $sources) {
+            $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                OperationId = "unsupported-source-$([guid]::NewGuid().ToString('N'))"
+                SourceUri = $sourceUri
+            })
+
+            $result.IsSuccessful | Should -BeFalse -Because "'$sourceUri' is not a GitHub repository URL"
+            $result.Status | Should -Be 'SourceUnsupported'
+            $result.Source | Should -BeNullOrEmpty
+            @($result.Errors.Code) | Should -Contain 'GitHubSourceHostUnsupported'
+        }
+    }
+
     It 'rejects GitHub paths that do not identify a repository' {
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-7'
