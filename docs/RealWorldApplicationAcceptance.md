@@ -12,7 +12,7 @@ The report records the selected provider, installer and reconciliation plugin ID
 
 This runner does not download or execute third-party installers. EXE/MSI installers can make machine-wide changes, MSIX registers packages, and portable ZIP installs can overwrite destinations. It would be unsafe to run 25 publishers' installers or updates on a daily-use PC.
 
-Consequently, this is a live preflight of onboarding, parsing, installed-state discovery and update decisions. It is not a claim that real-world installation/update execution has been validated. The production installer plugins have separate controlled integration coverage. A destructive lifecycle acceptance pass should run in a disposable Windows VM with snapshots and explicit approval.
+Consequently, this is a live preflight of onboarding, parsing, installed-state discovery and update decisions. It is not a claim that real-world installation/update execution has been validated. The production installer plugins have dedicated plugin-level unit coverage, and the EXE process path also has a controlled integration test. Those checks exercise installer contracts with controlled payloads, not real publisher applications. A destructive lifecycle acceptance pass should run in a disposable Windows VM with snapshots and explicit approval.
 
 The runner writes manifests and state only beneath its unique temporary workspace. It never modifies the user's normal Wintanium manifest/state directories and never runs installer execution.
 
