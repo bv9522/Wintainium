@@ -200,9 +200,38 @@ function Invoke-WintainiumApplicationOnboarding {
     # still declare the same reconciliation plugin and contract.
     $existingManifestPath = Join-Path -Path $ManifestRoot -ChildPath ("$([string]$normalization.ApplicationDefinition.id).wintainium.json")
     if (Test-Path -LiteralPath $existingManifestPath -PathType Leaf) {
+        $existingManifest = $null
         try {
             $existingManifest = Get-Content -LiteralPath $existingManifestPath -Raw -Encoding utf8 -ErrorAction Stop |
                 ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop
+            if ($existingManifest -isnot [System.Collections.IDictionary]) {
+                throw [System.IO.InvalidDataException]::new('The existing manifest root must be a JSON object.')
+            }
+        }
+        catch {
+            $readError = $_
+            $readMessage = 'Wintainium could not read the existing application manifest, so re-onboarding was stopped to avoid overwriting user-owned identity or reconciliation data.'
+            $errors.Add([pscustomobject][ordered]@{
+                Code='ExistingManifestUnreadable'
+                Path='$.Manifest'
+                Message=$readMessage
+                Detail=$readError.Exception.GetType().Name
+            })
+            & $addStage 4 'DefinitionNormalization' 'Failed' $false 'ExistingManifestUnreadable' $readMessage
+            return [pscustomobject][ordered]@{
+                OperationId=$resolvedOperationId
+                IsSuccessful=$false
+                Status='ExistingManifestUnreadable'
+                SourceResolution=$sourceResolution
+                ApplicationDefinition=$normalization.ApplicationDefinition
+                ManifestPath=$existingManifestPath
+                Errors=$errors.ToArray()
+                Warnings=$warnings.ToArray()
+                LogEvents=$logEvents.ToArray()
+                Stages=$stages.ToArray()
+            }
+        }
+
             # User-confirmed aliases are Core/user-owned identity facts. Preserve them
             # independently from provider suggestions whenever the same application is
             # re-onboarded. Legacy manifests did not record provenance, so their aliases
@@ -226,7 +255,7 @@ function Invoke-WintainiumApplicationOnboarding {
                 if (-not $duplicate) { $confirmedAliases.Add($normalizedAlias) }
             }
 
-            if ($confirmedAliases.Count -gt 0) {
+            if ($hasConfirmedAliasField -or $confirmedAliases.Count -gt 0) {
                 $providerAliases = [System.Collections.Generic.List[string]]::new()
                 # The provider may omit aliases entirely. Under StrictMode, directly
                 # reading a missing PSCustomObject property throws instead of returning
@@ -283,17 +312,6 @@ function Invoke-WintainiumApplicationOnboarding {
                 $newReconciliation['settings'] = $existingReconciliation['settings']
                 $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ExistingReconciliationSettingsPreserved' -Message 'Re-onboarding preserved the existing user-configured reconciliation settings because the reconciliation plugin and contract remain unchanged.' -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;PluginId=[string]$newReconciliation['pluginId']}))
             }
-        }
-        catch {
-            # Do not silently discard settings if the existing manifest cannot be
-            # read: make the condition visible and let normal persistence validation
-            # decide whether onboarding can safely replace the definition.
-            $warnings.Add([pscustomobject][ordered]@{
-                Code='ExistingReconciliationSettingsReadFailed'
-                Message='Wintainium could not read the existing manifest to preserve its reconciliation settings during re-onboarding.'
-                Detail=$_.Exception.GetType().Name
-            })
-        }
     }
 
     & $addStage 4 'DefinitionNormalization' 'Completed' $true $null 'The source was normalized into an application definition.'
