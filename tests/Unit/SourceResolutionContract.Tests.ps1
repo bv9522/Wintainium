@@ -130,19 +130,43 @@ Describe 'Wintainium source resolution contract' {
             $moduleBase = (Get-Module Wintainium.Core).ModuleBase
             $repoRoot = Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent
             $provider = [pscustomobject][ordered]@{
-                PluginId = 'Wintainium.provider.github-releases'
+                PluginId = 'Wintainium.provider.source-resolution-only'
                 PluginType = 'Provider'
                 ContractVersions = @('1')
-                EntryPoint = 'Wintainium.provider.valid-fixture.psm1'
-                Capabilities = @{ releaseDiscovery = $true; artifactDiscovery = $true; sourceResolution = $true }
-                DescriptorPath = Join-Path -Path $repoRoot -ChildPath 'tests/Fixtures/ProviderContracts/ValidProvider/Wintainium.provider.valid-fixture.psm1'
+                EntryPoint = 'Wintainium.provider.source-resolution-only.psm1'
+                Capabilities = @{ sourceResolution = $true }
+                DescriptorPath = Join-Path -Path $repoRoot -ChildPath 'tests/Fixtures/ProviderContracts/SourceResolutionOnly/plugin.json'
             }
             Invoke-WintainiumCoreProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
-                OperationId='source-test-6'; SourceUri='https://github.com/PCSX2/pcsx2'
+                OperationId='source-test-6'; SourceUri='https://source-resolution-only.example/missing-source'
             })
         }
 
         $result.IsSuccessful | Should -Be $false
-        $result.Status | Should -Be 'SourceResolverInternalError'
+        $result.Status | Should -Be 'SourceResolutionResultInvalid'
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionSourceMissing'
+    }
+
+    It 'rejects a successful source resolver result that also contains errors' {
+        $result = & (Get-Module Wintainium.Core) {
+            $moduleBase = (Get-Module Wintainium.Core).ModuleBase
+            $repoRoot = Split-Path -Path (Split-Path -Path $moduleBase -Parent) -Parent
+            $provider = [pscustomobject][ordered]@{
+                PluginId = 'Wintainium.provider.source-resolution-only'
+                PluginType = 'Provider'
+                ContractVersions = @('1')
+                EntryPoint = 'Wintainium.provider.source-resolution-only.psm1'
+                Capabilities = @{ sourceResolution = $true }
+                DescriptorPath = Join-Path -Path $repoRoot -ChildPath 'tests/Fixtures/ProviderContracts/SourceResolutionOnly/plugin.json'
+            }
+            Invoke-WintainiumCoreProviderSourceResolution -Provider $provider -Request ([pscustomobject]@{
+                OperationId='source-test-7'; SourceUri='https://source-resolution-only.example/success-with-errors'
+            })
+        }
+
+        $result.IsSuccessful | Should -Be $false
+        $result.Status | Should -Be 'SourceResolutionResultInvalid'
+        @($result.Errors.Code) | Should -Contain 'SourceResolutionResultInvalid'
+        $result.Errors[0].Message | Should -Match 'must not contain errors'
     }
 }
