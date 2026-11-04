@@ -127,6 +127,58 @@ Describe 'Wintainium GitHub source resolution' {
         $caseCount | Should -Be 100
     }
 
+    It 'preserves repository identity across a 100-application real-world corpus' {
+        $benchmarkPath = Join-Path -Path $script:testRoot -ChildPath 'tests/Fixtures/SourceResolutionBenchmark/real-world-github-applications.json'
+        $applications = @(Get-Content -LiteralPath $benchmarkPath -Raw -Encoding utf8 | ConvertFrom-Json)
+
+        $applications.Count | Should -Be 100
+
+        $caseIndex = 0
+        foreach ($application in $applications) {
+            $parts = ([string]$application.repository).Split('/', 2)
+            $owner = $parts[0]
+            $repository = $parts[1]
+            $variant = $caseIndex % 8
+            $sourceUri = switch ($variant) {
+                0 { "https://github.com/$owner/$repository" }
+                1 { "https://www.github.com/$owner/$repository.git" }
+                2 { "https://github.com/$owner/$repository/releases" }
+                3 { "https://github.com/$owner/$repository/releases/tag/v1.2.3" }
+                4 { "https://github.com/$owner/$repository/tree/main" }
+                5 { "https://github.com/$owner/$repository/issues/1" }
+                6 { "https://github.com/$owner/$repository/commit/abcdef1234567890" }
+                7 { "https://github.com/$owner/$repository/actions?query=workflow" }
+            }
+
+            $operationId = "real-world-application-$caseIndex"
+            $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                OperationId = $operationId
+                SourceUri = $sourceUri
+            })
+
+            $result.IsSuccessful | Should -BeTrue -Because "$($application.application) should resolve from its GitHub repository URL"
+            $result.Status | Should -Be 'Resolved'
+            $result.OperationId | Should -Be $operationId
+            $result.Source.ApplicationId | Should -Be "github.$($owner.ToLowerInvariant()).$($repository.ToLowerInvariant())"
+            $result.Source.Name | Should -Be $repository
+            $result.Source.Publisher | Should -Be $owner
+            $result.Source.CanonicalUri | Should -Be "https://github.com/$owner/$repository"
+            $result.Source.ProviderSettings.repository | Should -Be "$owner/$repository"
+            $result.Source.SourceContext.repository | Should -Be "$owner/$repository"
+
+            if ($variant -eq 3) {
+                $result.Source.SourceContext.releaseTag | Should -Be 'v1.2.3'
+            }
+            else {
+                $result.Source.SourceContext.PSObject.Properties.Name | Should -Not -Contain 'releaseTag'
+            }
+
+            $caseIndex++
+        }
+
+        $caseIndex | Should -Be 100
+    }
+
     It 'rejects a non-GitHub host' {
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-6'
