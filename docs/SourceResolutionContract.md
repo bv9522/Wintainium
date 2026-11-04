@@ -113,7 +113,7 @@ Core invokes every registered provider that advertises `sourceResolution`; descr
 - If one resolver succeeds while others return ordinary `SourceUnsupported` or `SourceInvalid` declines, accept the sole successful result. Those expected declines do not veto a provider that established a complete identity.
 - If one resolver succeeds while another reports a non-decline failure (for example, `SourceUnavailable`, `AuthenticationRequired`, `InteractiveResolutionRequired`, `SourceResponseInvalid`, or an internal/contract failure), retain the successful result but surface the competing failure as a warning. The failure must not be silently discarded.
 
-Core emits one `SourceResolutionDecisionEvaluated` log event for the aggregate decision. Its structured context records the outcome, provider-attempt counts, successful provider IDs, and selected provider ID when exactly one provider succeeded. It contains no submitted URL or query string. Individual provider events and diagnostics remain the evidence for each attempt.
+Core emits one `SourceResolutionDecisionEvaluated` log event for the aggregate decision. Its structured context records the outcome, provider-attempt counts, successful provider IDs, selected provider ID when exactly one provider succeeded, and ambiguity reason/provider IDs when applicable. `Ambiguous` can mean multiple successful providers or an explicit `SourceAmbiguous` response from another provider. It contains no submitted URL or query string. Individual provider events and diagnostics remain the evidence for each attempt.
 
 ## Architectural ownership
 
