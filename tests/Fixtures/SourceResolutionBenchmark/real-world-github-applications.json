@@ -1,0 +1,402 @@
+[
+  {
+    "application": "Audacity",
+    "repository": "audacity/audacity"
+  },
+  {
+    "application": "Blender",
+    "repository": "blender/blender"
+  },
+  {
+    "application": "VLC",
+    "repository": "videolan/vlc"
+  },
+  {
+    "application": "HandBrake",
+    "repository": "HandBrake/HandBrake"
+  },
+  {
+    "application": "OBS Studio",
+    "repository": "obsproject/obs-studio"
+  },
+  {
+    "application": "Krita",
+    "repository": "KDE/krita"
+  },
+  {
+    "application": "Inkscape",
+    "repository": "inkscape/inkscape"
+  },
+  {
+    "application": "GIMP",
+    "repository": "GIMP/gimp"
+  },
+  {
+    "application": "LibreOffice",
+    "repository": "LibreOffice/core"
+  },
+  {
+    "application": "Microsoft PowerToys",
+    "repository": "microsoft/PowerToys"
+  },
+  {
+    "application": "Windows Terminal",
+    "repository": "microsoft/terminal"
+  },
+  {
+    "application": "Visual Studio Code",
+    "repository": "microsoft/vscode"
+  },
+  {
+    "application": "PowerShell",
+    "repository": "PowerShell/PowerShell"
+  },
+  {
+    "application": "RustDesk",
+    "repository": "rustdesk/rustdesk"
+  },
+  {
+    "application": "ShareX",
+    "repository": "ShareX/ShareX"
+  },
+  {
+    "application": "Greenshot",
+    "repository": "greenshot/greenshot"
+  },
+  {
+    "application": "Notepad++",
+    "repository": "notepad-plus-plus/notepad-plus-plus"
+  },
+  {
+    "application": "WinDirStat",
+    "repository": "WinDirStat/WinDirStat"
+  },
+  {
+    "application": "qBittorrent",
+    "repository": "qbittorrent/qBittorrent"
+  },
+  {
+    "application": "SumatraPDF",
+    "repository": "sumatrapdfreader/sumatrapdf"
+  },
+  {
+    "application": "Ventoy",
+    "repository": "ventoy/Ventoy"
+  },
+  {
+    "application": "Rufus",
+    "repository": "pbatard/rufus"
+  },
+  {
+    "application": "balenaEtcher",
+    "repository": "balena-io/etcher"
+  },
+  {
+    "application": "Raspberry Pi Imager",
+    "repository": "raspberrypi/rpi-imager"
+  },
+  {
+    "application": "KeePassXC",
+    "repository": "keepassxreboot/keepassxc"
+  },
+  {
+    "application": "Cryptomator",
+    "repository": "cryptomator/cryptomator"
+  },
+  {
+    "application": "EarTrumpet",
+    "repository": "File-New-Project/EarTrumpet"
+  },
+  {
+    "application": "TranslucentTB",
+    "repository": "TranslucentTB/TranslucentTB"
+  },
+  {
+    "application": "Lively Wallpaper",
+    "repository": "rocksdanister/lively"
+  },
+  {
+    "application": "Rainmeter",
+    "repository": "rainmeter/rainmeter"
+  },
+  {
+    "application": "ExplorerPatcher",
+    "repository": "valinet/ExplorerPatcher"
+  },
+  {
+    "application": "Windhawk",
+    "repository": "ramensoftware/windhawk"
+  },
+  {
+    "application": "Twinkle Tray",
+    "repository": "xanderfrangos/twinkle-tray"
+  },
+  {
+    "application": "Monitorian",
+    "repository": "emoacht/Monitorian"
+  },
+  {
+    "application": "AutoHotkey",
+    "repository": "AutoHotkey/AutoHotkey"
+  },
+  {
+    "application": "Ditto Clipboard",
+    "repository": "ditto-cp/ditto"
+  },
+  {
+    "application": "CopyQ",
+    "repository": "hluk/CopyQ"
+  },
+  {
+    "application": "Flameshot",
+    "repository": "flameshot-org/flameshot"
+  },
+  {
+    "application": "Moonlight",
+    "repository": "moonlight-stream/moonlight-qt"
+  },
+  {
+    "application": "Sunshine",
+    "repository": "LizardByte/Sunshine"
+  },
+  {
+    "application": "Signal Desktop",
+    "repository": "signalapp/Signal-Desktop"
+  },
+  {
+    "application": "Telegram Desktop",
+    "repository": "telegramdesktop/tdesktop"
+  },
+  {
+    "application": "Element Desktop",
+    "repository": "element-hq/element-desktop"
+  },
+  {
+    "application": "Mattermost Desktop",
+    "repository": "mattermost/desktop"
+  },
+  {
+    "application": "Joplin",
+    "repository": "laurent22/joplin"
+  },
+  {
+    "application": "Logseq",
+    "repository": "logseq/logseq"
+  },
+  {
+    "application": "AppFlowy",
+    "repository": "AppFlowy-IO/AppFlowy"
+  },
+  {
+    "application": "Anytype",
+    "repository": "anyproto/anytype-ts"
+  },
+  {
+    "application": "Standard Notes",
+    "repository": "standardnotes/app"
+  },
+  {
+    "application": "Zotero",
+    "repository": "zotero/zotero"
+  },
+  {
+    "application": "Calibre",
+    "repository": "kovidgoyal/calibre"
+  },
+  {
+    "application": "FreeCAD",
+    "repository": "FreeCAD/FreeCAD"
+  },
+  {
+    "application": "OpenSCAD",
+    "repository": "openscad/openscad"
+  },
+  {
+    "application": "KiCad",
+    "repository": "KiCad/kicad-source-mirror"
+  },
+  {
+    "application": "PrusaSlicer",
+    "repository": "prusa3d/PrusaSlicer"
+  },
+  {
+    "application": "OrcaSlicer",
+    "repository": "SoftFever/OrcaSlicer"
+  },
+  {
+    "application": "UltiMaker Cura",
+    "repository": "Ultimaker/Cura"
+  },
+  {
+    "application": "Godot Engine",
+    "repository": "godotengine/godot"
+  },
+  {
+    "application": "GDevelop",
+    "repository": "4ian/GDevelop"
+  },
+  {
+    "application": "Ren'Py",
+    "repository": "renpy/renpy"
+  },
+  {
+    "application": "LÖVE",
+    "repository": "love2d/love"
+  },
+  {
+    "application": "Kdenlive",
+    "repository": "KDE/kdenlive"
+  },
+  {
+    "application": "Shotcut",
+    "repository": "mltframework/shotcut"
+  },
+  {
+    "application": "LosslessCut",
+    "repository": "mifi/lossless-cut"
+  },
+  {
+    "application": "OpenShot",
+    "repository": "OpenShot/openshot-qt"
+  },
+  {
+    "application": "darktable",
+    "repository": "darktable-org/darktable"
+  },
+  {
+    "application": "RawTherapee",
+    "repository": "RawTherapee/RawTherapee"
+  },
+  {
+    "application": "digiKam",
+    "repository": "KDE/digikam"
+  },
+  {
+    "application": "ExifTool",
+    "repository": "exiftool/exiftool"
+  },
+  {
+    "application": "ImageMagick",
+    "repository": "ImageMagick/ImageMagick"
+  },
+  {
+    "application": "GraphicsMagick",
+    "repository": "GraphicsMagick/GraphicsMagick"
+  },
+  {
+    "application": "ImageJ",
+    "repository": "imagej/ImageJ"
+  },
+  {
+    "application": "mpv",
+    "repository": "mpv-player/mpv"
+  },
+  {
+    "application": "MPC-HC",
+    "repository": "clsid2/mpc-hc"
+  },
+  {
+    "application": "Strawberry Music Player",
+    "repository": "strawberrymusicplayer/strawberry"
+  },
+  {
+    "application": "Audacious",
+    "repository": "audacious-media-player/audacious"
+  },
+  {
+    "application": "LMMS",
+    "repository": "LMMS/lmms"
+  },
+  {
+    "application": "MuseScore",
+    "repository": "musescore/MuseScore"
+  },
+  {
+    "application": "OpenRGB",
+    "repository": "OpenRGB/OpenRGB"
+  },
+  {
+    "application": "LibreHardwareMonitor",
+    "repository": "LibreHardwareMonitor/LibreHardwareMonitor"
+  },
+  {
+    "application": "FanControl",
+    "repository": "Rem0o/FanControl.Releases"
+  },
+  {
+    "application": "Open Hardware Monitor",
+    "repository": "openhardwaremonitor/openhardwaremonitor"
+  },
+  {
+    "application": "CrystalDiskInfo",
+    "repository": "hiyohiyo/CrystalDiskInfo"
+  },
+  {
+    "application": "CrystalDiskMark",
+    "repository": "hiyohiyo/CrystalDiskMark"
+  },
+  {
+    "application": "smartmontools",
+    "repository": "smartmontools/smartmontools"
+  },
+  {
+    "application": "BleachBit",
+    "repository": "bleachbit/bleachbit"
+  },
+  {
+    "application": "Bulk Crap Uninstaller",
+    "repository": "Klocman/Bulk-Crap-Uninstaller"
+  },
+  {
+    "application": "System Informer",
+    "repository": "SystemInformer/SystemInformer"
+  },
+  {
+    "application": "Open-Shell",
+    "repository": "Open-Shell/Open-Shell-Menu"
+  },
+  {
+    "application": "Thunderbird",
+    "repository": "thunderbird/thunderbird"
+  },
+  {
+    "application": "Firefox",
+    "repository": "mozilla/gecko-dev"
+  },
+  {
+    "application": "Brave",
+    "repository": "brave/brave-browser"
+  },
+  {
+    "application": "VSCodium",
+    "repository": "VSCodium/vscodium"
+  },
+  {
+    "application": "GitHub Desktop",
+    "repository": "desktop/desktop"
+  },
+  {
+    "application": "Git Extensions",
+    "repository": "gitextensions/gitextensions"
+  },
+  {
+    "application": "TortoiseGit",
+    "repository": "TortoiseGit/TortoiseGit"
+  },
+  {
+    "application": "WinMerge",
+    "repository": "WinMerge/winmerge"
+  },
+  {
+    "application": "Syncthing Tray",
+    "repository": "Martchus/syncthingtray"
+  },
+  {
+    "application": "Nextcloud Desktop",
+    "repository": "nextcloud/desktop"
+  },
+  {
+    "application": "IPFS Desktop",
+    "repository": "ipfs/ipfs-desktop"
+  }
+]
