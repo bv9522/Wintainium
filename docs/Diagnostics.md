@@ -190,6 +190,8 @@ A report with no provider/resolver events may indicate that resolution failed be
 
 For a provider-resolution failure, compare the provider event's `ProviderId`, `Stage`, `Status`, and `ErrorCode` with the structured error `Code` and `Message`. A failed provider attempt emits a `ProviderSourceResolutionFailed` event with `Stage=SourceIdentification`; its `Host` field contains only the normalized hostname, never the full source URL. This preserves a per-provider explanation even when multiple providers decline and no single `SourceResolution` object can be selected. These events distinguish an unsupported host or page shape from an unavailable source, an invalid response, and an interactive/authentication requirement.
 
+Core also emits one `SourceResolutionDecisionEvaluated` event after evaluating the capable providers. Its `Outcome` is `Resolved`, `Ambiguous`, `NoResolution`, or `NoCapableProvider`. `ProviderCount`, `SuccessfulProviderCount`, and `FailedProviderCount` summarize the competition; `SuccessfulProviderIds` identifies successful candidates, and `SelectedProviderId` is present only when exactly one provider succeeded. This aggregate event explains Core's decision without requiring the desktop to infer it from the number of provider failures. It contains no raw source URL. In particular, `Ambiguous` means multiple providers returned successful normalized identities and Core deliberately refused to select one; it is not a provider's own `SourceAmbiguous` failure status.
+
 ### Release discovery
 
 If release discovery fails:
