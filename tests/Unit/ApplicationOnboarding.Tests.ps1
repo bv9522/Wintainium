@@ -139,6 +139,48 @@ Describe 'Wintainium application onboarding' {
         @($third.LogEvents | Where-Object EventName -eq 'ExistingUserConfirmedAliasesPreserved').Count | Should -Be 1
     }
 
+    It 'preserves an explicitly empty user-confirmed alias collection across re-onboarding' {
+        $first = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $first.IsSuccessful | Should -BeTrue
+
+        $manifest = Get-Content -LiteralPath $first.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        $manifest['aliases'] = @('Provider Suggested Alias')
+        $manifest['userConfirmedAliases'] = @()
+        $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $first.ManifestPath -Encoding utf8
+
+        $second = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $second.IsSuccessful | Should -BeTrue
+        $second.ApplicationDefinition.PSObject.Properties.Name | Should -Contain 'userConfirmedAliases'
+        @($second.ApplicationDefinition.userConfirmedAliases).Count | Should -Be 0
+        @($second.LogEvents | Where-Object EventName -eq 'ExistingUserConfirmedAliasesPreserved').Count | Should -Be 1
+        @($second.LogEvents | Where-Object EventName -eq 'LegacyAliasesMigratedToUserConfirmed').Count | Should -Be 0
+
+        $third = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $third.IsSuccessful | Should -BeTrue
+        $persisted = Get-Content -LiteralPath $third.ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+        $persisted.ContainsKey('userConfirmedAliases') | Should -BeTrue
+        @($persisted['userConfirmedAliases']).Count | Should -Be 0
+        @($third.LogEvents | Where-Object EventName -eq 'LegacyAliasesMigratedToUserConfirmed').Count | Should -Be 0
+    }
+
+    It 'stops re-onboarding when the existing manifest cannot be read' {
+        $first = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+        $first.IsSuccessful | Should -BeTrue
+
+        $invalidManifest = '{ this is not valid JSON'
+        Set-Content -LiteralPath $first.ManifestPath -Value $invalidManifest -Encoding utf8 -NoNewline
+
+        $second = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2/releases/tag/v2.9.78' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $second.IsSuccessful | Should -BeFalse
+        $second.Status | Should -Be 'ExistingManifestUnreadable'
+        @($second.Errors | Where-Object Code -eq 'ExistingManifestUnreadable').Count | Should -Be 1
+        @($second.Warnings | Where-Object Code -eq 'ExistingReconciliationSettingsReadFailed').Count | Should -Be 0
+        Get-Content -LiteralPath $first.ManifestPath -Raw -Encoding utf8 | Should -Be $invalidManifest
+        $second.Stages[-1].Status | Should -Be 'Failed'
+        $second.Stages[-1].ReasonCode | Should -Be 'ExistingManifestUnreadable'
+    }
+
     It 'preserves a resolved source description in the persisted application definition model' {
         $source = [pscustomobject][ordered]@{
             ApplicationId='web.example.com.product'
