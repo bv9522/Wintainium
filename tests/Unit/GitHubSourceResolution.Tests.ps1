@@ -86,6 +86,51 @@ Describe 'Wintainium GitHub source resolution' {
         $result.Source.ProviderSettings.repository | Should -Be 'yt-dlp/yt-dlp'
     }
 
+    It 'maintains normalized identity across a 100-case repository URL stress matrix' {
+        Mock Invoke-RestMethod { throw 'Network access is forbidden during the 100-case identity stress matrix.' } -ModuleName Wintainium.provider.github-releases
+
+        $caseCount = 0
+        for ($ownerIndex = 1; $ownerIndex -le 10; $ownerIndex++) {
+            for ($repositoryIndex = 1; $repositoryIndex -le 10; $repositoryIndex++) {
+                $owner = 'Publisher{0:D2}' -f $ownerIndex
+                $repository = 'Application{0:D2}' -f $repositoryIndex
+                $caseVariant = $caseCount % 4
+                $sourceUri = switch ($caseVariant) {
+                    0 { "https://github.com/$owner/$repository" }
+                    1 { "https://www.github.com/$owner/$repository.git" }
+                    2 { "https://github.com/$owner/$repository/releases" }
+                    3 { "https://github.com/$owner/$repository/releases/tag/v1.2.3" }
+                }
+
+                $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
+                    OperationId = "identity-matrix-$caseCount"
+                    SourceUri = $sourceUri
+                })
+
+                $result.IsSuccessful | Should -BeTrue -Because "case $caseCount should resolve '$sourceUri'"
+                $result.Status | Should -Be 'Resolved'
+                $result.OperationId | Should -Be "identity-matrix-$caseCount"
+                $result.Source.ApplicationId | Should -Be "github.$($owner.ToLowerInvariant()).$($repository.ToLowerInvariant())"
+                $result.Source.CanonicalUri | Should -Be "https://github.com/$owner/$repository"
+                $result.Source.ProviderSettings.repository | Should -Be "$owner/$repository"
+                $result.Source.SourceContext.repository | Should -Be "$owner/$repository"
+                $result.Source.ProviderId | Should -Be 'Wintainium.provider.github-releases'
+                $result.Source.ProviderContractVersion | Should -Be '1'
+
+                if ($caseVariant -eq 3) {
+                    $result.Source.SourceContext.releaseTag | Should -Be 'v1.2.3'
+                }
+                else {
+                    $result.Source.SourceContext.PSObject.Properties.Name | Should -Not -Contain 'releaseTag'
+                }
+
+                $caseCount++
+            }
+        }
+
+        $caseCount | Should -Be 100
+    }
+
     It 'rejects a non-GitHub host' {
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-6'
