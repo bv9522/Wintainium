@@ -344,7 +344,7 @@ Describe 'Wintainium application onboarding' {
         $decision.Count | Should -Be 1
         $decision[0].Context.Outcome | Should -Be 'NoResolution'
         $decision[0].Context.SuccessfulProviderCount | Should -Be 0
-        $decision[0].Context.ProviderCount | Should -Be 2
+        $decision[0].Context.ProviderCount | Should -Be 3
     }
 
     It 'propagates SourceAmbiguous without creating application state' {
@@ -427,7 +427,7 @@ Describe 'Wintainium application onboarding' {
         $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
         $decision.Count | Should -Be 1
         $decision[0].Context.Outcome | Should -Be 'Ambiguous'
-        $decision[0].Context.ProviderCount | Should -Be 2
+        $decision[0].Context.ProviderCount | Should -Be 4
         $decision[0].Context.SuccessfulProviderCount | Should -Be 2
         @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.github-releases'
         @($decision[0].Context.SuccessfulProviderIds) | Should -Contain 'Wintainium.provider.test-github-source-resolution'
@@ -451,7 +451,7 @@ Describe 'Wintainium application onboarding' {
         $decision = @($result.LogEvents | Where-Object EventName -eq 'SourceResolutionDecisionEvaluated')
         $decision.Count | Should -Be 1
         $decision[0].Context.Outcome | Should -Be 'Resolved'
-        $decision[0].Context.ProviderCount | Should -Be 2
+        $decision[0].Context.ProviderCount | Should -Be 3
         $decision[0].Context.SuccessfulProviderCount | Should -Be 1
         $decision[0].Context.SelectedProviderId | Should -Be 'Wintainium.provider.github-releases'
     }
