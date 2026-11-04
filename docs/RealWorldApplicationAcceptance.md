@@ -2,7 +2,7 @@
 
 ## Scope
 
-The live catalog contains 25 real publisher sources: 15 official download/release pages and 10 upstream GitHub Releases pages. This runner is separate from Pester unit tests and the existing 100-case GitHub URL-shape benchmark.
+The live catalog contains 25 real publisher sources: 17 official download/release pages and 8 upstream GitHub Releases pages. This runner is separate from Pester unit tests and the existing 100-case GitHub URL-shape benchmark.
 
 For every application it invokes the production Core onboarding workflow against the live URL, allowing all registered source-resolution-capable providers to compete. It persists the generated definition only in a unique temporary workspace, performs live release and artifact discovery, reconciles installed state through the production Windows registry plugin using actual machine evidence, and evaluates update status through the public Core command.
 
