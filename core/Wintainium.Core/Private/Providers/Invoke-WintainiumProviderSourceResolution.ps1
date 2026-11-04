@@ -27,7 +27,8 @@ function Invoke-WintainiumCoreProviderSourceResolution {
             $logEvents.Add((New-WintainiumLogEvent -Severity Warning -OperationId $operationId -Component 'SourceIdentification' -EventName 'ProviderSourceResolutionFailed' -Message 'Provider source-identification attempt failed.' -Context $context))
         }
         [pscustomobject][ordered]@{
-            OperationId=$operationId; IsSuccessful=$IsSuccessful; Status=$Status
+            OperationId=$operationId; ProviderId=[string]$Provider.PluginId
+            IsSuccessful=$IsSuccessful; Status=$Status
             Source=$Source; Errors=@($Errors); Warnings=@($Warnings); LogEvents=$logEvents.ToArray()
         }
     }
