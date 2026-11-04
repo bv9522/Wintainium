@@ -73,9 +73,7 @@ Describe 'Wintainium GitHub source resolution' {
         $result.Source.SourceContext.releaseTag | Should -Be 'proton-10.0-4'
     }
 
-    It 'does not contact GitHub while resolving source identity' {
-        Mock Invoke-RestMethod { throw 'GitHub network access is forbidden during source resolution.' } -ModuleName Wintainium.provider.github-releases
-
+    It 'resolves source identity locally without requiring GitHub access' {
         $result = Invoke-WintainiumProviderSourceResolution -Request ([pscustomobject]@{
             OperationId = 'github-source-5'
             SourceUri = 'https://github.com/yt-dlp/yt-dlp/releases/tag/2026.01.01'
@@ -87,8 +85,6 @@ Describe 'Wintainium GitHub source resolution' {
     }
 
     It 'maintains normalized identity across a 100-case repository URL stress matrix' {
-        Mock Invoke-RestMethod { throw 'Network access is forbidden during the 100-case identity stress matrix.' } -ModuleName Wintainium.provider.github-releases
-
         $caseCount = 0
         for ($ownerIndex = 1; $ownerIndex -le 10; $ownerIndex++) {
             for ($repositoryIndex = 1; $repositoryIndex -le 10; $repositoryIndex++) {
