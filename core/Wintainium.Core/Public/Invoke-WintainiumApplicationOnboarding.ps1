@@ -232,86 +232,86 @@ function Invoke-WintainiumApplicationOnboarding {
             }
         }
 
-            # User-confirmed aliases are Core/user-owned identity facts. Preserve them
-            # independently from provider suggestions whenever the same application is
-            # re-onboarded. Legacy manifests did not record provenance, so their aliases
-            # are conservatively migrated as confirmed rather than discarded.
-            $hasConfirmedAliasField = $existingManifest.ContainsKey('userConfirmedAliases')
-            $preservedAliasValues = if ($hasConfirmedAliasField) {
-                @($existingManifest['userConfirmedAliases'])
+        # User-confirmed aliases are Core/user-owned identity facts. Preserve them
+        # independently from provider suggestions whenever the same application is
+        # re-onboarded. Legacy manifests did not record provenance, so their aliases
+        # are conservatively migrated as confirmed rather than discarded.
+        $hasConfirmedAliasField = $existingManifest.ContainsKey('userConfirmedAliases')
+        $preservedAliasValues = if ($hasConfirmedAliasField) {
+            @($existingManifest['userConfirmedAliases'])
+        }
+        else {
+            @($existingManifest['aliases'])
+        }
+        $confirmedAliases = [System.Collections.Generic.List[string]]::new()
+        foreach ($aliasValue in $preservedAliasValues) {
+            if ($aliasValue -isnot [string] -or [string]::IsNullOrWhiteSpace($aliasValue)) { continue }
+            $normalizedAlias = $aliasValue.Trim()
+            if ($normalizedAlias -ieq [string]$normalization.ApplicationDefinition.name) { continue }
+            $duplicate = $false
+            foreach ($existingAlias in $confirmedAliases) {
+                if ($existingAlias -ieq $normalizedAlias) { $duplicate = $true; break }
+            }
+            if (-not $duplicate) { $confirmedAliases.Add($normalizedAlias) }
+        }
+
+        if ($hasConfirmedAliasField -or $confirmedAliases.Count -gt 0) {
+            $providerAliases = [System.Collections.Generic.List[string]]::new()
+            # The provider may omit aliases entirely. Under StrictMode, directly
+            # reading a missing PSCustomObject property throws instead of returning
+            # null, so inspect the property collection before enumerating it.
+            $providerAliasValues = @()
+            $providerAliasProperty = $normalization.ApplicationDefinition.PSObject.Properties['aliases']
+            if ($null -ne $providerAliasProperty) {
+                $providerAliasValues = @($providerAliasProperty.Value)
+            }
+            foreach ($providerAlias in $providerAliasValues) {
+                if ($providerAlias -isnot [string] -or [string]::IsNullOrWhiteSpace($providerAlias)) { continue }
+                $normalizedProviderAlias = $providerAlias.Trim()
+                $isConfirmed = $false
+                foreach ($confirmedAlias in $confirmedAliases) {
+                    if ($normalizedProviderAlias -ieq $confirmedAlias) { $isConfirmed = $true; break }
+                }
+                if (-not $isConfirmed) { $providerAliases.Add($normalizedProviderAlias) }
+            }
+            if ($providerAliases.Count -gt 0) {
+                $normalization.ApplicationDefinition.aliases = $providerAliases.ToArray()
             }
             else {
-                @($existingManifest['aliases'])
+                $normalization.ApplicationDefinition.PSObject.Properties.Remove('aliases')
             }
-            $confirmedAliases = [System.Collections.Generic.List[string]]::new()
-            foreach ($aliasValue in $preservedAliasValues) {
-                if ($aliasValue -isnot [string] -or [string]::IsNullOrWhiteSpace($aliasValue)) { continue }
-                $normalizedAlias = $aliasValue.Trim()
-                if ($normalizedAlias -ieq [string]$normalization.ApplicationDefinition.name) { continue }
-                $duplicate = $false
-                foreach ($existingAlias in $confirmedAliases) {
-                    if ($existingAlias -ieq $normalizedAlias) { $duplicate = $true; break }
+            # Rebuild the definition with an explicit property entry. This avoids
+            # relying on Add-Member's mutation/binding behavior for collection values
+            # and ensures the persistence layer receives the exact string array.
+            $definitionProperties = [ordered]@{}
+            foreach ($property in $normalization.ApplicationDefinition.PSObject.Properties) {
+                if ($property.MemberType -in @('NoteProperty','Property')) {
+                    $definitionProperties[[string]$property.Name] = $property.Value
                 }
-                if (-not $duplicate) { $confirmedAliases.Add($normalizedAlias) }
             }
+            $definitionProperties['userConfirmedAliases'] = [string[]]$confirmedAliases.ToArray()
+            $normalization.ApplicationDefinition = [pscustomobject]$definitionProperties
 
-            if ($hasConfirmedAliasField -or $confirmedAliases.Count -gt 0) {
-                $providerAliases = [System.Collections.Generic.List[string]]::new()
-                # The provider may omit aliases entirely. Under StrictMode, directly
-                # reading a missing PSCustomObject property throws instead of returning
-                # null, so inspect the property collection before enumerating it.
-                $providerAliasValues = @()
-                $providerAliasProperty = $normalization.ApplicationDefinition.PSObject.Properties['aliases']
-                if ($null -ne $providerAliasProperty) {
-                    $providerAliasValues = @($providerAliasProperty.Value)
-                }
-                foreach ($providerAlias in $providerAliasValues) {
-                    if ($providerAlias -isnot [string] -or [string]::IsNullOrWhiteSpace($providerAlias)) { continue }
-                    $normalizedProviderAlias = $providerAlias.Trim()
-                    $isConfirmed = $false
-                    foreach ($confirmedAlias in $confirmedAliases) {
-                        if ($normalizedProviderAlias -ieq $confirmedAlias) { $isConfirmed = $true; break }
-                    }
-                    if (-not $isConfirmed) { $providerAliases.Add($normalizedProviderAlias) }
-                }
-                if ($providerAliases.Count -gt 0) {
-                    $normalization.ApplicationDefinition.aliases = $providerAliases.ToArray()
-                }
-                else {
-                    $normalization.ApplicationDefinition.PSObject.Properties.Remove('aliases')
-                }
-                # Rebuild the definition with an explicit property entry. This avoids
-                # relying on Add-Member's mutation/binding behavior for collection values
-                # and ensures the persistence layer receives the exact string array.
-                $definitionProperties = [ordered]@{}
-                foreach ($property in $normalization.ApplicationDefinition.PSObject.Properties) {
-                    if ($property.MemberType -in @('NoteProperty','Property')) {
-                        $definitionProperties[[string]$property.Name] = $property.Value
-                    }
-                }
-                $definitionProperties['userConfirmedAliases'] = [string[]]$confirmedAliases.ToArray()
-                $normalization.ApplicationDefinition = [pscustomobject]$definitionProperties
-
-                $eventName = if ($hasConfirmedAliasField) { 'ExistingUserConfirmedAliasesPreserved' } else { 'LegacyAliasesMigratedToUserConfirmed' }
-                $eventMessage = if ($hasConfirmedAliasField) {
-                    'Re-onboarding preserved user-confirmed identity aliases independently from provider-suggested aliases.'
-                }
-                else {
-                    'Re-onboarding conservatively migrated legacy aliases into the user-confirmed alias collection because their original provenance was not recorded.'
-                }
-                $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName $eventName -Message $eventMessage -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;AliasCount=$confirmedAliases.Count}))
+            $eventName = if ($hasConfirmedAliasField) { 'ExistingUserConfirmedAliasesPreserved' } else { 'LegacyAliasesMigratedToUserConfirmed' }
+            $eventMessage = if ($hasConfirmedAliasField) {
+                'Re-onboarding preserved user-confirmed identity aliases independently from provider-suggested aliases.'
             }
-
-            $existingReconciliation = $existingManifest['reconciliation']
-            $newReconciliation = $normalization.ApplicationDefinition.reconciliation
-            if ($existingReconciliation -is [System.Collections.IDictionary] -and
-                $null -ne $newReconciliation -and
-                [string]$existingReconciliation['pluginId'] -ieq [string]$newReconciliation['pluginId'] -and
-                [string]$existingReconciliation['requiredContractVersion'] -eq [string]$newReconciliation['requiredContractVersion'] -and
-                $existingReconciliation.Contains('settings')) {
-                $newReconciliation['settings'] = $existingReconciliation['settings']
-                $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ExistingReconciliationSettingsPreserved' -Message 'Re-onboarding preserved the existing user-configured reconciliation settings because the reconciliation plugin and contract remain unchanged.' -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;PluginId=[string]$newReconciliation['pluginId']}))
+            else {
+                'Re-onboarding conservatively migrated legacy aliases into the user-confirmed alias collection because their original provenance was not recorded.'
             }
+            $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName $eventName -Message $eventMessage -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;AliasCount=$confirmedAliases.Count}))
+        }
+
+        $existingReconciliation = $existingManifest['reconciliation']
+        $newReconciliation = $normalization.ApplicationDefinition.reconciliation
+        if ($existingReconciliation -is [System.Collections.IDictionary] -and
+            $null -ne $newReconciliation -and
+            [string]$existingReconciliation['pluginId'] -ieq [string]$newReconciliation['pluginId'] -and
+            [string]$existingReconciliation['requiredContractVersion'] -eq [string]$newReconciliation['requiredContractVersion'] -and
+            $existingReconciliation.Contains('settings')) {
+            $newReconciliation['settings'] = $existingReconciliation['settings']
+            $logEvents.Add((New-WintainiumLogEvent -Severity Information -OperationId $resolvedOperationId -Component 'Core' -EventName 'ExistingReconciliationSettingsPreserved' -Message 'Re-onboarding preserved the existing user-configured reconciliation settings because the reconciliation plugin and contract remain unchanged.' -Context @{ApplicationId=[string]$normalization.ApplicationDefinition.id;PluginId=[string]$newReconciliation['pluginId']}))
+        }
     }
 
     & $addStage 4 'DefinitionNormalization' 'Completed' $true $null 'The source was normalized into an application definition.'
