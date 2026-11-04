@@ -53,11 +53,16 @@ The desktop adapter exposes the command without reproducing Core behavior.
 
 ## Provider selection
 
-Core considers capable source-resolution providers in deterministic descriptor order.
+Core considers every capable source-resolution provider in deterministic descriptor order. Descriptor order exists for repeatable execution and diagnostics; it is not provider precedence.
 
-- zero successful resolutions → structured unsupported/unavailable/interactive result;
-- exactly one successful resolution → continue to policy resolution and normalization;
-- more than one successful resolution → `SourceAmbiguous` and no persistence.
+- No capable providers → `SourceUnsupported` with a `NoCapableProvider` decision event.
+- No successful resolutions → fail without persistence. The terminal status is selected deterministically from provider outcomes: `SourceAmbiguous`, `SourceUnavailable`, `AuthenticationRequired`, `InteractiveResolutionRequired`, `SourceResponseInvalid`, `SourceResolutionResultInvalid`, `SourceResolverInternalError`, then `SourceUnsupported`.
+- Exactly one successful resolution and no explicit provider ambiguity → continue to policy resolution and normalization.
+- More than one successful resolution → `SourceAmbiguous`; no provider is selected.
+- Exactly one successful resolution plus another provider's explicit `SourceAmbiguous` result → also `SourceAmbiguous`; Core does not override a provider's positive ambiguity signal without an authority/confidence contract.
+- Ordinary `SourceUnsupported` and `SourceInvalid` declines do not veto a sole successful result. Other competing failures remain visible as warnings rather than being discarded.
+
+Core emits one `SourceResolutionDecisionEvaluated` event that records the aggregate outcome, provider counts, successful/failed provider IDs, and selected provider ID only when Core accepts a unique result. Individual provider diagnostics remain correlated through the same `OperationId`.
 
 A provider that does not advertise source resolution remains valid and is not invoked for onboarding.
 
