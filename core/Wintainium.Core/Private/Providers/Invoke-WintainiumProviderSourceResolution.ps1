@@ -151,6 +151,11 @@ function Invoke-WintainiumCoreProviderSourceResolution {
         return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
     }
 
+    if ([bool]$resolverResult.IsSuccessful -and @($resolverResult.Errors).Count -gt 0) {
+        $error=[pscustomobject]@{Code='SourceResolutionResultInvalid';Message='A successful source-resolution result must not contain errors; non-fatal information belongs in Warnings.'}
+        return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
+    }
+
     if ([string]::IsNullOrWhiteSpace([string]$resolverResult.Status)) {
         $error=[pscustomobject]@{Code='SourceResolutionResultInvalid';Message='Source resolver result Status cannot be empty.'}
         return & $baseResult $false 'SourceResolutionResultInvalid' $null @($error) @()
