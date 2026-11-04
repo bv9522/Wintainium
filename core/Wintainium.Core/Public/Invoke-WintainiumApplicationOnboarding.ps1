@@ -162,9 +162,11 @@ function Invoke-WintainiumApplicationOnboarding {
         foreach($event in @($resolved.Result.LogEvents)){$logEvents.Add($event)}
         foreach($warning in @($resolved.Result.Warnings)){$warnings.Add($warning)}
     }
+    foreach($failure in $failures) {
+        foreach($warning in @($failure.Warnings)){$warnings.Add($warning)}
+    }
     foreach($failure in $failures | Where-Object { [string]$_.Status -notin @('SourceUnsupported','SourceInvalid') }) {
         foreach($event in @($failure.LogEvents)){$logEvents.Add($event)}
-        foreach($warning in @($failure.Warnings)){$warnings.Add($warning)}
         foreach($failureError in @($failure.Errors)) {
             $warnings.Add([pscustomobject][ordered]@{
                 Code='SourceResolverAttemptFailed'
