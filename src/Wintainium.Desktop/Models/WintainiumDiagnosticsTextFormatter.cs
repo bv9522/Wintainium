@@ -11,11 +11,11 @@ internal static class WintainiumDiagnosticsTextFormatter
     private static readonly HashSet<string> SafeContextNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "ApplicationId", "Capability", "CandidateCount", "Component", "ContentType", "ProviderCount",
-        "SuccessfulProviderCount", "FailedProviderCount", "SuccessfulProviderIds", "SelectedProviderId", "Outcome",
+        "SuccessfulProviderCount", "FailedProviderCount", "SuccessfulProviderIds", "SelectedProviderId", "Outcome", "TerminalStatus",
         "DownloadArtifactCandidateCount", "DurationMilliseconds", "ErrorCode", "EventName",
         "ExceptionType", "EvidenceSource", "FailureStage", "FinalUrl", "Host", "HtmlLength",
         "HttpStatusCode", "InstallationState", "MatchMode", "ObservedInstallationState",
-        "OperationId", "Outcome", "ParsedArtifactCount", "ParsedReleaseCount", "Persisted",
+        "OperationId", "ParsedArtifactCount", "ParsedReleaseCount", "Persisted",
         "PriorInstallationState", "ProviderId", "ReasonCode", "RegistryLocationCount",
         "RegistryReadFailureCount", "RequestedUrl", "Scope", "SectionCandidateCount",
         "Severity", "Stage", "Status", "View", "DecisionReasonCode", "DecisionStatus",
