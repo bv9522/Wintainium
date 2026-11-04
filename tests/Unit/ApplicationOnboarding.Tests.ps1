@@ -417,6 +417,23 @@ Describe 'Wintainium application onboarding' {
         $result.ManifestPath | Should -BeNullOrEmpty
     }
 
+    It 'keeps one valid resolution when another capable provider has a non-decline failure' {
+        $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/owner/fault' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy
+
+        $result.IsSuccessful | Should -BeTrue
+        $result.Status | Should -Be 'Resolved'
+        $result.ApplicationDefinition.id | Should -Be 'github.owner.fault'
+        $result.SourceResolution.Source.ProviderId | Should -Be 'Wintainium.provider.github-releases'
+
+        $attemptWarnings = @($result.Warnings | Where-Object Code -eq 'SourceResolverAttemptFailed')
+        $attemptWarnings.Count | Should -Be 1
+        $attemptWarnings[0].Status | Should -Be 'SourceUnavailable'
+        $attemptWarnings[0].Detail.Code | Should -Be 'SourceResolutionFixtureTransientFailure'
+
+        @($result.Errors | Where-Object Code -eq 'SourceResolutionFixtureTransientFailure').Count | Should -Be 0
+        $result.ManifestPath | Should -Not -BeNullOrEmpty
+    }
+
     It 'preserves the caller operation correlation identifier' {
         $operationId = [guid]::NewGuid().ToString()
         $result = Invoke-WintainiumApplicationOnboarding -SourceUri 'https://github.com/PCSX2/pcsx2' -ManifestRoot $script:manifestRoot -PluginRoot $script:pluginRoot -Policy $script:policy -OperationId $operationId
