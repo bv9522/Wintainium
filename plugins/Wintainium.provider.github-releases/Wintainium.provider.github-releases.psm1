@@ -362,15 +362,15 @@ function Invoke-WintainiumProviderSourceResolution {
         )
     }
 
-    if (-not [string]::IsNullOrWhiteSpace([string]$sourceUri.UserInfo) -or -not $sourceUri.IsDefaultPort) {
-        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
-            (New-GitHubProviderError -Code 'GitHubSourceAuthorityUnsupported' -Message 'GitHub source URLs must not contain user information or a non-default port.')
-        )
-    }
-
     if (-not $sourceUri.IsAbsoluteUri -or $sourceUri.Scheme -notin @('http','https') -or $sourceUri.Host -notin @('github.com','www.github.com')) {
         return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
             (New-GitHubProviderError -Code 'GitHubSourceHostUnsupported' -Message 'The supplied source URL is not a supported GitHub.com URL.')
+        )
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string]$sourceUri.UserInfo) -or -not $sourceUri.IsDefaultPort) {
+        return New-GitHubSourceResolutionResult -OperationId $operationId -IsSuccessful $false -Status 'SourceUnsupported' -Errors @(
+            (New-GitHubProviderError -Code 'GitHubSourceAuthorityUnsupported' -Message 'GitHub source URLs must not contain user information or a non-default port.')
         )
     }
 
